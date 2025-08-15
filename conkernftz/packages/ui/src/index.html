@@ -1,0 +1,756 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:;" />
+    <title>conkernftz</title>
+    <style>
+      :root {
+        --bg: #0b0d10;
+        --panel: #0f1318;
+        --panel-soft: #0d1117;
+        --border: #1f2328;
+        --muted: #8b949e;
+        --text: #e6edf3;
+        --accent: #2f81f7;
+        --success: #238636;
+        --danger: #da3633;
+        --btn-bg: #1f6feb;
+        --shadow: 0 8px 24px rgba(0,0,0,0.3);
+      }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; background: var(--bg); color: var(--text); }
+      header { padding: 12px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+      header .brand { display:flex; align-items:center; gap:10px; font-weight: 700; letter-spacing:.3px; }
+      header .brand .dot { width:10px; height:10px; border-radius:50%; background: linear-gradient(135deg, var(--accent), #7c3aed); display:inline-block; box-shadow: 0 0 12px rgba(47,129,247,.6); }
+      main { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 50px); }
+      .sidebar { border-right: 1px solid var(--border); padding: 16px; background: var(--panel); overflow:auto; }
+      .content { padding: 16px; overflow:auto; }
+      button { background: var(--success); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: transform .04s ease, filter .2s ease; }
+      button:hover { filter: brightness(1.05); }
+      button:active { transform: translateY(1px); }
+      .btn-secondary { background: #30363d; color: var(--text); }
+      .btn-primary { background: var(--btn-bg); }
+      .btn-danger { background: var(--danger); }
+      pre { background: #0b0f14; padding: 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: auto; }
+      input, select, textarea { width: 100%; padding: 8px 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #30363d; background: var(--panel-soft); color: var(--text); }
+      fieldset { background: var(--panel); box-shadow: var(--shadow); }
+      h3 { margin: 8px 0 10px; font-weight: 600; }
+
+      /* Gallery */
+      .gallery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); }
+      .gallery-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+      .gallery-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+      .thumb { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 10px; background: #0b0f14; border: 1px solid var(--border); cursor: zoom-in; }
+      .thumb img { width: 100%; height: 100%; object-fit: cover; display:block; transition: transform .25s ease; }
+      .thumb:hover img { transform: scale(1.04); }
+      .thumb .badge { position:absolute; left:8px; top:8px; background: rgba(0,0,0,.5); padding:2px 6px; font-size:11px; border-radius:999px; border:1px solid rgba(255,255,255,.1); }
+      .empty-state { color: var(--muted); padding: 24px; text-align:center; border: 1px dashed var(--border); border-radius: 12px; }
+
+      /* Lightbox */
+      .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; z-index: 40; }
+      .lightbox.open { display:flex; }
+      .lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,.1); }
+      .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.15); width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; font-size: 24px; cursor: pointer; user-select: none; }
+      .lb-prev { left: 32px; }
+      .lb-next { right: 32px; }
+      .lb-close { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,.08); color:#fff; border: 1px solid rgba(255,255,255,.15); width: 40px; height: 40px; border-radius: 999px; display:grid; place-items:center; font-size: 18px; cursor:pointer; }
+      .lb-nav:hover, .lb-close:hover { background: rgba(255,255,255,.12); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand"><span class="dot"></span><span>conkernftz</span></div>
+      <div style="opacity:.75;font-size:12px;">Next‑gen generative NFT foundry</div>
+    </header>
+    <main>
+      <div class="sidebar">
+        <div>
+          <button id="btn-choose">Choose Project</button>
+        </div>
+        <div>
+          <button id="btn-init">Init</button>
+        </div>
+        <div>
+          <button id="btn-validate">Validate</button>
+        </div>
+        <div>
+          <label>Preview Count</label>
+          <input id="preview-count" type="number" value="9"/>
+          <button id="btn-preview">Preview</button>
+        </div>
+        <div>
+          <label>Build Count</label>
+          <input id="build-count" type="number" value="10"/>
+          <button id="btn-build">Build</button>
+        </div>
+        <div>
+          <label>Upload Provider</label>
+          <select id="upload-provider">
+            <option value="arweave">Arweave</option>
+            <option value="ipfs">IPFS</option>
+          </select>
+          <label>Concurrency</label>
+          <input id="upload-concurrency" type="number" value="6"/>
+          <button id="btn-upload">Upload</button>
+        </div>
+        <div>
+          <label>Mint From</label>
+          <input id="mint-from" type="number" value="1"/>
+          <label>Count</label>
+          <input id="mint-count" type="number" value="1"/>
+          <button id="btn-mint">Mint</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="gallery-card">
+          <div class="gallery-header">
+            <h3 style="margin:0;">Previews</h3>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button id="btn-open-previews" class="btn-secondary" style="padding:6px 10px; font-size:12px;">Open folder</button>
+              <div id="gallery-meta" style="opacity:.75; font-size:12px;"></div>
+            </div>
+          </div>
+          <div id="previews" class="gallery-grid"></div>
+          <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" in the sidebar to generate sample images.</div>
+        </div>
+        <div style="margin-top:16px;">
+          <h3>Output</h3>
+          <pre id="out"></pre>
+        </div>
+        <div style="margin-top:16px;">
+          <h3>Project Config</h3>
+          <div id="config-editor" style="display:flex; flex-direction: column; gap: 12px;">
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <div>
+                <label>Name</label>
+                <input id="cfg-name" placeholder="Collection name" />
+              </div>
+              <div>
+                <label>Symbol</label>
+                <input id="cfg-symbol" placeholder="SYMB" />
+              </div>
+              <div>
+                <label>Edition Size</label>
+                <input id="cfg-editions" type="number" min="1" />
+              </div>
+              <div>
+                <label>Image Background</label>
+                <input id="cfg-image-bg" placeholder="transparent or #RRGGBB" />
+              </div>
+              <div>
+                <label>Image Width</label>
+                <input id="cfg-image-w" type="number" min="1" />
+              </div>
+              <div>
+                <label>Image Height</label>
+                <input id="cfg-image-h" type="number" min="1" />
+              </div>
+            </div>
+
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Rarity</legend>
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div>
+                  <label>Filename Delimiter</label>
+                  <input id="rarity-delim" placeholder="#" />
+                </div>
+                <div>
+                  <label>Default Weight</label>
+                  <input id="rarity-default" type="number" min="1" />
+                </div>
+                <div style="align-self:end; opacity:.8; font-size: 12px;">
+                  Example: "Golden Crown#1.png" vs "Blue Cap#10.png"
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Uniqueness (DNA)</legend>
+              <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px;">
+                <div>
+                  <label>Hash</label>
+                  <input id="uniq-hash" value="sha256" disabled />
+                </div>
+                <div>
+                  <label>Ignore Traits (comma-separated trait types)</label>
+                  <input id="uniq-ignore" placeholder="Background, ..." />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Layers</legend>
+              <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
+                <div style="opacity:.85;">Configure order, paths, and rarity strategy per layer.</div>
+                <div style="display:flex; gap:8px;">
+                  <button id="btn-refresh-assets" type="button" style="background:#30363d;">Refresh Counts</button>
+                  <button id="btn-create-folders" type="button" style="background:#30363d;">Create Folders</button>
+                  <button id="btn-add-layer" type="button">Add Layer</button>
+                  <button id="btn-save-config" type="button" style="background:#2f81f7;">Save Config</button>
+                </div>
+              </div>
+              <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="text-align:left; border-bottom:1px solid #30363d;">
+                    <th style="padding:4px 6px;">Order</th>
+                    <th style="padding:4px 6px;">Name</th>
+                    <th style="padding:4px 6px;">Path</th>
+                    <th style="padding:4px 6px;">Rarity</th>
+                    <th style="padding:4px 6px;">Required</th>
+                    <th style="padding:4px 6px;">Blend</th>
+                    <th style="padding:4px 6px;">Opacity</th>
+                    <th style="padding:4px 6px;">Assets</th>
+                    <th style="padding:4px 6px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="layers-tbody"></tbody>
+              </table>
+            </fieldset>
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Rules (advanced)</legend>
+              <div style="display:grid; grid-template-columns: 1fr; gap: 8px;">
+                <textarea id="rules-json" rows="6" style="width:100%; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:8px;" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
+                <div style="display:flex; gap:8px;">
+                  <button id="btn-validate-rules" type="button" style="background:#8957e5;">Validate Rules</button>
+                  <button id="btn-save-rules" type="button" style="background:#2f81f7;">Save Rules</button>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Export</legend>
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items:end;">
+                <div>
+                  <label>Out Dir</label>
+                  <input id="export-outdir" placeholder="build" />
+                </div>
+                <div>
+                  <label>Preview Out Dir</label>
+                  <input id="export-preview-outdir" placeholder="Optional: absolute or relative path" />
+                </div>
+                <div>
+                  <label>Image Format</label>
+                  <select id="export-format">
+                    <option value="png">png</option>
+                    <option value="webp">webp</option>
+                    <option value="gif">gif</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Include Contact Sheet</label>
+                  <input id="export-contact" type="checkbox" checked />
+                </div>
+              </div>
+            </fieldset>
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Rarity Report</legend>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button id="btn-open-rarity" type="button" style="background:#1f6feb;">Open rarity.json</button>
+                <span style="opacity:.8;">Generated after Build</span>
+              </div>
+              <pre id="rarity-out" style="margin-top:8px; max-height:260px;"></pre>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div id="lightbox" class="lightbox" aria-hidden="true">
+      <button id="lb-close" class="lb-close" aria-label="Close">✕</button>
+      <button id="lb-prev" class="lb-nav lb-prev" aria-label="Previous">‹</button>
+      <img id="lb-image" alt="Preview" />
+      <button id="lb-next" class="lb-nav lb-next" aria-label="Next">›</button>
+    </div>
+    <script>
+      // Ensure bridge exists even if preload failed to load
+      window.foundry = window.foundry || {
+        run: async () => ({ ok: false, error: 'preload not loaded' }),
+        chooseProjectDir: async () => ({ ok: false, error: 'preload not loaded' }),
+        getProjectDir: async () => ({ ok: true, projectDir: null }),
+        readConfig: async () => ({ ok: false, error: 'preload not loaded' }),
+        writeConfig: async () => ({ ok: false, error: 'preload not loaded' }),
+        chooseDirInsideProject: async () => ({ ok: false, error: 'preload not loaded' }),
+        readFile: async () => ({ ok: false, error: 'preload not loaded' }),
+        ensureDirs: async () => ({ ok: false, error: 'preload not loaded' }),
+        listImages: async () => ({ ok: false, count: 0, error: 'preload not loaded' }),
+        listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }),
+      };
+      const out = document.getElementById('out');
+      const previews = document.getElementById('previews');
+      const previewsEmpty = document.getElementById('previews-empty');
+      const galleryMeta = document.getElementById('gallery-meta');
+      const lightbox = document.getElementById('lightbox');
+      const lbImage = document.getElementById('lb-image');
+      const btnOpenPreviews = document.getElementById('btn-open-previews');
+      const lbPrev = document.getElementById('lb-prev');
+      const lbNext = document.getElementById('lb-next');
+      const lbClose = document.getElementById('lb-close');
+      const tbody = document.getElementById('layers-tbody');
+      const btnAddLayer = document.getElementById('btn-add-layer');
+      const btnSaveConfig = document.getElementById('btn-save-config');
+      const btnCreateFolders = document.getElementById('btn-create-folders');
+      const btnRefreshAssets = document.getElementById('btn-refresh-assets');
+      let currentConfig = null;
+      function log(msg) { out.textContent = String(msg || '') }
+      let galleryUrls = [];
+      let cacheBustToken = 0;
+      let currentIndex = -1;
+      function setGalleryMeta() {
+        if (galleryMeta) galleryMeta.textContent = galleryUrls.length ? (galleryUrls.length + ' image' + (galleryUrls.length === 1 ? '' : 's')) : '';
+      }
+      function isAbsolutePath(p) {
+        // Windows: C:\ or \\server\share ; POSIX: /
+        return /^(?:[a-zA-Z]:[\\/]|\\\\|\/)/.test(p || '');
+      }
+      function fileUrl(baseDir, folder, name) {
+        const nameNorm = String(name || '').replace(/\\/g, '/');
+        if (isAbsolutePath(folder)) {
+          const folderNorm = String(folder || '').replace(/\\/g, '/');
+          return encodeURI('file:///' + folderNorm + '/' + nameNorm);
+        }
+        const baseNorm = String(baseDir || '').replace(/\\/g, '/');
+        const folderNorm = String(folder || '').replace(/\\/g, '/');
+        return encodeURI('file:///' + baseNorm + '/' + folderNorm + '/' + nameNorm);
+      }
+      function mountThumbGrid(baseDir, folder, files) {
+        previews.innerHTML = '';
+        galleryUrls = files.map((name) => {
+          const u = fileUrl(baseDir, folder, name);
+          const sep = u.includes('?') ? '&' : '?';
+          return u + sep + 'v=' + cacheBustToken;
+        });
+        setGalleryMeta();
+        if (!galleryUrls.length) {
+          previewsEmpty.style.display = 'block';
+          return;
+        }
+        previewsEmpty.style.display = 'none';
+        galleryUrls.forEach((url, i) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'thumb';
+          wrap.dataset.index = String(i);
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = 'Preview ' + (i + 1);
+          img.onerror = () => { wrap.remove(); };
+          const badge = document.createElement('div');
+          badge.className = 'badge';
+          badge.textContent = String(i + 1);
+          wrap.appendChild(img);
+          wrap.appendChild(badge);
+          previews.appendChild(wrap);
+        });
+      }
+      function openLightbox(index) {
+        if (!galleryUrls.length) return;
+        currentIndex = (index + galleryUrls.length) % galleryUrls.length;
+        lbImage.src = galleryUrls[currentIndex];
+        lightbox.classList.add('open');
+        lightbox.setAttribute('aria-hidden', 'false');
+      }
+      function closeLightbox() {
+        lightbox.classList.remove('open');
+        lightbox.setAttribute('aria-hidden', 'true');
+      }
+      function nav(delta) {
+        if (!galleryUrls.length) return;
+        currentIndex = (currentIndex + delta + galleryUrls.length) % galleryUrls.length;
+        lbImage.src = galleryUrls[currentIndex];
+      }
+      async function refreshPreviews() {
+        try {
+          previews.innerHTML = '';
+          previewsEmpty.style.display = 'none';
+          cacheBustToken = Date.now();
+          const cfg = await window.foundry.readConfig();
+          if (!cfg.ok) return;
+          const outDir = (cfg.json.export?.previewOutDir) || (cfg.json.export?.outDir) || 'build';
+          const base = await window.foundry.getProjectDir();
+          function isPreviewDir(p) { return /(\\|\/)preview$/i.test(String(p || '').replace(/[\\/]+$/,'')); }
+          const cleanedOutDir = outDir.replace(/\\+$/,'').replace(/\/+$/,'');
+          const primary = (cfg.json.export?.previewOutDir)
+            ? cleanedOutDir
+            : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
+          const altPreview = isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview');
+          const fallbacks = Array.from(new Set([altPreview, outDir, 'preview'])).filter(p => p !== primary);
+          btnOpenPreviews.onclick = () => window.foundry.openInExplorer(primary);
+          log('Scanning previews in: ' + primary);
+          const projectBase = (base && base.projectDir) ? base.projectDir : '';
+          async function listAndRender(dir) {
+            const list = await window.foundry.listDir(dir);
+            if (list.ok && Array.isArray(list.items) && list.items.length) {
+              const imageFiles = list.items
+                .filter((n) => !n.endsWith('/'))
+                .filter((n) => /\.(png|webp|gif)$/i.test(n));
+              if (!imageFiles.length) return false;
+              const preferred = imageFiles.filter((n) => /^(preview_|contact-sheet)/i.test(n));
+              const files = (preferred.length ? preferred : imageFiles)
+                .sort((a, b) => {
+                  const isSheetA = a.toLowerCase().startsWith('contact-sheet');
+                  const isSheetB = b.toLowerCase().startsWith('contact-sheet');
+                  if (isSheetA && !isSheetB) return 1;
+                  if (!isSheetA && isSheetB) return -1;
+                  const na = Number((a.match(/preview_(\d+)/i) || [])[1] || 0);
+                  const nb = Number((b.match(/preview_(\d+)/i) || [])[1] || 0);
+                  return na - nb;
+                });
+              log(`Found ${files.length} image(s) in ${dir}`);
+              mountThumbGrid(projectBase, dir, files);
+              return true;
+            }
+            if (!list.ok) log(`Failed to list ${dir}: ${list.error || 'unknown error'}`);
+            return false;
+          }
+          // Try primary location then fallbacks
+          let rendered = await listAndRender(primary);
+          if (!rendered) {
+            for (const fb of fallbacks) {
+              rendered = await listAndRender(fb);
+              if (rendered) break;
+            }
+          }
+          // As a last resort, try to infer sequential preview_#.png names from count
+          if (!rendered) {
+            const countRes = await window.foundry.listImages(primary);
+            if (countRes && countRes.ok && Number(countRes.count) > 0) {
+              const tryNames = [];
+              const max = Number(countRes.count);
+              for (let i = 1; i <= max; i++) tryNames.push(`preview_${i}.png`);
+              mountThumbGrid(projectBase, primary, tryNames);
+              rendered = true;
+            }
+          }
+          // Small retry in case FS updates are delayed
+          if (!rendered) {
+            await new Promise(r => setTimeout(r, 250));
+            rendered = await listAndRender(primary);
+          }
+          if (!rendered) {
+            previewsEmpty.style.display = 'block';
+            log('No previews found in: ' + primary);
+          }
+        } catch {
+          previewsEmpty.style.display = 'block';
+        }
+      }
+      function blendOptionsHtml(selected) {
+        const modes = [
+          'normal','clear','source','over','in','out','atop','dest','dest-over','dest-in','dest-out','dest-atop','xor',
+          'add','linear-dodge','saturate','multiply','screen','overlay','darken','lighten','color-dodge','colour-dodge','color-burn','colour-burn',
+          'hard-light','soft-light','difference','exclusion','subtract','divide','linear-burn','vivid-light','linear-light','pin-light','hard-mix',
+          'darker-color','lighter-color','hue','saturation','color','luminosity'
+        ];
+        return modes.map(m => `<option value="${m}" ${selected === m ? 'selected' : ''}>${m}</option>`).join('');
+      }
+      function layerRowTemplate(idx, layer) {
+        return `
+          <tr data-idx="${idx}" style="border-bottom:1px solid #21262d;">
+            <td style="padding:4px 6px; white-space:nowrap;">
+              <button class="btn-up" title="Move up" style="padding:4px 6px; background:#30363d;">▲</button>
+              <button class="btn-down" title="Move down" style="padding:4px 6px; background:#30363d;">▼</button>
+            </td>
+            <td style="padding:4px 6px;">
+              <input class="layer-name" value="${layer.name || ''}">
+            </td>
+            <td style="padding:4px 6px;">
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input class="layer-path" value="${layer.path || ''}" placeholder="layers/<folder>" style="flex:1;">
+                <button class="btn-browse" title="Browse" style="padding:4px 6px; background:#30363d;">Browse</button>
+              </div>
+            </td>
+            <td style="padding:4px 6px;">
+              <select class="layer-rarity">
+                <option value="filename" ${layer.rarity === 'filename' || !layer.rarity ? 'selected' : ''}>filename</option>
+                <option value="uniform" ${layer.rarity === 'uniform' ? 'selected' : ''}>uniform</option>
+              </select>
+            </td>
+            <td style="padding:4px 6px; text-align:center;">
+              <input class="layer-required" type="checkbox" ${layer.required ? 'checked' : ''}>
+            </td>
+            <td style="padding:4px 6px;">
+              <select class="layer-blend">${blendOptionsHtml(layer.blend || 'normal')}</select>
+            </td>
+            <td style="padding:4px 6px;">
+              <input class="layer-opacity" type="number" min="0" max="1" step="0.01" value="${(typeof layer.opacity === 'number' ? layer.opacity : 1)}">
+            </td>
+            <td style="padding:4px 6px;">
+              <span class="layer-assets" style="opacity:.8;">—</span>
+            </td>
+            <td style="padding:4px 6px;">
+              <button class="btn-remove" style="background:#da3633;">Remove</button>
+              <button class="btn-open-folder" title="Open folder" style="padding:4px 6px; background:#30363d; margin-left:6px;">Open</button>
+            </td>
+          </tr>`;
+      }
+      function renderLayersTable() {
+        if (!currentConfig) return;
+        tbody.innerHTML = '';
+        (currentConfig.layers || []).forEach((layer, i) => {
+          const tmpl = document.createElement('tbody');
+          tmpl.innerHTML = layerRowTemplate(i, layer);
+          const row = tmpl.firstElementChild;
+          tbody.appendChild(row);
+        });
+      }
+      function readLayersFromTable() {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        return rows.map((tr) => {
+          return {
+            name: tr.querySelector('.layer-name').value.trim(),
+            path: tr.querySelector('.layer-path').value.trim(),
+            rarity: tr.querySelector('.layer-rarity').value,
+            required: tr.querySelector('.layer-required').checked,
+            blend: tr.querySelector('.layer-blend').value,
+            opacity: Math.max(0, Math.min(1, Number(tr.querySelector('.layer-opacity').value) || 1)),
+          };
+        });
+      }
+      async function updateAssetCounts() {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        for (const tr of rows) {
+          const pathInput = tr.querySelector('.layer-path');
+          const assetsSpan = tr.querySelector('.layer-assets');
+          const rel = pathInput.value.trim();
+          if (!rel) { assetsSpan.textContent = '—'; continue; }
+          try {
+            const res = await window.foundry.listImages(rel);
+            if (res.ok) {
+              assetsSpan.textContent = String(res.count) + ' file(s)';
+            } else {
+              assetsSpan.textContent = '0';
+            }
+          } catch {
+            assetsSpan.textContent = '0';
+          }
+        }
+      }
+      function bindLayerTableEvents() {
+        tbody.addEventListener('click', (e) => {
+          const target = e.target;
+          const tr = target.closest('tr');
+          if (!tr) return;
+          if (target.classList.contains('btn-remove')) {
+            tr.remove();
+            updateAssetCounts();
+          } else if (target.classList.contains('btn-up')) {
+            const prev = tr.previousElementSibling;
+            if (prev) tbody.insertBefore(tr, prev);
+          } else if (target.classList.contains('btn-down')) {
+            const next = tr.nextElementSibling;
+            if (next) tbody.insertBefore(next, tr);
+          } else if (target.classList.contains('btn-browse')) {
+            window.foundry.chooseDirInsideProject().then((res) => {
+              if (res.ok && res.path) {
+                const input = tr.querySelector('.layer-path');
+                input.value = res.path;
+                updateAssetCounts();
+              }
+            });
+          } else if (target.classList.contains('btn-open-folder')) {
+            const rel = tr.querySelector('.layer-path').value.trim();
+            if (rel) window.foundry.openInExplorer(rel);
+          }
+        });
+        tbody.addEventListener('change', (e) => {
+          const target = e.target;
+          if (target.classList.contains('layer-path')) {
+            updateAssetCounts();
+          }
+        });
+      }
+      function populateFormFromConfig(cfg) {
+        currentConfig = cfg;
+        document.getElementById('cfg-name').value = cfg.name || '';
+        document.getElementById('cfg-symbol').value = cfg.symbol || '';
+        document.getElementById('cfg-editions').value = String(cfg.editionSize || 1);
+        document.getElementById('cfg-image-w').value = String(cfg.image?.width || 1024);
+        document.getElementById('cfg-image-h').value = String(cfg.image?.height || 1024);
+        document.getElementById('cfg-image-bg').value = cfg.image?.background || '';
+        document.getElementById('rarity-delim').value = cfg.rarity?.delimiter || '#';
+        document.getElementById('rarity-default').value = String(cfg.rarity?.defaultWeight || 1);
+        document.getElementById('uniq-ignore').value = (cfg.uniqueness?.ignore || []).join(', ');
+        // rules
+        document.getElementById('rules-json').value = JSON.stringify(cfg.rules || { mutuallyExclusive: [], requires: [], maxOccurrences: [] }, null, 2);
+        // export
+        document.getElementById('export-outdir').value = (cfg.export && cfg.export.outDir) ? cfg.export.outDir : 'build';
+        document.getElementById('export-format').value = (cfg.export && cfg.export.imageFormat) ? cfg.export.imageFormat : 'png';
+        document.getElementById('export-preview-outdir').value = (cfg.export && cfg.export.previewOutDir) ? cfg.export.previewOutDir : '';
+        document.getElementById('export-contact').checked = Boolean(cfg.export?.includePreviewContactSheet ?? true);
+        renderLayersTable();
+      }
+      async function loadConfigUI() {
+        const cfg = await window.foundry.readConfig();
+        if (cfg.ok && cfg.json) {
+          populateFormFromConfig(cfg.json);
+        }
+      }
+      btnAddLayer.addEventListener('click', () => {
+        const tr = document.createElement('tbody');
+        tr.innerHTML = layerRowTemplate(tbody.children.length, { name: '', path: 'layers/', rarity: 'filename', required: false, blend: 'normal', opacity: 1 });
+        tbody.appendChild(tr.firstElementChild);
+        updateAssetCounts();
+      });
+      if (btnCreateFolders) btnCreateFolders.addEventListener('click', async () => {
+        const layers = readLayersFromTable();
+        const paths = layers.map(l => l.path).filter(Boolean);
+        const res = await window.foundry.ensureDirs(paths);
+        log(res.ok ? 'Folders ensured.' : (res.error || 'Failed to create folders.'));
+        updateAssetCounts();
+      });
+      if (btnRefreshAssets) btnRefreshAssets.addEventListener('click', () => updateAssetCounts());
+      if (btnSaveConfig) btnSaveConfig.addEventListener('click', async () => {
+        if (!currentConfig) return;
+        const updated = { ...currentConfig };
+        updated.name = document.getElementById('cfg-name').value.trim() || currentConfig.name;
+        updated.symbol = document.getElementById('cfg-symbol').value.trim();
+        updated.editionSize = Number(document.getElementById('cfg-editions').value) || currentConfig.editionSize;
+        updated.image = {
+          width: Number(document.getElementById('cfg-image-w').value) || currentConfig.image.width,
+          height: Number(document.getElementById('cfg-image-h').value) || currentConfig.image.height,
+          background: document.getElementById('cfg-image-bg').value || currentConfig.image.background || 'transparent',
+        };
+        updated.rarity = {
+          mode: 'filenameDelimiter',
+          delimiter: document.getElementById('rarity-delim').value || '#',
+          defaultWeight: Math.max(1, Number(document.getElementById('rarity-default').value) || 1),
+        };
+        const ignoreRaw = document.getElementById('uniq-ignore').value || '';
+        updated.uniqueness = {
+          hash: 'sha256',
+          ignore: ignoreRaw.split(',').map(s => s.trim()).filter(Boolean),
+        };
+        updated.export = {
+          outDir: document.getElementById('export-outdir').value || 'build',
+          previewOutDir: (document.getElementById('export-preview-outdir').value || '').trim() || undefined,
+          imageFormat: document.getElementById('export-format').value || 'png',
+          includePreviewContactSheet: document.getElementById('export-contact').checked,
+        };
+        updated.layers = readLayersFromTable();
+        const res = await window.foundry.writeConfig(updated);
+        log(res.ok ? 'Config saved.' : (res.error || 'Failed to save config.'));
+      });
+      document.getElementById('btn-validate-rules').addEventListener('click', async () => {
+        try {
+          const txt = document.getElementById('rules-json').value;
+          const parsed = JSON.parse(txt);
+          if (!parsed || typeof parsed !== 'object') throw new Error('Rules must be an object');
+          log('Rules JSON looks valid.');
+        } catch (e) {
+          log('Rules invalid: ' + (e?.message || e));
+        }
+      });
+      document.getElementById('btn-save-rules').addEventListener('click', async () => {
+        if (!currentConfig) return;
+        try {
+          const txt = document.getElementById('rules-json').value;
+          const parsed = JSON.parse(txt);
+          const updated = { ...currentConfig, rules: parsed };
+          const res = await window.foundry.writeConfig(updated);
+          if (res.ok) {
+            currentConfig = updated;
+            log('Rules saved.');
+          } else {
+            log(res.error || 'Failed to save rules');
+          }
+        } catch (e) {
+          log('Rules invalid JSON: ' + (e?.message || e));
+        }
+      });
+      document.getElementById('btn-open-rarity').addEventListener('click', async () => {
+        try {
+          const cfg = await window.foundry.readConfig();
+          if (!cfg.ok) return log('Open a project first.');
+          const outDir = (cfg.json.export?.outDir) || 'build';
+          const res = await window.foundry.readFile(outDir + '/rarity.json');
+          if (res.ok) {
+            document.getElementById('rarity-out').textContent = res.content;
+          } else {
+            log(res.error || 'rarity.json not found. Build first.');
+          }
+        } catch (e) {
+          log(String(e?.message || e));
+        }
+      });
+      // Gallery interactions
+      previews.addEventListener('click', (e) => {
+        const el = e.target.closest('.thumb');
+        if (!el) return;
+        const idx = Number(el.dataset.index || '0');
+        openLightbox(idx);
+      });
+      lbClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+      lbPrev.addEventListener('click', (e) => { e.stopPropagation(); nav(-1); });
+      lbNext.addEventListener('click', (e) => { e.stopPropagation(); nav(1); });
+      // Guard against event bubbling closing the lightbox
+      ;[lbImage, lbPrev, lbNext, lbClose].forEach((el) => {
+        el.addEventListener('mousedown', (e) => e.stopPropagation());
+        el.addEventListener('click', (e) => e.stopPropagation());
+      });
+      // Click outside to close disabled to avoid accidental closures on nav buttons
+      document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') nav(-1);
+        if (e.key === 'ArrowRight') nav(1);
+      });
+
+      // Also handle mouse wheel horizontally for navigation
+      lightbox.addEventListener('wheel', (e) => {
+        if (!lightbox.classList.contains('open')) return;
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          e.preventDefault();
+          if (e.deltaX > 0) nav(1); else nav(-1);
+        }
+      }, { passive: false });
+
+      bindLayerTableEvents();
+      document.getElementById('btn-choose').onclick = async () => {
+        const res = await window.foundry.chooseProjectDir();
+        log(res.ok ? ('Project: ' + res.projectDir) : res.error);
+        if (res.ok) { await loadConfigUI(); await refreshPreviews(); }
+      }
+      document.getElementById('btn-init').onclick = async () => {
+        const res = await window.foundry.run(['init']);
+        log(res.ok ? res.stdout : res.error);
+        await loadConfigUI();
+      }
+      document.getElementById('btn-validate').onclick = async () => {
+        const res = await window.foundry.run(['validate']);
+        log(res.ok ? res.stdout : res.error);
+      }
+      document.getElementById('btn-preview').onclick = async () => {
+        const c = document.getElementById('preview-count').value;
+        // Randomize seed so previews differ every run
+        const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        const res = await window.foundry.run(['preview', '--count', String(c), '--seed', seed]);
+        log((res.ok ? res.stdout : res.error) + (res.ok ? ('\nSeed: ' + seed) : ''));
+        // Give the FS a moment to flush writes on Windows
+        setTimeout(() => refreshPreviews(), 200);
+      }
+      document.getElementById('btn-build').onclick = async () => {
+        const c = document.getElementById('build-count').value;
+        const res = await window.foundry.run(['build', '--count', String(c)]);
+        log(res.ok ? res.stdout : res.error);
+        refreshPreviews();
+      }
+      document.getElementById('btn-upload').onclick = async () => {
+        const provider = document.getElementById('upload-provider').value;
+        const conc = document.getElementById('upload-concurrency').value;
+        const res = await window.foundry.run(['upload', '--provider', String(provider), '--concurrency', String(conc)]);
+        log(res.ok ? res.stdout : res.error);
+      }
+      document.getElementById('btn-mint').onclick = async () => {
+        const from = document.getElementById('mint-from').value;
+        const count = document.getElementById('mint-count').value;
+        const res = await window.foundry.run(['mint', '--from', String(from), '--count', String(count)]);
+        log(res.ok ? res.stdout : res.error);
+      }
+      // Try to load config on startup (if previously selected)
+      loadConfigUI().then(() => { updateAssetCounts(); refreshPreviews(); });
+    </script>
+  </body>
+  <script>
+    // preload.d.ts shim for TS, ignored here
+    window.foundry = window.foundry || { run: async () => ({ ok: false, error: 'preload not loaded' }), listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }) };
+  </script>
+  </html>
+
+

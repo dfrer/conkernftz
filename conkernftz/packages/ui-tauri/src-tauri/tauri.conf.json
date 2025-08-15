@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/v2/tooling/cli/schema.json",
+  "identifier": "com.conkernftz.app",
+  "productName": "conkernftz",
+  "version": "0.1.0",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "frontendDist": "../../ui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "conkernftz",
+        "width": 1100,
+        "height": 800
+      }
+    ]
+  }
+}
+
+

@@ -1,0 +1,12 @@
+# Ensure LF line endings in text; keep binary as-is
+* text=auto eol=lf
+
+# Treat common binary types explicitly
+*.png binary
+*.ico binary
+*.icns binary
+*.exe binary
+*.dll binary
+*.wasm binary
+
+

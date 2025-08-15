@@ -1,0 +1,510 @@
+import sharp from 'sharp';
+import type { BlendMode } from './types.js';
+
+export type SharpBlendMode =
+  | 'clear'
+  | 'source'
+  | 'over'
+  | 'in'
+  | 'out'
+  | 'atop'
+  | 'dest'
+  | 'dest-over'
+  | 'dest-in'
+  | 'dest-out'
+  | 'dest-atop'
+  | 'xor'
+  | 'add'
+  | 'saturate'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'darken'
+  | 'lighten'
+  | 'colour-dodge'
+  | 'color-dodge'
+  | 'colour-burn'
+  | 'color-burn'
+  | 'hard-light'
+  | 'soft-light'
+  | 'difference'
+  | 'exclusion';
+
+export interface CompositeLayerInput {
+  path: string; // absolute path to image asset
+  blend?: BlendMode;
+  opacity?: number; // 0..1
+}
+
+export interface CompositeOptions {
+  width: number;
+  height: number;
+  background?: string; // color or 'transparent'
+}
+
+export async function compositeLayers(
+  layers: CompositeLayerInput[],
+  options: CompositeOptions,
+): Promise<Buffer> {
+  const anyUnsupported = layers.some((l) => mapBlendModeToSharp(l.blend ?? 'normal') === null);
+
+  if (!anyUnsupported) {
+    // Fast path: all blends supported natively by Sharp
+    const base = sharp({
+      create: {
+        width: options.width,
+        height: options.height,
+        channels: 4,
+        background:
+          options.background && options.background !== 'transparent'
+            ? options.background
+            : { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    });
+
+    const composites: sharp.OverlayOptions[] = [];
+    for (const layer of layers) {
+      let pipeline = sharp(layer.path)
+        .resize(options.width, options.height, { fit: 'fill' })
+        .ensureAlpha();
+      if (layer.opacity !== undefined && layer.opacity >= 0 && layer.opacity <= 1 && layer.opacity !== 1) {
+        // Scale alpha channel by desired opacity
+        pipeline = pipeline.linear([1, 1, 1, clamp01(layer.opacity)], [0, 0, 0, 0]);
+      }
+      const overlay = await pipeline.toBuffer();
+      const sharpBlend = mapBlendModeToSharp(layer.blend ?? 'normal');
+      composites.push({
+        input: overlay,
+        top: 0,
+        left: 0,
+        blend: (sharpBlend as sharp.OverlayOptions['blend']) ?? 'over',
+      });
+    }
+
+    const out = await base.composite(composites).png().toBuffer();
+    return out;
+  }
+
+  // CPU fallback path: supports advanced Photoshop-like modes
+  return await compositeLayersCpu(layers, options);
+}
+
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 1;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+// Map our extended BlendMode to Sharp's native modes where possible.
+// For modes not supported by Sharp, return null to signal future CPU fallback.
+function mapBlendModeToSharp(mode: BlendMode): sharp.OverlayOptions['blend'] | null {
+  switch (mode) {
+    case 'normal':
+    case 'over':
+      return 'over';
+    case 'clear':
+      return 'clear';
+    case 'source':
+      return 'source';
+    case 'in':
+      return 'in';
+    case 'out':
+      return 'out';
+    case 'atop':
+      return 'atop';
+    case 'dest':
+      return 'dest';
+    case 'dest-over':
+      return 'dest-over';
+    case 'dest-in':
+      return 'dest-in';
+    case 'dest-out':
+      return 'dest-out';
+    case 'dest-atop':
+      return 'dest-atop';
+    case 'xor':
+      return 'xor';
+    case 'add':
+    case 'linear-dodge':
+      return 'add';
+    case 'saturate':
+      return 'saturate';
+    case 'multiply':
+      return 'multiply';
+    case 'screen':
+      return 'screen';
+    case 'overlay':
+      return 'overlay';
+    case 'darken':
+      return 'darken';
+    case 'lighten':
+      return 'lighten';
+    case 'color-dodge':
+    case 'colour-dodge':
+      return 'colour-dodge';
+    case 'color-burn':
+    case 'colour-burn':
+      return 'colour-burn';
+    case 'hard-light':
+      return 'hard-light';
+    case 'soft-light':
+      return 'soft-light';
+    case 'difference':
+      return 'difference';
+    case 'exclusion':
+      return 'exclusion';
+    // Not natively supported by sharp. We'll return null for now.
+    case 'subtract':
+    case 'divide':
+    case 'linear-burn':
+    case 'vivid-light':
+    case 'linear-light':
+    case 'pin-light':
+    case 'hard-mix':
+    case 'darker-color':
+    case 'lighter-color':
+    case 'hue':
+    case 'saturation':
+    case 'color':
+    case 'luminosity':
+      return null;
+    default:
+      return 'over';
+  }
+}
+
+async function compositeLayersCpu(
+  layers: CompositeLayerInput[],
+  options: CompositeOptions,
+): Promise<Buffer> {
+  const width = options.width;
+  const height = options.height;
+
+  // Make initial background in raw RGBA
+  const baseRaw = await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background:
+        options.background && options.background !== 'transparent'
+          ? options.background
+          : { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .ensureAlpha()
+    .raw()
+    .toBuffer();
+
+  let outPixels = new Uint8ClampedArray(baseRaw.buffer, baseRaw.byteOffset, baseRaw.byteLength);
+
+  for (const layer of layers) {
+    const overlayRaw = await sharp(layer.path)
+      .resize(width, height, { fit: 'fill' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    const overlayPixels = new Uint8ClampedArray(overlayRaw.buffer, overlayRaw.byteOffset, overlayRaw.byteLength);
+
+    const mode = layer.blend ?? 'normal';
+    const opacity = clamp01(layer.opacity ?? 1);
+    outPixels = blendPixelArrays(outPixels, overlayPixels, width, height, mode, opacity);
+  }
+
+  const png = await sharp(Buffer.from(outPixels), {
+    raw: { width, height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+  return png;
+}
+
+function blendPixelArrays(
+  base: Uint8ClampedArray,
+  src: Uint8ClampedArray,
+  width: number,
+  height: number,
+  mode: BlendMode,
+  opacity: number,
+): Uint8ClampedArray {
+  const total = width * height * 4;
+  const out = new Uint8ClampedArray(base.length);
+  for (let i = 0; i < total; i += 4) {
+    const br = (base[i] ?? 0) / 255;
+    const bg = (base[i + 1] ?? 0) / 255;
+    const bb = (base[i + 2] ?? 0) / 255;
+    const ba = (base[i + 3] ?? 0) / 255;
+
+    const sr = (src[i] ?? 0) / 255;
+    const sg = (src[i + 1] ?? 0) / 255;
+    const sb = (src[i + 2] ?? 0) / 255;
+    const sa = ((src[i + 3] ?? 0) / 255) * opacity;
+
+    if (mode === 'clear') {
+      // destination-out: erase destination where source exists
+      const outA = ba * (1 - sa);
+      out[i] = clamp255(br * 255);
+      out[i + 1] = clamp255(bg * 255);
+      out[i + 2] = clamp255(bb * 255);
+      out[i + 3] = clamp255(outA * 255);
+      continue;
+    }
+
+    let cr = 0;
+    let cg = 0;
+    let cb = 0;
+
+    if (sa === 0) {
+      // No contribution from source
+      cr = br; cg = bg; cb = bb;
+    } else if (mode === 'clear') {
+      // Erase where source is present
+      cr = br; cg = bg; cb = bb;
+    } else {
+      // Compute blended color (ignoring alpha), then alpha composite
+      const f = getBlendFunc(mode);
+      if (f) {
+        const blended = f({ r: br, g: bg, b: bb }, { r: sr, g: sg, b: sb });
+        cr = blended.r;
+        cg = blended.g;
+        cb = blended.b;
+      } else {
+        // Fallback to normal
+        cr = sr;
+        cg = sg;
+        cb = sb;
+      }
+    }
+
+    // Porter-Duff source-over with source alpha sa
+    const outA = sa + ba * (1 - sa);
+    let outR = 0;
+    let outG = 0;
+    let outB = 0;
+    if (outA > 0) {
+      outR = (cr * sa + br * ba * (1 - sa)) / outA;
+      outG = (cg * sa + bg * ba * (1 - sa)) / outA;
+      outB = (cb * sa + bb * ba * (1 - sa)) / outA;
+    }
+
+    out[i] = clamp255(outR * 255);
+    out[i + 1] = clamp255(outG * 255);
+    out[i + 2] = clamp255(outB * 255);
+    out[i + 3] = clamp255(outA * 255);
+  }
+  return out;
+}
+
+function clamp255(x: number): number {
+  if (!Number.isFinite(x)) return 0;
+  if (x < 0) return 0;
+  if (x > 255) return 255;
+  return x;
+}
+
+type RGB = { r: number; g: number; b: number };
+type BlendFunc = (backdrop: RGB, source: RGB) => RGB;
+
+function getBlendFunc(mode: BlendMode): BlendFunc | null {
+  switch (mode) {
+    case 'normal':
+    case 'over':
+      return (_b, s) => s;
+    case 'multiply':
+      return (b, s) => ({ r: b.r * s.r, g: b.g * s.g, b: b.b * s.b });
+    case 'screen':
+      return (b, s) => ({ r: 1 - (1 - b.r) * (1 - s.r), g: 1 - (1 - b.g) * (1 - s.g), b: 1 - (1 - b.b) * (1 - s.b) });
+    case 'overlay':
+      return (b, s) => ({
+        r: b.r < 0.5 ? 2 * b.r * s.r : 1 - 2 * (1 - b.r) * (1 - s.r),
+        g: b.g < 0.5 ? 2 * b.g * s.g : 1 - 2 * (1 - b.g) * (1 - s.g),
+        b: b.b < 0.5 ? 2 * b.b * s.b : 1 - 2 * (1 - b.b) * (1 - s.b),
+      });
+    case 'darken':
+      return (b, s) => ({ r: Math.min(b.r, s.r), g: Math.min(b.g, s.g), b: Math.min(b.b, s.b) });
+    case 'lighten':
+      return (b, s) => ({ r: Math.max(b.r, s.r), g: Math.max(b.g, s.g), b: Math.max(b.b, s.b) });
+    case 'color-dodge':
+    case 'colour-dodge':
+      return (b, s) => ({ r: colorDodge(b.r, s.r), g: colorDodge(b.g, s.g), b: colorDodge(b.b, s.b) });
+    case 'color-burn':
+    case 'colour-burn':
+      return (b, s) => ({ r: colorBurn(b.r, s.r), g: colorBurn(b.g, s.g), b: colorBurn(b.b, s.b) });
+    case 'hard-light':
+      return (b, s) => ({
+        r: s.r < 0.5 ? 2 * b.r * s.r : 1 - 2 * (1 - b.r) * (1 - s.r),
+        g: s.g < 0.5 ? 2 * b.g * s.g : 1 - 2 * (1 - b.g) * (1 - s.g),
+        b: s.b < 0.5 ? 2 * b.b * s.b : 1 - 2 * (1 - b.b) * (1 - s.b),
+      });
+    case 'soft-light':
+      return (b, s) => ({
+        r: softLightChannel(b.r, s.r),
+        g: softLightChannel(b.g, s.g),
+        b: softLightChannel(b.b, s.b),
+      });
+    case 'difference':
+      return (b, s) => ({ r: Math.abs(b.r - s.r), g: Math.abs(b.g - s.g), b: Math.abs(b.b - s.b) });
+    case 'exclusion':
+      return (b, s) => ({ r: b.r + s.r - 2 * b.r * s.r, g: b.g + s.g - 2 * b.g * s.g, b: b.b + s.b - 2 * b.b * s.b });
+    case 'add':
+    case 'linear-dodge':
+      return (b, s) => ({ r: Math.min(1, b.r + s.r), g: Math.min(1, b.g + s.g), b: Math.min(1, b.b + s.b) });
+    case 'subtract':
+      return (b, s) => ({ r: Math.max(0, b.r - s.r), g: Math.max(0, b.g - s.g), b: Math.max(0, b.b - s.b) });
+    case 'divide':
+      return (b, s) => ({ r: divideChannel(b.r, s.r), g: divideChannel(b.g, s.g), b: divideChannel(b.b, s.b) });
+    case 'linear-burn':
+      return (b, s) => ({ r: Math.max(0, b.r + s.r - 1), g: Math.max(0, b.g + s.g - 1), b: Math.max(0, b.b + s.b - 1) });
+    case 'linear-light':
+      return (b, s) => ({ r: clamp01(b.r + 2 * s.r - 1), g: clamp01(b.g + 2 * s.g - 1), b: clamp01(b.b + 2 * s.b - 1) });
+    case 'vivid-light':
+      return (b, s) => ({
+        r: vividLightChannel(b.r, s.r),
+        g: vividLightChannel(b.g, s.g),
+        b: vividLightChannel(b.b, s.b),
+      });
+    case 'pin-light':
+      return (b, s) => ({
+        r: pinLightChannel(b.r, s.r),
+        g: pinLightChannel(b.g, s.g),
+        b: pinLightChannel(b.b, s.b),
+      });
+    case 'hard-mix':
+      return (b, s) => ({
+        r: hardMixChannel(b.r, s.r),
+        g: hardMixChannel(b.g, s.g),
+        b: hardMixChannel(b.b, s.b),
+      });
+    case 'darker-color':
+      return (b, s) => (luminance(s) < luminance(b) ? s : b);
+    case 'lighter-color':
+      return (b, s) => (luminance(s) > luminance(b) ? s : b);
+    case 'hue':
+      return (b, s) => setHslComponent(b, s, 'h');
+    case 'saturation':
+      return (b, s) => setHslComponent(b, s, 's');
+    case 'color':
+      return (b, s) => setHslComponent(b, s, 'hs');
+    case 'luminosity':
+      return (b, s) => setHslComponent(b, s, 'l');
+    default:
+      return null;
+  }
+}
+
+function colorDodge(b: number, s: number): number {
+  if (s >= 1) return 1;
+  return clamp01(b / (1 - s));
+}
+
+function colorBurn(b: number, s: number): number {
+  if (s <= 0) return 0;
+  return 1 - clamp01((1 - b) / s);
+}
+
+function divideChannel(b: number, s: number): number {
+  const eps = 1e-6;
+  return clamp01(b / Math.max(eps, s));
+}
+
+function softLightChannel(b: number, s: number): number {
+  // Approximation: (1 - 2S)B^2 + 2SB
+  return clamp01((1 - 2 * s) * b * b + 2 * s * b);
+}
+
+function vividLightChannel(b: number, s: number): number {
+  if (s < 0.5) {
+    // Color burn
+    return colorBurn(b, 2 * s);
+  }
+  // Color dodge
+  return colorDodge(b, 2 * (1 - s));
+}
+
+function pinLightChannel(b: number, s: number): number {
+  if (s < 0.5) {
+    return Math.min(b, 2 * s);
+  }
+  return Math.max(b, 2 * s - 1);
+}
+
+function hardMixChannel(b: number, s: number): number {
+  const v = vividLightChannel(b, s);
+  return v < 0.5 ? 0 : 1;
+}
+
+function luminance(rgb: RGB): number {
+  // sRGB luminance approximation
+  return rgb.r * 0.2126 + rgb.g * 0.7152 + rgb.b * 0.0722;
+}
+
+function setHslComponent(backdrop: RGB, source: RGB, which: 'h' | 's' | 'l' | 'hs'): RGB {
+  const bHsl = rgbToHsl(backdrop);
+  const sHsl = rgbToHsl(source);
+  const out = { h: bHsl.h, s: bHsl.s, l: bHsl.l };
+  if (which === 'h') out.h = sHsl.h;
+  else if (which === 's') out.s = sHsl.s;
+  else if (which === 'l') out.l = sHsl.l;
+  else if (which === 'hs') {
+    out.h = sHsl.h;
+    out.s = sHsl.s;
+  }
+  return hslToRgb(out);
+}
+
+type HSL = { h: number; s: number; l: number };
+
+function rgbToHsl(rgb: RGB): HSL {
+  const r = rgb.r;
+  const g = rgb.g;
+  const b = rgb.b;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d !== 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+  return { h, s, l };
+}
+
+function hslToRgb(hsl: HSL): RGB {
+  const h = hsl.h;
+  const s = hsl.s;
+  const l = hsl.l;
+  if (s === 0) {
+    return { r: l, g: l, b: l };
+  }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = hue2rgb(p, q, h + 1 / 3);
+  const g = hue2rgb(p, q, h);
+  const b = hue2rgb(p, q, h - 1 / 3);
+  return { r, g, b };
+}
+
+function hue2rgb(p: number, q: number, t: number): number {
+  if (t < 0) t += 1;
+  if (t > 1) t -= 1;
+  if (t < 1 / 6) return p + (q - p) * 6 * t;
+  if (t < 1 / 2) return q;
+  if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+  return p;
+}
+
+

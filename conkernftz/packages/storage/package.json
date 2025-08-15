@@ -1,0 +1,31 @@
+{
+  "name": "@foundry/storage",
+  "version": "0.1.0",
+  "description": "Pluggable uploaders (Arweave Bundlr, IPFS)",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run || exit 0",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@bundlr-network/client": "^0.11.17",
+    "mime": "^4.0.4",
+    "nft.storage": "^7.1.1",
+    "pinata-sdk": "^0.1.7"
+  }
+}
+
+

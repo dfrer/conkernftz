@@ -1,0 +1,33 @@
+{
+  "name": "@foundry/core",
+  "version": "0.1.0",
+  "description": "Core compositing engine, rarity, DNA, rule engine, preview",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dist/*": "./dist/*"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@noble/hashes": "^1.4.0",
+    "canvas": "^2.11.2",
+    "sharp": "^0.33.4",
+    "zod": "^3.23.8"
+  }
+}
+
+

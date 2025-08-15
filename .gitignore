@@ -1,0 +1,24 @@
+# Node
+node_modules/
+
+# Builds
+dist/
+build/
+.turbo/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Rust (tauri)
+target/
+
+# Local keys and secrets
+keys/
+.env
+.env.*
+
+
