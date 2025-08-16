@@ -4,6 +4,30 @@ conkernftz is a next‑gen open‑source NFT art foundry. It replaces legacy gen
 
 This repo is a monorepo. The workspace root is `conkernftz/`.
 
+### What's new in v2
+
+- Core engine
+  - Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
+  - Rules: `mutuallyExclusive`, `requires`, `maxOccurrences`
+  - Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable default weights
+  - Compositor supports per‑layer blend and opacity; preview contact sheet and rarity report
+- CLI
+  - `init`: scaffolds `foundry.config.json` and layer directories
+  - `validate`: schema validation plus checks for missing/empty required layers
+  - `preview`: generates N seeded previews; normalizes preview dir and clears prior output
+  - `build`: writes `/build/images`, `/build/json`, `_metadata.json`, and `rarity.json`
+  - `upload`: Arweave Bundlr or IPFS (NFT.Storage/Pinata) with concurrency; rewrites local JSON image URIs; emits `.upload-manifest.json`
+  - `mint`: Solana mint via Umi/Token Metadata; emits `minted.json`; respects RPC from config when provided
+  - `e2e`: convenience pipeline runner
+- Chain (Solana)
+  - JSON builder + mint adapter; optional pNFT and ruleset PDA; configurable RPC via `chain.solana.rpcUrl`
+- Storage
+  - Arweave Bundlr, IPFS (NFT.Storage, Pinata)
+- Tooling
+  - TypeScript, Zod schemas, ESLint/Prettier, Vitest, Turbo, pnpm workspaces
+
+Requirements: Node.js >= 18.18, pnpm 9.x.
+
 ### Requirements
 
 - Node.js >= 18.18
