@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { initCmd } from './commands/init.js';
 import { validateCmd } from './commands/validate.js';
 import { previewCmd } from './commands/preview.js';
@@ -8,11 +11,23 @@ import { uploadCmd } from './commands/upload.js';
 import { mintCmd } from './commands/mint.js';
 import { e2eCmd } from './commands/e2e.js';
 
+function readVersion(): string {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const pkgPath = path.resolve(here, '../package.json');
+    const raw = fs.readFileSync(pkgPath, 'utf8');
+    const v = JSON.parse(raw).version;
+    return typeof v === 'string' ? v : '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
 const program = new Command();
 program
   .name('foundry')
   .description('conkernftz CLI')
-  .version('0.1.0');
+  .version(readVersion());
 
 program.addCommand(initCmd());
 program.addCommand(validateCmd());

@@ -10,6 +10,7 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1100,
     height: 800,
+    icon: path.join(__dirname, 'assets', 'logo-512.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -46,10 +47,33 @@ ipcMain.handle('foundry:chooseProjectDir', async () => {
 
 ipcMain.handle('foundry:getProjectDir', async () => ({ ok: true, projectDir }));
 
+ipcMain.handle('foundry:setProjectDir', async (_evt, dir: string) => {
+  try {
+    if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
+    const exists = fssync.existsSync(dir);
+    if (!exists) return { ok: false, error: 'Path does not exist' };
+    projectDir = dir;
+    return { ok: true, projectDir };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
 ipcMain.handle('foundry:readConfig', async () => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     const p = path.join(projectDir, 'foundry.config.json');
+    const raw = await fs.readFile(p, 'utf8');
+    return { ok: true, json: JSON.parse(raw) };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
+ipcMain.handle('foundry:readConfigAt', async (_evt, dir: string) => {
+  try {
+    if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
+    const p = path.join(dir, 'foundry.config.json');
     const raw = await fs.readFile(p, 'utf8');
     return { ok: true, json: JSON.parse(raw) };
   } catch (e: any) {
@@ -215,6 +239,52 @@ ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
     const dirents = await fs.readdir(dir, { withFileTypes: true });
     const items = dirents.map((d) => (d.isDirectory() ? d.name + '/' : d.name));
     return { ok: true, items };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
+// Bulk rename files inside the project. Accepts absolute or project-relative 'from' and 'to' paths
+ipcMain.handle('foundry:renameFiles', async (_evt, pairs: { from: string; to: string }[]) => {
+  try {
+    if (!Array.isArray(pairs) || pairs.length === 0) return { ok: true, renamed: 0 };
+    const toAbs = (p: string) => (path.isAbsolute(p) ? p : (projectDir ? path.join(projectDir, p) : p));
+    const isInsideProject = (p: string) => {
+      if (!projectDir) return true;
+      const rel = path.relative(projectDir, p);
+      return !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+    };
+    let renamed = 0;
+    const renamedPairs: Array<{ from: string; to: string }> = [];
+    for (const pair of pairs) {
+      if (!pair || !pair.from || !pair.to) continue;
+      const src = toAbs(pair.from);
+      let dst = toAbs(pair.to);
+      const dstDir = path.dirname(dst);
+      if (projectDir) {
+        if (!isInsideProject(src) || !isInsideProject(dst)) {
+          return { ok: false, error: 'Rename paths must be inside the project directory' };
+        }
+      }
+      if (!fssync.existsSync(src)) continue;
+      await fs.mkdir(dstDir, { recursive: true });
+      // If destination exists, try to find a free incremental suffix
+      if (fssync.existsSync(dst)) {
+        const ext = path.extname(dst);
+        const base = path.join(dstDir, path.basename(dst, ext));
+        let i = 1;
+        let candidate = `${base}_${i}${ext}`;
+        while (fssync.existsSync(candidate)) {
+          i++;
+          candidate = `${base}_${i}${ext}`;
+        }
+        dst = candidate;
+      }
+      await fs.rename(src, dst);
+      renamed++;
+    }
+    // After renames, emit a simple notification to the renderer if needed later
+    return { ok: true, renamed };
   } catch (e: any) {
     return { ok: false, error: String(e?.message ?? e) };
   }

@@ -1,32 +1,24 @@
 ## conkernftz — NFT Art Foundry (monorepo)
 
-conkernftz is a next‑gen open‑source NFT art foundry. It replaces legacy generators with a modern, type‑safe, modular toolchain for composing layers, enforcing rules, generating editions, previewing, uploading to storage, and minting (Solana via Umi/Token Metadata).
+conkernftz is a modern, type‑safe NFT art foundry. It replaces legacy generators with a modular toolchain for composing layered artwork, enforcing trait rules, generating editions, previewing results, uploading to storage, and minting on Solana (Umi/Token Metadata).
 
-This repo is a monorepo. The workspace root is `conkernftz/`.
+This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
 
-### What's new in v2
+### What's new in v3.0.0
 
-- Core engine
-  - Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
-  - Rules: `mutuallyExclusive`, `requires`, `maxOccurrences`
-  - Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable default weights
-  - Compositor supports per‑layer blend and opacity; preview contact sheet and rarity report
-- CLI
-  - `init`: scaffolds `foundry.config.json` and layer directories
-  - `validate`: schema validation plus checks for missing/empty required layers
-  - `preview`: generates N seeded previews; normalizes preview dir and clears prior output
-  - `build`: writes `/build/images`, `/build/json`, `_metadata.json`, and `rarity.json`
-  - `upload`: Arweave Bundlr or IPFS (NFT.Storage/Pinata) with concurrency; rewrites local JSON image URIs; emits `.upload-manifest.json`
-  - `mint`: Solana mint via Umi/Token Metadata; emits `minted.json`; respects RPC from config when provided
-  - `e2e`: convenience pipeline runner
-- Chain (Solana)
-  - JSON builder + mint adapter; optional pNFT and ruleset PDA; configurable RPC via `chain.solana.rpcUrl`
-- Storage
-  - Arweave Bundlr, IPFS (NFT.Storage, Pinata)
-- Tooling
-  - TypeScript, Zod schemas, ESLint/Prettier, Vitest, Turbo, pnpm workspaces
+- Core and CLI documentation overhauled for clarity and completeness
+- CLI now reports its version from `package.json` (no more hard‑coded version)
+- General polish to messages and defaults; stability and DX improvements
 
-Requirements: Node.js >= 18.18, pnpm 9.x.
+### Features
+
+- Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
+- Rules engine: `mutuallyExclusive`, `requires`, `maxOccurrences`
+- Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable defaults
+- Compositor supports per‑layer blend mode and opacity; preview contact sheet and rarity report
+- Storage: Arweave Bundlr and IPFS (NFT.Storage/Pinata)
+- Solana mint via Umi/Token Metadata with optional pNFT and ruleset PDA
+- TypeScript everywhere, Zod schemas, Vitest, ESLint/Prettier
 
 ### Requirements
 
@@ -49,11 +41,11 @@ cd conkernftz
 pnpm install
 pnpm build
 
-# Run the CLI (from workspace root)
+# Run the CLI (from the workspace root)
 pnpm cli -- --help
 ```
 
-### CLI usage
+### CLI commands
 
 ```bash
 # Scaffold a new project in the current directory
@@ -73,24 +65,33 @@ foundry upload --provider arweave --concurrency 6
 # or
 foundry upload --provider ipfs --concurrency 6
 
-# Mint on Solana (devnet by default)
+# Mint on Solana (devnet by default; respects chain.solana.rpcUrl)
 foundry mint --count 1 --from 1
 
 # End‑to‑end helper
 foundry e2e
 ```
 
-The CLI expects a `foundry.config.json` in your project directory. Run `foundry init` to scaffold one. Key fields include:
+Key options per command:
 
-- `layers`: Ordered list of layer specs with optional rarity hints
-- `rules`: Mutual exclusivity, requirements, and max occurrences
-- `rarity`: Mode and defaults (e.g., filename delimiter)
-- `image`: Output size and background
-- `export`: Output directory and options
+- `preview`: `--count <n>`, `--seed <s>`
+- `build`: `--count <n>` (defaults to `editionSize`)
+- `upload`: `--provider <arweave|ipfs>`, `--concurrency <n>`
+- `mint`: `--count <n>`, `--from <n>`
+
+### Configuration
+
+The CLI expects a `foundry.config.json` in your project directory. Run `foundry init` to scaffold one. Important fields:
+
+- `layers`: ordered list of layer specs with optional rarity hints
+- `rules`: mutual exclusivity, requirements, and max occurrences
+- `rarity`: mode and defaults (e.g., filename delimiter)
+- `image`: output size and background
+- `export`: output directories and options (supports `previewOutDir`)
 - `storage`: Arweave/IPFS credentials
-- `chain.solana`: Cluster, wallet, fees, creators, and pNFT options
+- `chain.solana`: cluster, wallet, fees, creators, and pNFT options
 
-### Develop
+### Development
 
 ```bash
 cd conkernftz
@@ -104,5 +105,4 @@ pnpm clean      # clean build outputs
 ### License
 
 MIT — see `LICENSE`.
-
 

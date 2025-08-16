@@ -1,6 +1,6 @@
 {
   "name": "@foundry/chain-solana",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Solana adapter: metadata JSON builder, Umi mint, optional pNFT",
   "license": "MIT",
   "type": "module",

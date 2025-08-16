@@ -8,6 +8,11 @@
     "beforeBuildCommand": "",
     "frontendDist": "../../ui/dist"
   },
+  "bundle": {
+    "icon": [
+      "app-icon.png"
+    ]
+  },
   "app": {
     "windows": [
       {

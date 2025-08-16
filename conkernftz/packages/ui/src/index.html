@@ -4,47 +4,1313 @@
     <meta charset="utf-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:;" />
     <title>conkernftz</title>
+    <link rel="icon" type="image/png" href="assets/logo-512.png" />
     <style>
       :root {
-        --bg: #0b0d10;
-        --panel: #0f1318;
-        --panel-soft: #0d1117;
-        --border: #1f2328;
-        --muted: #8b949e;
-        --text: #e6edf3;
-        --accent: #2f81f7;
-        --success: #238636;
-        --danger: #da3633;
-        --btn-bg: #1f6feb;
-        --shadow: 0 8px 24px rgba(0,0,0,0.3);
+        /* Base Color Palette */
+        --bg: #07090c;
+        --bg-accent: 
+          radial-gradient(1400px 700px at 15% -15%, rgba(103,126,234,.22), transparent 65%), 
+          radial-gradient(1200px 600px at 115% 15%, rgba(255,80,146,.16), transparent 55%),
+          radial-gradient(800px 400px at 85% 85%, rgba(139,69,19,.08), transparent 40%);
+        --bg-texture: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+        
+        /* Surface Colors */
+        --panel: rgba(14,18,24,0.85);
+        --panel-soft: rgba(12,16,22,0.78);
+        --panel-elevated: rgba(18,24,32,0.92);
+        --panel-floating: rgba(22,28,38,0.94);
+        
+        /* Border & Separation */
+        --border: rgba(255,255,255,0.09);
+        --border-soft: rgba(255,255,255,0.04);
+        --border-bright: rgba(255,255,255,0.15);
+        --divider: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        
+        /* Typography */
+        --text: #e9eef5;
+        --text-muted: #98a1ad;
+        --text-dim: #6c7883;
+        --text-bright: #ffffff;
+        
+        /* Accent System */
+        --accent: #6a8dff;
+        --accent-2: #ff6adf;
+        --accent-soft: rgba(106,141,255,0.15);
+        --accent-glow: 0 0 20px rgba(106,141,255,0.3);
+        
+        /* Status Colors */
+        --success: #33cc7a;
+        --success-soft: rgba(51,204,122,0.15);
+        --danger: #ff5b5b;
+        --danger-soft: rgba(255,91,91,0.15);
+        --warning: #ffb84d;
+        --warning-soft: rgba(255,184,77,0.15);
+        --info: #4dc9ff;
+        --info-soft: rgba(77,201,255,0.15);
+        
+        /* Interactive Elements */
+        --btn-bg: linear-gradient(135deg, var(--accent) 0%, #5c7cfa 100%);
+        --btn-hover: linear-gradient(135deg, #7c9dff 0%, #6c82fa 100%);
+        --btn-active: linear-gradient(135deg, #5a7bef 0%, #526bea 100%);
+        
+        /* Shadows & Depth */
+        --shadow-subtle: 0 2px 8px rgba(0,0,0,0.12);
+        --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+        --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
+        --shadow-colored: 0 8px 32px rgba(106,141,255,0.2);
+        
+        /* Dimensions */
+        --radius: 14px;
+        --radius-sm: 8px;
+        --radius-lg: 20px;
+        --radius-xl: 28px;
+        --blur: 12px;
+        --blur-subtle: 6px;
+        --blur-heavy: 20px;
+        
+        /* Artistic Elements */
+        --noise-opacity: 0.03;
+        --texture-overlay: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.01) 50%, transparent 51%);
+        
+        /* Animation Curves */
+        --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+        --ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);
+        --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+        /* Header Dimensions */
+        --header-control-height: 40px;
+        --header-gap: 16px;
       }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; background: var(--bg); color: var(--text); }
-      header { padding: 12px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-      header .brand { display:flex; align-items:center; gap:10px; font-weight: 700; letter-spacing:.3px; }
-      header .brand .dot { width:10px; height:10px; border-radius:50%; background: linear-gradient(135deg, var(--accent), #7c3aed); display:inline-block; box-shadow: 0 0 12px rgba(47,129,247,.6); }
-      main { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 50px); }
-      .sidebar { border-right: 1px solid var(--border); padding: 16px; background: var(--panel); overflow:auto; }
-      .content { padding: 16px; overflow:auto; }
-      button { background: var(--success); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: transform .04s ease, filter .2s ease; }
-      button:hover { filter: brightness(1.05); }
-      button:active { transform: translateY(1px); }
-      .btn-secondary { background: #30363d; color: var(--text); }
-      .btn-primary { background: var(--btn-bg); }
-      .btn-danger { background: var(--danger); }
-      pre { background: #0b0f14; padding: 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: auto; }
-      input, select, textarea { width: 100%; padding: 8px 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #30363d; background: var(--panel-soft); color: var(--text); }
-      fieldset { background: var(--panel); box-shadow: var(--shadow); }
-      h3 { margin: 8px 0 10px; font-weight: 600; }
+      .theme-light {
+        /* Base Color Palette */
+        --bg: #f7f8fb;
+        --bg-accent: 
+          radial-gradient(1400px 700px at -15% -15%, rgba(106,141,255,.25), transparent 65%), 
+          radial-gradient(1200px 600px at 115% 15%, rgba(255,106,223,.18), transparent 55%),
+          radial-gradient(800px 400px at 85% 85%, rgba(255,193,7,.06), transparent 40%);
+        --bg-texture: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+        
+        /* Surface Colors */
+        --panel: rgba(255,255,255,0.88);
+        --panel-soft: rgba(250,252,254,0.82);
+        --panel-elevated: rgba(255,255,255,0.94);
+        --panel-floating: rgba(255,255,255,0.96);
+        
+        /* Border & Separation */
+        --border: rgba(30,38,60,0.12);
+        --border-soft: rgba(30,38,60,0.06);
+        --border-bright: rgba(30,38,60,0.20);
+        --divider: linear-gradient(90deg, transparent, rgba(30,38,60,0.1), transparent);
+        
+        /* Typography */
+        --text: #0f1626;
+        --text-muted: #607086;
+        --text-dim: #8896aa;
+        --text-bright: #000000;
+        
+        /* Accent System */
+        --accent: #495cff;
+        --accent-2: #ff4cbd;
+        --accent-soft: rgba(73,92,255,0.12);
+        --accent-glow: 0 0 20px rgba(73,92,255,0.25);
+        
+        /* Status Colors */
+        --success: #059669;
+        --success-soft: rgba(5,150,105,0.12);
+        --danger: #ef4444;
+        --danger-soft: rgba(239,68,68,0.12);
+        --warning: #f59e0b;
+        --warning-soft: rgba(245,158,11,0.12);
+        --info: #3b82f6;
+        --info-soft: rgba(59,130,246,0.12);
+        
+        /* Interactive Elements */
+        --btn-bg: linear-gradient(135deg, var(--accent) 0%, #3b4acf 100%);
+        --btn-hover: linear-gradient(135deg, #5d6cff 0%, #4b5adf 100%);
+        --btn-active: linear-gradient(135deg, #424fbf 0%, #3a47cf 100%);
+        
+        /* Shadows & Depth */
+        --shadow-subtle: 0 2px 8px rgba(20,24,36,0.08);
+        --shadow: 0 8px 32px rgba(20,24,36,0.18);
+        --shadow-lg: 0 16px 48px rgba(20,24,36,0.22);
+        --shadow-xl: 0 24px 64px rgba(20,24,36,0.25);
+        --shadow-colored: 0 8px 32px rgba(73,92,255,0.15);
+        
+        /* Artistic Elements */
+        --noise-opacity: 0.02;
+        --texture-overlay: linear-gradient(45deg, transparent 49%, rgba(0,0,0,0.01) 50%, transparent 51%);
+      }
+      * { 
+        box-sizing: border-box; 
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      body { 
+        font-family: 'SF Pro Display', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; 
+        margin: 0; 
+        background: var(--bg); 
+        color: var(--text); 
+        min-height: 100vh; 
+        position: relative;
+        overflow-x: hidden;
+      }
+      
+      .bgfx { 
+        position: fixed; 
+        inset: 0; 
+        pointer-events: none; 
+        z-index: 0; 
+        background: var(--bg-accent);
+      }
+      
+      .bgfx::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--bg-texture);
+        opacity: var(--noise-opacity);
+        mix-blend-mode: overlay;
+      }
+      
+      .bgfx::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--texture-overlay);
+        opacity: 0.5;
+      }
+      .app-shell { 
+        position: relative; 
+        z-index: 1; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100vh; 
+      }
+      
+      header { 
+        padding: 20px 24px; 
+        border-bottom: 1px solid var(--border-bright); 
+        display: grid; 
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center; 
+        column-gap: var(--header-gap);
+        backdrop-filter: blur(var(--blur)) saturate(140%); 
+        background: 
+          linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01)),
+          linear-gradient(90deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        position: relative;
+        overflow: visible;
+        z-index: 50;
+      }
+      
+      header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--divider);
+      }
+      
+      header .brand { 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        font-weight: 800; 
+        letter-spacing: 0.4px;
+        position: relative;
+      }
+      
+      header .brand .logo { 
+        width: 64px; 
+        height: 64px; 
+        border-radius: 0; 
+        display: inline-block; 
+        box-shadow: none;
+        transition: all 0.3s var(--ease-out-cubic);
+        background: transparent !important;
+        border: none;
+        cursor: pointer;
+        object-fit: contain;
+      }
+      
+      header .brand .logo:hover {
+        transform: scale(1.05);
+        box-shadow: none;
+      }
+      
+      .brand .name { 
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); 
+        -webkit-background-clip: text; 
+        background-clip: text; 
+        color: transparent;
+        font-size: 42px;
+        line-height: 1;
+        text-transform: uppercase;
+        font-weight: 900;
+        transform: scaleX(0.82) scaleY(1.25);
+        transform-origin: left center;
+        letter-spacing: 0.02em;
+        text-shadow: 0 0 20px rgba(106,141,255,0.3);
+      }
+      .header-center {
+        position: absolute;
+        left: 140px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+      }
+      
+      .header-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      
+      .header-btn {
+        background: linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: var(--radius);
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s var(--ease-out-cubic);
+        cursor: pointer;
+        box-shadow: var(--shadow-subtle);
+        text-decoration: none;
+        min-height: var(--header-control-height);
+      }
+      
+      .header-btn:hover {
+        background: linear-gradient(135deg, var(--panel-floating) 0%, var(--panel-elevated) 100%);
+        border-color: var(--accent-soft);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow), var(--accent-glow);
+        color: var(--text-bright);
+      }
+      
+      .header-btn svg {
+        transition: transform 0.3s var(--ease-out-cubic);
+      }
+      
+      .header-btn:hover svg {
+        transform: scale(1.1);
+      }
 
-      /* Gallery */
-      .gallery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); }
-      .gallery-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
-      .gallery-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-      .thumb { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 10px; background: #0b0f14; border: 1px solid var(--border); cursor: zoom-in; }
-      .thumb img { width: 100%; height: 100%; object-fit: cover; display:block; transition: transform .25s ease; }
-      .thumb:hover img { transform: scale(1.04); }
-      .thumb .badge { position:absolute; left:8px; top:8px; background: rgba(0,0,0,.5); padding:2px 6px; font-size:11px; border-radius:999px; border:1px solid rgba(255,255,255,.1); }
-      .empty-state { color: var(--muted); padding: 24px; text-align:center; border: 1px dashed var(--border); border-radius: 12px; }
+      .nasa-btn {
+        font-size: 12px;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        max-width: 40vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Brand pop-out below logo/name */
+      .brand {
+        position: static;
+      }
+      .brand-popout {
+        position: fixed;
+        top: 0;
+        left: 0;
+        margin-top: 0;
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%),
+          linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border: 1px solid var(--border-bright);
+        border-radius: var(--radius-lg);
+        padding: 10px;
+        box-shadow: var(--shadow-lg), var(--accent-glow);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-4px);
+        transition: all 0.25s var(--ease-out-cubic);
+        z-index: 200;
+      }
+      .brand:hover .brand-popout,
+      .brand:focus-within .brand-popout {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .brand-popout .nasa-btn {
+        display: block;
+        width: 100%;
+        max-width: min(70vw, 720px);
+      }
+
+      /* Small visible handle to hover for dropdown */
+      .brand-handle { display: none; }
+      
+      .header-actions { display: contents; }
+      
+      /* Enhanced Decorative Logo Overlay */
+      .logo-overlay { 
+        position: fixed; 
+        top: 25px; 
+        left: 16px; 
+        width: 112px; 
+        height: 112px; 
+        z-index: 30; 
+        pointer-events: auto; 
+        cursor: pointer; 
+        background: transparent; 
+        filter: drop-shadow(var(--shadow-lg));
+        transition: all 0.4s var(--ease-bounce);
+        border-radius: var(--radius-lg);
+      }
+      
+      .logo-overlay:hover {
+        transform: scale(1.08) rotate(2deg);
+        filter: drop-shadow(var(--shadow-xl)) brightness(1.1);
+      }
+      
+      /* Artistic Caption Styling */
+      .logo-caption { 
+        position: fixed; 
+        top: 80px; 
+        left: 140px; 
+        z-index: 29; 
+        color: var(--text); 
+        pointer-events: none; 
+        background: transparent; 
+        text-shadow: var(--shadow-subtle);
+      }
+      
+      .logo-caption .title { 
+        font-size: 26px; 
+        font-weight: 900; 
+        letter-spacing: 0.5px; 
+        line-height: 1.05;
+        background: linear-gradient(135deg, var(--text-bright) 0%, var(--text) 60%, var(--text-muted) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      
+      .logo-caption .subtitle { 
+        font-size: 13px; 
+        opacity: 0.8; 
+        margin-top: 4px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      
+      /* Enhanced Project Label */
+      .project-label { 
+        font-size: 12px; 
+        font-weight: 600;
+        opacity: 0.9; 
+        border: 1px solid var(--border-bright); 
+        padding: 6px 12px; 
+        border-radius: 999px; 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%),
+          linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+        backdrop-filter: blur(var(--blur-subtle));
+        box-shadow: var(--shadow-subtle);
+        transition: all 0.2s var(--ease-out-cubic);
+        min-height: var(--header-control-height);
+        display: inline-flex;
+        align-items: center;
+        justify-self: end;
+      }
+      
+      .project-label:hover {
+        border-color: var(--accent-soft);
+        box-shadow: var(--shadow), var(--accent-glow);
+      }
+      
+      /* Enhanced Switch Project Button */
+      .switch-project { 
+        background: linear-gradient(135deg, var(--panel) 0%, var(--panel-soft) 100%); 
+        color: var(--text); 
+        border: 1px solid var(--border); 
+        padding: 8px 14px; 
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        transition: all 0.25s var(--ease-out-cubic);
+        box-shadow: var(--shadow-subtle);
+        min-height: var(--header-control-height);
+        display: inline-flex;
+        align-items: center;
+      }
+      
+      .switch-project:hover {
+        background: linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        border-color: var(--border-bright);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+      }
+      
+      /* Sophisticated Tab System */
+      .tabs { 
+        display: flex; 
+        gap: 6px; 
+        align-items: center;
+        background: var(--panel-soft);
+        padding: 4px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        justify-self: center;
+        white-space: nowrap;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .tab-btn { 
+        background: transparent; 
+        color: var(--text-muted); 
+        border: none;
+        padding: 8px 16px; 
+        border-radius: var(--radius); 
+        cursor: pointer; 
+        transition: all 0.3s var(--ease-out-cubic);
+        font-weight: 600;
+        font-size: 14px;
+        position: relative;
+        overflow: hidden;
+        min-height: var(--header-control-height);
+        display: inline-flex;
+        align-items: center;
+      }
+      
+      .tab-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out-cubic);
+      }
+      
+      .tab-btn:hover {
+        color: var(--text);
+        transform: translateY(-1px);
+      }
+      
+      .tab-btn:hover::before {
+        opacity: 0.1;
+      }
+      
+      .tab-btn.active { 
+        background: 
+          linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        color: white;
+        box-shadow: 
+          var(--shadow-colored),
+          inset 0 1px 0 rgba(255,255,255,0.2);
+        transform: translateY(-1px);
+      }
+      
+      .tab-btn.active::before {
+        opacity: 0;
+      }
+      .tab-btn:focus-visible,
+      .switch-project:focus-visible,
+      .header-btn:focus-visible,
+      .project-label:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      @media (max-width: 900px) {
+        header { grid-template-columns: auto 1fr auto; }
+        #current-project-label.project-label { display: none; }
+        .tabs { justify-self: start; }
+      }
+      @media (max-width: 640px) {
+        header { padding: 16px; }
+        .brand .name { display: none; }
+        .tab-btn { padding: 6px 10px; font-size: 13px; }
+      }
+      main { 
+        flex: 1; 
+        overflow: hidden; 
+      }
+      
+      .view { 
+        height: 100%; 
+        overflow: hidden; 
+      }
+      
+      .hidden { 
+        display: none !important; 
+      }
+
+      /* Enhanced Launcher */
+      .launcher { 
+        height: 100%; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 32px; 
+        position: relative;
+      }
+      
+      .launcher::before {
+        content: '';
+        position: absolute;
+        top: 20%;
+        left: 10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+        opacity: 0.05;
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+      }
+      
+      .launcher-card { 
+        width: min(1200px, 95vw); 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        border: 1px solid var(--border-bright); 
+        border-radius: var(--radius-xl); 
+        padding: 32px; 
+        box-shadow: 
+          0 16px 48px rgba(0,0,0,0.2),
+          0 8px 24px rgba(0,0,0,0.15),
+          0 4px 12px rgba(0,0,0,0.1);
+        backdrop-filter: blur(var(--blur)) saturate(150%);
+        position: relative;
+        overflow: visible;
+      }
+      
+      .launcher-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--divider);
+      }
+      
+      .launcher-head { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      
+      .launcher-head h2 {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(135deg, var(--text-bright) 0%, var(--text) 70%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        letter-spacing: 0.3px;
+      }
+      
+      .projects-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+        gap: 20px; 
+      }
+      
+      .proj-card { 
+        position: relative; 
+        background: 
+          linear-gradient(135deg, var(--panel-floating) 0%, var(--panel-soft) 100%);
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        padding: 18px; 
+        min-height: 220px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 14px; 
+        justify-content: space-between; 
+        cursor: pointer; 
+        transition: all 0.4s var(--ease-out-cubic);
+        box-shadow: 
+          0 4px 16px rgba(0,0,0,0.1),
+          0 2px 8px rgba(0,0,0,0.06),
+          0 1px 4px rgba(0,0,0,0.04);
+        overflow: visible;
+      }
+      
+      .proj-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out-cubic);
+        border-top-left-radius: var(--radius-lg);
+        border-top-right-radius: var(--radius-lg);
+      }
+      
+      .proj-thumb { 
+        width: 100%; 
+        height: 140px; 
+        object-fit: cover; 
+        border-radius: var(--radius); 
+        border: 1px solid var(--border); 
+        background: var(--panel); 
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        transition: all 0.3s var(--ease-out-cubic);
+      }
+      
+      .proj-thumb.placeholder { 
+        display: block; 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel-soft) 100%),
+          var(--bg-texture);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 48px;
+      }
+      
+      .proj-thumb.placeholder::before {
+        content: '🎨';
+      }
+      
+      .proj-card:hover { 
+        transform: translateY(-6px) scale(1.02);
+        border-color: var(--accent-soft);
+        box-shadow: var(--shadow-lg), var(--accent-glow);
+      }
+      
+      .proj-card:hover::before {
+        opacity: 1;
+      }
+      
+      .proj-card:hover .proj-thumb {
+        transform: scale(1.05);
+        border-color: var(--accent-soft);
+      }
+      
+      .proj-name { 
+        font-weight: 700; 
+        font-size: 16px;
+        color: var(--text-bright);
+      }
+      
+      .proj-path { 
+        font-size: 12px; 
+        opacity: 0.7; 
+        color: var(--text-muted);
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+      }
+      
+      .proj-actions { 
+        display: flex; 
+        gap: 10px; 
+        align-items: center; 
+        justify-content: flex-end; 
+      }
+      
+      .proj-remove { 
+        background: transparent; 
+        color: var(--danger); 
+        border: 1px dashed var(--danger-soft); 
+        padding: 6px 10px; 
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s var(--ease-out-cubic);
+      }
+      
+      .proj-remove:hover {
+        background: var(--danger-soft);
+        border-color: var(--danger);
+      }
+      
+      .proj-create { 
+        display: grid; 
+        place-items: center; 
+        color: var(--text); 
+        border: 2px dashed var(--accent-soft); 
+        background: 
+          linear-gradient(135deg, var(--accent-soft) 0%, transparent 100%);
+        transition: all 0.4s var(--ease-out-cubic);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .proj-create::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out-cubic);
+      }
+      
+      .proj-create:hover {
+        border-color: var(--accent);
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: var(--shadow-colored);
+      }
+      
+      .proj-create:hover::before {
+        opacity: 0.1;
+      }
+      
+      .proj-plus { 
+        font-size: 52px; 
+        line-height: 1; 
+        opacity: 0.8;
+        transition: all 0.3s var(--ease-bounce);
+        z-index: 1;
+        position: relative;
+      }
+      
+      .proj-create:hover .proj-plus {
+        transform: rotate(180deg) scale(1.1);
+        opacity: 1;
+      }
+
+      /* App main tabs */
+      .tabview { height: calc(100vh - 64px - 8px); overflow: hidden; display: grid; grid-template-rows: 1fr; }
+      .tabpane { 
+        height: 100%; 
+        overflow: auto; 
+        padding: 16px; 
+        /* Hide scrollbars while maintaining scroll functionality */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer 10+ */
+      }
+      
+      .tabpane::-webkit-scrollbar { 
+        display: none; /* WebKit browsers */
+      }
+      .actions-grid { display:grid; grid-template-columns: 320px 1fr; gap: 16px; height: 100%; }
+      /* Enhanced Sidebar System */
+      .sidebar { 
+        border-right: 1px solid var(--border-bright); 
+        padding: 20px; 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        overflow: auto; 
+        border-radius: var(--radius-lg); 
+        box-shadow: 
+          0 8px 32px rgba(0,0,0,0.12),
+          0 4px 16px rgba(0,0,0,0.08),
+          0 2px 8px rgba(0,0,0,0.05);
+        position: relative;
+        /* Hide scrollbars while maintaining scroll functionality */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer 10+ */
+      }
+      
+      .sidebar::-webkit-scrollbar { 
+        display: none; /* WebKit browsers */
+      }
+      
+      .sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+        border-radius: 0 var(--radius) var(--radius) 0;
+      }
+      
+      /* Remove previous overlay offset now that header contains the brand */
+      #tab-main .sidebar { 
+        margin-top: 0; 
+      }
+      
+      #tab-mint .sidebar,
+      #tab-options .sidebar { 
+        margin-top: 0; 
+      }
+      
+      .content { 
+        padding: 0; 
+        /* Allow outer shadows of children to render fully */
+        overflow: visible;
+        /* Keep inner scrolling behavior via child panes/cards as needed */
+        /* Hide scrollbars while maintaining scroll functionality */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer 10+ */
+      }
+      
+      .content::-webkit-scrollbar { 
+        display: none; /* WebKit browsers */
+      }
+      
+      .sidebar-group { 
+        margin-bottom: 20px; 
+        padding: 16px; 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        background: 
+          linear-gradient(135deg, var(--panel-floating) 0%, var(--panel-soft) 100%);
+        box-shadow: var(--shadow-subtle);
+        position: relative;
+        transition: all 0.2s var(--ease-out-cubic);
+      }
+      
+      .sidebar-group:hover {
+        border-color: var(--border-bright);
+        box-shadow: var(--shadow);
+        transform: translateY(-1px);
+      }
+      
+      .sidebar-group::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--divider);
+      }
+      
+      .group-title { 
+        font-size: 12px; 
+        font-weight: 700;
+        opacity: 0.8; 
+        text-transform: uppercase; 
+        letter-spacing: 0.1em; 
+        margin-bottom: 10px;
+        color: var(--text-bright);
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .mini { 
+        font-size: 12px; 
+        font-weight: 500;
+      }
+      
+      .muted { 
+        color: var(--text-muted); 
+      }
+      
+      /* Enhanced Button System */
+      button { 
+        background: var(--btn-bg);
+        color: white; 
+        border: none; 
+        padding: 10px 16px; 
+        border-radius: var(--radius); 
+        cursor: pointer; 
+        transition: all 0.2s var(--ease-out-cubic);
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        font-size: 14px;
+        position: relative;
+        overflow: hidden;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      
+      button::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity 0.2s var(--ease-out-cubic);
+      }
+      
+      button:hover { 
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        filter: brightness(1.1);
+      }
+      
+      button:hover::before {
+        opacity: 1;
+      }
+      
+      button:active { 
+        transform: translateY(0px);
+        box-shadow: var(--shadow);
+      }
+      
+      .btn-secondary { 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        color: var(--text); 
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-subtle);
+      }
+      
+      .btn-secondary:hover {
+        background: 
+          linear-gradient(135deg, var(--panel-floating) 0%, var(--panel-elevated) 100%);
+        border-color: var(--border-bright);
+      }
+      
+      .btn-primary { 
+        background: var(--btn-bg);
+        box-shadow: var(--shadow-colored);
+      }
+      
+      .btn-primary:hover {
+        background: var(--btn-hover);
+        box-shadow: var(--shadow-lg), var(--accent-glow);
+      }
+      
+      .btn-primary:active {
+        background: var(--btn-active);
+      }
+      
+      .btn-danger { 
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        box-shadow: 0 8px 32px rgba(255,91,91,0.3);
+      }
+      
+      .btn-danger:hover {
+        background: linear-gradient(135deg, #ff6b6b 0%, var(--danger) 100%);
+        box-shadow: var(--shadow-lg), 0 0 20px rgba(255,91,91,0.4);
+      }
+      
+      .btn-ghost { 
+        background: transparent; 
+        color: var(--text); 
+        border: 1px solid var(--border); 
+        box-shadow: none;
+      }
+      
+      .btn-ghost:hover {
+        background: var(--panel-soft);
+        border-color: var(--border-bright);
+        box-shadow: var(--shadow-subtle);
+      }
+      
+      /* Special Button Variants */
+      .btn-floating {
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        box-shadow: var(--shadow-lg);
+      }
+      
+      .btn-floating:hover {
+        transform: translateY(-4px) scale(1.1);
+      }
+      /* Enhanced Code Blocks */
+      pre { 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel-soft) 100%);
+        padding: 16px; 
+        border-radius: var(--radius-lg); 
+        border: 1px solid var(--border); 
+        box-shadow: var(--shadow);
+        overflow: auto;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        position: relative;
+      }
+      
+      pre::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--divider);
+      }
+      
+      /* Enhanced Form Inputs */
+      input, select, textarea { 
+        width: 100%; 
+        padding: 12px 16px; 
+        margin: 8px 0; 
+        border-radius: var(--radius); 
+        border: 1px solid var(--border); 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel-soft) 100%);
+        color: var(--text);
+        font-weight: 500;
+        transition: all 0.2s var(--ease-out-cubic);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      }
+      
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 
+          inset 0 1px 0 rgba(255,255,255,0.1),
+          0 0 0 3px var(--accent-soft),
+          var(--accent-glow);
+        background: var(--panel-floating);
+      }
+      
+      input:hover, select:hover, textarea:hover {
+        border-color: var(--border-bright);
+        background: var(--panel-floating);
+      }
+      
+      /* Enhanced Labels */
+      label {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 4px;
+        display: block;
+      }
+      
+      /* Enhanced Fieldsets */
+      fieldset { 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        box-shadow: var(--shadow);
+        border-radius: var(--radius-lg); 
+        border: 1px solid var(--border-bright);
+        padding: 20px;
+        margin: 16px 0;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      fieldset::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0.6;
+      }
+      
+      legend {
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text-bright);
+        padding: 0 12px;
+        background: 
+          linear-gradient(135deg, var(--panel-floating) 0%, var(--panel-elevated) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-subtle);
+      }
+      
+      /* Enhanced Headings */
+      h3 { 
+        margin: 12px 0 16px; 
+        font-weight: 700;
+        font-size: 20px;
+        color: var(--text-bright);
+        background: linear-gradient(135deg, var(--text-bright) 0%, var(--text) 80%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      /* Enhanced Subtabs System */
+      .subtabs { 
+        display: inline-flex; 
+        gap: 6px; 
+        padding: 12px 16px; 
+        background: 
+          linear-gradient(180deg, var(--bg) 0%, color-mix(in oklab, var(--bg) 85%, transparent) 100%);
+        backdrop-filter: blur(var(--blur-subtle)); 
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-lg);
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-subtle);
+      }
+      
+      .subtab-btn { 
+        background: transparent; 
+        color: var(--text-muted); 
+        border: 1px solid var(--border); 
+        padding: 8px 16px; 
+        border-radius: 999px; 
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.2s var(--ease-out-cubic);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .subtab-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0;
+        transition: opacity 0.2s var(--ease-out-cubic);
+      }
+      
+      .subtab-btn:hover {
+        color: var(--text);
+        border-color: var(--border-bright);
+        background: var(--panel-soft);
+      }
+      
+      .subtab-btn:hover::before {
+        opacity: 0.1;
+      }
+      
+      .subtab-btn.active { 
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        border-color: transparent;
+        color: white;
+        box-shadow: var(--shadow-colored);
+      }
+      
+      .subtab-btn.active::before {
+        opacity: 0;
+      }
+      
+      .subpane { 
+        padding: 12px 8px; 
+      }
+
+      /* Enhanced Gallery System */
+      .gallery-card { 
+        background: 
+          linear-gradient(135deg, var(--panel-elevated) 0%, var(--panel) 100%);
+        border: 1px solid var(--border-bright); 
+        border-radius: var(--radius-xl); 
+        padding: 20px; 
+        box-shadow: 
+          0 8px 32px rgba(0,0,0,0.15),
+          0 4px 16px rgba(0,0,0,0.1),
+          0 2px 8px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .gallery-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+        opacity: 0.8;
+        border-top-left-radius: var(--radius-xl);
+        border-top-right-radius: var(--radius-xl);
+      }
+      
+      .gallery-header { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      
+      .gallery-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+        gap: 16px; 
+      }
+      
+      .thumb { 
+        position: relative; 
+        width: 100%; 
+        aspect-ratio: 1 / 1; 
+        overflow: hidden; 
+        border-radius: var(--radius-lg); 
+        background: var(--panel-soft); 
+        border: 1px solid var(--border); 
+        cursor: zoom-in;
+        transition: all 0.3s var(--ease-out-cubic);
+        box-shadow: var(--shadow);
+      }
+      
+      .thumb::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(106,141,255,0.1) 100%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out-cubic);
+        z-index: 1;
+      }
+      
+      .thumb img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        display: block; 
+        transition: transform 0.3s var(--ease-out-cubic);
+      }
+      
+      .thumb:hover { 
+        transform: translateY(-4px) scale(1.02);
+        border-color: var(--accent-soft);
+        box-shadow: var(--shadow-lg), var(--accent-glow);
+      }
+      
+      .thumb:hover::before {
+        opacity: 1;
+      }
+      
+      .thumb:hover img { 
+        transform: scale(1.08);
+      }
+      
+      .thumb .badge { 
+        position: absolute; 
+        left: 10px; 
+        top: 10px; 
+        background: rgba(0,0,0,0.7); 
+        padding: 4px 8px; 
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 999px; 
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(var(--blur-subtle));
+        color: white;
+        z-index: 2;
+      }
+      
+      .empty-state { 
+        color: var(--text-muted); 
+        padding: 32px; 
+        text-align: center; 
+        border: 2px dashed var(--border); 
+        border-radius: var(--radius-lg);
+        background: 
+          linear-gradient(135deg, var(--panel-soft) 0%, transparent 100%);
+        font-weight: 500;
+      }
+      
+      .empty-state::before {
+        content: '🎨';
+        display: block;
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.6;
+      }
 
       /* Lightbox */
       .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; z-index: 40; }
@@ -55,53 +1321,176 @@
       .lb-next { right: 32px; }
       .lb-close { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,.08); color:#fff; border: 1px solid rgba(255,255,255,.15); width: 40px; height: 40px; border-radius: 999px; display:grid; place-items:center; font-size: 18px; cursor:pointer; }
       .lb-nav:hover, .lb-close:hover { background: rgba(255,255,255,.12); }
+
+      /* Renamer overlay */
+      .renamer { position: fixed; inset: 0; background: rgba(0,0,0,.80); display: none; align-items: center; justify-content: center; z-index: 45; }
+      .renamer.open { display:flex; }
+      .renamer-card { 
+        width: min(920px, 92vw); 
+        background: var(--panel); 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        padding: 12px; 
+        box-shadow: 
+          0 12px 40px rgba(0,0,0,0.25),
+          0 6px 20px rgba(0,0,0,0.15),
+          0 3px 10px rgba(0,0,0,0.1); 
+        backdrop-filter: blur(var(--blur)) saturate(140%); 
+      }
+      .rn-thumb { position: relative; width: 100%; height: 320px; background: var(--panel-soft); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: grid; place-items: center; cursor: default; }
+      .rn-thumb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+      .rn-thumb .badge { position:absolute; left:8px; top:8px; background: rgba(0,0,0,.5); padding:2px 6px; font-size:11px; border-radius:999px; border:1px solid rgba(255,255,255,.1); }
+
+
+      
+      /* Artistic Depth & Elevation System */
+      .depth-1 { box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+      .depth-2 { box-shadow: 0 4px 16px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.3); }
+      .depth-3 { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.4); }
+      .depth-4 { box-shadow: 0 12px 32px rgba(0,0,0,0.25), 0 6px 12px rgba(0,0,0,0.5); }
+      .depth-5 { box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 8px 16px rgba(0,0,0,0.6); }
+      
+      .floating { 
+        transform: translateY(-2px); 
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .floating:hover { 
+        transform: translateY(-6px) scale(1.02); 
+        filter: brightness(1.05);
+      }
+
+      /* Progress indicator below subtabs */
+      .top-progress {
+        margin-top: 8px;
+        margin-bottom: 12px;
+      }
+      .top-progress .bar-wrap {
+        height: 12px;
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      }
+      .top-progress .bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        box-shadow: var(--accent-glow);
+        transition: width 0.2s var(--ease-out-cubic);
+      }
+      .top-progress .meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-muted);
+        padding-top: 4px;
+      }
+      .top-progress .text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .top-progress .percent {
+        font-variant-numeric: tabular-nums;
+        color: var(--text);
+      }
+
+
     </style>
   </head>
   <body>
+
+    <div class="bgfx"></div>
+    <div class="app-shell">
     <header>
-      <div class="brand"><span class="dot"></span><span>conkernftz</span></div>
-      <div style="opacity:.75;font-size:12px;">Next‑gen generative NFT foundry</div>
+        <div class="brand" id="brand">
+          <img class="logo" id="brand-home" src="assets/logo-512.png" alt="Logo" />
+          <div class="name">CONKERNFTZ</div>
+          <div class="brand-handle">More</div>
+          <div class="brand-popout">
+            <button class="header-btn nasa-btn" id="btn-nasa" title="NORTHAMERICANSURVEILLANCEASSOCIATION">NORTHAMERICANSURVEILLANCEASSOCIATION</button>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="main">Main</button>
+            <button class="tab-btn" data-tab="mint">Mint</button>
+            <button class="tab-btn" data-tab="options">Options</button>
+            <button class="tab-btn" data-tab="help">Help</button>
+            <button class="tab-btn" data-tab="about">About</button>
+          </div>
+          <div id="current-project-label" class="project-label">No project</div>
+          <button class="switch-project" id="btn-switch-project">Switch Project</button>
+        </div>
     </header>
+    
     <main>
+        <!-- Launcher View -->
+        <div id="view-launcher" class="view launcher">
+          <div class="launcher-card">
+            <div class="launcher-head">
+              <h2>Choose a Project</h2>
+              <button class="btn-primary" id="btn-launcher-browse">Browse…</button>
+            </div>
+            <div class="projects-grid" id="projects-grid">
+              <!-- Recent projects will render here -->
+              <div class="proj-card proj-create" id="proj-create">
+                <div class="proj-plus">＋</div>
+                <div style="opacity:.8; font-size:13px; margin-top:8px;">Create or add project</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- App View / Tabs -->
+        <div id="view-app" class="view tabview hidden">
+          <section id="tab-main" class="tabpane">
+            <div class="actions-grid">
       <div class="sidebar">
-        <div>
-          <button id="btn-choose">Choose Project</button>
+                <div class="sidebar-group">
+                  <div class="group-title">Project</div>
+                  <div id="current-project-mini" class="mini muted">No project selected</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button id="btn-choose">Choose</button>
+                    <button id="btn-open-project" class="btn-secondary">Open Folder</button>
         </div>
-        <div>
-          <button id="btn-init">Init</button>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button id="btn-init" class="btn-ghost">Init</button>
+                    <button id="btn-validate" class="btn-ghost">Validate</button>
         </div>
-        <div>
-          <button id="btn-validate">Validate</button>
         </div>
-        <div>
+                <div class="sidebar-group">
+                  <div class="group-title">Generate</div>
           <label>Preview Count</label>
           <input id="preview-count" type="number" value="9"/>
-          <button id="btn-preview">Preview</button>
+                  <button id="btn-preview" class="btn-primary">Generate Previews</button>
         </div>
-        <div>
+                <div class="sidebar-group">
+                  <div class="group-title">Build</div>
           <label>Build Count</label>
           <input id="build-count" type="number" value="10"/>
-          <button id="btn-build">Build</button>
-        </div>
-        <div>
-          <label>Upload Provider</label>
-          <select id="upload-provider">
-            <option value="arweave">Arweave</option>
-            <option value="ipfs">IPFS</option>
-          </select>
-          <label>Concurrency</label>
-          <input id="upload-concurrency" type="number" value="6"/>
-          <button id="btn-upload">Upload</button>
-        </div>
-        <div>
-          <label>Mint From</label>
-          <input id="mint-from" type="number" value="1"/>
-          <label>Count</label>
-          <input id="mint-count" type="number" value="1"/>
-          <button id="btn-mint">Mint</button>
+                  <button id="btn-build" class="btn-primary">Build Collection</button>
         </div>
       </div>
       <div class="content">
+                <div class="subtabs">
+                  <button class="subtab-btn active" data-subtab="overview">Overview</button>
+                  <button class="subtab-btn" data-subtab="configure">Configure</button>
+                  <button class="subtab-btn" data-subtab="rules">Rules & Export</button>
+                  <button class="subtab-btn" data-subtab="reports">Reports</button>
+                </div>
+                <div id="task-progress" class="top-progress hidden" role="status" aria-live="polite">
+                  <div class="bar-wrap">
+                    <div id="task-progress-bar" class="bar" style="width:0%"></div>
+                  </div>
+                  <div class="meta">
+                    <div id="task-progress-text" class="text">Idle</div>
+                    <div id="task-progress-percent" class="percent">0%</div>
+                  </div>
+                </div>
+                <div id="main-overview" class="subpane">
         <div class="gallery-card">
           <div class="gallery-header">
             <h3 style="margin:0;">Previews</h3>
@@ -111,13 +1500,35 @@
             </div>
           </div>
           <div id="previews" class="gallery-grid"></div>
-          <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" in the sidebar to generate sample images.</div>
+                    <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" to generate sample images.</div>
         </div>
-        <div style="margin-top:16px;">
-          <h3>Output</h3>
+                  <div style="margin-top:16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                    <div class="gallery-card" style="padding: 10px 12px;">
+                      <div class="mini muted">Collection</div>
+                      <div id="stat-collection" style="font-weight:600; margin-top:4px;">—</div>
+                    </div>
+                    <div class="gallery-card" style="padding: 10px 12px;">
+                      <div class="mini muted">Edition Size</div>
+                      <div id="stat-editions" style="font-weight:600; margin-top:4px;">—</div>
+                    </div>
+                    <div class="gallery-card" style="padding: 10px 12px;">
+                      <div class="mini muted">Image Size</div>
+                      <div id="stat-dimensions" style="font-weight:600; margin-top:4px;">—</div>
+                    </div>
+                    <div class="gallery-card" style="padding: 10px 12px;">
+                      <div class="mini muted">Layers</div>
+                      <div id="stat-layers" style="font-weight:600; margin-top:4px;">—</div>
+                    </div>
+                  </div>
+                  <div id="console-card" style="margin-top:16px;" class="gallery-card">
+                    <div class="gallery-header">
+                      <h3 style="margin:0;">Console</h3>
+                      <button id="btn-toggle-console" class="btn-secondary" style="padding:6px 10px; font-size:12px;">Hide</button>
+                    </div>
           <pre id="out"></pre>
         </div>
-        <div style="margin-top:16px;">
+                </div>
+                <div id="main-configure" class="subpane hidden">
           <h3>Project Config</h3>
           <div id="config-editor" style="display:flex; flex-direction: column; gap: 12px;">
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
@@ -147,7 +1558,7 @@
               </div>
             </div>
 
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Rarity</legend>
               <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                 <div>
@@ -164,7 +1575,7 @@
               </div>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Uniqueness (DNA)</legend>
               <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px;">
                 <div>
@@ -178,20 +1589,20 @@
               </div>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Layers</legend>
               <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
                 <div style="opacity:.85;">Configure order, paths, and rarity strategy per layer.</div>
                 <div style="display:flex; gap:8px;">
-                  <button id="btn-refresh-assets" type="button" style="background:#30363d;">Refresh Counts</button>
-                  <button id="btn-create-folders" type="button" style="background:#30363d;">Create Folders</button>
+                  <button id="btn-refresh-assets" type="button" class="btn-secondary">Refresh Counts</button>
+                  <button id="btn-create-folders" type="button" class="btn-secondary">Create Folders</button>
                   <button id="btn-add-layer" type="button">Add Layer</button>
-                  <button id="btn-save-config" type="button" style="background:#2f81f7;">Save Config</button>
+                  <button id="btn-save-config" type="button" class="btn-primary">Save Config</button>
                 </div>
               </div>
               <table style="width:100%; border-collapse: collapse;">
                 <thead>
-                  <tr style="text-align:left; border-bottom:1px solid #30363d;">
+                  <tr style="text-align:left; border-bottom:1px solid var(--border);">
                     <th style="padding:4px 6px;">Order</th>
                     <th style="padding:4px 6px;">Name</th>
                     <th style="padding:4px 6px;">Path</th>
@@ -206,6 +1617,85 @@
                 <tbody id="layers-tbody"></tbody>
               </table>
             </fieldset>
+
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;">
+              <legend>Image Renamer</legend>
+              <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
+                <div style="opacity:.85;">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
+                <div style="display:flex; gap:8px;">
+                  <button id="ir-refresh" type="button" class="btn-ghost" style="background:#30363d;">Refresh</button>
+                  <button id="ir-add-folder" type="button" class="btn-ghost" style="background:#30363d;">Add Folder…</button>
+                </div>
+              </div>
+              <div id="ir-layer-list" class="mini" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:8px; margin-bottom:8px;"></div>
+
+              <div class="mini muted" style="margin-top:4px;">Naming</div>
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <div>
+                  <label>Mode</label>
+                  <select id="ir-name-mode">
+                    <option value="preset-seq">Preset + Sequence</option>
+                    <option value="random-list">Random from List</option>
+                    <option value="keep">Keep Filenames</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Base Name</label>
+                  <input id="ir-base-name" placeholder="e.g. Trait" />
+                </div>
+                <div>
+                  <label>Start Index</label>
+                  <input id="ir-start" type="number" min="0" value="1" />
+                </div>
+                <div>
+                  <label>Pad Width</label>
+                  <input id="ir-pad" type="number" min="0" value="0" />
+                </div>
+              </div>
+              <div>
+                <label>Random Name List (one per line)</label>
+                <textarea id="ir-name-list" rows="3" placeholder="Alpha\nBeta\nGamma" style="width:100%; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:8px;"></textarea>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <label style="display:flex; align-items:center; gap:6px;"><input id="ir-include-layer" type="checkbox"/> Include layer name prefix</label>
+                <label style="display:flex; align-items:center; gap:6px;"><input id="ir-keep-ext" type="checkbox" checked disabled/> Keep file extension</label>
+              </div>
+
+              <div class="mini muted" style="margin-top:8px;">Rarity</div>
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <div>
+                  <label>Delimiter</label>
+                  <input id="ir-delim" placeholder="#" />
+                </div>
+                <div>
+                  <label>Mode</label>
+                  <select id="ir-rarity-mode">
+                    <option value="keep">Keep</option>
+                    <option value="uniform">Uniform</option>
+                    <option value="random-range">Random Range</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Weight (uniform)</label>
+                  <input id="ir-weight" type="number" min="1" value="1" />
+                </div>
+                <div>
+                  <label>Random Min–Max</label>
+                  <div style="display:flex; gap:6px;">
+                    <input id="ir-min" type="number" min="1" value="1" />
+                    <input id="ir-max" type="number" min="1" value="10" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:8px; margin-top:10px;">
+                <button id="ir-bulk-rename" type="button" class="btn-primary">Bulk Rename Selected</button>
+                <button id="ir-open-step" type="button" class="btn-secondary">Step-through Renamer…</button>
+              </div>
+            </fieldset>
+                  </div>
+                </div>
+                <div id="main-rules" class="subpane hidden">
             <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
               <legend>Rules (advanced)</legend>
               <div style="display:grid; grid-template-columns: 1fr; gap: 8px;">
@@ -216,7 +1706,7 @@
                 </div>
               </div>
             </fieldset>
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+                  <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;">
               <legend>Export</legend>
               <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items:end;">
                 <div>
@@ -241,6 +1731,8 @@
                 </div>
               </div>
             </fieldset>
+                </div>
+                <div id="main-reports" class="subpane hidden">
             <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
               <legend>Rarity Report</legend>
               <div style="display:flex; gap:8px; align-items:center;">
@@ -251,13 +1743,156 @@
             </fieldset>
           </div>
         </div>
+            </div>
+          </section>
+          <section id="tab-mint" class="tabpane hidden">
+            <div style="display:grid; grid-template-columns: minmax(260px, 360px) 1fr; gap:16px;">
+              <div class="sidebar">
+                <div>
+                  <label>Upload Provider</label>
+                  <select id="upload-provider">
+                    <option value="arweave">Arweave</option>
+                    <option value="ipfs">IPFS</option>
+                  </select>
+                  <label>Concurrency</label>
+                  <input id="upload-concurrency" type="number" value="6"/>
+                  <button id="btn-upload">Upload</button>
+                </div>
+                <div style="margin-top:12px;">
+                  <label>Mint From</label>
+                  <input id="mint-from" type="number" value="1"/>
+                  <label>Count</label>
+                  <input id="mint-count" type="number" value="1"/>
+                  <button id="btn-mint">Mint</button>
+                </div>
+              </div>
+              <div class="content">
+                <div class="gallery-card">
+                  <div class="gallery-header">
+                    <h3 style="margin:0;">Minting</h3>
+                    <div style="opacity:.75; font-size:12px;">Upload assets and mint your collection</div>
+                  </div>
+                  <div style="color:var(--muted);">We will expand this page later with progress indicators, logs, and provider configuration. For now, use the controls in the sidebar to upload and mint.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="tab-options" class="tabpane hidden">
+            <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
+              <div class="sidebar">
+                <div>
+                  <label>Theme</label>
+                  <select id="opt-theme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Accent</label>
+                  <select id="opt-accent">
+                    <option value="#6a8dff">Indigo</option>
+                    <option value="#ff6adf">Magenta</option>
+                    <option value="#22d3ee">Cyan</option>
+                    <option value="#10b981">Emerald</option>
+                    <option value="#f59e0b">Amber</option>
+                    <option value="#ef4444">Red</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Corner Radius</label>
+                  <input id="opt-radius" type="range" min="8" max="22" value="14" />
+                </div>
+                <div>
+                  <label>Glass Blur</label>
+                  <input id="opt-blur" type="range" min="0" max="24" value="10" />
+                </div>
+
+                <div>
+                  <label>Background Noise</label>
+                  <input id="opt-noise" type="range" min="0" max="0.1" step="0.01" value="0.03" />
+                </div>
+                <div>
+                  <label>Glow Intensity</label>
+                  <input id="opt-glow" type="range" min="0" max="1" step="0.1" value="0.3" />
+                </div>
+
+                <div>
+                  <button id="opt-reset" class="btn-secondary">Reset UI</button>
+                </div>
+              </div>
+              <div class="content">
+                <div class="gallery-card">
+                  <div class="gallery-header">
+                    <h3 style="margin:0;">Customization</h3>
+                    <div style="opacity:.75; font-size:12px;">Tune the look and feel</div>
+                  </div>
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                    <div style="background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding:12px;">
+                      <div style="font-weight:600;">Live Accent</div>
+                      <div style="height: 44px; margin-top:8px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 10px;"></div>
+                    </div>
+                    <div style="background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding:12px;">
+                      <div style="font-weight:600;">Preview Card</div>
+                      <div style="height: 120px; margin-top:8px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border:1px dashed color-mix(in oklab, var(--accent) 55%, var(--border));"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
       </div>
     </main>
+    </div>
     <div id="lightbox" class="lightbox" aria-hidden="true">
       <button id="lb-close" class="lb-close" aria-label="Close">✕</button>
       <button id="lb-prev" class="lb-nav lb-prev" aria-label="Previous">‹</button>
       <img id="lb-image" alt="Preview" />
       <button id="lb-next" class="lb-nav lb-next" aria-label="Next">›</button>
+    </div>
+    <div id="renamer" class="renamer" aria-hidden="true">
+      <div class="renamer-card">
+        <div class="gallery-header">
+          <h3 style="margin:0;">Step-through Renamer</h3>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="rn-choose-folder" class="btn-ghost" style="background:#30363d;">Choose Folder…</button>
+            <button id="rn-close" class="btn-ghost">Close</button>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 280px 1fr; gap:12px; align-items:start;">
+          <div>
+            <div class="rn-thumb">
+              <img id="rn-image" alt="Preview" />
+              <div class="badge" id="rn-meta"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+              <div>
+                <label>Base Name</label>
+                <input id="rn-name" placeholder="Name" />
+              </div>
+              <div>
+                <label>Rarity Weight</label>
+                <input id="rn-weight" type="number" min="1" value="1" />
+              </div>
+              <div>
+                <label>Delimiter</label>
+                <input id="rn-delim" placeholder="#" />
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button id="rn-random-name" class="btn-secondary">Random Name</button>
+              <button id="rn-random-weight" class="btn-secondary">Random Weight</button>
+              <label style="display:flex; align-items:center; gap:6px;"><input id="rn-include-layer" type="checkbox"/> Include layer prefix</label>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button id="rn-prev" class="btn-ghost">← Prev</button>
+              <button id="rn-apply-next" class="btn-primary">Apply & Next →</button>
+              <button id="rn-skip" class="btn-secondary">Skip</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
       // Ensure bridge exists even if preload failed to load
@@ -265,14 +1900,200 @@
         run: async () => ({ ok: false, error: 'preload not loaded' }),
         chooseProjectDir: async () => ({ ok: false, error: 'preload not loaded' }),
         getProjectDir: async () => ({ ok: true, projectDir: null }),
+        setProjectDir: async () => ({ ok: false, error: 'preload not loaded' }),
         readConfig: async () => ({ ok: false, error: 'preload not loaded' }),
+        readConfigAt: async () => ({ ok: false, error: 'preload not loaded' }),
         writeConfig: async () => ({ ok: false, error: 'preload not loaded' }),
         chooseDirInsideProject: async () => ({ ok: false, error: 'preload not loaded' }),
         readFile: async () => ({ ok: false, error: 'preload not loaded' }),
         ensureDirs: async () => ({ ok: false, error: 'preload not loaded' }),
         listImages: async () => ({ ok: false, count: 0, error: 'preload not loaded' }),
+        openInExplorer: async () => ({ ok: false, error: 'preload not loaded' }),
         listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }),
+        renameFiles: async () => ({ ok: false, error: 'preload not loaded' }),
       };
+      // Views & Tabs
+      const viewLauncher = document.getElementById('view-launcher');
+      const viewApp = document.getElementById('view-app');
+      const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+      const tabMain = document.getElementById('tab-main');
+      const tabMint = document.getElementById('tab-mint');
+      const tabOptions = document.getElementById('tab-options');
+      function switchTab(name) {
+        const map = { main: tabMain, mint: tabMint, options: tabOptions };
+        Object.entries(map).forEach(([key, pane]) => {
+          if (!pane) return;
+          if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+        });
+        tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+        try { localStorage.setItem('ui:lastTab', name); } catch {}
+        // Ensure subtabs default when entering Main
+        if (name === 'main') {
+          switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
+        }
+      }
+      tabButtons.forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+      function showView(which) {
+        if (which === 'app') { viewApp.classList.remove('hidden'); viewLauncher.classList.add('hidden'); }
+        else { viewLauncher.classList.remove('hidden'); viewApp.classList.add('hidden'); }
+      }
+      document.getElementById('btn-switch-project').addEventListener('click', () => showView('launcher'));
+      const logoOverlayEl = document.querySelector('.logo-overlay');
+      logoOverlayEl && logoOverlayEl.addEventListener('click', () => showView('launcher'));
+
+      // Main subtabs
+      const subtabButtons = Array.from(document.querySelectorAll('.subtab-btn'));
+      const subOverview = document.getElementById('main-overview');
+      const subConfigure = document.getElementById('main-configure');
+      const subRules = document.getElementById('main-rules');
+      const subReports = document.getElementById('main-reports');
+      function switchSubtab(name) {
+        const map = { overview: subOverview, configure: subConfigure, rules: subRules, reports: subReports };
+        Object.entries(map).forEach(([key, pane]) => {
+          if (!pane) return;
+          if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+        });
+        subtabButtons.forEach((b) => b.classList.toggle('active', b.dataset.subtab === name));
+        try { localStorage.setItem('ui:lastSubtab', name); } catch {}
+      }
+      subtabButtons.forEach((b) => b.addEventListener('click', () => switchSubtab(b.dataset.subtab)));
+
+      // Recent projects (localStorage)
+      function readRecents() {
+        try { return JSON.parse(localStorage.getItem('foundry:recents') || '[]'); } catch { return []; }
+      }
+      function writeRecents(list) {
+        try { localStorage.setItem('foundry:recents', JSON.stringify(list)); } catch {}
+      }
+      function addRecent(dir) {
+        if (!dir) return;
+        const list = readRecents();
+        const existing = list.find((r) => r.dir === dir);
+        const ts = Date.now();
+        if (existing) { existing.lastUsed = ts; } else { list.push({ dir, lastUsed: ts }); }
+        list.sort((a,b) => (b.lastUsed||0) - (a.lastUsed||0));
+        writeRecents(list);
+      }
+      function removeRecent(dir) {
+        const list = readRecents().filter((r) => r.dir !== dir);
+        writeRecents(list);
+        renderRecents();
+      }
+      function renderRecents() {
+        const grid = document.getElementById('projects-grid');
+        const createCard = document.getElementById('proj-create');
+        const list = readRecents();
+        Array.from(grid.querySelectorAll('.proj-card.item')).forEach((n) => n.remove());
+        const folderName = (p) => String(p||'').replace(/[\\/]+$/, '').split(/\\|\//).pop();
+        list.forEach((r) => {
+          const card = document.createElement('div');
+          card.className = 'proj-card item';
+          const thumbSrc = '';
+          card.innerHTML = `
+            <img class="proj-thumb" alt="thumb" />
+            <div class="proj-name">${folderName(r.dir)}</div>
+            <div class="proj-path">${r.dir}</div>
+            <div class="proj-actions">
+              <button class="proj-remove">Remove</button>
+              <button class="btn-primary proj-open">Open</button>
+            </div>`;
+          const img = card.querySelector('.proj-thumb');
+          // Try to infer a preview image (use config.previewOutDir if present)
+          (async () => {
+            try {
+              const norm = (p) => String(p||'').replace(/\\/g,'/');
+              const joinAbs = (dir, name) => (norm(dir).replace(/\/$/,'')) + '/' + String(name||'').replace(/^\//,'');
+              const isAbs = (p) => /^(?:[a-zA-Z]:[\\/]|\\\\|\/)/.test(String(p||''));
+              const absFileUrl = (absPath) => encodeURI('file:///' + norm(absPath));
+              // Read project config to detect custom preview output dir
+              const cfg = await window.foundry.readConfigAt(r.dir);
+              const configured = (cfg && cfg.ok && cfg.json && cfg.json.export && cfg.json.export.previewOutDir) ? String(cfg.json.export.previewOutDir) : null;
+              const projectDir = norm(r.dir);
+              const candidatePaths = [];
+              if (configured && configured.trim()) {
+                const clean = norm(configured).replace(/\/$/,'');
+                if (isAbs(clean)) {
+                  candidatePaths.push(clean);
+                  // Also try configured + '/preview' if not already a preview dir
+                  if (!/\/(?:preview)$/i.test(clean)) candidatePaths.push(clean + '/preview');
+                } else {
+                  const relAbs = joinAbs(projectDir, clean);
+                  candidatePaths.push(relAbs);
+                  if (!/\/(?:preview)$/i.test(clean)) candidatePaths.push(relAbs + '/preview');
+                }
+              }
+              candidatePaths.push(joinAbs(projectDir, 'build/preview'));
+              candidatePaths.push(joinAbs(projectDir, 'preview'));
+              candidatePaths.push(joinAbs(projectDir, 'build'));
+
+              const imageRegex = /\.(png|webp|gif)$/i;
+              let pickedAbs = '';
+              for (const target of candidatePaths) {
+                const listing = await window.foundry.listDir(target);
+                if (!listing.ok || !Array.isArray(listing.items)) continue;
+                const files = listing.items.filter((n) => !n.endsWith('/') && imageRegex.test(n));
+                if (!files.length) continue;
+                const preferred = files.find((n) => /^preview_\d+\./i.test(n))
+                  || files.find((n) => /^contact-sheet/i.test(n))
+                  || files[0];
+                pickedAbs = joinAbs(target, preferred);
+                break;
+              }
+              if (pickedAbs) {
+                img.src = absFileUrl(pickedAbs);
+                img.classList.remove('placeholder');
+              } else {
+                img.removeAttribute('src');
+                img.classList.add('placeholder');
+              }
+            } catch {
+              img.removeAttribute('src');
+              img.classList.add('placeholder');
+            }
+          })();
+          card.querySelector('.proj-remove').addEventListener('click', (e) => { e.stopPropagation(); removeRecent(r.dir); });
+          card.querySelector('.proj-open').addEventListener('click', async (e) => { e.stopPropagation(); await openProject(r.dir); });
+          card.addEventListener('click', async () => { await openProject(r.dir); });
+          grid.insertBefore(card, createCard);
+        });
+      }
+
+      async function openProject(dir) {
+        const set = await window.foundry.setProjectDir(dir);
+        if (set && set.ok) {
+          addRecent(dir);
+          showView('app');
+          await loadConfigUI();
+          await updateAssetCounts();
+          await refreshPreviews();
+          const lastTab = localStorage.getItem('ui:lastTab') || 'main';
+          switchTab(lastTab);
+          switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
+          setProjectLabels(dir);
+        } else {
+          log(set.error || 'Failed to set project');
+        }
+      }
+
+      document.getElementById('proj-create').addEventListener('click', async () => {
+        const res = await window.foundry.chooseProjectDir();
+        if (res && res.ok && res.projectDir) {
+          await window.foundry.setProjectDir(res.projectDir);
+          addRecent(res.projectDir);
+          const init = await window.foundry.run(['init']);
+          log(init.ok ? init.stdout : init.error);
+          showView('app');
+          await loadConfigUI();
+          await refreshPreviews();
+        }
+      });
+      document.getElementById('btn-launcher-browse').addEventListener('click', async () => {
+        const res = await window.foundry.chooseProjectDir();
+        if (res && res.ok && res.projectDir) {
+          await openProject(res.projectDir);
+        }
+      });
+
       const out = document.getElementById('out');
       const previews = document.getElementById('previews');
       const previewsEmpty = document.getElementById('previews-empty');
@@ -288,6 +2109,23 @@
       const btnSaveConfig = document.getElementById('btn-save-config');
       const btnCreateFolders = document.getElementById('btn-create-folders');
       const btnRefreshAssets = document.getElementById('btn-refresh-assets');
+      // Image Renamer refs
+      const irLayerList = document.getElementById('ir-layer-list');
+      const irRefresh = document.getElementById('ir-refresh');
+      const irAddFolder = document.getElementById('ir-add-folder');
+      const irNameMode = document.getElementById('ir-name-mode');
+      const irBaseName = document.getElementById('ir-base-name');
+      const irStart = document.getElementById('ir-start');
+      const irPad = document.getElementById('ir-pad');
+      const irNameList = document.getElementById('ir-name-list');
+      const irIncludeLayer = document.getElementById('ir-include-layer');
+      const irDelim = document.getElementById('ir-delim');
+      const irRarityMode = document.getElementById('ir-rarity-mode');
+      const irWeight = document.getElementById('ir-weight');
+      const irMin = document.getElementById('ir-min');
+      const irMax = document.getElementById('ir-max');
+      const irBulkRename = document.getElementById('ir-bulk-rename');
+      const irOpenStep = document.getElementById('ir-open-step');
       let currentConfig = null;
       function log(msg) { out.textContent = String(msg || '') }
       let galleryUrls = [];
@@ -301,14 +2139,18 @@
         return /^(?:[a-zA-Z]:[\\/]|\\\\|\/)/.test(p || '');
       }
       function fileUrl(baseDir, folder, name) {
-        const nameNorm = String(name || '').replace(/\\/g, '/');
+        const nameNorm = String(name || '').replace(/\\/g, '/').replace(/^\//,'');
+        let url = '';
         if (isAbsolutePath(folder)) {
-          const folderNorm = String(folder || '').replace(/\\/g, '/');
-          return encodeURI('file:///' + folderNorm + '/' + nameNorm);
+          const folderNorm = String(folder || '').replace(/\\/g, '/').replace(/\/$/,'');
+          url = 'file:///' + folderNorm + '/' + nameNorm;
+        } else {
+          const baseNorm = String(baseDir || '').replace(/\\/g, '/').replace(/\/$/,'');
+          const folderNorm = String(folder || '').replace(/\\/g, '/').replace(/^\//,'').replace(/\/$/,'');
+          url = 'file:///' + baseNorm + (folderNorm ? '/' + folderNorm : '') + '/' + nameNorm;
         }
-        const baseNorm = String(baseDir || '').replace(/\\/g, '/');
-        const folderNorm = String(folder || '').replace(/\\/g, '/');
-        return encodeURI('file:///' + baseNorm + '/' + folderNorm + '/' + nameNorm);
+        // encodeURI leaves '#' unescaped which breaks file URLs; patch it afterwards
+        return encodeURI(url).replace(/#/g, '%23');
       }
       function mountThumbGrid(baseDir, folder, files) {
         previews.innerHTML = '';
@@ -490,6 +2332,41 @@
           tbody.appendChild(row);
         });
       }
+      // Progress UI elements and helpers
+      const progressRoot = document.getElementById('task-progress');
+      const progressBar = document.getElementById('task-progress-bar');
+      const progressText = document.getElementById('task-progress-text');
+      const progressPercent = document.getElementById('task-progress-percent');
+      let progressIntervalId = null;
+      function showProgressUI(show) {
+        if (!progressRoot) return;
+        progressRoot.classList.toggle('hidden', !show);
+        progressRoot.setAttribute('aria-hidden', show ? 'false' : 'true');
+      }
+      function setProgress(percent, message) {
+        if (!progressBar || !progressText || !progressPercent) return;
+        const p = Math.max(0, Math.min(100, Math.floor(Number(percent) || 0)));
+        progressBar.style.width = p + '%';
+        progressPercent.textContent = p + '%';
+        if (message) progressText.textContent = String(message);
+      }
+      function startProgress(message, estimateMs) {
+        if (progressIntervalId) { clearInterval(progressIntervalId); progressIntervalId = null; }
+        showProgressUI(true);
+        setProgress(0, message || 'Working…');
+        const start = Date.now();
+        const duration = Math.max(2000, Number(estimateMs) || 10000);
+        progressIntervalId = setInterval(() => {
+          const elapsed = Date.now() - start;
+          const frac = Math.min(0.9, (elapsed / duration) * 0.9);
+          setProgress(Math.round(frac * 100), message || 'Working…');
+        }, 200);
+      }
+      function endProgress(message, ok = true) {
+        if (progressIntervalId) { clearInterval(progressIntervalId); progressIntervalId = null; }
+        setProgress(100, message || (ok ? 'Completed.' : 'Failed.'));
+        setTimeout(() => { showProgressUI(false); }, 1000);
+      }
       function readLayersFromTable() {
         const rows = Array.from(tbody.querySelectorAll('tr'));
         return rows.map((tr) => {
@@ -575,11 +2452,15 @@
         document.getElementById('export-preview-outdir').value = (cfg.export && cfg.export.previewOutDir) ? cfg.export.previewOutDir : '';
         document.getElementById('export-contact').checked = Boolean(cfg.export?.includePreviewContactSheet ?? true);
         renderLayersTable();
+        // Init Image Renamer defaults
+        if (irDelim) irDelim.value = cfg.rarity?.delimiter || '#';
+        if (irLayerList) renderIrLayerList();
       }
       async function loadConfigUI() {
         const cfg = await window.foundry.readConfig();
         if (cfg.ok && cfg.json) {
           populateFormFromConfig(cfg.json);
+          updateStatsFromConfig(cfg.json);
         }
       }
       btnAddLayer.addEventListener('click', () => {
@@ -587,6 +2468,7 @@
         tr.innerHTML = layerRowTemplate(tbody.children.length, { name: '', path: 'layers/', rarity: 'filename', required: false, blend: 'normal', opacity: 1 });
         tbody.appendChild(tr.firstElementChild);
         updateAssetCounts();
+        if (irLayerList) renderIrLayerList();
       });
       if (btnCreateFolders) btnCreateFolders.addEventListener('click', async () => {
         const layers = readLayersFromTable();
@@ -596,6 +2478,217 @@
         updateAssetCounts();
       });
       if (btnRefreshAssets) btnRefreshAssets.addEventListener('click', () => updateAssetCounts());
+
+      function renderIrLayerList() {
+        if (!irLayerList) return;
+        const layers = readLayersFromTable();
+        irLayerList.innerHTML = '';
+        layers.forEach((l, idx) => {
+          const div = document.createElement('div');
+          div.style.border = '1px solid var(--border)';
+          div.style.borderRadius = '10px';
+          div.style.padding = '8px';
+          div.style.background = 'var(--panel-soft)';
+          div.innerHTML = `
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" class="ir-layer-check" data-path="${l.path||''}" />
+              <span style="font-weight:600;">${l.name || ('Layer ' + (idx+1))}</span>
+              <span class="muted" style="margin-left:auto;">${l.path || ''}</span>
+            </label>`;
+          irLayerList.appendChild(div);
+        });
+      }
+
+      irRefresh && irRefresh.addEventListener('click', renderIrLayerList);
+      irAddFolder && irAddFolder.addEventListener('click', async () => {
+        const res = await window.foundry.chooseDirInsideProject();
+        if (!res.ok || !res.path) return;
+        const div = document.createElement('div');
+        div.style.border = '1px solid var(--border)';
+        div.style.borderRadius = '10px';
+        div.style.padding = '8px';
+        div.style.background = 'var(--panel-soft)';
+        div.innerHTML = `
+          <label style=\"display:flex; align-items:center; gap:8px;\">\n            <input type=\"checkbox\" class=\"ir-layer-check\" data-path=\"${res.path}\" checked />\n            <span style=\"font-weight:600;\">(Custom)</span>\n            <span class=\"muted\" style=\"margin-left:auto;\">${res.path}</span>\n          </label>`;
+        irLayerList && irLayerList.appendChild(div);
+      });
+
+      function padNumber(n, width) {
+        const s = String(n);
+        const w = Math.max(0, Number(width)||0);
+        return w > 0 ? s.padStart(w, '0') : s;
+      }
+
+      function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+      async function buildRenamePlan(paths) {
+        const delim = (irDelim && irDelim.value) || '#';
+        const nameMode = irNameMode ? irNameMode.value : 'preset-seq';
+        const baseName = irBaseName ? irBaseName.value.trim() : '';
+        const start = irStart ? (Number(irStart.value) || 1) : 1;
+        const pad = irPad ? (Number(irPad.value) || 0) : 0;
+        const includeLayer = irIncludeLayer ? irIncludeLayer.checked : false;
+        const rarityMode = irRarityMode ? irRarityMode.value : 'keep';
+        const uniformWeight = Math.max(1, irWeight ? (Number(irWeight.value) || 1) : 1);
+        const minW = Math.max(1, irMin ? (Number(irMin.value) || 1) : 1);
+        const maxW = Math.max(minW, irMax ? (Number(irMax.value) || minW) : minW);
+        const randomNames = irNameList ? irNameList.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean) : [];
+
+        const imageRegex = /\.(png|webp|gif)$/i;
+        const pairs = [];
+
+        for (const rel of paths) {
+          const list = await window.foundry.listDir(rel);
+          if (!list.ok || !Array.isArray(list.items)) continue;
+          let seq = start;
+          const layerPrefix = includeLayer ? (String(rel).replace(/[\\/]+$/,'').split(/\\|\//).pop() || '') + '_' : '';
+          const files = list.items.filter((n) => !n.endsWith('/') && imageRegex.test(n));
+          for (const file of files) {
+            const ext = file.replace(/^[^.]+(\.[^.]+)$/,'$1');
+            let name = '';
+            if (nameMode === 'keep') {
+              name = file.replace(/\.[^.]+$/, '');
+            } else if (nameMode === 'random-list' && randomNames.length) {
+              name = pickRandom(randomNames);
+            } else {
+              name = baseName || 'Asset';
+              name += padNumber(seq, pad);
+              seq++;
+            }
+            let weight = 1;
+            if (rarityMode === 'keep') {
+              const m = file.replace(/\.[^.]+$/, '').match(/(.*?)(?:([#@:_-])(\d+))?$/);
+              weight = m && m[3] ? Math.max(1, Number(m[3])) : uniformWeight;
+            } else if (rarityMode === 'uniform') {
+              weight = uniformWeight;
+            } else {
+              weight = Math.floor(minW + Math.random()*(maxW-minW+1));
+            }
+            const finalBase = (layerPrefix + name).replace(/\s+/g, ' ').trim();
+            const target = `${rel.replace(/[\\/]+$/,'')}/${finalBase}${delim}${weight}${ext}`;
+            pairs.push({ from: `${rel.replace(/[\\/]+$/,'')}/${file}`, to: target });
+          }
+        }
+        return pairs;
+      }
+
+      irBulkRename && irBulkRename.addEventListener('click', async () => {
+        try {
+          const checks = irLayerList ? Array.from(irLayerList.querySelectorAll('.ir-layer-check')) : [];
+          const selected = checks.filter((c) => c.checked).map((c) => c.dataset.path || '').filter(Boolean);
+          if (!selected.length) { log('Select at least one folder.'); return; }
+          const plan = await buildRenamePlan(selected);
+          if (!plan.length) { log('No images found to rename.'); return; }
+          const res = await window.foundry.renameFiles(plan);
+          log(res.ok ? `Renamed ${res.renamed||0} file(s).` : (res.error || 'Rename failed'));
+          await updateAssetCounts();
+          cacheBustToken = Date.now();
+          await refreshPreviews();
+        } catch (e) {
+          log(String((e && e.message) || e));
+        }
+      });
+
+      // Step-through Renamer overlay
+      const rnOverlay = document.getElementById('renamer');
+      const rnImage = document.getElementById('rn-image');
+      const rnMeta = document.getElementById('rn-meta');
+      const rnClose = document.getElementById('rn-close');
+      const rnChoose = document.getElementById('rn-choose-folder');
+      const rnName = document.getElementById('rn-name');
+      const rnWeight = document.getElementById('rn-weight');
+      const rnDelim = document.getElementById('rn-delim');
+      const rnPrev = document.getElementById('rn-prev');
+      const rnApplyNext = document.getElementById('rn-apply-next');
+      const rnSkip = document.getElementById('rn-skip');
+      const rnRandomName = document.getElementById('rn-random-name');
+      const rnRandomWeight = document.getElementById('rn-random-weight');
+      const rnIncludeLayer = document.getElementById('rn-include-layer');
+
+      let rnFolder = '';
+      let rnFiles = [];
+      let rnIdx = 0;
+      let rnProjectBase = '';
+
+      function openRenamer() { rnOverlay && rnOverlay.classList.add('open'); rnOverlay && rnOverlay.setAttribute('aria-hidden','false'); }
+      function closeRenamer() { rnOverlay && rnOverlay.classList.remove('open'); rnOverlay && rnOverlay.setAttribute('aria-hidden','true'); }
+
+      function showCurrent() {
+        if (!rnFolder || rnIdx < 0 || rnIdx >= rnFiles.length) return;
+        const baseInfo = (rnIdx + 1) + '/' + rnFiles.length;
+        if (rnImage) {
+          const raw = fileUrl(rnProjectBase, rnFolder, rnFiles[rnIdx]);
+          const sep = raw.includes('?') ? '&' : '?';
+          rnImage.src = raw + sep + 'v=' + cacheBustToken;
+        }
+        if (rnMeta) rnMeta.textContent = baseInfo;
+        if (rnName) rnName.value = rnFiles[rnIdx].replace(/\.[^.]+$/, '');
+        if (rnDelim) rnDelim.value = (irDelim && irDelim.value) || '#';
+        if (rnWeight) rnWeight.value = String(Math.max(1, Number(irWeight && irWeight.value || '1')));
+      }
+
+      async function ensureProjectBase() {
+        try {
+          const base = await window.foundry.getProjectDir();
+          rnProjectBase = (base && base.projectDir) ? base.projectDir : '';
+        } catch { rnProjectBase = ''; }
+      }
+
+      async function pickFolderForRenamer() {
+        const res = await window.foundry.chooseDirInsideProject();
+        if (!res.ok || !res.path) return;
+        // Normalize rnFolder to POSIX-style for consistent fileUrl joining
+        rnFolder = String(res.path).replace(/\\/g, '/').replace(/^\//,'').replace(/\/+/g,'/');
+        await ensureProjectBase();
+        const list = await window.foundry.listDir(rnFolder);
+        if (!list.ok) { log(list.error || 'Failed to list folder'); return; }
+        rnFiles = (list.items || []).filter((n) => /\.(png|webp|gif)$/i.test(n));
+        rnIdx = 0;
+        showCurrent();
+      }
+
+      rnChoose && rnChoose.addEventListener('click', pickFolderForRenamer);
+      rnClose && rnClose.addEventListener('click', closeRenamer);
+      irOpenStep && irOpenStep.addEventListener('click', async () => { await ensureProjectBase(); openRenamer(); if (!rnFolder) { await pickFolderForRenamer(); } else { showCurrent(); } });
+      rnPrev && rnPrev.addEventListener('click', () => { rnIdx = Math.max(0, rnIdx - 1); showCurrent(); });
+      rnSkip && rnSkip.addEventListener('click', async () => {
+        // Re-list to keep in sync in case files were changed externally
+        try { const list = await window.foundry.listDir(rnFolder); if (list.ok && Array.isArray(list.items)) { rnFiles = (list.items||[]).filter((n)=>/\.(png|webp|gif)$/i.test(n)); } } catch {}
+        rnIdx = Math.min(rnFiles.length - 1, rnIdx + 1); showCurrent();
+      });
+      rnApplyNext && rnApplyNext.addEventListener('click', async () => {
+        if (!rnFolder || rnIdx < 0 || rnIdx >= rnFiles.length) return;
+        const file = rnFiles[rnIdx];
+        const ext = file.replace(/^[^.]+(\.[^.]+)$/,'$1');
+        const prefix = (rnIncludeLayer && rnIncludeLayer.checked) ? ((String(rnFolder).replace(/[\\/]+$/,'').split(/\\|\//).pop() || '') + '_') : '';
+        const nameVal = (rnName && rnName.value ? rnName.value.trim() : 'Asset');
+        const delimVal = (rnDelim && rnDelim.value ? rnDelim.value : '#');
+        const weightVal = String(Math.max(1, Number(rnWeight && rnWeight.value || '1')));
+        const newFileName = prefix + nameVal + delimVal + weightVal + ext;
+        const srcPath = rnFolder.replace(/[\\/]+$/,'') + '/' + file;
+        const dstPath = rnFolder.replace(/[\\/]+$/,'') + '/' + newFileName;
+        const res = await window.foundry.renameFiles([{ from: srcPath, to: dstPath }]);
+        if (!res.ok) { log(res.error || 'Rename failed'); return; }
+        try {
+          // Refresh listing to reflect any collision suffixes applied by backend
+          const list = await window.foundry.listDir(rnFolder);
+          if (list.ok && Array.isArray(list.items)) {
+            rnFiles = (list.items || []).filter((n) => /\.(png|webp|gif)$/i.test(n));
+          }
+        } catch {}
+        // Advance if possible; if at last image, stay on last
+        rnIdx = Math.min(rnFiles.length - 1, rnIdx + 1);
+        showCurrent();
+      });
+      rnRandomName && rnRandomName.addEventListener('click', () => {
+        const list = irNameList ? irNameList.value.split(/\r?\n/).map((s)=>s.trim()).filter(Boolean) : [];
+        if (list.length && rnName) rnName.value = pickRandom(list);
+      });
+      rnRandomWeight && rnRandomWeight.addEventListener('click', () => {
+        const minVal = Math.max(1, irMin ? (Number(irMin.value) || 1) : 1);
+        const maxVal = Math.max(minVal, irMax ? (Number(irMax.value) || minVal) : minVal);
+        if (rnWeight) rnWeight.value = String(Math.floor(minVal + Math.random() * (maxVal - minVal + 1)));
+      });
       if (btnSaveConfig) btnSaveConfig.addEventListener('click', async () => {
         if (!currentConfig) return;
         const updated = { ...currentConfig };
@@ -669,6 +2762,30 @@
           log(String(e?.message || e));
         }
       });
+      // Console toggle
+      const consoleCard = document.getElementById('console-card');
+      const btnToggleConsole = document.getElementById('btn-toggle-console');
+      if (btnToggleConsole && consoleCard) {
+        btnToggleConsole.addEventListener('click', () => {
+          const pre = consoleCard.querySelector('pre');
+          const hidden = pre.style.display === 'none';
+          pre.style.display = hidden ? 'block' : 'none';
+          btnToggleConsole.textContent = hidden ? 'Hide' : 'Show';
+        });
+      }
+
+      // Project label helpers
+      const projectLabel = document.getElementById('current-project-label');
+      const projectMini = document.getElementById('current-project-mini');
+      function setProjectLabels(dir) {
+        const name = String(dir || '').replace(/[\\/]+$/, '').split(/\\|\//).pop() || 'No project';
+        if (projectLabel) projectLabel.textContent = dir ? name : 'No project';
+        if (projectMini) projectMini.textContent = dir || 'No project selected';
+      }
+      async function refreshProjectLabels() {
+        const base = await window.foundry.getProjectDir();
+        setProjectLabels(base && base.projectDir ? base.projectDir : '');
+      }
       // Gallery interactions
       previews.addEventListener('click', (e) => {
         const el = e.target.closest('.thumb');
@@ -692,6 +2809,67 @@
         if (e.key === 'ArrowRight') nav(1);
       });
 
+      // Brand logo click: go to launcher view
+      const brandHome = document.getElementById('brand-home');
+      if (brandHome) {
+        brandHome.addEventListener('click', () => {
+          const viewLauncher = document.getElementById('view-launcher');
+          const viewApp = document.getElementById('view-app');
+          if (viewLauncher && viewApp) {
+            viewLauncher.classList.remove('hidden');
+            viewApp.classList.add('hidden');
+          }
+          // Clear active tab highlight when returning home
+          document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        });
+      }
+
+      // Hover intent to keep brand popout open while moving mouse
+      (function setupBrandPopout() {
+        const brand = document.getElementById('brand');
+        const header = document.querySelector('header');
+        const popout = brand ? brand.querySelector('.brand-popout') : null;
+        const handle = null; // handle visually hidden in header redesign
+        if (!brand || !popout || !header) return;
+        let hideTimer = null;
+        function position() {
+          const b = brand.getBoundingClientRect();
+          const h = header.getBoundingClientRect();
+          const topBelowHeader = Math.round(h.bottom);
+          const leftOfBrand = Math.round(b.left);
+          if (handle) {
+            handle.style.top = topBelowHeader + 'px';
+            handle.style.left = leftOfBrand + 'px';
+            handle.style.width = Math.min(Math.round(b.width), 200) + 'px';
+          }
+          popout.style.top = (topBelowHeader + 8) + 'px';
+          popout.style.left = leftOfBrand + 'px';
+        }
+        function open() {
+          position();
+          popout.style.opacity = '1';
+          popout.style.pointerEvents = 'auto';
+          popout.style.transform = 'translateY(0)';
+          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        }
+        function scheduleClose() {
+          if (hideTimer) clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            popout.style.opacity = '0';
+            popout.style.pointerEvents = 'none';
+            popout.style.transform = 'translateY(-4px)';
+          }, 160);
+        }
+        ;[brand, popout].forEach(el => {
+          if (!el) return;
+          el.addEventListener('mouseenter', open);
+          el.addEventListener('mouseleave', scheduleClose);
+        });
+        window.addEventListener('resize', position);
+        window.addEventListener('scroll', position, { passive: true });
+        position();
+      })();
+
       // Also handle mouse wheel horizontally for navigation
       lightbox.addEventListener('wheel', (e) => {
         if (!lightbox.classList.contains('open')) return;
@@ -705,46 +2883,174 @@
       document.getElementById('btn-choose').onclick = async () => {
         const res = await window.foundry.chooseProjectDir();
         log(res.ok ? ('Project: ' + res.projectDir) : res.error);
-        if (res.ok) { await loadConfigUI(); await refreshPreviews(); }
+        if (res.ok) { addRecent(res.projectDir); await window.foundry.setProjectDir(res.projectDir); await loadConfigUI(); await refreshPreviews(); await refreshProjectLabels(); }
       }
       document.getElementById('btn-init').onclick = async () => {
+        startProgress('Initializing project…', 4000);
         const res = await window.foundry.run(['init']);
         log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Project initialized' : 'Init failed', res.ok);
         await loadConfigUI();
       }
       document.getElementById('btn-validate').onclick = async () => {
+        startProgress('Validating rules…', 3000);
         const res = await window.foundry.run(['validate']);
         log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Validation complete' : 'Validation failed', res.ok);
       }
       document.getElementById('btn-preview').onclick = async () => {
-        const c = document.getElementById('preview-count').value;
+        const cRaw = document.getElementById('preview-count').value;
+        const cNum = Math.max(1, Number(cRaw) || 9);
         // Randomize seed so previews differ every run
         const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        const res = await window.foundry.run(['preview', '--count', String(c), '--seed', seed]);
+        startProgress('Generating previews…', Math.min(60000, 500 * cNum + 2000));
+        const res = await window.foundry.run(['preview', '--count', String(cNum), '--seed', seed]);
         log((res.ok ? res.stdout : res.error) + (res.ok ? ('\nSeed: ' + seed) : ''));
+        endProgress(res.ok ? 'Previews generated' : 'Preview failed', res.ok);
         // Give the FS a moment to flush writes on Windows
         setTimeout(() => refreshPreviews(), 200);
       }
       document.getElementById('btn-build').onclick = async () => {
-        const c = document.getElementById('build-count').value;
-        const res = await window.foundry.run(['build', '--count', String(c)]);
+        const cRaw = document.getElementById('build-count').value;
+        const cNum = Math.max(1, Number(cRaw) || 10);
+        startProgress('Building collection…', Math.min(120000, 700 * cNum + 3000));
+        const res = await window.foundry.run(['build', '--count', String(cNum)]);
         log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Build complete' : 'Build failed', res.ok);
         refreshPreviews();
       }
       document.getElementById('btn-upload').onclick = async () => {
         const provider = document.getElementById('upload-provider').value;
         const conc = document.getElementById('upload-concurrency').value;
+        startProgress('Uploading assets…', 20000);
         const res = await window.foundry.run(['upload', '--provider', String(provider), '--concurrency', String(conc)]);
         log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Upload complete' : 'Upload failed', res.ok);
       }
       document.getElementById('btn-mint').onclick = async () => {
         const from = document.getElementById('mint-from').value;
-        const count = document.getElementById('mint-count').value;
-        const res = await window.foundry.run(['mint', '--from', String(from), '--count', String(count)]);
+        const countRaw = document.getElementById('mint-count').value;
+        const countNum = Math.max(1, Number(countRaw) || 1);
+        startProgress('Minting…', Math.min(180000, 5000 * countNum));
+        const res = await window.foundry.run(['mint', '--from', String(from), '--count', String(countNum)]);
         log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Mint complete' : 'Mint failed', res.ok);
       }
-      // Try to load config on startup (if previously selected)
-      loadConfigUI().then(() => { updateAssetCounts(); refreshPreviews(); });
+      // Open project folder
+      const btnOpenProject = document.getElementById('btn-open-project');
+      if (btnOpenProject) btnOpenProject.addEventListener('click', async () => {
+        const base = await window.foundry.getProjectDir();
+        if (base && base.projectDir) await window.foundry.openInExplorer(base.projectDir);
+      });
+      // Enhanced UI Options wiring
+      function applyUiFromStorage() {
+        const theme = localStorage.getItem('ui:theme') || 'dark';
+        const accent = localStorage.getItem('ui:accent') || '#6a8dff';
+        const radius = Number(localStorage.getItem('ui:radius') || '14');
+        const blur = Number(localStorage.getItem('ui:blur') || '12');
+
+        const noise = Number(localStorage.getItem('ui:noise') || '0.03');
+        const glow = Number(localStorage.getItem('ui:glow') || '0.3');
+        
+        document.documentElement.classList.toggle('theme-light', theme === 'light');
+        
+        // Update form controls
+        document.getElementById('opt-theme') && (document.getElementById('opt-theme').value = theme);
+        document.getElementById('opt-accent') && (document.getElementById('opt-accent').value = accent);
+        document.getElementById('opt-radius') && (document.getElementById('opt-radius').value = String(radius));
+        document.getElementById('opt-blur') && (document.getElementById('opt-blur').value = String(blur));
+        document.getElementById('opt-noise') && (document.getElementById('opt-noise').value = String(noise));
+        document.getElementById('opt-glow') && (document.getElementById('opt-glow').value = String(glow));
+        
+        // Apply CSS variables
+        document.documentElement.style.setProperty('--accent', accent);
+        const accent2 = accent === '#6a8dff' ? '#ff6adf' : '#6a8dff';
+        document.documentElement.style.setProperty('--accent-2', accent2);
+        document.documentElement.style.setProperty('--radius', radius + 'px');
+        document.documentElement.style.setProperty('--radius-sm', Math.max(6, radius - 6) + 'px');
+        document.documentElement.style.setProperty('--radius-lg', Math.min(28, radius + 6) + 'px');
+        document.documentElement.style.setProperty('--radius-xl', Math.min(32, radius + 14) + 'px');
+        document.documentElement.style.setProperty('--blur', blur + 'px');
+        document.documentElement.style.setProperty('--blur-subtle', Math.max(2, blur - 6) + 'px');
+        document.documentElement.style.setProperty('--blur-heavy', Math.min(24, blur + 8) + 'px');
+        document.documentElement.style.setProperty('--noise-opacity', String(noise));
+        document.documentElement.style.setProperty('--accent-glow', `0 0 ${20 * glow}px rgba(106,141,255,${glow})`);
+        
+        // Add floating class to eligible elements (excluding large windows) - always enabled
+        // Apply to small elements only
+        document.querySelectorAll('.proj-card, .sidebar-group, .thumb').forEach(el => {
+          if (!el.classList.contains('floating')) el.classList.add('floating');
+        });
+        
+        // Apply to gallery cards, but exclude large ones
+        document.querySelectorAll('.gallery-card').forEach(el => {
+          // Skip large gallery cards (main preview gallery, console, minting, and settings)
+          const isMainPreviewGallery = el.querySelector('.gallery-grid') !== null;
+          const isConsoleCard = el.id === 'console-card';
+          const isLargeSettingsCard = el.querySelector('.gallery-header h3') && 
+                                     el.querySelector('.gallery-header h3').textContent === 'Customization';
+          const isMintingCard = el.querySelector('.gallery-header h3') && 
+                               el.querySelector('.gallery-header h3').textContent === 'Minting';
+          
+          // Only apply floating to small gallery cards (like stats cards)
+          if (!isMainPreviewGallery && !isConsoleCard && !isLargeSettingsCard && !isMintingCard) {
+            if (!el.classList.contains('floating')) el.classList.add('floating');
+          }
+        });
+      }
+      const optTheme = document.getElementById('opt-theme');
+      const optAccent = document.getElementById('opt-accent');
+      const optRadius = document.getElementById('opt-radius');
+      const optBlur = document.getElementById('opt-blur');
+      const optNoise = document.getElementById('opt-noise');
+      const optGlow = document.getElementById('opt-glow');
+      const optReset = document.getElementById('opt-reset');
+      
+      optTheme && optTheme.addEventListener('change', (e) => { localStorage.setItem('ui:theme', e.target.value); applyUiFromStorage(); });
+      optAccent && optAccent.addEventListener('change', (e) => { localStorage.setItem('ui:accent', e.target.value); applyUiFromStorage(); });
+      optRadius && optRadius.addEventListener('input', (e) => { localStorage.setItem('ui:radius', e.target.value); applyUiFromStorage(); });
+      optBlur && optBlur.addEventListener('input', (e) => { localStorage.setItem('ui:blur', e.target.value); applyUiFromStorage(); });
+      optNoise && optNoise.addEventListener('input', (e) => { localStorage.setItem('ui:noise', e.target.value); applyUiFromStorage(); });
+      optGlow && optGlow.addEventListener('input', (e) => { localStorage.setItem('ui:glow', e.target.value); applyUiFromStorage(); });
+      optReset && optReset.addEventListener('click', () => { 
+        localStorage.removeItem('ui:theme'); 
+        localStorage.removeItem('ui:accent'); 
+        localStorage.removeItem('ui:radius'); 
+        localStorage.removeItem('ui:blur'); 
+        localStorage.removeItem('ui:noise');
+        localStorage.removeItem('ui:glow');
+        applyUiFromStorage(); 
+      });
+
+      // Startup: decide view, render recents, load config if project set
+      (async function startup() {
+        applyUiFromStorage();
+        renderRecents();
+        const base = await window.foundry.getProjectDir();
+        if (base && base.projectDir) {
+          showView('app');
+          await loadConfigUI();
+          await updateAssetCounts();
+          await refreshPreviews();
+          switchTab(localStorage.getItem('ui:lastTab') || 'main');
+          switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
+          await refreshProjectLabels();
+        } else {
+          showView('launcher');
+        }
+      })();
+
+      // Populate stats from config
+      function updateStatsFromConfig(cfg) {
+        const statCollection = document.getElementById('stat-collection');
+        const statEditions = document.getElementById('stat-editions');
+        const statDimensions = document.getElementById('stat-dimensions');
+        const statLayers = document.getElementById('stat-layers');
+        if (statCollection) statCollection.textContent = (cfg.name || '—') + (cfg.symbol ? ' (' + cfg.symbol + ')' : '');
+        if (statEditions) statEditions.textContent = String(cfg.editionSize || '—');
+        if (statDimensions) statDimensions.textContent = (cfg.image?.width && cfg.image?.height) ? (cfg.image.width + ' × ' + cfg.image.height) : '—';
+        if (statLayers) statLayers.textContent = String((cfg.layers || []).length || 0);
+      }
     </script>
   </body>
   <script>

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+#### v3.0.0 — 2025-08-16
+
+- CLI
+  - CLI version is now sourced from `package.json` at runtime
+  - Improved help text, defaults, and error messages
+- Documentation
+  - README restructured for clarity with command summaries and config highlights
+  - Added guidance on `previewOutDir` and RPC usage in `mint`
+- Monorepo
+  - Bumped all packages to 3.0.0
+  - Minor stability and DX improvements across commands
+
+Note: Requires Node.js >= 18.18 and pnpm 9.x.
+
 #### v2.0.0 — 2025-08-16
 
 - Core

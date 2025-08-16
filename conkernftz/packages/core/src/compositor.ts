@@ -258,9 +258,6 @@ function blendPixelArrays(
     if (sa === 0) {
       // No contribution from source
       cr = br; cg = bg; cb = bb;
-    } else if (mode === 'clear') {
-      // Erase where source is present
-      cr = br; cg = bg; cb = bb;
     } else {
       // Compute blended color (ignoring alpha), then alpha composite
       const f = getBlendFunc(mode);
