@@ -37,13 +37,18 @@ This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
 ### Quick start
 
 ```bash
-cd conkernftz
+cd conkernftz/conkernftz
 pnpm install
 pnpm build
 
 # Run the CLI (from the workspace root)
 pnpm cli -- --help
 ```
+# Run the Electron GUI
+
+
+pnpm -C packages/ui build
+pnpm -C packages/ui start
 
 ### CLI commands
 
