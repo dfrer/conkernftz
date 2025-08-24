@@ -29,12 +29,16 @@ function copyDirRecursive(srcDir, dstDir) {
 copyDirRecursive(assetsSrcDir, assetsDstDir);
 if (fs.existsSync(assetsSrcDir)) console.log('Copied assets to dist');
 
-// Also pull root-level logos into dist/assets if available
+// Also pull root-level logos and help icon into dist/assets if available
 const repoRoot = path.join(__dirname, '..', '..', '..', '..');
 const root512 = path.join(repoRoot, '512x512.png');
 const root1024 = path.join(repoRoot, '1024x1024.png');
+const rootHelpIconJpg = path.join(repoRoot, 'helpicon.jpg');
+const rootHelpIconPng = path.join(repoRoot, 'helpicon.png');
 const dstLogo512 = path.join(assetsDstDir, 'logo-512.png');
 const dstLogo1024 = path.join(assetsDstDir, 'logo-1024.png');
+const dstHelpIconJpg = path.join(assetsDstDir, 'helpicon.jpg');
+const dstHelpIconPng = path.join(assetsDstDir, 'helpicon.png');
 try {
   // Only copy root-level logos if not already provided by UI assets
   if (fs.existsSync(root512)) {
@@ -54,6 +58,16 @@ try {
     } else {
       console.log('Skipped root 1024x1024.png (dist/assets/logo-1024.png already exists)');
     }
+  }
+  if (fs.existsSync(rootHelpIconPng)) {
+    fs.mkdirSync(assetsDstDir, { recursive: true });
+    fs.copyFileSync(rootHelpIconPng, dstHelpIconPng);
+    console.log('Copied helpicon.png -> dist/assets/helpicon.png');
+  }
+  if (fs.existsSync(rootHelpIconJpg)) {
+    fs.mkdirSync(assetsDstDir, { recursive: true });
+    fs.copyFileSync(rootHelpIconJpg, dstHelpIconJpg);
+    console.log('Copied helpicon.jpg -> dist/assets/helpicon.jpg');
   }
 } catch (e) {
   console.warn('Failed to copy root logos:', e && e.message ? e.message : e);

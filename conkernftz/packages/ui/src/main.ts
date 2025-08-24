@@ -232,6 +232,16 @@ ipcMain.handle('foundry:openInExplorer', async (_evt, relativePath: string) => {
   }
 });
 
+ipcMain.handle('foundry:openExternal', async (_evt, url: string) => {
+  try {
+    if (!url || typeof url !== 'string') return { ok: false, error: 'Invalid URL' };
+    await shell.openExternal(url);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
 // List directory (simple helper for debugging paths)
 ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
   try {

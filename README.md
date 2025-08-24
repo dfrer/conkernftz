@@ -4,11 +4,11 @@ conkernftz is a modern, type‑safe NFT art foundry. It replaces legacy generato
 
 This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
 
-### What's new in v3.0.0
+### What's new in v4.0.0
 
-- Core and CLI documentation overhauled for clarity and completeness
-- CLI now reports its version from `package.json` (no more hard‑coded version)
-- General polish to messages and defaults; stability and DX improvements
+- Documentation refresh across README, CHANGELOG, and contributing guide
+- Added v4 release notes and clarified configuration and command usage
+- General polish to examples and wording; stability and DX improvements
 
 ### Features
 

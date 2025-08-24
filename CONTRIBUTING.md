@@ -40,6 +40,7 @@ Examples:
 - `feat(core): add linear-light blend mode to CPU compositor`
 - `fix(cli): handle missing upload manifest with actionable message`
 - `docs(readme): clarify mint RPC configuration`
+- `docs(changelog): add v4.0.0`
 
 #### Pull requests
 

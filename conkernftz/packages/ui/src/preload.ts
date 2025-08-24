@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('foundry', {
   openInExplorer: (relativePath: string) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
   listDir: (relativePath: string) => ipcRenderer.invoke('foundry:listDir', relativePath),
   renameFiles: (pairs: { from: string; to: string }[]) => ipcRenderer.invoke('foundry:renameFiles', pairs),
+  openExternal: (url: string) => ipcRenderer.invoke('foundry:openExternal', url),
 });
 
 

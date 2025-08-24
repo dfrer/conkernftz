@@ -16,6 +16,7 @@ declare global {
       openInExplorer(relativePath: string): Promise<{ ok: boolean; error?: string }>;
       listDir(relativePath: string): Promise<{ ok: boolean; items?: string[]; error?: string }>;
       renameFiles(pairs: { from: string; to: string }[]): Promise<{ ok: boolean; renamed?: number; error?: string }>;
+      openExternal(url: string): Promise<{ ok: boolean; error?: string }>;
     };
   }
 }

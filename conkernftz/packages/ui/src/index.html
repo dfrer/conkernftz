@@ -646,7 +646,7 @@
           0 4px 16px rgba(0,0,0,0.1),
           0 2px 8px rgba(0,0,0,0.06),
           0 1px 4px rgba(0,0,0,0.04);
-        overflow: visible;
+        overflow: hidden;
       }
       
       .proj-card::before {
@@ -1185,6 +1185,91 @@
       .subtab-btn.active::before {
         opacity: 0;
       }
+
+      /* Help System */
+      .helpable { position: relative; }
+      .help-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        margin-left: 10px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: none;
+        user-select: none;
+        overflow: hidden;
+        vertical-align: middle;
+      }
+      .help-icon::before {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-image: url('assets/helpicon.png');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        border-radius: 50%;
+      }
+      .help-icon[data-img='1']::before { display: none; }
+      .help-icon img { width:100%; height:100%; object-fit: contain; display:block; border-radius:50%; background: transparent; }
+      .help-icon[data-fallback='1']::before { content: '?'; display:flex; align-items:center; justify-content:center; background-image:none; color:#fff; font-weight:700; }
+      .help-icon:hover { filter: brightness(1.1); }
+      .help-popover {
+        position: fixed;
+        max-width: 360px;
+        z-index: 99999;
+        background: var(--panel-floating);
+        color: var(--text);
+        border: 1px solid var(--border-bright);
+        border-radius: 10px;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 12px 24px rgba(0,0,0,0.3);
+        padding: 12px 12px 10px 12px;
+      }
+      .help-popover .hp-title {
+        font-weight: 700;
+        margin: 0 0 6px 0;
+      }
+      .help-popover .hp-body { font-size: 13px; opacity: .95; }
+      .help-popover .hp-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .help-popover .hp-link {
+        background: transparent;
+        color: var(--accent);
+        border: none;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .help-overlay {
+        position: fixed;
+        inset: 0;
+        background: transparent;
+        z-index: 99990;
+        pointer-events: auto;
+      }
+      /* Help Page */
+      #tab-help .help-page { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+      #tab-help .help-toc { position: sticky; top: 16px; align-self: start; }
+      #tab-help .help-toc .toc-card { background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding:12px; }
+      #tab-help .help-toc a { display:block; color: var(--text); text-decoration:none; opacity:.85; padding:6px 8px; border-radius:8px; }
+      #tab-help .help-toc a:hover { background: color-mix(in oklab, var(--accent-soft) 40%, transparent); opacity:1; }
+      #tab-help .help-content .card { background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding:16px; }
+      #tab-help .help-content h2 { margin: 0 0 8px 0; }
+      #tab-help .help-content h3 { margin: 14px 0 6px 0; }
+      #tab-help .help-content p { margin: 6px 0; opacity:.95; }
+      #tab-help .help-content ul { margin: 6px 0 6px 18px; }
+      #tab-help .badge-link { display:inline-block; padding:2px 6px; border-radius: 6px; background: var(--accent-soft); border:1px solid var(--border); }
       
       .subpane { 
         padding: 12px 8px; 
@@ -1450,28 +1535,28 @@
             <div class="actions-grid">
       <div class="sidebar">
                 <div class="sidebar-group">
-                  <div class="group-title">Project</div>
+                  <div class="group-title" data-help="sidebar-project">Project</div>
                   <div id="current-project-mini" class="mini muted">No project selected</div>
                   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
                     <button id="btn-choose">Choose</button>
                     <button id="btn-open-project" class="btn-secondary">Open Folder</button>
         </div>
                   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-                    <button id="btn-init" class="btn-ghost">Init</button>
-                    <button id="btn-validate" class="btn-ghost">Validate</button>
+                    <button id="btn-init" class="btn-ghost" data-help="init">Init</button>
+                    <button id="btn-validate" class="btn-ghost" data-help="validate">Validate</button>
         </div>
         </div>
                 <div class="sidebar-group">
-                  <div class="group-title">Generate</div>
+                  <div class="group-title" data-help="sidebar-generate">Generate</div>
           <label>Preview Count</label>
           <input id="preview-count" type="number" value="9"/>
-                  <button id="btn-preview" class="btn-primary">Generate Previews</button>
+                  <button id="btn-preview" class="btn-primary" data-help="preview">Generate Previews</button>
         </div>
                 <div class="sidebar-group">
-                  <div class="group-title">Build</div>
+                  <div class="group-title" data-help="sidebar-build">Build</div>
           <label>Build Count</label>
           <input id="build-count" type="number" value="10"/>
-                  <button id="btn-build" class="btn-primary">Build Collection</button>
+                  <button id="btn-build" class="btn-primary" data-help="build">Build Collection</button>
         </div>
       </div>
       <div class="content">
@@ -1492,14 +1577,14 @@
                 </div>
                 <div id="main-overview" class="subpane">
         <div class="gallery-card">
-          <div class="gallery-header">
+          <div class="gallery-header" data-help="previews">
             <h3 style="margin:0;">Previews</h3>
             <div style="display:flex; align-items:center; gap:8px;">
               <button id="btn-open-previews" class="btn-secondary" style="padding:6px 10px; font-size:12px;">Open folder</button>
               <div id="gallery-meta" style="opacity:.75; font-size:12px;"></div>
             </div>
           </div>
-          <div id="previews" class="gallery-grid"></div>
+          <div id="previews" class="gallery-grid" data-help="preview-grid"></div>
                     <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" to generate sample images.</div>
         </div>
                   <div style="margin-top:16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
@@ -1529,7 +1614,7 @@
         </div>
                 </div>
                 <div id="main-configure" class="subpane hidden">
-          <h3>Project Config</h3>
+          <h3 data-help="config">Project Config</h3>
           <div id="config-editor" style="display:flex; flex-direction: column; gap: 12px;">
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
               <div>
@@ -1558,7 +1643,7 @@
               </div>
             </div>
 
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-rarity">
               <legend>Rarity</legend>
               <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                 <div>
@@ -1575,7 +1660,7 @@
               </div>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-dna">
               <legend>Uniqueness (DNA)</legend>
               <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px;">
                 <div>
@@ -1589,7 +1674,7 @@
               </div>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;">
+            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-layers">
               <legend>Layers</legend>
               <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
                 <div style="opacity:.85;">Configure order, paths, and rarity strategy per layer.</div>
@@ -1618,7 +1703,7 @@
               </table>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;">
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;" data-help="config-renamer">
               <legend>Image Renamer</legend>
               <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
                 <div style="opacity:.85;">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
@@ -1734,7 +1819,7 @@
                 </div>
                 <div id="main-reports" class="subpane hidden">
             <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
-              <legend>Rarity Report</legend>
+              <legend data-help="rarity-report">Rarity Report</legend>
               <div style="display:flex; gap:8px; align-items:center;">
                 <button id="btn-open-rarity" type="button" style="background:#1f6feb;">Open rarity.json</button>
                 <span style="opacity:.8;">Generated after Build</span>
@@ -1745,25 +1830,54 @@
         </div>
             </div>
           </section>
+          <section id="tab-about" class="tabpane hidden">
+            <div class="content" style="padding: 16px;">
+              <div class="gallery-card">
+                <div class="gallery-header">
+                  <h3 style="margin:0;">About</h3>
+                </div>
+                <div style="display:grid; gap:12px;">
+                  <p style="margin:0; opacity:.95;">
+                    <strong>CONKERNFTZ</strong> is a creator toolkit for layer-based generative art and NFT collections. 
+                    It helps you configure layers and rarity, preview outputs, build full editions with metadata, and prepare assets for upload and minting.
+                  </p>
+                  <p style="margin:0; opacity:.95;">
+                    Built and designed by <strong>Conker</strong>.
+                  </p>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                    <a id="about-twitter" href="https://twitter.com/conkernasa" rel="noreferrer noopener" class="header-btn" style="text-decoration:none;">
+                      <span>Follow @conkernasa</span>
+                    </a>
+                    <a id="about-site" href="https://northamericansurveillanceassociation.com" rel="noreferrer noopener" class="header-btn nasa-btn" style="text-decoration:none;">
+                      <span>northamericansurveillanceassociation.com</span>
+                    </a>
+                  </div>
+                  <div style="opacity:.75; font-size:12px; margin-top:8px;">
+                    Links open in your default browser.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
           <section id="tab-mint" class="tabpane hidden">
             <div style="display:grid; grid-template-columns: minmax(260px, 360px) 1fr; gap:16px;">
-              <div class="sidebar">
+              <div class="sidebar" data-help="sidebar-mint">
                 <div>
-                  <label>Upload Provider</label>
+                  <label data-help="upload-provider">Upload Provider</label>
                   <select id="upload-provider">
                     <option value="arweave">Arweave</option>
                     <option value="ipfs">IPFS</option>
                   </select>
-                  <label>Concurrency</label>
+                  <label data-help="upload-concurrency">Concurrency</label>
                   <input id="upload-concurrency" type="number" value="6"/>
-                  <button id="btn-upload">Upload</button>
+                  <button id="btn-upload" data-help="upload">Upload</button>
                 </div>
                 <div style="margin-top:12px;">
-                  <label>Mint From</label>
+                  <label data-help="mint-from">Mint From</label>
                   <input id="mint-from" type="number" value="1"/>
-                  <label>Count</label>
+                  <label data-help="mint-count">Count</label>
                   <input id="mint-count" type="number" value="1"/>
-                  <button id="btn-mint">Mint</button>
+                  <button id="btn-mint" data-help="mint">Mint</button>
                 </div>
               </div>
               <div class="content">
@@ -1779,16 +1893,16 @@
           </section>
           <section id="tab-options" class="tabpane hidden">
             <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
-              <div class="sidebar">
+              <div class="sidebar" data-help="sidebar-options">
                 <div>
-                  <label>Theme</label>
+                  <label data-help="ui-theme">Theme</label>
                   <select id="opt-theme">
                     <option value="dark">Dark</option>
                     <option value="light">Light</option>
                   </select>
                 </div>
                 <div>
-                  <label>Accent</label>
+                  <label data-help="ui-accent">Accent</label>
                   <select id="opt-accent">
                     <option value="#6a8dff">Indigo</option>
                     <option value="#ff6adf">Magenta</option>
@@ -1799,20 +1913,20 @@
                   </select>
                 </div>
                 <div>
-                  <label>Corner Radius</label>
+                  <label data-help="ui-radius">Corner Radius</label>
                   <input id="opt-radius" type="range" min="8" max="22" value="14" />
                 </div>
                 <div>
-                  <label>Glass Blur</label>
+                  <label data-help="ui-blur">Glass Blur</label>
                   <input id="opt-blur" type="range" min="0" max="24" value="10" />
                 </div>
 
                 <div>
-                  <label>Background Noise</label>
+                  <label data-help="ui-noise">Background Noise</label>
                   <input id="opt-noise" type="range" min="0" max="0.1" step="0.01" value="0.03" />
                 </div>
                 <div>
-                  <label>Glow Intensity</label>
+                  <label data-help="ui-glow">Glow Intensity</label>
                   <input id="opt-glow" type="range" min="0" max="1" step="0.1" value="0.3" />
                 </div>
 
@@ -1836,6 +1950,25 @@
                       <div style="height: 120px; margin-top:8px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border:1px dashed color-mix(in oklab, var(--accent) 55%, var(--border));"></div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="tab-help" class="tabpane hidden">
+            <div class="help-page">
+              <aside class="help-toc">
+                <div class="toc-card">
+                  <div style="font-weight:700; margin-bottom:6px;">On this page</div>
+                  <nav id="help-toc"></nav>
+                </div>
+              </aside>
+              <div class="help-content">
+                <div class="card">
+                  <div class="gallery-header">
+                    <h3 style="margin:0;">Help & Documentation</h3>
+                    <div style="opacity:.75; font-size:12px;">Comprehensive guide to using CONKERNFTZ. Click any <span class="badge-link">?</span> icon in the app to see context help.</div>
+                  </div>
+                  <div id="help-content"></div>
                 </div>
               </div>
             </div>
@@ -1919,8 +2052,10 @@
       const tabMain = document.getElementById('tab-main');
       const tabMint = document.getElementById('tab-mint');
       const tabOptions = document.getElementById('tab-options');
+      const tabHelp = document.getElementById('tab-help');
+      const tabAbout = document.getElementById('tab-about');
       function switchTab(name) {
-        const map = { main: tabMain, mint: tabMint, options: tabOptions };
+        const map = { main: tabMain, mint: tabMint, options: tabOptions, help: tabHelp, about: tabAbout };
         Object.entries(map).forEach(([key, pane]) => {
           if (!pane) return;
           if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
@@ -1931,6 +2066,12 @@
         if (name === 'main') {
           switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
         }
+        // Build help content when entering Help tab
+        if (name === 'help') {
+          try { buildHelpPage(); } catch {}
+        }
+        // Re-attach help icons in the newly shown tab
+        attachHelpAnchors();
       }
       tabButtons.forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
       function showView(which) {
@@ -1940,6 +2081,29 @@
       document.getElementById('btn-switch-project').addEventListener('click', () => showView('launcher'));
       const logoOverlayEl = document.querySelector('.logo-overlay');
       logoOverlayEl && logoOverlayEl.addEventListener('click', () => showView('launcher'));
+
+      // External links (NASA + Twitter) and brand popup
+      const btnNasa = document.getElementById('btn-nasa');
+      if (btnNasa) {
+        btnNasa.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.foundry.openExternal('https://northamericansurveillanceassociation.com');
+        });
+      }
+      const aboutTwitter = document.getElementById('about-twitter');
+      if (aboutTwitter) {
+        aboutTwitter.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.foundry.openExternal('https://twitter.com/conkernasa');
+        });
+      }
+      const aboutSite = document.getElementById('about-site');
+      if (aboutSite) {
+        aboutSite.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.foundry.openExternal('https://northamericansurveillanceassociation.com');
+        });
+      }
 
       // Main subtabs
       const subtabButtons = Array.from(document.querySelectorAll('.subtab-btn'));
@@ -2070,6 +2234,9 @@
           switchTab(lastTab);
           switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
           setProjectLabels(dir);
+          // Build help content and attach contextual help icons
+          try { buildHelpPage(); } catch {}
+          attachHelpAnchors();
         } else {
           log(set.error || 'Failed to set project');
         }
@@ -3035,6 +3202,9 @@
           switchTab(localStorage.getItem('ui:lastTab') || 'main');
           switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
           await refreshProjectLabels();
+          // Build help content and attach contextual help icons
+          buildHelpPage();
+          attachHelpAnchors();
         } else {
           showView('launcher');
         }
@@ -3050,6 +3220,741 @@
         if (statEditions) statEditions.textContent = String(cfg.editionSize || '—');
         if (statDimensions) statDimensions.textContent = (cfg.image?.width && cfg.image?.height) ? (cfg.image.width + ' × ' + cfg.image.height) : '—';
         if (statLayers) statLayers.textContent = String((cfg.layers || []).length || 0);
+      }
+      // =====================
+      // Help System (4.0.0)
+      // =====================
+      const HELP_TOPICS = {
+        'sidebar-mint': {
+          title: 'Mint sidebar',
+          short: 'Upload and mint controls overview.',
+          body: `<p>Configure your upload provider and concurrency, then mint in batches. Use the main help for detailed provider setup.</p>`,
+          related: ['upload-provider','upload','mint']
+        },
+        'sidebar-options': {
+          title: 'Options sidebar',
+          short: 'Customize theme, accent, radius, blur, noise, and glow.',
+          body: `<p>These settings only affect the UI look and feel. Your choices are saved locally.</p>`,
+          related: ['ui-theme','ui-accent']
+        },
+        'sidebar-project': {
+          title: 'Sidebar: Project',
+          short: 'Select, open, initialize, and validate your working folder.',
+          body: `
+            <p>Use this group to pick or switch your project directory, open it in your OS, and run common setup tasks.</p>
+            <ul>
+              <li><b>Choose</b>: Pick a folder to work in.</li>
+              <li><b>Open Folder</b>: Opens the current project in your OS.</li>
+              <li><b>Init</b>: Create starter config and folders.</li>
+              <li><b>Validate</b>: Check config and assets for issues.</li>
+            </ul>
+          `,
+          related: ['projects','init','validate']
+        },
+        'sidebar-generate': {
+          title: 'Sidebar: Generate',
+          short: 'Preview sample outputs while iterating on art and rules.',
+          body: `
+            <p>Set a <b>Preview Count</b> and click <b>Generate Previews</b> to render a small gallery. Use this to catch alignment issues or rule conflicts early.</p>
+          `,
+          related: ['preview','rules']
+        },
+        'sidebar-build': {
+          title: 'Sidebar: Build',
+          short: 'Produce the final collection artifacts.',
+          body: `
+            <p>Use <b>Build Collection</b> to render final images and metadata for your entire edition. Consider building in batches during development.</p>
+          `,
+          related: ['build','rarity-report']
+        },
+        'previews': {
+          title: 'Previews panel',
+          short: 'Shows your latest generated previews.',
+          body: `
+            <p>Use this panel to visually inspect recent previews. Click an item to open the lightbox and navigate with the arrows.</p>
+          `,
+          related: ['preview-grid','preview']
+        },
+        'preview-grid': {
+          title: 'Previews grid',
+          short: 'Grid of preview thumbnails.',
+          body: `<p>The grid scales to your window size. Open the previews folder for raw files.</p>`
+        },
+        'config': {
+          title: 'Project Config overview',
+          short: 'Set collection metadata, image dimensions, and defaults.',
+          body: `
+            <ul>
+              <li><b>Name / Symbol</b>: Project identifiers.</li>
+              <li><b>Edition Size</b>: Total number of outputs.</li>
+              <li><b>Image Background</b>: Color or 'transparent'.</li>
+              <li><b>Width / Height</b>: Canvas size in pixels.</li>
+            </ul>
+          `
+        },
+        'config-rarity': {
+          title: 'Rarity settings',
+          short: 'Control filename parsing and default weights.',
+          body: `
+            <p>Set the filename delimiter used to parse weights (e.g., 'Trait#10.png'). Choose a default weight used when none is specified in filenames.</p>
+          `
+        },
+        'config-dna': {
+          title: 'Uniqueness (DNA)',
+          short: 'Hash-based uniqueness with optional ignore list.',
+          body: `
+            <p>We compute a DNA hash for each combination of traits. Add trait types to <b>Ignore Traits</b> to allow duplicates that differ only by those traits.</p>
+          `
+        },
+        'config-layers': {
+          title: 'Layers table',
+          short: 'Order, paths, strategies, and counts for each layer.',
+          body: `
+            <ul>
+              <li><b>Order</b>: Draw order from top to bottom.</li>
+              <li><b>Name</b>: Trait type (e.g., Background, Hat).</li>
+              <li><b>Path</b>: Folder containing assets for the layer.</li>
+              <li><b>Rarity</b>: Weighting strategy per layer.</li>
+              <li><b>Required</b>: Whether this layer must appear.</li>
+              <li><b>Blend / Opacity</b>: Composition settings.</li>
+              <li><b>Assets</b>: Discovered count for quick sanity checks.</li>
+            </ul>
+          `,
+          related: ['rules','rarity-report']
+        },
+        'config-renamer': {
+          title: 'Image Renamer',
+          short: 'Bulk/interactive rename and weight assignment.',
+          body: `
+            <p>Use bulk rename for patterns across many files, or open the step-through renamer for curated edits. Keep delimiter consistent with rarity settings.</p>
+          `,
+          related: ['renamer','config-rarity']
+        },
+        'projects': {
+          title: 'Projects: selecting and switching',
+          short: 'Pick a working directory to load and save your collection.',
+          body: `
+            <p>Open a project from the launcher or via the <b>Switch Project</b> button in the header. A project is any folder that contains a <code>foundry.config.json</code> file. All outputs (previews, builds, reports) are written inside this folder.</p>
+            <ul>
+              <li><b>Choose</b>: Select a folder to work in. If no config exists, you can initialize one.</li>
+              <li><b>Open Folder</b>: Opens the current project in your OS file explorer.</li>
+              <li><b>Recents</b>: The launcher lists folders you used recently.</li>
+            </ul>
+          `,
+          related: ['init','config']
+        },
+        'init': {
+          title: 'Init: create config and folders',
+          short: 'Generate a starter foundry.config.json and scaffold directories.',
+          body: `
+            <p>Use <b>Init</b> to create a default <code>foundry.config.json</code> and recommended folders. Edit the config in the <b>Main → Configure</b> subtab to set name, edition size, image dimensions, and layers.</p>
+            <ul>
+              <li>Re-run Init safely; it won’t overwrite existing files.</li>
+              <li>After editing the config, click <b>Validate</b> to check for issues.</li>
+            </ul>
+          `,
+          related: ['validate','config']
+        },
+        'validate': {
+          title: 'Validate: sanity-check configuration',
+          short: 'Checks your config and files for common mistakes.',
+          body: `
+            <p><b>Validate</b> parses your config, verifies layer folders, and ensures required fields are present. Fix any reported issues before building.</p>
+            <p>Validation also warns about improbable rarity distributions and missing assets.</p>
+          `,
+          related: ['rarity-report','rules']
+        },
+        'generate': {
+          title: 'Generate & Build',
+          short: 'Create images and metadata based on your rules.',
+          body: `
+            <p><b>Build</b> composes the collection using your layers, rules, and rarity weights. Outputs:</p>
+            <ul>
+              <li><code>outputs/images/</code>: Final images</li>
+              <li><code>outputs/json/</code>: Metadata files</li>
+              <li><code>reports/rarity.json</code>: Rarity statistics</li>
+            </ul>
+            <p>Use <b>Preview</b> for quick sample outputs while iterating on art and rules.</p>
+          `,
+          related: ['rarity-report','rules']
+        },
+        'preview': {
+          title: 'Generate Previews',
+          short: 'Quickly sample compositions before a full build.',
+          body: `
+            <p>Use <b>Generate Previews</b> to render a small set of images to validate layering, rules, and art alignment without committing to a full build.</p>
+            <ul>
+              <li>Adjust <b>Preview Count</b> to render more or fewer samples.</li>
+              <li>Open the previews folder to inspect outputs at full size.</li>
+            </ul>
+          `,
+          related: ['generate','rules']
+        },
+        'build': {
+          title: 'Build Collection',
+          short: 'Produce final images and metadata for the entire edition.',
+          body: `
+            <p><b>Build Collection</b> creates the complete set of images and JSON files using your configured layers, rarity weights, and rules.</p>
+            <ul>
+              <li>Run <b>Validate</b> first to catch configuration issues.</li>
+              <li>Review the <b>Rarity Report</b> after building and iterate as needed.</li>
+            </ul>
+          `,
+          related: ['rarity-report','upload']
+        },
+        'rules': {
+          title: 'Rules & Export',
+          short: 'Control trait compatibility, forced inclusions/exclusions, and file naming.',
+          body: `
+            <p>Define rules to prevent incompatible trait combos and to guide export naming formats. Rules are applied during <b>Build</b> and affect rarity distribution.</p>
+            <ul>
+              <li><b>Blocks</b>: Prevent two traits from appearing together.</li>
+              <li><b>Requires</b>: If trait A is chosen, enforce trait B.</li>
+              <li><b>Export</b>: Customize metadata fields and filenames.</li>
+            </ul>
+          `,
+          related: ['rarity-report']
+        },
+        'rarity-report': {
+          title: 'Rarity Report',
+          short: 'Understand trait frequencies and collection rarity.',
+          body: `
+            <p>After a successful <b>Build</b>, open <code>reports/rarity.json</code> to inspect trait counts and probabilities. Use this to balance your collection before mint.</p>
+            <ul>
+              <li>Rebuild after changing weights or rules to update the report.</li>
+              <li>Use the Renamer to normalize inconsistent trait names.</li>
+            </ul>
+          `,
+          related: ['generate','renamer']
+        },
+        'renamer': {
+          title: 'Step-through Renamer',
+          short: 'Batch rename assets and set weights interactively.',
+          body: `
+            <p>The Renamer lets you step through images, update base names, adjust rarity weight, and include layer prefixes. Apply changes and continue to the next item.</p>
+            <ul>
+              <li><b>Random Name</b> and <b>Random Weight</b> options help explore alternatives.</li>
+              <li>Use <b>Delimiter</b> to control how traits are parsed from filenames.</li>
+            </ul>
+          `,
+          related: ['rarity-report']
+        },
+        'upload-provider': {
+          title: 'Upload Provider',
+          short: 'Choose where to host your images and metadata.',
+          body: `
+            <p>Select <b>Arweave</b> or <b>IPFS</b> to upload build outputs. Provider settings may require environment credentials or a funded wallet (for Arweave Bundlr).</p>
+          `,
+          related: ['upload','mint']
+        },
+        'upload-concurrency': {
+          title: 'Upload Concurrency',
+          short: 'Number of parallel uploads.',
+          body: `<p>Higher values speed up uploads but may hit rate limits. Start with 4–8 and adjust based on your network and provider stability.</p>`,
+          related: ['upload']
+        },
+        'upload': {
+          title: 'Upload',
+          short: 'Send outputs/images and outputs/json to your provider.',
+          body: `<p>Uploads the built assets. Ensure you have run <b>Build</b> and reviewed the <b>Rarity Report</b> first.</p>`,
+          related: ['generate','mint']
+        },
+        'mint-from': {
+          title: 'Mint From',
+          short: 'First token index to mint.',
+          body: `<p>Controls the starting index for minting. Use to mint in batches or resume after an interruption.</p>`,
+          related: ['mint']
+        },
+        'mint-count': {
+          title: 'Mint Count',
+          short: 'How many tokens to mint in one action.',
+          body: `<p>Mint in small batches to monitor network fees and success. Combine with <b>Mint From</b> to continue across ranges.</p>`,
+          related: ['mint']
+        },
+        'mint': {
+          title: 'Mint',
+          short: 'Creates tokens on-chain using your uploaded assets.',
+          body: `<p>After successful upload, mint tokens using your chain’s tooling. Configure chain settings in your environment; the UI will expand with chain-specific controls in future versions.</p>`,
+          related: ['upload']
+        },
+        'ui-theme': {
+          title: 'Theme',
+          short: 'Switch between dark and light modes.',
+          body: `<p>Use <b>Options</b> → <b>Theme</b> to toggle. Your choice is saved locally.</p>`,
+          related: ['ui-accent']
+        },
+        'ui-accent': {
+          title: 'Accent',
+          short: 'Primary highlight colors used across the UI.',
+          body: `<p>Pick an accent pair to suit your style. This affects buttons, focus states, and glows.</p>`,
+          related: ['ui-theme']
+        },
+        'ui-radius': {
+          title: 'Corner Radius',
+          short: 'Adjust rounded corners for panels and controls.',
+          body: `<p>Personal preference only; does not impact generated art.</p>`
+        },
+        'ui-blur': {
+          title: 'Glass Blur',
+          short: 'Controls background blur intensity.',
+          body: `<p>Higher blur increases depth at the cost of GPU usage.</p>`
+        },
+        'ui-noise': {
+          title: 'Background Noise',
+          short: 'Subtle texture across the UI background.',
+          body: `<p>Use to taste; set to 0 for absolute clean look.</p>`
+        },
+        'ui-glow': {
+          title: 'Glow Intensity',
+          short: 'Accent glow around interactive elements.',
+          body: `<p>Lower values reduce visual emphasis; higher increases vibrancy.</p>`
+        },
+        'shortcuts': {
+          title: 'Keyboard Shortcuts',
+          short: 'Speed up common tasks.',
+          body: `
+            <ul>
+              <li><b>Ctrl/Cmd + O</b>: Switch Project</li>
+              <li><b>Ctrl/Cmd + B</b>: Build</li>
+              <li><b>Ctrl/Cmd + P</b>: Preview</li>
+              <li><b>Ctrl/Cmd + ,</b>: Options</li>
+            </ul>
+          `
+        },
+        'troubleshooting': {
+          title: 'Troubleshooting',
+          short: 'Common issues and fixes.',
+          body: `
+            <ul>
+              <li><b>Build fails</b>: Run <b>Validate</b>, check missing layers, fix rule conflicts.</li>
+              <li><b>Uploads stall</b>: Lower <b>Concurrency</b>, check provider status/network.</li>
+              <li><b>Wrong rarity</b>: Adjust weights or rules, then rebuild and review the report.</li>
+            </ul>
+          `
+        },
+        'glossary': {
+          title: 'Glossary',
+          short: 'Terms used throughout the app.',
+          body: `
+            <ul>
+              <li><b>Edition</b>: Total number of tokens/images to generate.</li>
+              <li><b>Layer</b>: A visual stack level (e.g., Background, Body, Eyes).</li>
+              <li><b>Trait</b>: A concrete option within a layer (e.g., Eyes: Laser).</li>
+              <li><b>Weight</b>: Probability bias for choosing a trait.</li>
+              <li><b>DNA</b>: A hash representing a unique combo of chosen traits.</li>
+              <li><b>Rule</b>: Constraint that limits which trait combos are allowed.</li>
+              <li><b>Preview</b>: A quick render of sample editions for iteration.</li>
+              <li><b>Build</b>: Full render of all editions plus metadata and reports.</li>
+            </ul>
+          `
+        },
+        'launcher': {
+          title: 'Launcher',
+          short: 'Open, create, and manage recent projects.',
+          body: `
+            <p>Start on the Launcher to select a working folder. The app remembers recents and shows a quick grid.</p>
+            <ul>
+              <li><b>Browse…</b>: Pick an existing folder. If it lacks a config, you can <b>Init</b> later.</li>
+              <li><b>Create or add project</b>: Shortcut to pick a folder and initialize a project.</li>
+              <li><b>Recents</b>: Hover a card to <b>Open</b> or <b>Remove</b> it from the list.</li>
+            </ul>
+            <p>Projects are just folders containing a <code>foundry.config.json</code>.</p>
+          `
+        },
+        'file-structure': {
+          title: 'Recommended project structure',
+          short: 'Where configs, layers, outputs, and reports live.',
+          body: `
+            <p>Keep a clean layout for predictable builds and easier collaboration.</p>
+            <pre><code>project/
+  foundry.config.json
+  layers/
+    Background/
+      Blue.png
+      Red.png
+    Body/
+      Robot#5.png
+      Human#10.png
+    Eyes/
+      Laser#1.png
+      Calm#8.png
+  outputs/
+    images/
+    json/
+  reports/
+    rarity.json
+            </code></pre>
+            <ul>
+              <li>Layer subfolders can be named freely; ensure <b>Path</b> in the Layers table points to each.</li>
+              <li>Use rarity weights in filenames (e.g., <code>Trait#10.png</code>) or set <b>Default Weight</b>.</li>
+            </ul>
+          `
+        },
+        'layers-actions': {
+          title: 'Layers: Actions',
+          short: 'Manage layer folders and entries.',
+          body: `
+            <ul>
+              <li><b>Refresh Counts</b>: Re-scan layer folders to update <b>Assets</b> column.</li>
+              <li><b>Create Folders</b>: Make missing layer directories based on the table.</li>
+              <li><b>Add Layer</b>: Append a new row; set <b>Name</b>, <b>Path</b>, and strategy.</li>
+              <li><b>Save Config</b>: Persist all changes to <code>foundry.config.json</code>.</li>
+            </ul>
+            <p>Tip: Keep layer names stable to avoid breaking trait statistics across builds.</p>
+          `
+        },
+        'console': {
+          title: 'Console',
+          short: 'View logs, validation results, and task status.',
+          body: `
+            <p>The Console shows output from operations like <b>Validate</b>, <b>Preview</b>, and <b>Build</b>.</p>
+            <ul>
+              <li>Toggle visibility with the button in the <b>Overview</b> card.</li>
+              <li>Copy text by selecting it directly in the console panel.</li>
+            </ul>
+          `
+        },
+        'lightbox': {
+          title: 'Preview Lightbox',
+          short: 'Inspect previews at full size.',
+          body: `
+            <p>Click a preview to open the lightbox.</p>
+            <ul>
+              <li>Use on-screen arrows to navigate between images.</li>
+              <li>Close with the <b>✕</b> button.</li>
+            </ul>
+          `
+        },
+        'outputs': {
+          title: 'Output files & folders',
+          short: 'Where images, metadata, and reports are written.',
+          body: `
+            <ul>
+              <li><code>outputs/images/</code>: Final rendered images.</li>
+              <li><code>outputs/json/</code>: Off-chain metadata files.</li>
+              <li><code>reports/rarity.json</code>: Collection rarity statistics.</li>
+            </ul>
+            <p>Customize paths via <b>Export</b> settings (<code>export.outDir</code>, <code>export.previewOutDir</code>).</p>
+          `
+        },
+        'storage-config': {
+          title: 'Storage configuration',
+          short: 'Configure Arweave or IPFS credentials in the config file.',
+          body: `
+            <p>Set storage provider and credentials in <code>foundry.config.json</code> under <code>storage</code>:</p>
+            <pre><code>"storage": {
+  "provider": "arweave", // or "ipfs"
+  "arweave": { "bundlrNode": "https://node.bundlr.network", "currency": "SOL", "keyPath": "C:/path/key.json" },
+  "ipfs": { "pinataKey": "...", "pinataSecret": "...", "nftStorageKey": "..." }
+}</code></pre>
+            <p>These are used by the Upload flow. Keep secrets outside of version control.</p>
+          `
+        },
+        'chain-config': {
+          title: 'Solana chain configuration',
+          short: 'Set cluster, wallet, fees, and creators.',
+          body: `
+            <p>Configure chain details under <code>chain.solana</code>:</p>
+            <pre><code>"chain": {
+  "target": "solana",
+  "solana": {
+    "cluster": "devnet",
+    "rpcUrl": "https://api.devnet.solana.com",
+    "walletKeypairPath": "C:/path/keypair.json",
+    "sellerFeeBasisPoints": 500,
+    "creators": [ { "address": "...", "share": 100 } ],
+    "collection": { "mint": null },
+    "isMutable": true,
+    "usePnft": true
+  }
+}</code></pre>
+            <p>These values influence minting and on-chain metadata.</p>
+          `
+        },
+        'metadata-json': {
+          title: 'Metadata JSON (Solana)',
+          short: 'Fields produced for each edition.',
+          body: `
+            <p>The builder outputs Metaplex-compatible JSON for each token.</p>
+            <pre><code>{
+  "name": "Name #1",
+  "symbol": "SYMB",
+  "description": "...",
+  "image": "ar://.../1.png",
+  "attributes": [ { "trait_type": "Eyes", "value": "Laser" } ],
+  "properties": {
+    "files": [ { "uri": "ar://.../1.png", "type": "image/png" } ],
+    "category": "image"
+  },
+  "animation_url": "ar://.../1.mp4" // optional
+}</code></pre>
+            <p>The exact shape is produced by the active chain adapter.</p>
+          `
+        },
+        'renamer-step': {
+          title: 'Step-through Renamer tips',
+          short: 'Efficiently curate names and weights.',
+          body: `
+            <ul>
+              <li>Set <b>Delimiter</b> to match your rarity scheme (e.g., <code>#</code>).</li>
+              <li>Use <b>Include layer prefix</b> for disambiguation (e.g., <code>Hat_Golden</code>).</li>
+              <li><b>Apply & Next</b> saves changes and advances to the next asset.</li>
+              <li>Random helpers are great for brainstorming naming sets.</li>
+            </ul>
+          `
+        },
+        'rules-examples': {
+          title: 'Rules: examples',
+          short: 'Common patterns for blocking and requiring traits.',
+          body: `
+            <pre><code>{
+  "mutuallyExclusive": [["Eyes:Laser", "Headwear:Visor"]],
+  "requires": [ { "if": "Background:Night", "thenAnyOf": ["Eyes:Glow", "Eyes:Laser"] } ],
+  "maxOccurrences": [ { "trait": "Eyes:Laser", "max": 50 } ]
+}</code></pre>
+            <p>Keep trait strings in the form <code>Layer:Value</code>. Use <b>Validate Rules</b> to check for mistakes.</p>
+          `
+        }
+      };
+
+      const HELP_ORDER = [
+        { id: 'getting-started', title: 'Getting Started', topics: ['launcher','projects','file-structure','init','validate'] },
+        { id: 'ui-overview', title: 'Main Interface', topics: ['sidebar-project','sidebar-generate','sidebar-build','previews','preview-grid','lightbox','console'] },
+        { id: 'config', title: 'Configuration', topics: ['config','config-rarity','config-dna','config-layers','layers-actions','config-renamer'] },
+        { id: 'building', title: 'Build & Outputs', topics: ['preview','generate','build','rules','rules-examples','rarity-report','outputs'] },
+        { id: 'renamer', title: 'Renamer', topics: ['renamer','renamer-step'] },
+        { id: 'minting', title: 'Upload, Storage & Chain', topics: ['upload-provider','upload-concurrency','upload','mint-from','mint-count','mint','storage-config','chain-config','metadata-json'] },
+        { id: 'ui', title: 'UI Options', topics: ['ui-theme','ui-accent','ui-radius','ui-blur','ui-noise','ui-glow'] },
+        { id: 'productivity', title: 'Productivity', topics: ['shortcuts'] },
+        { id: 'support', title: 'Troubleshooting & Glossary', topics: ['troubleshooting','glossary'] },
+      ];
+
+      // Preferred help targets: when opening full help from a popover,
+      // jump to a more comprehensive article instead of the brief overview.
+      const HELP_JUMP_MAP = {
+        'config-renamer': 'renamer-step',
+        'renamer': 'renamer-step',
+        'rules': 'rules-examples',
+      };
+
+      function buildHelpPage() {
+        const toc = document.getElementById('help-toc');
+        const container = document.getElementById('help-content');
+        if (!toc || !container) return;
+        toc.innerHTML = '';
+        container.innerHTML = '';
+        for (const section of HELP_ORDER) {
+          const secLink = document.createElement('a');
+          secLink.href = `#${section.id}`;
+          secLink.textContent = section.title;
+          toc.appendChild(secLink);
+
+          const sec = document.createElement('section');
+          sec.id = section.id;
+          const h2 = document.createElement('h2');
+          h2.textContent = section.title;
+          sec.appendChild(h2);
+          for (const t of section.topics) {
+            const topic = HELP_TOPICS[t];
+            if (!topic) continue;
+            const art = document.createElement('article');
+            art.id = `topic-${t}`;
+            const h3 = document.createElement('h3');
+            h3.textContent = topic.title;
+            const p = document.createElement('p');
+            p.style.opacity = '.9';
+            p.textContent = topic.short;
+            const body = document.createElement('div');
+            body.innerHTML = topic.body;
+            const jump = document.createElement('p');
+            jump.innerHTML = `<a class=\"badge-link\" href=\"#\" data-help-jump=\"${t}\">Open context help</a>`;
+            art.appendChild(h3);
+            art.appendChild(p);
+            art.appendChild(body);
+            art.appendChild(jump);
+            sec.appendChild(art);
+          }
+          container.appendChild(sec);
+        }
+
+        // Hook up context jumps
+        container.querySelectorAll('[data-help-jump]').forEach((a) => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const topicId = target && target.getAttribute ? target.getAttribute('data-help-jump') : '';
+            showHelpPopover(topicId || '', null);
+          });
+        });
+      }
+
+      let helpOverlayEl = null;
+      let helpPopoverEl = null;
+      function ensureHelpElements() {
+        if (!helpOverlayEl) {
+          helpOverlayEl = document.createElement('div');
+          helpOverlayEl.className = 'help-overlay';
+          helpOverlayEl.addEventListener('click', hideHelpPopover);
+        }
+        if (!helpPopoverEl) {
+          helpPopoverEl = document.createElement('div');
+          helpPopoverEl.className = 'help-popover';
+        }
+      }
+
+      function attachHelpAnchors() {
+        // Clear any previously attached icons so we can reflow placement
+        document.querySelectorAll('.help-icon').forEach((n) => n.remove());
+        document.querySelectorAll('[data-help].helpable').forEach((n) => n.classList.remove('helpable'));
+
+        const anchors = Array.from(document.querySelectorAll('[data-help]'));
+        anchors.forEach((el) => {
+          if (el.classList.contains('helpable')) return;
+          el.classList.add('helpable');
+          const btn = document.createElement('span');
+          btn.className = 'help-icon';
+          btn.setAttribute('role', 'button');
+          btn.setAttribute('tabindex', '0');
+          // Prefer PNG then JPG; fallback to ? if both fail
+          const setImg = (src) => {
+            const im = new Image();
+            im.onload = () => { btn.setAttribute('data-img', '1'); btn.appendChild(im); };
+            im.onerror = () => { btn.setAttribute('data-fallback', '1'); };
+            im.src = src;
+          };
+          const probePng = new Image();
+          probePng.onload = () => setImg('assets/helpicon.png');
+          probePng.onerror = () => setImg('assets/helpicon.jpg');
+          probePng.src = 'assets/helpicon.png';
+          btn.title = 'Help';
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const topic = el.getAttribute('data-help') || '';
+            showHelpPopover(topic, btn);
+          });
+          btn.addEventListener('keydown', (e) => {
+            const key = e && (e.key || e.code);
+            if (key === 'Enter' || key === ' ') {
+              e.preventDefault();
+              const topic = el.getAttribute('data-help') || '';
+              showHelpPopover(topic, btn);
+            }
+          });
+          // Placement rules:
+          // - If element is a fieldset, attach to its legend (top label)
+          // - If element is a legend/title/header (h1–h4 or .group-title), append inside next to text
+          // - If element is a .gallery-header container, attach to its h3 if available
+          // - If element is a sidebar container, attach to first .group-title only
+          // - Skip buttons entirely
+          const tag = (el.tagName || '').toLowerCase();
+          const isButtonish = tag === 'button' || el.classList.contains('btn-primary') || el.classList.contains('btn-secondary') || el.classList.contains('btn-ghost');
+          if (isButtonish) return;
+          if (tag === 'fieldset') {
+            const lg = el.querySelector('legend');
+            if (lg) {
+              if (!lg.classList.contains('helpable')) lg.classList.add('helpable');
+              lg.appendChild(btn);
+              return;
+            }
+          }
+          if (tag === 'legend' || tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || el.classList.contains('group-title')) {
+            el.appendChild(btn);
+            return;
+          }
+          if (el.classList.contains('gallery-header')) {
+            const head = el.querySelector('h1,h2,h3,h4,.title');
+            if (head) {
+              if (!head.classList.contains('helpable')) head.classList.add('helpable');
+              head.appendChild(btn);
+            } else {
+              el.appendChild(btn);
+            }
+            return;
+          }
+          if (el.classList.contains('sidebar')) {
+            const firstTitle = el.querySelector('.group-title');
+            if (firstTitle) {
+              if (!firstTitle.classList.contains('helpable')) firstTitle.classList.add('helpable');
+              firstTitle.appendChild(btn);
+            }
+            return;
+          }
+          // Default: append inside
+          el.appendChild(btn);
+        });
+      }
+
+      function hideHelpPopover() {
+        if (helpPopoverEl && helpPopoverEl.parentElement) helpPopoverEl.remove();
+        if (helpOverlayEl && helpOverlayEl.parentElement) helpOverlayEl.remove();
+      }
+
+      function showHelpPopover(topicId, anchorEl) {
+        ensureHelpElements();
+        const topic = HELP_TOPICS[topicId];
+        if (!topic) return;
+        helpPopoverEl.innerHTML = '';
+        const title = document.createElement('div');
+        title.className = 'hp-title';
+        title.textContent = topic.title;
+        const body = document.createElement('div');
+        body.className = 'hp-body';
+        body.innerHTML = `<p style=\"margin-top:0;\">${topic.short}</p>${topic.body}`;
+        const actions = document.createElement('div');
+        actions.className = 'hp-actions';
+        const open = document.createElement('button');
+        open.className = 'hp-link';
+        open.textContent = (HELP_JUMP_MAP[topicId] ? 'Read detailed guide' : 'Open full help');
+        open.addEventListener('click', () => {
+          switchTab('help');
+          const preferred = HELP_JUMP_MAP[topicId] || topicId;
+          const id = `topic-${preferred}`;
+          const el = document.getElementById(id);
+          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+          hideHelpPopover();
+        });
+        const close = document.createElement('button');
+        close.className = 'hp-link';
+        close.textContent = 'Close';
+        close.addEventListener('click', hideHelpPopover);
+        actions.appendChild(open);
+        actions.appendChild(close);
+        helpPopoverEl.appendChild(title);
+        helpPopoverEl.appendChild(body);
+        helpPopoverEl.appendChild(actions);
+
+        document.body.appendChild(helpOverlayEl);
+        document.body.appendChild(helpPopoverEl);
+        helpOverlayEl.style.pointerEvents = 'auto';
+        helpPopoverEl.style.pointerEvents = 'auto';
+
+        // Position
+        let x = 24, y = 24; // default fallback
+        if (anchorEl) {
+          const r = anchorEl.getBoundingClientRect();
+          const margin = 8;
+          const desiredWidth = 360;
+          // Prefer right of anchor; clamp within viewport
+          x = Math.min(Math.max(12, r.right + margin), Math.max(12, window.innerWidth - desiredWidth - 12));
+          y = Math.max(12, Math.min(window.innerHeight - 24, r.top));
+        }
+        helpPopoverEl.style.left = `${x}px`;
+        helpPopoverEl.style.top = `${y}px`;
+
+        // UX: close on Esc and reposition on resize
+        const keyHandler = (ev) => { if ((ev.key || ev.code) === 'Escape') { hideHelpPopover(); window.removeEventListener('keydown', keyHandler); window.removeEventListener('resize', resizeHandler); } };
+        const resizeHandler = () => {
+          if (!helpPopoverEl || !helpPopoverEl.parentElement) return;
+          if (!anchorEl) return;
+          const r = anchorEl.getBoundingClientRect();
+          const desiredWidth = 360;
+          let nx = Math.min(Math.max(12, r.right + 8), Math.max(12, window.innerWidth - desiredWidth - 12));
+          let ny = Math.max(12, Math.min(window.innerHeight - 24, r.top));
+          helpPopoverEl.style.left = `${nx}px`;
+          helpPopoverEl.style.top = `${ny}px`;
+        };
+        window.addEventListener('keydown', keyHandler, { once: true });
+        window.addEventListener('resize', resizeHandler);
       }
     </script>
   </body>
