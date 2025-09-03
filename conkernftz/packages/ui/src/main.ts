@@ -5,6 +5,7 @@ import { execFile, fork } from 'node:child_process';
 import { promisify } from 'node:util';
 import fssync from 'node:fs';
 import { shell } from 'electron';
+import { FileManager } from '@foundry/storage';
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -37,11 +38,13 @@ app.on('window-all-closed', () => {
 });
 
 let projectDir: string | null = null;
+let fileManager: FileManager | null = null;
 
 ipcMain.handle('foundry:chooseProjectDir', async () => {
   const res = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
   if (res.canceled || res.filePaths.length === 0) return { ok: false, error: 'Canceled' };
   projectDir = res.filePaths[0] as string;
+  fileManager = new FileManager(projectDir);
   return { ok: true, projectDir };
 });
 
@@ -53,6 +56,7 @@ ipcMain.handle('foundry:setProjectDir', async (_evt, dir: string) => {
     const exists = fssync.existsSync(dir);
     if (!exists) return { ok: false, error: 'Path does not exist' };
     projectDir = dir;
+    fileManager = new FileManager(projectDir);
     return { ok: true, projectDir };
   } catch (e: any) {
     return { ok: false, error: String(e?.message ?? e) };
@@ -295,6 +299,40 @@ ipcMain.handle('foundry:renameFiles', async (_evt, pairs: { from: string; to: st
     }
     // After renames, emit a simple notification to the renderer if needed later
     return { ok: true, renamed };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
+// Generic file manager helpers
+ipcMain.handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {
+  try {
+    if (!projectDir) return { ok: false, error: 'No project selected' };
+    fileManager = fileManager || new FileManager(projectDir);
+    await fileManager.saveBase64(base64, relPath);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
+ipcMain.handle('foundry:fsList', async (_evt, relDir: string) => {
+  try {
+    if (!projectDir) return { ok: false, error: 'No project selected' };
+    fileManager = fileManager || new FileManager(projectDir);
+    const files = await fileManager.listFiles(relDir);
+    return { ok: true, files };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
+  }
+});
+
+ipcMain.handle('foundry:fsDelete', async (_evt, relPath: string) => {
+  try {
+    if (!projectDir) return { ok: false, error: 'No project selected' };
+    fileManager = fileManager || new FileManager(projectDir);
+    await fileManager.deleteFile(relPath);
+    return { ok: true };
   } catch (e: any) {
     return { ok: false, error: String(e?.message ?? e) };
   }

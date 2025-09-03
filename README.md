@@ -19,6 +19,8 @@ This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
 - Storage: Arweave Bundlr and IPFS (NFT.Storage/Pinata)
 - Solana mint via Umi/Token Metadata with optional pNFT and ruleset PDA
 - TypeScript everywhere, Zod schemas, Vitest, ESLint/Prettier
+- Fal AI image generation page in the GUI with model selection and asset saving
+- Shared file manager foundation for storing and browsing generated assets
 
 ### Requirements
 
@@ -49,11 +51,9 @@ pnpm cli -- --help
 pnpm -C packages/ui build
 pnpm -C packages/ui start
 ```
+### Fal AI page
 
-
-
-pnpm -C packages/ui build
-pnpm -C packages/ui start
+The Electron GUI includes a **Fal AI** tab for quick image generation using the [fal.ai](https://fal.ai) API. Choose among common models, adjust width/height and number of outputs, then save generated assets directly into your project. A built‑in file manager lists saved images and opens their folder for further editing. Your FAL API key is stored locally for convenience.
 
 ### CLI commands
 
