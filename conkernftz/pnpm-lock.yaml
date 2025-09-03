@@ -119,6 +119,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@foundry/storage':
+        specifier: workspace:*
+        version: link:../storage
       execa:
         specifier: ^9.4.0
         version: 9.6.0

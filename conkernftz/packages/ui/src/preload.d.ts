@@ -17,6 +17,9 @@ declare global {
       listDir(relativePath: string): Promise<{ ok: boolean; items?: string[]; error?: string }>;
       renameFiles(pairs: { from: string; to: string }[]): Promise<{ ok: boolean; renamed?: number; error?: string }>;
       openExternal(url: string): Promise<{ ok: boolean; error?: string }>;
+      saveBase64(b64: string, relPath: string): Promise<{ ok: boolean; error?: string }>;
+      listFiles(relDir: string): Promise<{ ok: boolean; files?: string[]; error?: string }>;
+      deleteFile(relPath: string): Promise<{ ok: boolean; error?: string }>;
     };
   }
 }

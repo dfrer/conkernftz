@@ -12,7 +12,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "execa": "^9.4.0"
+    "execa": "^9.4.0",
+    "@foundry/storage": "workspace:*"
   },
   "devDependencies": {
     "electron": "^31.3.0"

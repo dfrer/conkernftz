@@ -1503,6 +1503,7 @@
             <button class="tab-btn active" data-tab="main">Main</button>
             <button class="tab-btn" data-tab="mint">Mint</button>
             <button class="tab-btn" data-tab="options">Options</button>
+            <button class="tab-btn" data-tab="fal">Fal AI</button>
             <button class="tab-btn" data-tab="help">Help</button>
             <button class="tab-btn" data-tab="about">About</button>
           </div>
@@ -1954,6 +1955,61 @@
               </div>
             </div>
           </section>
+          <section id="tab-fal" class="tabpane hidden">
+            <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
+              <div class="sidebar" data-help="sidebar-fal">
+                <div>
+                  <label>API Key</label>
+                  <input id="fal-key" type="password" placeholder="FAL key" />
+                </div>
+                <div>
+                  <label>Model</label>
+                  <select id="fal-model">
+                    <option value="flux/dev">Flux Dev</option>
+                    <option value="flux-pro/v1.0">Flux Pro v1</option>
+                    <option value="stable-diffusion">Stable Diffusion</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Prompt</label>
+                  <textarea id="fal-prompt" rows="3" placeholder="Describe your image"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                  <div>
+                    <label>Width</label>
+                    <input id="fal-width" type="number" value="512" min="64" max="2048" step="64" />
+                  </div>
+                  <div>
+                    <label>Height</label>
+                    <input id="fal-height" type="number" value="512" min="64" max="2048" step="64" />
+                  </div>
+                </div>
+                <div>
+                  <label>Images</label>
+                  <input id="fal-count" type="number" value="1" min="1" max="4" />
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <button id="fal-generate" class="btn-primary">Generate</button>
+                  <button id="fal-open-folder" class="btn-ghost">Open Folder</button>
+                </div>
+                <div id="fal-status" class="muted" style="margin-top:8px;"></div>
+              </div>
+              <div class="content">
+                <div class="gallery-card">
+                  <div class="gallery-header">
+                    <h3 style="margin:0;">Results</h3>
+                  </div>
+                  <div id="fal-results" class="gallery-grid"></div>
+                </div>
+                <div class="gallery-card" style="margin-top:16px;">
+                  <div class="gallery-header">
+                    <h3 style="margin:0;">Saved Images</h3>
+                  </div>
+                  <div id="fal-saved" class="gallery-grid"></div>
+                </div>
+              </div>
+            </div>
+          </section>
           <section id="tab-help" class="tabpane hidden">
             <div class="help-page">
               <aside class="help-toc">
@@ -2052,10 +2108,11 @@
       const tabMain = document.getElementById('tab-main');
       const tabMint = document.getElementById('tab-mint');
       const tabOptions = document.getElementById('tab-options');
+      const tabFal = document.getElementById('tab-fal');
       const tabHelp = document.getElementById('tab-help');
       const tabAbout = document.getElementById('tab-about');
       function switchTab(name) {
-        const map = { main: tabMain, mint: tabMint, options: tabOptions, help: tabHelp, about: tabAbout };
+        const map = { main: tabMain, mint: tabMint, options: tabOptions, fal: tabFal, help: tabHelp, about: tabAbout };
         Object.entries(map).forEach(([key, pane]) => {
           if (!pane) return;
           if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
@@ -3881,6 +3938,112 @@
           }
           // Default: append inside
           el.appendChild(btn);
+        });
+      }
+
+      // FAL AI generation
+      const falKeyEl = document.getElementById('fal-key');
+      const falPromptEl = document.getElementById('fal-prompt');
+      const falGenerateBtn = document.getElementById('fal-generate');
+      const falStatusEl = document.getElementById('fal-status');
+      const falModelEl = document.getElementById('fal-model');
+      const falWidthEl = document.getElementById('fal-width');
+      const falHeightEl = document.getElementById('fal-height');
+      const falCountEl = document.getElementById('fal-count');
+      const falResultsEl = document.getElementById('fal-results');
+      const falSavedEl = document.getElementById('fal-saved');
+      const falOpenFolderBtn = document.getElementById('fal-open-folder');
+
+      if (falKeyEl) {
+        try { falKeyEl.value = localStorage.getItem('fal:key') || ''; } catch {}
+      }
+
+      async function loadFalSaved() {
+        const list = await window.foundry.listFiles('fal');
+        const proj = await window.foundry.getProjectDir();
+        if (!list.ok || !proj.ok) return;
+        falSavedEl.innerHTML = '';
+        const base = proj.projectDir.replace(/\\/g, '/');
+        (list.files || []).forEach((name) => {
+          const img = document.createElement('img');
+          img.src = `file://${base}/fal/${name}`;
+          const wrap = document.createElement('div');
+          wrap.className = 'gallery-item';
+          wrap.appendChild(img);
+          falSavedEl.appendChild(wrap);
+        });
+      }
+      loadFalSaved();
+
+      if (falOpenFolderBtn) {
+        falOpenFolderBtn.addEventListener('click', () => {
+          window.foundry.openInExplorer('fal');
+        });
+      }
+
+      if (falGenerateBtn) {
+        falGenerateBtn.addEventListener('click', async () => {
+          const key = (falKeyEl.value || '').trim();
+          const prompt = (falPromptEl.value || '').trim();
+          const model = (falModelEl.value || '').trim();
+          const w = parseInt(falWidthEl.value, 10) || 512;
+          const h = parseInt(falHeightEl.value, 10) || 512;
+          const count = parseInt(falCountEl.value, 10) || 1;
+          falStatusEl.textContent = 'Generating...';
+          falResultsEl.innerHTML = '';
+          try {
+            const resp = await fetch(`https://api.fal.ai/${model}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: `Key ${key}`,
+              },
+              body: JSON.stringify({ prompt, image_size: `${w}x${h}`, num_images: count }),
+            });
+            const data = await resp.json();
+            const images = [];
+            if (Array.isArray(data.images)) {
+              data.images.forEach((im) => {
+                if (im.url) images.push(im.url);
+                else if (im.b64_json) images.push(`data:image/png;base64,${im.b64_json}`);
+              });
+            } else if (data.image_base64) {
+              images.push(`data:image/png;base64,${data.image_base64}`);
+            }
+            if (!images.length) { falStatusEl.textContent = 'No image returned'; return; }
+            falStatusEl.textContent = '';
+            images.forEach((src, idx) => {
+              const wrap = document.createElement('div');
+              wrap.className = 'gallery-item';
+              const imgEl = document.createElement('img');
+              imgEl.src = src;
+              const saveBtn = document.createElement('button');
+              saveBtn.textContent = 'Save';
+              saveBtn.className = 'btn-ghost';
+              saveBtn.addEventListener('click', async () => {
+                let b64;
+                if (src.startsWith('data:')) {
+                  b64 = src.split(',')[1];
+                } else {
+                  const buf = await fetch(src).then(r => r.arrayBuffer());
+                  let binary = '';
+                  const bytes = new Uint8Array(buf);
+                  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                  b64 = btoa(binary);
+                }
+                const name = `${model.replace(/\//g, '-')}-${Date.now()}-${idx + 1}.png`;
+                await window.foundry.saveBase64(b64, `fal/${name}`);
+                loadFalSaved();
+              });
+              wrap.appendChild(imgEl);
+              wrap.appendChild(saveBtn);
+              falResultsEl.appendChild(wrap);
+            });
+            try { localStorage.setItem('fal:key', key); } catch {}
+          } catch (err) {
+            falStatusEl.textContent = 'Error: ' + err;
+          }
         });
       }
 
