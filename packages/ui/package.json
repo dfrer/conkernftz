@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "description": "Electron GUI for conkernftz CLI",
-  "type": "commonjs",
+  "type": "module",
   "main": "dist/main.js",
   "scripts": {
     "build": "pnpm run build:ts && pnpm run build:assets",

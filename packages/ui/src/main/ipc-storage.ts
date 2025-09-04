@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 import { FileManager } from '@foundry/storage';
-import { getProjectDir, getFileManager, setFileManager } from './ipc-project';
+import { getProjectDir, getFileManager, setFileManager } from './ipc-project.js';
 
 export function initStorageIpc(): void {
   ipcMain.handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {

@@ -1,9 +1,12 @@
 import { dialog, ipcMain } from 'electron';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fssync from 'node:fs';
 import { execFile, fork } from 'node:child_process';
 import { promisify } from 'node:util';
-import { getProjectDir, setProjectDir } from './ipc-project';
+import { getProjectDir, setProjectDir } from './ipc-project.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const execFileAsync = promisify(execFile);
 
