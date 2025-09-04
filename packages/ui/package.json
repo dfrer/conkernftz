@@ -11,7 +11,8 @@
     "build:assets": "node scripts/copy.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "electron .",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "vitest run"
   },
   "dependencies": {
     "execa": "^9.4.0",
