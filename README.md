@@ -8,6 +8,7 @@ This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
 
 - Documentation refresh across README, CHANGELOG, and contributing guide
 - Added v4 release notes and clarified configuration and command usage
+- Workspace packages bumped to v4.0.0
 - General polish to examples and wording; stability and DX improvements
 
 ### Features
