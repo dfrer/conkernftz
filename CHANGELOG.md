@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
   - README streamlined; clarified quick start, configuration, and command usage
   - Added `RELEASE_NOTES_v4.0.0.md`; refreshed `CONTRIBUTING.md` examples
 - Monorepo
+  - Bumped all packages to 4.0.0
   - Housekeeping to align and polish docs
 
 Note: This release focuses on documentation. No API or CLI behavior changes.
