@@ -21,5 +21,3 @@ module.exports = {
   },
   ignorePatterns: ["dist", "**/*.d.ts"]
 };
-
-

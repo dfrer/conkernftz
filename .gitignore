@@ -5,6 +5,8 @@ node_modules/
 dist/
 build/
 .turbo/
+coverage/
+*.tsbuildinfo
 
 # OS / Editor
 .DS_Store
