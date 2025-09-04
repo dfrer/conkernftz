@@ -2,8 +2,7 @@ import { NFTStorage } from 'nft.storage';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import mime from 'mime';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
+import pinataSDK from '@pinata/sdk';
 
 export interface IpfsConfig {
   pinataKey?: string;
@@ -24,9 +23,7 @@ export async function uploadViaNftStorage(filePath: string, key: string): Promis
 // Optional Pinata implementation can be wired later to avoid strict type conflicts in older SDK versions
 // Pinata uploader using pinFileToIPFS with a stream interface
 export async function uploadViaPinata(filePath: string, key: string, secret: string): Promise<{ uri: string; type: string }> {
-  // CommonJS import interop
-  const pinataSDK: any = require('pinata-sdk');
-  const pinata = pinataSDK({ pinataApiKey: key, pinataSecretApiKey: secret });
+  const pinata = new pinataSDK({ pinataApiKey: key, pinataSecretApiKey: secret });
   const contentType = mime.getType(filePath) ?? 'application/octet-stream';
   const { createReadStream } = await import('node:fs');
   const stream = createReadStream(filePath);
