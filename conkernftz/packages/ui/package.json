@@ -6,7 +6,9 @@
   "type": "commonjs",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/copy.js",
+    "build": "pnpm run build:ts && pnpm run build:assets",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:assets": "node scripts/copy.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "electron .",
     "clean": "rimraf dist"

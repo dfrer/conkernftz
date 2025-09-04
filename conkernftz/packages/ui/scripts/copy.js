@@ -11,6 +11,10 @@ console.log('Copied index.html to dist');
 // Copy assets directory if present so images are available at runtime
 const assetsSrcDir = path.join(__dirname, '..', 'src', 'assets');
 const assetsDstDir = path.join(dstDir, 'assets');
+const cssFiles = [
+  path.join(__dirname, '..', 'src', 'styles.css'),
+  path.join(__dirname, '..', 'src', 'design-system', 'tokens.css'),
+];
 
 function copyDirRecursive(srcDir, dstDir) {
   if (!fs.existsSync(srcDir)) return;
@@ -28,6 +32,16 @@ function copyDirRecursive(srcDir, dstDir) {
 
 copyDirRecursive(assetsSrcDir, assetsDstDir);
 if (fs.existsSync(assetsSrcDir)) console.log('Copied assets to dist');
+
+for (const css of cssFiles) {
+  if (fs.existsSync(css)) {
+    const rel = path.relative(path.join(__dirname, '..', 'src'), css);
+    const target = path.join(dstDir, rel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(css, target);
+    console.log(`Copied ${rel} to dist`);
+  }
+}
 
 // Also pull root-level logos and help icon into dist/assets if available
 const repoRoot = path.join(__dirname, '..', '..', '..', '..');
