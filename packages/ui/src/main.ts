@@ -1,8 +1,11 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
-import { initProjectIpc } from './main/ipc-project';
-import { initStorageIpc } from './main/ipc-storage';
-import { initCliRunner } from './main/cli-runner';
+import { fileURLToPath } from 'url';
+import { initProjectIpc } from './main/ipc-project.js';
+import { initStorageIpc } from './main/ipc-storage.js';
+import { initCliRunner } from './main/cli-runner.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 initProjectIpc();
 initStorageIpc();
