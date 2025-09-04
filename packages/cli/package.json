@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run || exit 0",
+    "test": "vitest run",
     "lint": "eslint src --ext .ts",
     "clean": "rimraf dist",
     "start": "node dist/bin.js"
