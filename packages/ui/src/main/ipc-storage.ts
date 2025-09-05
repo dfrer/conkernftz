@@ -1,9 +1,9 @@
-import { ipcMain } from 'electron';
-import { FileManager } from '@foundry/storage';
+import * as electron from 'electron';
+import { FileManager } from '@foundry/storage/file-manager';
 import { getProjectDir, getFileManager, setFileManager } from './ipc-project.js';
 
 export function initStorageIpc(): void {
-  ipcMain.handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {
+  electron.ipcMain.handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };
@@ -19,7 +19,7 @@ export function initStorageIpc(): void {
     }
   });
 
-  ipcMain.handle('foundry:fsList', async (_evt, relDir: string) => {
+  electron.ipcMain.handle('foundry:fsList', async (_evt, relDir: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };
@@ -35,7 +35,7 @@ export function initStorageIpc(): void {
     }
   });
 
-  ipcMain.handle('foundry:fsDelete', async (_evt, relPath: string) => {
+  electron.ipcMain.handle('foundry:fsDelete', async (_evt, relPath: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };
@@ -51,4 +51,3 @@ export function initStorageIpc(): void {
     }
   });
 }
-

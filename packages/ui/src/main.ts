@@ -1,23 +1,23 @@
-import { app, BrowserWindow } from 'electron';
+import * as electron from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { initProjectIpc } from './main/ipc-project.js';
 import { initStorageIpc } from './main/ipc-storage.js';
 import { initCliRunner } from './main/cli-runner.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const appDir = __dirname;
 
 initProjectIpc();
 initStorageIpc();
 initCliRunner();
 
 function createWindow(): void {
-  const win = new BrowserWindow({
+  const win = new electron.BrowserWindow({
     width: 1100,
     height: 800,
-    icon: path.join(__dirname, 'assets', 'logo-512.png'),
+    icon: path.join(appDir, 'assets', 'logo-512.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      // Use CommonJS preload to avoid ESM import error in Electron
+      preload: path.join(appDir, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: false,
@@ -27,17 +27,16 @@ function createWindow(): void {
   win.webContents.on('did-fail-load', (_e, code, desc) => {
     console.error('Failed to load UI:', code, desc);
   });
-  win.loadFile(path.join(__dirname, 'index.html'));
+  win.loadFile(path.join(appDir, 'index.html'));
 }
 
-app.whenReady().then(() => {
+electron.app.whenReady().then(() => {
   createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  electron.app.on('activate', () => {
+    if (electron.BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+electron.app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') electron.app.quit();
 });
-

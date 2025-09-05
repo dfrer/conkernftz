@@ -3,6 +3,7 @@ node_modules/
 
 # Builds
 dist/
+dist-cjs/
 build/
 .turbo/
 coverage/
@@ -12,6 +13,13 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+.DS_Store
+Thumbs.db
+
+# Prevent stray compiled JS from ending up in src for storage
+packages/storage/src/**/*.js
+packages/storage/src/**/*.d.ts
+packages/storage/src/**/*.map
 .idea/
 .vscode/
 
@@ -22,5 +30,4 @@ target/
 keys/
 .env
 .env.*
-
 

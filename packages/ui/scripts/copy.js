@@ -1,8 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fs = require('fs');
+const path = require('path');
 
 const src = path.join(__dirname, '..', 'src', 'index.html');
 const dstDir = path.join(__dirname, '..', 'dist');
@@ -10,6 +7,20 @@ const dst = path.join(dstDir, 'index.html');
 fs.mkdirSync(dstDir, { recursive: true });
 fs.copyFileSync(src, dst);
 console.log('Copied index.html to dist');
+
+// Ensure CommonJS preload file is available in dist
+const preloadCjsSrc = path.join(__dirname, '..', 'src', 'preload.cjs');
+const preloadCjsDst = path.join(dstDir, 'preload.cjs');
+try {
+  if (fs.existsSync(preloadCjsSrc)) {
+    fs.copyFileSync(preloadCjsSrc, preloadCjsDst);
+    console.log('Copied preload.cjs to dist');
+  }
+} catch (e) {
+  console.warn('Failed to copy preload.cjs:', e && e.message ? e.message : e);
+}
+
+// No CJS entry bootstrap needed when main is compiled to CommonJS
 
 // Copy assets directory if present so images are available at runtime
 const assetsSrcDir = path.join(__dirname, '..', 'src', 'assets');
@@ -89,5 +100,3 @@ try {
 } catch (e) {
   console.warn('Failed to copy root logos:', e && e.message ? e.message : e);
 }
-
-

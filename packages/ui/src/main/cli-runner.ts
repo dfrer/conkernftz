@@ -1,12 +1,11 @@
-import { dialog, ipcMain } from 'electron';
+import * as electron from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fssync from 'node:fs';
 import { execFile, fork } from 'node:child_process';
 import { promisify } from 'node:util';
 import { getProjectDir, setProjectDir } from './ipc-project.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = __dirname;
 
 const execFileAsync = promisify(execFile);
 
@@ -17,7 +16,7 @@ async function runPnpm(args: string[], cwd: string): Promise<{ stdout: string; s
 }
 
 async function ensureCliAndDepsBuilt(): Promise<void> {
-  const uiDistDir = path.resolve(__dirname, '..');
+  const uiDistDir = path.resolve(baseDir, '..');
   const repoRoot = path.resolve(uiDistDir, '../../..');
   const pkgsDir = path.resolve(uiDistDir, '../..');
   const cliDist = path.join(pkgsDir, 'cli', 'dist', 'bin.js');
@@ -53,17 +52,17 @@ function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ 
 }
 
 export function initCliRunner(): void {
-  ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
+  electron.ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
     try {
       let projectDir = getProjectDir();
       if (!projectDir) {
-        const pick = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+        const pick = await electron.dialog.showOpenDialog({ properties: ['openDirectory'] });
         if (pick.canceled || pick.filePaths.length === 0) return { ok: false, error: 'Select a project directory first.' };
         projectDir = pick.filePaths[0] as string;
         setProjectDir(projectDir);
       }
       await ensureCliAndDepsBuilt();
-      const root = path.join(__dirname, '../../../cli');
+      const root = path.join(baseDir, '../../../cli');
       const bin = path.join(root, 'dist', 'bin.js');
       const { stdout, stderr, code } = await runNodeModule(bin, args, projectDir);
       if (code !== 0) {
@@ -75,4 +74,3 @@ export function initCliRunner(): void {
     }
   });
 }
-

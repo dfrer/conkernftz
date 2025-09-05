@@ -1,10 +1,11 @@
 // @ts-nocheck
-import { tokens } from "../design-system/tokens";
+// In the browser, module imports need explicit extensions
+import { tokens } from "../design-system/tokens.js";
 console.debug("Design tokens loaded", tokens);
 
 // Renderer logic extracted from index.html
-// Ensure bridge exists even if preload failed to load
-window.foundry = window.foundry || {
+// Ensure bridge exists only if preload didn't define it (avoid writing to read-only)
+if (!('foundry' in window)) (window as any).foundry = {
   run: async () => ({ ok: false, error: 'preload not loaded' }),
   chooseProjectDir: async () => ({ ok: false, error: 'preload not loaded' }),
   getProjectDir: async () => ({ ok: true, projectDir: null }),
