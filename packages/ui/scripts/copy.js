@@ -58,7 +58,8 @@ for (const css of cssFiles) {
 }
 
 // Also pull root-level logos and help icon into dist/assets if available
-const repoRoot = path.join(__dirname, '..', '..', '..', '..');
+// __dirname is packages/ui/scripts — repo root is three levels up
+const repoRoot = path.join(__dirname, '..', '..', '..');
 const root512 = path.join(repoRoot, '512x512.png');
 const root1024 = path.join(repoRoot, '1024x1024.png');
 const rootHelpIconJpg = path.join(repoRoot, 'helpicon.jpg');

@@ -18,10 +18,10 @@ contextBridge.exposeInMainWorld('foundry', {
   listImages: (relativePath) => ipcRenderer.invoke('foundry:listImages', relativePath),
   openInExplorer: (relativePath) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
   listDir: (relativePath) => ipcRenderer.invoke('foundry:listDir', relativePath),
+  deletePath: (relativePath) => ipcRenderer.invoke('foundry:deletePath', relativePath),
   renameFiles: (pairs) => ipcRenderer.invoke('foundry:renameFiles', pairs),
   openExternal: (url) => ipcRenderer.invoke('foundry:openExternal', url),
   saveBase64: (b64, relPath) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),
   listFiles: (relDir) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath) => ipcRenderer.invoke('foundry:fsDelete', relPath),
 });
-

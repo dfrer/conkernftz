@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https:; media-src 'self' data: file: blob: https:;" />
     <title>conkernftz</title>
     <link rel="icon" type="image/png" href="assets/logo-512.png" />
         <link rel="stylesheet" href="design-system/tokens.css" />
@@ -87,6 +87,7 @@
                 <div class="subtabs">
                   <button class="subtab-btn active" data-subtab="overview">Overview</button>
                   <button class="subtab-btn" data-subtab="configure">Configure</button>
+                  <button class="subtab-btn" data-subtab="files">Files</button>
                   <button class="subtab-btn" data-subtab="rules">Rules & Export</button>
                   <button class="subtab-btn" data-subtab="reports">Reports</button>
                 </div>
@@ -136,6 +137,28 @@
                     </div>
           <pre id="out"></pre>
         </div>
+                </div>
+                <div id="main-files" class="subpane hidden">
+            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+              <legend>Project Files</legend>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                <button id="fs-up" class="btn-ghost" title="Go Up" style="background:#30363d;">Up</button>
+                <input id="fs-path" placeholder="/ (project root)" style="flex:1; min-width:300px;" />
+                <button id="fs-refresh" class="btn-ghost" style="background:#30363d;">Refresh</button>
+                <button id="fs-open-explorer" class="btn-secondary">Open</button>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                <button id="fs-new-folder" class="btn-primary">New Folder</button>
+                <label class="btn-secondary" style="position:relative; overflow:hidden;">
+                  <input id="fs-upload" type="file" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+                  Upload Files…
+                </label>
+                <button id="fs-rename" class="btn-ghost" style="background:#30363d;">Rename</button>
+                <button id="fs-delete" class="btn-ghost" style="background:#30363d;">Delete</button>
+              </div>
+              <div id="fs-list" style="display:grid; grid-template-columns: 1fr auto; gap:6px; max-height:340px; overflow:auto; border:1px solid #30363d; border-radius:6px; padding:6px;"></div>
+              <div class="mini muted">Tip: Click items to select. Double-click folders to open.</div>
+            </fieldset>
                 </div>
                 <div id="main-configure" class="subpane hidden">
           <h3 data-help="config">Project Config</h3>
@@ -481,46 +504,122 @@
           <section id="tab-fal" class="tabpane hidden">
             <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
               <div class="sidebar" data-help="sidebar-fal">
-                <div>
-                  <label>API Key</label>
-                  <input id="fal-key" type="password" placeholder="FAL key" />
-                </div>
-                <div>
-                  <label>Model</label>
-                  <select id="fal-model">
-                    <option value="flux/dev">Flux Dev</option>
-                    <option value="flux-pro/v1.0">Flux Pro v1</option>
-                    <option value="stable-diffusion">Stable Diffusion</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Prompt</label>
-                  <textarea id="fal-prompt" rows="3" placeholder="Describe your image"></textarea>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="sidebar-group">
+                  <div class="group-title">Fal AI</div>
                   <div>
-                    <label>Width</label>
-                    <input id="fal-width" type="number" value="512" min="64" max="2048" step="64" />
+                    <label>API Key</label>
+                    <input id="fal-key" type="password" placeholder="FAL key" />
+                  </div>
+                  <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+                    <label style="display:flex; align-items:center; gap:6px;"><input id="fal-advanced" type="checkbox" /> Advanced</label>
+                    <button id="fal-open-folder" class="btn-ghost" title="Open saved folder">Open Folder</button>
+                  </div>
+                  <div id="fal-status" class="mini muted" style="margin-top:8px;"></div>
+                </div>
+
+                <div class="sidebar-group" id="fal-basic-controls">
+                  <div class="group-title">Quick Image</div>
+                  <div>
+                    <label>Model</label>
+                    <select id="fal-model">
+                      <option value="flux/dev">Flux Dev</option>
+                      <option value="flux-pro/v1.0">Flux Pro v1</option>
+                    </select>
                   </div>
                   <div>
-                    <label>Height</label>
-                    <input id="fal-height" type="number" value="512" min="64" max="2048" step="64" />
+                    <label>Prompt</label>
+                    <textarea id="fal-prompt" rows="3" placeholder="Describe your image"></textarea>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div>
+                      <label>Width</label>
+                      <input id="fal-width" type="number" value="512" min="64" max="2048" step="64" />
+                    </div>
+                    <div>
+                      <label>Height</label>
+                      <input id="fal-height" type="number" value="512" min="64" max="2048" step="64" />
+                    </div>
+                  </div>
+                  <div>
+                    <label>Images</label>
+                    <input id="fal-count" type="number" value="1" min="1" max="4" />
+                  </div>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="fal-generate" class="btn-primary">Generate</button>
                   </div>
                 </div>
-                <div>
-                  <label>Images</label>
-                  <input id="fal-count" type="number" value="1" min="1" max="4" />
+
+                <div class="sidebar-group" id="fal-catalog-controls" style="display:none;">
+                  <div class="group-title">Explore Models</div>
+                  <div style="display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center;">
+                    <input id="fal-search" placeholder="Search models, tags…" />
+                    <select id="fal-category">
+                      <option value="all">All</option>
+                      <option value="image">Images</option>
+                      <option value="video">Video</option>
+                      <option value="audio">Audio</option>
+                      <option value="llm">LLM</option>
+                      <option value="tool">Tools</option>
+                    </select>
+                  </div>
+                  <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px;">
+                    <input id="fal-catalog-url" placeholder="Catalog JSON URL (https://…)" />
+                    <button id="fal-fetch-catalog-url" class="btn-secondary">Fetch</button>
+                  </div>
+                  <div id="fal-model-list" style="margin-top:8px; max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:6px;"></div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button id="fal-refresh-catalog" class="btn-secondary">Refresh</button>
+                    <label class="btn-secondary" style="position:relative; overflow:hidden;">
+                      <input id="fal-import-catalog" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+                      Import JSON…
+                    </label>
+                    <button id="fal-export-catalog" class="btn-ghost">Export</button>
+                    <button id="fal-reset-catalog" class="btn-ghost">Reset</button>
+                  </div>
+                  <div class="mini muted">Tip: Star favorites and use search to filter. Catalog can be updated without app updates.</div>
                 </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <button id="fal-generate" class="btn-primary">Generate</button>
-                  <button id="fal-open-folder" class="btn-ghost">Open Folder</button>
-                </div>
-                <div id="fal-status" class="muted" style="margin-top:8px;"></div>
               </div>
+
               <div class="content">
+                <div class="gallery-card" id="fal-params-card" style="display:none;">
+                  <div class="gallery-header">
+                    <h3 id="fal-model-title" style="margin:0;">Model & Parameters</h3>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                      <a id="fal-docs-link" class="btn-ghost" href="#" target="_blank" rel="noreferrer">Docs</a>
+                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                        <input id="fal-queue-mode" type="checkbox" /> Queue
+                      </label>
+                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                        <input id="fal-queue-logs" type="checkbox" checked /> Logs
+                      </label>
+                      <input id="fal-webhook-url" placeholder="Webhook URL (optional)" style="min-width:220px;" />
+                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                        Body:
+                        <select id="fal-body-shape">
+                          <option value="auto" selected>Auto</option>
+                          <option value="raw">Raw</option>
+                          <option value="input-wrap">{ input: ... }</option>
+                        </select>
+                      </label>
+                      <button id="fal-reset-params" class="btn-ghost" title="Reset fields to example">Reset</button>
+                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                        <input id="fal-show-json" type="checkbox" /> Show JSON
+                      </label>
+                      <button id="fal-add-field" class="btn-ghost" title="Add custom field">Add Field</button>
+                      <button id="fal-save-model" class="btn-ghost" title="Save model to catalog">Save Model</button>
+                      <button id="fal-dryrun" class="btn-secondary" title="Build payload only">Dry Run</button>
+                      <button id="fal-run" class="btn-primary">Run</button>
+                    </div>
+                  </div>
+                  <div id="fal-param-editor" style="display:grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap:10px;"></div>
+                </div>
+
                 <div class="gallery-card">
                   <div class="gallery-header">
                     <h3 style="margin:0;">Results</h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                      <button id="fal-save-all" class="btn-ghost">Save All</button>
+                    </div>
                   </div>
                   <div id="fal-results" class="gallery-grid"></div>
                 </div>
@@ -609,5 +708,3 @@
         <script type="module" src="renderer/app.js"></script>
   </body>
   </html>
-
-

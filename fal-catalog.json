@@ -1,0 +1,4091 @@
+[
+  {
+    "id": "fal-ai/nano-banana/edit",
+    "name": "Nano Banana Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/nano-banana/edit",
+    "description": "Endpoint: https://fal.run/fal-ai/nano-banana/edit",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_urls",
+        "type": "json",
+        "label": "Image Urls",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "make a photo of the man driving the car down the california coastline",
+      "image_urls": [
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input.png",
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input-2.png"
+      ],
+      "num_images": 1,
+      "output_format": "jpeg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/nano-banana/edit",
+    "name": "Nano Banana Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/nano-banana/edit/api",
+    "description": "Endpoint: https://fal.run/fal-ai/nano-banana/edit",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_urls",
+        "type": "json",
+        "label": "Image Urls",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "make a photo of the man driving the car down the california coastline",
+      "image_urls": [
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input.png",
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input-2.png"
+      ],
+      "num_images": 1,
+      "output_format": "jpeg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/kling-video/v2.1/master/image-to-video",
+    "name": "Kling 2.1 Master Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/kling-video/v2.1/master/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/kling-video/v2.1/master/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "cfg_scale",
+        "type": "number",
+        "label": "Cfg Scale",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Sunlight dapples through budding branches, illuminating a vibrant tapestry of greens and browns as a pair of robins meticulously weave twigs and mud into a cradle of life, their tiny forms a whirlwind of activity against a backdrop of blossoming spring.  The scene unfolds with a gentle, observational pace, allowing the viewer to fully appreciate the intricate details of nest construction, the soft textures of downy feathers contrasted against the rough bark of the branches, the delicate balance of strength and fragility in their creation.",
+      "image_url": "https://v3.fal.media/files/zebra/9Nrm22YyLojSTPJbZYNhh_image.webp",
+      "duration": "5",
+      "negative_prompt": "blur, distort, and low quality",
+      "cfg_scale": 0.5
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/kling-video/v2.1/master/image-to-video",
+    "name": "Kling 2.1 Master Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/kling-video/v2.1/master/image-to-video/api",
+    "description": "Endpoint: https://fal.run/fal-ai/kling-video/v2.1/master/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "cfg_scale",
+        "type": "number",
+        "label": "Cfg Scale",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Sunlight dapples through budding branches, illuminating a vibrant tapestry of greens and browns as a pair of robins meticulously weave twigs and mud into a cradle of life, their tiny forms a whirlwind of activity against a backdrop of blossoming spring.  The scene unfolds with a gentle, observational pace, allowing the viewer to fully appreciate the intricate details of nest construction, the soft textures of downy feathers contrasted against the rough bark of the branches, the delicate balance of strength and fragility in their creation.",
+      "image_url": "https://v3.fal.media/files/zebra/9Nrm22YyLojSTPJbZYNhh_image.webp",
+      "duration": "5",
+      "negative_prompt": "blur, distort, and low quality",
+      "cfg_scale": 0.5
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/moonvalley/marey/i2v",
+    "name": "Marey Realism V1.5 Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/moonvalley/marey/i2v",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "dimensions",
+        "type": "string",
+        "label": "Dimensions",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "seed",
+        "type": "number",
+        "label": "Seed",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Detailed Description: In a hidden jungle grotto, a majestic waterfall plunges into a dark, serene pool below. Ethereal sunbeams slice through the dense canopy high above, illuminating the swirling mist generated by the powerful cascade. The light rays dance across the scene, highlighting the vibrant green foliage that clings to the dark, wet rock walls. The constant roar of the falling water echoes through the secluded space, as the surface of the pool ripples and churns from the impact, creating a mesmerizing display of nature's raw power and tranquil beauty. Background: Brilliant sunbeams pierce through an opening in the dense jungle canopy, their ethereal rays shifting and shimmering as they cut through the misty air. Middleground: A powerful column of white water cascades down a dark, foliage-covered cliff face, creating a stark contrast with the shadowy recesses of the grotto. Foreground: The waterfall crashes into a dark, churning pool of water, sending up a fine spray and creating ever-expanding ripples across the surface.",
+      "dimensions": "1920x1080",
+      "duration": "5s",
+      "negative_prompt": "<synthetic> <scene cut> low-poly, flat shader, bad rigging, stiff animation, uncanny eyes, low-quality textures, looping glitch, cheap effect, overbloom, bloom spam, default lighting, game asset, stiff face, ugly specular, AI artifacts",
+      "seed": 9,
+      "image_url": "https://d1kaxrqq3vfrw5.cloudfront.net/fal-launch-assets/guide-assets/fal-i2v-example-input.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/moonvalley/marey/i2v/api",
+    "name": "Marey Realism V1.5 Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/moonvalley/marey/i2v/api",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "dimensions",
+        "type": "string",
+        "label": "Dimensions",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "seed",
+        "type": "number",
+        "label": "Seed",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Detailed Description: In a hidden jungle grotto, a majestic waterfall plunges into a dark, serene pool below. Ethereal sunbeams slice through the dense canopy high above, illuminating the swirling mist generated by the powerful cascade. The light rays dance across the scene, highlighting the vibrant green foliage that clings to the dark, wet rock walls. The constant roar of the falling water echoes through the secluded space, as the surface of the pool ripples and churns from the impact, creating a mesmerizing display of nature's raw power and tranquil beauty. Background: Brilliant sunbeams pierce through an opening in the dense jungle canopy, their ethereal rays shifting and shimmering as they cut through the misty air. Middleground: A powerful column of white water cascades down a dark, foliage-covered cliff face, creating a stark contrast with the shadowy recesses of the grotto. Foreground: The waterfall crashes into a dark, churning pool of water, sending up a fine spray and creating ever-expanding ripples across the surface.",
+      "dimensions": "1920x1080",
+      "duration": "5s",
+      "negative_prompt": "<synthetic> <scene cut> low-poly, flat shader, bad rigging, stiff animation, uncanny eyes, low-quality textures, looping glitch, cheap effect, overbloom, bloom spam, default lighting, game asset, stiff face, ugly specular, AI artifacts",
+      "seed": 9,
+      "image_url": "https://d1kaxrqq3vfrw5.cloudfront.net/fal-launch-assets/guide-assets/fal-i2v-example-input.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/ideogram/character/edit",
+    "name": "Ideogram V3 Character Edit Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/ideogram/character/edit",
+    "description": "Endpoint: https://fal.run/fal-ai/ideogram/character/edit",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "rendering_speed",
+        "type": "string",
+        "label": "Rendering Speed",
+        "group": "basic"
+      },
+      {
+        "key": "style",
+        "type": "string",
+        "label": "Style",
+        "group": "basic"
+      },
+      {
+        "key": "expand_prompt",
+        "type": "boolean",
+        "label": "Expand Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "mask_url",
+        "type": "mask",
+        "label": "Mask Url",
+        "group": "basic"
+      },
+      {
+        "key": "reference_image_urls",
+        "type": "json",
+        "label": "Reference Image Urls",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "rendering_speed": "BALANCED",
+      "style": "AUTO",
+      "expand_prompt": true,
+      "num_images": 1,
+      "prompt": "woman holding bag",
+      "image_url": "https://v3.fal.media/files/panda/-LC_gNNV3wUHaGMQT3klE_output.png",
+      "mask_url": "https://v3.fal.media/files/panda/jVDAgSkpsZFDP080ceSZJ_woman_face_mask.png",
+      "reference_image_urls": [
+        "https://v3.fal.media/files/kangaroo/0rinwnj_Kn9Fsu2dK-aKm_image.png"
+      ]
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/ideogram/character/edit",
+    "name": "Ideogram V3 Character Edit Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/ideogram/character/edit/api",
+    "description": "Endpoint: https://fal.run/fal-ai/ideogram/character/edit",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "rendering_speed",
+        "type": "string",
+        "label": "Rendering Speed",
+        "group": "basic"
+      },
+      {
+        "key": "style",
+        "type": "string",
+        "label": "Style",
+        "group": "basic"
+      },
+      {
+        "key": "expand_prompt",
+        "type": "boolean",
+        "label": "Expand Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "mask_url",
+        "type": "mask",
+        "label": "Mask Url",
+        "group": "basic"
+      },
+      {
+        "key": "reference_image_urls",
+        "type": "json",
+        "label": "Reference Image Urls",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "rendering_speed": "BALANCED",
+      "style": "AUTO",
+      "expand_prompt": true,
+      "num_images": 1,
+      "prompt": "woman holding bag",
+      "image_url": "https://v3.fal.media/files/panda/-LC_gNNV3wUHaGMQT3klE_output.png",
+      "mask_url": "https://v3.fal.media/files/panda/jVDAgSkpsZFDP080ceSZJ_woman_face_mask.png",
+      "reference_image_urls": [
+        "https://v3.fal.media/files/kangaroo/0rinwnj_Kn9Fsu2dK-aKm_image.png"
+      ]
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "name": "MiniMax Hailuo 02 [Standard] (Image to Video) Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "prompt_optimizer",
+        "type": "boolean",
+        "label": "Prompt Optimizer",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Man walked into winter cave with polar bear",
+      "image_url": "https://storage.googleapis.com/falserverless/model_tests/minimax/1749891352437225630-389852416840474630_1749891352.png",
+      "duration": "6",
+      "prompt_optimizer": true,
+      "resolution": "768P"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "name": "MiniMax Hailuo 02 [Standard] (Image to Video) Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/minimax/hailuo-02/standard/image-to-video/api",
+    "description": "Endpoint: https://fal.run/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "prompt_optimizer",
+        "type": "boolean",
+        "label": "Prompt Optimizer",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Man walked into winter cave with polar bear",
+      "image_url": "https://storage.googleapis.com/falserverless/model_tests/minimax/1749891352437225630-389852416840474630_1749891352.png",
+      "duration": "6",
+      "prompt_optimizer": true,
+      "resolution": "768P"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/veo3/fast/image-to-video",
+    "name": "Veo 3 Fast [Image to Video] Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/veo3/fast/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/veo3/fast/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "generate_audio",
+        "type": "audio",
+        "label": "Generate Audio",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A woman looks into the camera, breathes in, then exclaims energetically, \"have you guys checked out Veo3 Image-to-Video on Fal? It's incredible!\"",
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+      "duration": "8s",
+      "generate_audio": true,
+      "resolution": "720p"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/veo3/fast/image-to-video",
+    "name": "Veo 3 Fast [Image to Video] Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/veo3/fast/image-to-video/api",
+    "description": "Endpoint: https://fal.run/fal-ai/veo3/fast/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "generate_audio",
+        "type": "audio",
+        "label": "Generate Audio",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A woman looks into the camera, breathes in, then exclaims energetically, \"have you guys checked out Veo3 Image-to-Video on Fal? It's incredible!\"",
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/veo3-i2v-input.png",
+      "duration": "8s",
+      "generate_audio": true,
+      "resolution": "720p"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-a14b/text-to-video",
+    "name": "Wan-2.2 Text-to-Video A14B Text to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-a14b/text-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-a14b/text-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "frames_per_second",
+        "type": "number",
+        "label": "Frames Per Second",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "enable_prompt_expansion",
+        "type": "boolean",
+        "label": "Enable Prompt Expansion",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale_2",
+        "type": "number",
+        "label": "Guidance Scale 2",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "interpolator_model",
+        "type": "string",
+        "label": "Interpolator Model",
+        "group": "basic"
+      },
+      {
+        "key": "num_interpolated_frames",
+        "type": "number",
+        "label": "Num Interpolated Frames",
+        "group": "basic"
+      },
+      {
+        "key": "adjust_fps_for_interpolation",
+        "type": "boolean",
+        "label": "Adjust Fps For Interpolation",
+        "group": "basic"
+      },
+      {
+        "key": "video_quality",
+        "type": "video",
+        "label": "Video Quality",
+        "group": "basic"
+      },
+      {
+        "key": "video_write_mode",
+        "type": "video",
+        "label": "Video Write Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A close-up of a young woman smiling gently in the rain, raindrops glistening on her face and eyelashes. The video captures the delicate details of her expression and the water droplets, with soft light reflecting off her skin in the rainy atmosphere.",
+      "num_frames": 81,
+      "frames_per_second": 16,
+      "resolution": "720p",
+      "aspect_ratio": "16:9",
+      "num_inference_steps": 27,
+      "enable_safety_checker": true,
+      "enable_prompt_expansion": false,
+      "acceleration": "regular",
+      "guidance_scale": 3.5,
+      "guidance_scale_2": 4,
+      "shift": 5,
+      "interpolator_model": "film",
+      "num_interpolated_frames": 1,
+      "adjust_fps_for_interpolation": true,
+      "video_quality": "high",
+      "video_write_mode": "balanced"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-a14b/text-to-video",
+    "name": "Wan-2.2 Text-to-Video A14B Text to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-a14b/text-to-video/api",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-a14b/text-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "frames_per_second",
+        "type": "number",
+        "label": "Frames Per Second",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "enable_prompt_expansion",
+        "type": "boolean",
+        "label": "Enable Prompt Expansion",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale_2",
+        "type": "number",
+        "label": "Guidance Scale 2",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "interpolator_model",
+        "type": "string",
+        "label": "Interpolator Model",
+        "group": "basic"
+      },
+      {
+        "key": "num_interpolated_frames",
+        "type": "number",
+        "label": "Num Interpolated Frames",
+        "group": "basic"
+      },
+      {
+        "key": "adjust_fps_for_interpolation",
+        "type": "boolean",
+        "label": "Adjust Fps For Interpolation",
+        "group": "basic"
+      },
+      {
+        "key": "video_quality",
+        "type": "video",
+        "label": "Video Quality",
+        "group": "basic"
+      },
+      {
+        "key": "video_write_mode",
+        "type": "video",
+        "label": "Video Write Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A close-up of a young woman smiling gently in the rain, raindrops glistening on her face and eyelashes. The video captures the delicate details of her expression and the water droplets, with soft light reflecting off her skin in the rainy atmosphere.",
+      "num_frames": 81,
+      "frames_per_second": 16,
+      "resolution": "720p",
+      "aspect_ratio": "16:9",
+      "num_inference_steps": 27,
+      "enable_safety_checker": true,
+      "enable_prompt_expansion": false,
+      "acceleration": "regular",
+      "guidance_scale": 3.5,
+      "guidance_scale_2": 4,
+      "shift": 5,
+      "interpolator_model": "film",
+      "num_interpolated_frames": 1,
+      "adjust_fps_for_interpolation": true,
+      "video_quality": "high",
+      "video_write_mode": "balanced"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux/krea/image-to-image",
+    "name": "FLUX.1 Krea [dev] Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux/krea/image-to-image",
+    "description": "Endpoint: https://fal.run/fal-ai/flux/krea/image-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "strength",
+        "type": "number",
+        "label": "Strength",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://fal.media/files/koala/Chls9L2ZnvuipUTEwlnJC.png",
+      "strength": 0.95,
+      "num_inference_steps": 40,
+      "prompt": "A cat dressed as a wizard with a background of a mystic forest.",
+      "guidance_scale": 4.5,
+      "num_images": 1,
+      "enable_safety_checker": true,
+      "output_format": "jpeg",
+      "acceleration": "none"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux/krea/image-to-image",
+    "name": "FLUX.1 Krea [dev] Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux/krea/image-to-image/api",
+    "description": "Endpoint: https://fal.run/fal-ai/flux/krea/image-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "strength",
+        "type": "number",
+        "label": "Strength",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://fal.media/files/koala/Chls9L2ZnvuipUTEwlnJC.png",
+      "strength": 0.95,
+      "num_inference_steps": 40,
+      "prompt": "A cat dressed as a wizard with a background of a mystic forest.",
+      "guidance_scale": 4.5,
+      "num_images": 1,
+      "enable_safety_checker": true,
+      "output_format": "jpeg",
+      "acceleration": "none"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext",
+    "name": "FLUX.1 Kontext [pro] Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Put a donut next to the flour.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "image_url": "https://v3.fal.media/files/rabbit/rmgBxhwGYb2d3pl3x9sKf_output.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext",
+    "name": "FLUX.1 Kontext [pro] Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext/api",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Put a donut next to the flour.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "image_url": "https://v3.fal.media/files/rabbit/rmgBxhwGYb2d3pl3x9sKf_output.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/chatterbox/text-to-speech/multilingual",
+    "name": "Chatterbox Text to Speech",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/chatterbox/text-to-speech/multilingual",
+    "description": "Endpoint: https://fal.run/fal-ai/chatterbox/text-to-speech/multilingual",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      },
+      {
+        "key": "voice",
+        "type": "string",
+        "label": "Voice",
+        "group": "basic"
+      },
+      {
+        "key": "exaggeration",
+        "type": "number",
+        "label": "Exaggeration",
+        "group": "basic"
+      },
+      {
+        "key": "temperature",
+        "type": "number",
+        "label": "Temperature",
+        "group": "basic"
+      },
+      {
+        "key": "cfg_scale",
+        "type": "number",
+        "label": "Cfg Scale",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "text": "Last month, we reached a new milestone with two billion views on our YouTube channel.",
+      "voice": "english",
+      "exaggeration": 0.5,
+      "temperature": 0.8,
+      "cfg_scale": 0.5
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-a14b/image-to-image",
+    "name": "Wan Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-a14b/image-to-image",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-a14b/image-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/elevenlabs/sound-effects/v2",
+    "name": "Elevenlabs Text to Audio",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/elevenlabs/sound-effects/v2",
+    "description": "Endpoint: https://fal.run/fal-ai/elevenlabs/sound-effects/v2",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      },
+      {
+        "key": "prompt_influence",
+        "type": "number",
+        "label": "Prompt Influence",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "text": "Spacious braam suitable for high-impact movie trailer moments",
+      "prompt_influence": 0.3,
+      "output_format": "mp3_44100_128"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/sync-lipsync/v2/pro",
+    "name": "Sync Lipsync Video to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/sync-lipsync/v2/pro",
+    "description": "Endpoint: https://fal.run/fal-ai/sync-lipsync/v2/pro",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "sync_mode",
+        "type": "string",
+        "label": "Sync Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "video_url": "https://storage.googleapis.com/falserverless/example_inputs/sync_v2_pro_video_input.mp4",
+      "audio_url": "https://storage.googleapis.com/falserverless/example_inputs/sync_v2_pro_audio_input.mp3",
+      "sync_mode": "cut_off"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/bytedance/seedance/v1/lite/reference-to-video",
+    "name": "Bytedance Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/bytedance/seedance/v1/lite/reference-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/bytedance/seedance/v1/lite/reference-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "reference_image_urls",
+        "type": "json",
+        "label": "Reference Image Urls",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "The girl catches the puppy and hugs it.",
+      "resolution": "720p",
+      "duration": "5",
+      "enable_safety_checker": true,
+      "reference_image_urls": [
+        "https://storage.googleapis.com/falserverless/example_inputs/seedance_reference.jpeg",
+        "https://storage.googleapis.com/falserverless/example_inputs/seedance_reference_2.jpeg"
+      ]
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/argil/avatars/text-to-video",
+    "name": "Avatars Text to Video Text to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/argil/avatars/text-to-video",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "avatar",
+        "type": "string",
+        "label": "Avatar",
+        "group": "basic"
+      },
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      },
+      {
+        "key": "voice",
+        "type": "string",
+        "label": "Voice",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "avatar": "Noemie car (UGC)",
+      "text": "\nArgil is kinda crazy guys! You just turn a real person into \nan avatar that actually talks and moves and it's already reel-ready, \nfor TikTok, Shorts, whatever. No wasting hours editing, it still looks super pro.\n",
+      "voice": "Rachel"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/argil/avatars/audio-to-video",
+    "name": "Avatars Audio to Video Audio to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/argil/avatars/audio-to-video",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [],
+    "inputExample": null,
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/uso",
+    "name": "Uso Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/uso",
+    "description": "Endpoint: https://fal.run/fal-ai/uso",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/decart/lucy-5b/image-to-video",
+    "name": "Decart Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/decart/lucy-5b/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/decart/lucy-5b/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "sync_mode",
+        "type": "boolean",
+        "label": "Sync Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A cat is walking slowly in the garden",
+      "image_url": "https://v3.fal.media/files/monkey/OlpQEYh7oNeJ3qKsdiaym_ia5ECOgFbfcniMDu01_18_da73e078e0924472b51d92f3e3fba98c.png",
+      "resolution": "720p",
+      "aspect_ratio": "16:9",
+      "sync_mode": true
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan-fun-control",
+    "name": "Wan 2.2 Fun Control Video to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/wan-fun-control",
+    "description": "Endpoint: https://fal.run/fal-ai/wan-fun-control",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "match_input_num_frames",
+        "type": "boolean",
+        "label": "Match Input Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "match_input_fps",
+        "type": "boolean",
+        "label": "Match Input Fps",
+        "group": "basic"
+      },
+      {
+        "key": "fps",
+        "type": "number",
+        "label": "Fps",
+        "group": "basic"
+      },
+      {
+        "key": "control_video_url",
+        "type": "video",
+        "label": "Control Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "preprocess_type",
+        "type": "string",
+        "label": "Preprocess Type",
+        "group": "basic"
+      },
+      {
+        "key": "reference_image_url",
+        "type": "image",
+        "label": "Reference Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A woman wearing a lavender floral dress spins around in a circle.",
+      "num_inference_steps": 27,
+      "guidance_scale": 6,
+      "shift": 5,
+      "match_input_num_frames": true,
+      "num_frames": 81,
+      "match_input_fps": true,
+      "fps": 16,
+      "control_video_url": "https://storage.googleapis.com/falserverless/example_inputs/wan-fun-control-video-input.mp4",
+      "preprocess_type": "depth",
+      "reference_image_url": "https://storage.googleapis.com/falserverless/example_inputs/wan-fun-input-reference-image.webp"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/vibevoice/7b",
+    "name": "VibeVoice 7B Text to Speech",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/vibevoice/7b",
+    "description": "Endpoint: https://fal.run/fal-ai/vibevoice/7b",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "preset",
+        "type": "string",
+        "label": "Preset",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "preset": "Carter [EN]"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/vibevoice",
+    "name": "VibeVoice 1.5B Text to Speech",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/vibevoice",
+    "description": "Endpoint: https://fal.run/fal-ai/vibevoice",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "preset",
+        "type": "string",
+        "label": "Preset",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "preset": "Carter [EN]"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-14b/speech-to-video",
+    "name": "Wan-2.2 Speech-to-Video 14B Audio to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-14b/speech-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-14b/speech-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "frames_per_second",
+        "type": "number",
+        "label": "Frames Per Second",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "video_quality",
+        "type": "video",
+        "label": "Video Quality",
+        "group": "basic"
+      },
+      {
+        "key": "video_write_mode",
+        "type": "video",
+        "label": "Video Write Mode",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Summer beach vacation style, a white cat wearing sunglasses sits on a surfboard.",
+      "num_frames": 80,
+      "frames_per_second": 16,
+      "resolution": "480p",
+      "num_inference_steps": 27,
+      "enable_safety_checker": true,
+      "guidance_scale": 3.5,
+      "shift": 5,
+      "video_quality": "high",
+      "video_write_mode": "balanced",
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/wan_s2v_cat.png",
+      "audio_url": "https://storage.googleapis.com/falserverless/example_inputs/wan_s2v_talk.wav"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/bria/video/increase-resolution",
+    "name": "Video Video to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/bria/video/increase-resolution",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "desired_increase",
+        "type": "string",
+        "label": "Desired Increase",
+        "group": "basic"
+      },
+      {
+        "key": "output_container_and_codec",
+        "type": "string",
+        "label": "Output Container And Codec",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "video_url": "https://bria-datasets.s3.us-east-1.amazonaws.com/video_increase_res/3446608-sd_426_240_25fps.mp4",
+      "desired_increase": "2",
+      "output_container_and_codec": "webm_vp9"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/gemini-25-flash-image/edit",
+    "name": "Gemini 2.5 Flash Image Image to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/gemini-25-flash-image/edit",
+    "description": "Endpoint: https://fal.run/fal-ai/gemini-25-flash-image/edit",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_urls",
+        "type": "json",
+        "label": "Image Urls",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "make a photo of the man driving the car down the california coastline",
+      "image_urls": [
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input.png",
+        "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input-2.png"
+      ],
+      "num_images": 1,
+      "output_format": "jpeg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/gemini-25-flash-image",
+    "name": "Gemini 2.5 Flash Image Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/gemini-25-flash-image",
+    "description": "Endpoint: https://fal.run/fal-ai/gemini-25-flash-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "An action shot of a black lab swimming in an inground suburban swimming pool. The camera is placed meticulously on the water line, dividing the image in half, revealing both the dogs head above water holding a tennis ball in it's mouth, and it's paws paddling underwater.",
+      "num_images": 1,
+      "output_format": "jpeg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/veo3",
+    "name": "Veo 3 Text to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/veo3",
+    "description": "Endpoint: https://fal.run/fal-ai/veo3",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "enhance_prompt",
+        "type": "boolean",
+        "label": "Enhance Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "auto_fix",
+        "type": "boolean",
+        "label": "Auto Fix",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "generate_audio",
+        "type": "audio",
+        "label": "Generate Audio",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A casual street interview on a busy New York City sidewalk in the afternoon. The interviewer holds a plain, unbranded microphone and asks: Have you seen Google's new Veo3 model It is a super good model. Person replies: Yeah I saw it, it's already available on fal. It's crazy good.",
+      "aspect_ratio": "16:9",
+      "duration": "8s",
+      "enhance_prompt": true,
+      "auto_fix": true,
+      "resolution": "720p",
+      "generate_audio": true
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/pixverse/v5/image-to-video",
+    "name": "Pixverse v5 Image to Video Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/pixverse/v5/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/pixverse/v5/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "label": "Duration",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "A woman warrior with her hammer walking with his glacier wolf.",
+      "aspect_ratio": "16:9",
+      "resolution": "720p",
+      "duration": "5",
+      "negative_prompt": "blurry, low quality, low resolution, pixelated, noisy, grainy, out of focus, poorly lit, poorly exposed, poorly composed, poorly framed, poorly cropped, poorly color corrected, poorly color graded",
+      "image_url": "https://v3.fal.media/files/zebra/qL93Je8ezvzQgDOEzTjKF_KhGKZTEebZcDw6T5rwQPK_output.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-a14b/image-to-video",
+    "name": "Wan v2.2 A14B Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-a14b/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-a14b/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "frames_per_second",
+        "type": "number",
+        "label": "Frames Per Second",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "enable_prompt_expansion",
+        "type": "boolean",
+        "label": "Enable Prompt Expansion",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale_2",
+        "type": "number",
+        "label": "Guidance Scale 2",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "interpolator_model",
+        "type": "string",
+        "label": "Interpolator Model",
+        "group": "basic"
+      },
+      {
+        "key": "num_interpolated_frames",
+        "type": "number",
+        "label": "Num Interpolated Frames",
+        "group": "basic"
+      },
+      {
+        "key": "adjust_fps_for_interpolation",
+        "type": "boolean",
+        "label": "Adjust Fps For Interpolation",
+        "group": "basic"
+      },
+      {
+        "key": "video_quality",
+        "type": "video",
+        "label": "Video Quality",
+        "group": "basic"
+      },
+      {
+        "key": "video_write_mode",
+        "type": "video",
+        "label": "Video Write Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://storage.googleapis.com/falserverless/model_tests/wan/dragon-warrior.jpg",
+      "prompt": "The white dragon warrior stands still, eyes full of determination and strength. The camera slowly moves closer or circles around the warrior, highlighting the powerful presence and heroic spirit of the character.",
+      "num_frames": 81,
+      "frames_per_second": 16,
+      "resolution": "720p",
+      "aspect_ratio": "auto",
+      "num_inference_steps": 27,
+      "enable_safety_checker": true,
+      "enable_prompt_expansion": false,
+      "acceleration": "regular",
+      "guidance_scale": 3.5,
+      "guidance_scale_2": 3.5,
+      "shift": 5,
+      "interpolator_model": "film",
+      "num_interpolated_frames": 1,
+      "adjust_fps_for_interpolation": true,
+      "video_quality": "high",
+      "video_write_mode": "balanced"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/ltxv-13b-098-distilled/image-to-video",
+    "name": "LTX-Video 13B 0.9.8 Distilled Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/ltxv-13b-098-distilled/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/ltxv-13b-098-distilled/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "loras",
+        "type": "json",
+        "label": "Loras",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "first_pass_num_inference_steps",
+        "type": "number",
+        "label": "First Pass Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "second_pass_num_inference_steps",
+        "type": "number",
+        "label": "Second Pass Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "second_pass_skip_initial_steps",
+        "type": "number",
+        "label": "Second Pass Skip Initial Steps",
+        "group": "basic"
+      },
+      {
+        "key": "frame_rate",
+        "type": "number",
+        "label": "Frame Rate",
+        "group": "basic"
+      },
+      {
+        "key": "expand_prompt",
+        "type": "boolean",
+        "label": "Expand Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "reverse_video",
+        "type": "video",
+        "label": "Reverse Video",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "enable_detail_pass",
+        "type": "boolean",
+        "label": "Enable Detail Pass",
+        "group": "basic"
+      },
+      {
+        "key": "temporal_adain_factor",
+        "type": "number",
+        "label": "Temporal Adain Factor",
+        "group": "basic"
+      },
+      {
+        "key": "tone_map_compression_ratio",
+        "type": "number",
+        "label": "Tone Map Compression Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "constant_rate_factor",
+        "type": "number",
+        "label": "Constant Rate Factor",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "The astronaut gets up and walks away",
+      "negative_prompt": "worst quality, inconsistent motion, blurry, jittery, distorted",
+      "loras": [],
+      "resolution": "720p",
+      "aspect_ratio": "auto",
+      "num_frames": 121,
+      "first_pass_num_inference_steps": 8,
+      "second_pass_num_inference_steps": 8,
+      "second_pass_skip_initial_steps": 5,
+      "frame_rate": 24,
+      "expand_prompt": false,
+      "reverse_video": false,
+      "enable_safety_checker": true,
+      "enable_detail_pass": false,
+      "temporal_adain_factor": 0.5,
+      "tone_map_compression_ratio": 0,
+      "constant_rate_factor": 29,
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/ltxv-image-input.jpg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/creatify/lipsync",
+    "name": "Lipsync Video to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/creatify/lipsync",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "loop",
+        "type": "boolean",
+        "label": "Loop",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "audio_url": "https://v3.fal.media/files/penguin/IjB1sco-ydVA-szm3a1Rm_E_voice.mp3",
+      "video_url": "https://v3.fal.media/files/monkey/GzfGN-LfnbobjM9h2g5PF_Eduardo.mov",
+      "loop": true
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/bytedance/omnihuman",
+    "name": "OmniHuman Image to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/bytedance/omnihuman",
+    "description": "Endpoint: https://fal.run/fal-ai/bytedance/omnihuman",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/omnihuman.png",
+      "audio_url": "https://storage.googleapis.com/falserverless/example_inputs/omnihuman_audio.mp3"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/ai-avatar/single-text",
+    "name": "Ai Avatar Image to Video",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/ai-avatar/single-text",
+    "description": "Endpoint: https://fal.run/fal-ai/ai-avatar/single-text",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "text_input",
+        "type": "string",
+        "label": "Text Input",
+        "group": "basic"
+      },
+      {
+        "key": "voice",
+        "type": "string",
+        "label": "Voice",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "seed",
+        "type": "number",
+        "label": "Seed",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://v3.fal.media/files/panda/HuM21CXMf0q7OO2zbvwhV_c4533aada79a495b90e50e32dc9b83a8.png",
+      "text_input": "Spend more time with people who make you feel alive, and less with things that drain your soul.",
+      "voice": "Bill",
+      "prompt": "An elderly man with a white beard and headphones records audio with a microphone. He appears engaged and expressive, suggesting a podcast or voiceover.",
+      "num_frames": 136,
+      "resolution": "480p",
+      "seed": 42,
+      "acceleration": "regular"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/sync-lipsync/v2",
+    "name": "Sync Lipsync 2.0 Video to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/sync-lipsync/v2",
+    "description": "Endpoint: https://fal.run/fal-ai/sync-lipsync/v2",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "model",
+        "type": "string",
+        "label": "Model",
+        "group": "basic"
+      },
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "sync_mode",
+        "type": "string",
+        "label": "Sync Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "model": "lipsync-2",
+      "video_url": "https://v3.fal.media/files/tiger/IugLCDJRIoGqvqTa-EJTr_3wg74vCqyNuQ-IiBd77MM_output.mp4",
+      "audio_url": "https://fal.media/files/lion/vyFWygmZsIZlUO4s0nr2n.wav",
+      "sync_mode": "cut_off"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/pixverse/lipsync",
+    "name": "Pixverse Video to Video",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/pixverse/lipsync",
+    "description": "Endpoint: https://fal.run/fal-ai/pixverse/lipsync",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "voice_id",
+        "type": "string",
+        "label": "Voice Id",
+        "group": "basic"
+      },
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "video_url": "https://v3.fal.media/files/penguin/T-ONORYMYLoEOB9lXryA2_IKEy3yAyi1evJGBAkXGZx_output.mp4",
+      "audio_url": "https://v3.fal.media/files/monkey/k4iyN8bJZWwJXMKH-pO9r_speech.mp3",
+      "voice_id": "Auto",
+      "text": "Hello, this is a test message."
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-kontext-lora/inpaint",
+    "name": "Flux Kontext Lora Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-kontext-lora/inpaint",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-kontext-lora/inpaint",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "reference_image_url",
+        "type": "image",
+        "label": "Reference Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "mask_url",
+        "type": "mask",
+        "label": "Mask Url",
+        "group": "basic"
+      },
+      {
+        "key": "strength",
+        "type": "number",
+        "label": "Strength",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/image_kontext_inpaint.jpeg",
+      "prompt": "A football lying on a field.",
+      "num_inference_steps": 30,
+      "guidance_scale": 2.5,
+      "num_images": 1,
+      "enable_safety_checker": true,
+      "output_format": "png",
+      "acceleration": "none",
+      "reference_image_url": "https://storage.googleapis.com/falserverless/example_inputs/reference_kontext_inpaint.jpeg",
+      "mask_url": "https://storage.googleapis.com/falserverless/example_inputs/mask_kontext_inpaint.png",
+      "strength": 0.88
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-kontext-trainer",
+    "name": "Flux Kontext Trainer Training",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-kontext-trainer",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-kontext-trainer",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_data_url",
+        "type": "string",
+        "label": "Image Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "steps",
+        "type": "number",
+        "label": "Steps",
+        "group": "basic"
+      },
+      {
+        "key": "learning_rate",
+        "type": "number",
+        "label": "Learning Rate",
+        "group": "basic"
+      },
+      {
+        "key": "output_lora_format",
+        "type": "string",
+        "label": "Output Lora Format",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_data_url": "",
+      "steps": 1000,
+      "learning_rate": 0.0001,
+      "output_lora_format": "fal"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-kontext-lora/text-to-image",
+    "name": "Flux Kontext Lora Text to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-kontext-lora/text-to-image",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-kontext-lora/text-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-kontext-lora",
+    "name": "Flux Kontext Lora Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-kontext-lora",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-kontext-lora",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "resolution_mode",
+        "type": "string",
+        "label": "Resolution Mode",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/kontext_example_input.webp",
+      "prompt": "change the setting to a day time, add a lot of people walking the sidewalk while maintaining the same style of the painting",
+      "num_inference_steps": 30,
+      "guidance_scale": 2.5,
+      "num_images": 1,
+      "enable_safety_checker": true,
+      "output_format": "png",
+      "acceleration": "none",
+      "resolution_mode": "match_input"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext/max/multi",
+    "name": "FLUX.1 Kontext [max] Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext/max/multi",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext/max/multi",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "image_urls",
+        "type": "json",
+        "label": "Image Urls",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Put the little duckling on top of the woman's t-shirt.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "image_urls": [
+        "https://v3.fal.media/files/penguin/XoW0qavfF-ahg-jX4BMyL_image.webp",
+        "https://v3.fal.media/files/tiger/bml6YA7DWJXOigadvxk75_image.webp"
+      ]
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext/multi",
+    "name": "FLUX.1 Kontext [pro] Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext/multi",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext/multi",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "image_urls",
+        "type": "json",
+        "label": "Image Urls",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Put the little duckling on top of the woman's t-shirt.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "image_urls": [
+        "https://v3.fal.media/files/penguin/XoW0qavfF-ahg-jX4BMyL_image.webp",
+        "https://v3.fal.media/files/tiger/bml6YA7DWJXOigadvxk75_image.webp"
+      ]
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext/max",
+    "name": "FLUX.1 Kontext [max] Image to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext/max",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext/max",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Put a donut next to the flour.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "image_url": "https://v3.fal.media/files/rabbit/rmgBxhwGYb2d3pl3x9sKf_output.png"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro/kontext/max/text-to-image",
+    "name": "FLUX.1 Kontext [max] Text to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro/kontext/max/text-to-image",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro/kontext/max/text-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "output_format",
+        "type": "string",
+        "label": "Output Format",
+        "group": "basic"
+      },
+      {
+        "key": "safety_tolerance",
+        "type": "string",
+        "label": "Safety Tolerance",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Extreme close-up of a single tiger eye, direct frontal view. Detailed iris and pupil. Sharp focus on eye texture and color. Natural lighting to capture authentic eye shine and depth. The word \"FLUX\" is painted over it in big, white brush strokes with visible texture.",
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "output_format": "jpeg",
+      "safety_tolerance": "2",
+      "aspect_ratio": "1:1"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/chatterbox/text-to-speech",
+    "name": "Chatterbox Text to Speech",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/chatterbox/text-to-speech",
+    "description": "Endpoint: https://fal.run/fal-ai/chatterbox/text-to-speech",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      },
+      {
+        "key": "audio_url",
+        "type": "audio",
+        "label": "Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "exaggeration",
+        "type": "number",
+        "label": "Exaggeration",
+        "group": "basic"
+      },
+      {
+        "key": "temperature",
+        "type": "number",
+        "label": "Temperature",
+        "group": "basic"
+      },
+      {
+        "key": "cfg",
+        "type": "number",
+        "label": "Cfg",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "text": "I just found a hidden treasure in the backyard! Check it out!",
+      "audio_url": "https://storage.googleapis.com/chatterbox-demo-samples/prompts/male_rickmorty.mp3",
+      "exaggeration": 0.25,
+      "temperature": 0.7,
+      "cfg": 0.5
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/playai/tts/dialog",
+    "name": "PlayAI Text-to-Speech Dialog Text to Audio",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/playai/tts/dialog",
+    "description": "Endpoint: https://fal.run/fal-ai/playai/tts/dialog",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "voice",
+        "type": "string",
+        "label": "Voice",
+        "group": "basic"
+      },
+      {
+        "key": "turn_prefix",
+        "type": "string",
+        "label": "Turn Prefix",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "voice": "Furio (English (IT)/Italian)",
+      "turn_prefix": "Speaker 2: "
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/minimax/speech-02-hd",
+    "name": "MiniMax Speech-02 HD Text to Speech",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/minimax/speech-02-hd",
+    "description": "Endpoint: https://fal.run/fal-ai/minimax/speech-02-hd",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [],
+    "inputExample": null,
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/dia-tts/voice-clone",
+    "name": "Dia Tts Audio to Audio",
+    "category": "audio",
+    "docs": "https://fal.ai/models/fal-ai/dia-tts/voice-clone",
+    "description": "Endpoint: https://fal.run/fal-ai/dia-tts/voice-clone",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "text",
+        "type": "string",
+        "label": "Text",
+        "group": "basic"
+      },
+      {
+        "key": "ref_audio_url",
+        "type": "audio",
+        "label": "Ref Audio Url",
+        "group": "basic"
+      },
+      {
+        "key": "ref_text",
+        "type": "string",
+        "label": "Ref Text",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "text": "[S1] Hello, how are you? [S2] I'm good, thank you. [S1] What's your name? [S2] My name is Dia. [S1] Nice to meet you. [S2] Nice to meet you too.",
+      "ref_audio_url": "https://v3.fal.media/files/elephant/d5lORit2npFfBykcAtyUr_tmplacfh8oa.mp3",
+      "ref_text": "[S1] Dia is an open weights text to dialogue model. [S2] You get full control over scripts and voices. [S1] Wow. Amazing. (laughs) [S2] Try it now on Fal."
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/mirelo-ai/sfx-v1/video-to-audio",
+    "name": "Mirelo SFX Video to Audio",
+    "category": "video",
+    "docs": "https://fal.ai/models/mirelo-ai/sfx-v1/video-to-audio",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "text_prompt",
+        "type": "text",
+        "label": "Text Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_samples",
+        "type": "number",
+        "label": "Num Samples",
+        "group": "basic"
+      },
+      {
+        "key": "seed",
+        "type": "number",
+        "label": "Seed",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "number",
+        "label": "Duration",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "video_url": "https://di3otfzjg1gxa.cloudfront.net/input_example.mp4",
+      "text_prompt": "",
+      "num_samples": 2,
+      "seed": 2105,
+      "duration": 10
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "https://fal.ai/models/mirelo-ai/sfx-v1/video-to-video",
+    "name": "Mirelo SFX Video to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/mirelo-ai/sfx-v1/video-to-video",
+    "description": "Scraped from fal.ai",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "video_url",
+        "type": "video",
+        "label": "Video Url",
+        "group": "basic"
+      },
+      {
+        "key": "text_prompt",
+        "type": "text",
+        "label": "Text Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_samples",
+        "type": "number",
+        "label": "Num Samples",
+        "group": "basic"
+      },
+      {
+        "key": "seed",
+        "type": "number",
+        "label": "Seed",
+        "group": "basic"
+      },
+      {
+        "key": "duration",
+        "type": "number",
+        "label": "Duration",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "video_url": "https://di3otfzjg1gxa.cloudfront.net/input_example.mp4",
+      "text_prompt": "",
+      "num_samples": 2,
+      "seed": 2105,
+      "duration": 10
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-lora-portrait-trainer",
+    "name": "Train Flux LoRAs For Portraits Training",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-lora-portrait-trainer",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-lora-portrait-trainer",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "images_data_url",
+        "type": "string",
+        "label": "Images Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "learning_rate",
+        "type": "number",
+        "label": "Learning Rate",
+        "group": "basic"
+      },
+      {
+        "key": "steps",
+        "type": "number",
+        "label": "Steps",
+        "group": "basic"
+      },
+      {
+        "key": "multiresolution_training",
+        "type": "boolean",
+        "label": "Multiresolution Training",
+        "group": "basic"
+      },
+      {
+        "key": "subject_crop",
+        "type": "boolean",
+        "label": "Subject Crop",
+        "group": "basic"
+      },
+      {
+        "key": "create_masks",
+        "type": "mask",
+        "label": "Create Masks",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "images_data_url": "",
+      "learning_rate": 0.0002,
+      "steps": 1000,
+      "multiresolution_training": true,
+      "subject_crop": true,
+      "create_masks": false
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-lora-fast-training",
+    "name": "Train Flux LoRA Training",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-lora-fast-training",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-lora-fast-training",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "images_data_url",
+        "type": "string",
+        "label": "Images Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "create_masks",
+        "type": "mask",
+        "label": "Create Masks",
+        "group": "basic"
+      },
+      {
+        "key": "steps",
+        "type": "number",
+        "label": "Steps",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "images_data_url": "",
+      "create_masks": true,
+      "steps": 1000
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan-trainer/t2v-14b",
+    "name": "Wan-2.1 LoRA Trainer Training",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/wan-trainer/t2v-14b",
+    "description": "Endpoint: https://fal.run/fal-ai/wan-trainer/t2v-14b",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "training_data_url",
+        "type": "string",
+        "label": "Training Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "number_of_steps",
+        "type": "number",
+        "label": "Number Of Steps",
+        "group": "basic"
+      },
+      {
+        "key": "learning_rate",
+        "type": "number",
+        "label": "Learning Rate",
+        "group": "basic"
+      },
+      {
+        "key": "auto_scale_input",
+        "type": "boolean",
+        "label": "Auto Scale Input",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "training_data_url": "",
+      "number_of_steps": 400,
+      "learning_rate": 0.0002,
+      "auto_scale_input": true
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-pro-trainer",
+    "name": "Train Flux LoRAs For Pro Models Training",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-pro-trainer",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-pro-trainer",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "data_url",
+        "type": "string",
+        "label": "Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "mode",
+        "type": "string",
+        "label": "Mode",
+        "group": "basic"
+      },
+      {
+        "key": "finetune_comment",
+        "type": "string",
+        "label": "Finetune Comment",
+        "group": "basic"
+      },
+      {
+        "key": "iterations",
+        "type": "number",
+        "label": "Iterations",
+        "group": "basic"
+      },
+      {
+        "key": "priority",
+        "type": "string",
+        "label": "Priority",
+        "group": "basic"
+      },
+      {
+        "key": "captioning",
+        "type": "boolean",
+        "label": "Captioning",
+        "group": "basic"
+      },
+      {
+        "key": "trigger_word",
+        "type": "string",
+        "label": "Trigger Word",
+        "group": "basic"
+      },
+      {
+        "key": "lora_rank",
+        "type": "number",
+        "label": "Lora Rank",
+        "group": "basic"
+      },
+      {
+        "key": "finetune_type",
+        "type": "string",
+        "label": "Finetune Type",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "data_url": "",
+      "mode": "character",
+      "finetune_comment": "test-1",
+      "iterations": 300,
+      "priority": "quality",
+      "captioning": true,
+      "trigger_word": "TOK",
+      "lora_rank": 32,
+      "finetune_type": "full"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/imagen4/preview",
+    "name": "Imagen 4 Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/imagen4/preview",
+    "description": "Endpoint: https://fal.run/fal-ai/imagen4/preview",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Capture an intimate close-up bathed in warm, soft, late-afternoon sunlight filtering into a quintessential 1960s kitchen. The focal point is a charmingly designed vintage package of all-purpose flour, resting invitingly on a speckled Formica countertop. The packaging itself evokes pure nostalgia: perhaps thick, slightly textured paper in a warm cream tone, adorned with simple, bold typography (a friendly serif or script) in classic red and blue “ALL-PURPOSE FLOUR”, featuring a delightful illustration like a stylized sheaf of wheat or a cheerful baker character. In smaller bold print at the bottom of the package: “NET WT 5 LBS (80 OZ) 2.27kg”. Focus sharply on the package details – the slightly soft edges of the paper bag, the texture of the vintage printing, the inviting \"All-Purpose Flour\" text. Subtle hints of the 1960s kitchen frame the shot – the chrome edge of the counter gleaming softly, a blurred glimpse of a pastel yellow ceramic tile backsplash, or the corner of a vintage metal canister set just out of focus. The shallow depth of field keeps attention locked on the beautifully designed package, creating an aesthetic rich in warmth, authenticity, and nostalgic appeal.",
+      "aspect_ratio": "1:1",
+      "num_images": 1,
+      "resolution": "1K"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-krea-lora/stream",
+    "name": "Flux Krea Lora Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-krea-lora/stream",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-krea-lora/stream",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/recraft/v3/text-to-image",
+    "name": "Recraft V3 Text to Image",
+    "category": "llm",
+    "docs": "https://fal.ai/models/fal-ai/recraft/v3/text-to-image",
+    "description": "Endpoint: https://fal.run/fal-ai/recraft/v3/text-to-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/hidream-i1-full",
+    "name": "Hidream I1 Full Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/hidream-i1-full",
+    "description": "Endpoint: https://fal.run/fal-ai/hidream-i1-full",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/ltx-video-13b-distilled/image-to-video",
+    "name": "LTX Video-0.9.7 13B Distilled Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/ltx-video-13b-distilled/image-to-video",
+    "description": "Endpoint: https://fal.run/fal-ai/ltx-video-13b-distilled/image-to-video",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "negative_prompt",
+        "type": "text",
+        "label": "Negative Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "loras",
+        "type": "json",
+        "label": "Loras",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "first_pass_num_inference_steps",
+        "type": "number",
+        "label": "First Pass Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "first_pass_skip_final_steps",
+        "type": "number",
+        "label": "First Pass Skip Final Steps",
+        "group": "basic"
+      },
+      {
+        "key": "second_pass_num_inference_steps",
+        "type": "number",
+        "label": "Second Pass Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "second_pass_skip_initial_steps",
+        "type": "number",
+        "label": "Second Pass Skip Initial Steps",
+        "group": "basic"
+      },
+      {
+        "key": "frame_rate",
+        "type": "number",
+        "label": "Frame Rate",
+        "group": "basic"
+      },
+      {
+        "key": "expand_prompt",
+        "type": "boolean",
+        "label": "Expand Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "reverse_video",
+        "type": "video",
+        "label": "Reverse Video",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "constant_rate_factor",
+        "type": "number",
+        "label": "Constant Rate Factor",
+        "group": "basic"
+      },
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "The astronaut gets up and walks away",
+      "negative_prompt": "worst quality, inconsistent motion, blurry, jittery, distorted",
+      "loras": [],
+      "resolution": "720p",
+      "aspect_ratio": "auto",
+      "num_frames": 121,
+      "first_pass_num_inference_steps": 8,
+      "first_pass_skip_final_steps": 1,
+      "second_pass_num_inference_steps": 8,
+      "second_pass_skip_initial_steps": 5,
+      "frame_rate": 30,
+      "expand_prompt": false,
+      "reverse_video": false,
+      "enable_safety_checker": true,
+      "constant_rate_factor": 35,
+      "image_url": "https://storage.googleapis.com/falserverless/example_inputs/ltxv-image-input.jpg"
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan-22-image-trainer",
+    "name": "Wan 2.2 14B Image Trainer Training",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/wan-22-image-trainer",
+    "description": "Endpoint: https://fal.run/fal-ai/wan-22-image-trainer",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "training_data_url",
+        "type": "string",
+        "label": "Training Data Url",
+        "group": "basic"
+      },
+      {
+        "key": "trigger_phrase",
+        "type": "string",
+        "label": "Trigger Phrase",
+        "group": "basic"
+      },
+      {
+        "key": "use_face_detection",
+        "type": "boolean",
+        "label": "Use Face Detection",
+        "group": "basic"
+      },
+      {
+        "key": "use_face_cropping",
+        "type": "boolean",
+        "label": "Use Face Cropping",
+        "group": "basic"
+      },
+      {
+        "key": "use_masks",
+        "type": "mask",
+        "label": "Use Masks",
+        "group": "basic"
+      },
+      {
+        "key": "steps",
+        "type": "number",
+        "label": "Steps",
+        "group": "basic"
+      },
+      {
+        "key": "learning_rate",
+        "type": "number",
+        "label": "Learning Rate",
+        "group": "basic"
+      },
+      {
+        "key": "is_style",
+        "type": "boolean",
+        "label": "Is Style",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "training_data_url": "",
+      "trigger_phrase": "",
+      "use_face_detection": true,
+      "use_face_cropping": false,
+      "use_masks": true,
+      "steps": 1000,
+      "learning_rate": 0.0007,
+      "is_style": false
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/wan/v2.2-a14b/image-to-video/lora",
+    "name": "Wan v2.2 A14B Image-to-Video A14B with LoRAs Image to Video",
+    "category": "video",
+    "docs": "https://fal.ai/models/fal-ai/wan/v2.2-a14b/image-to-video/lora",
+    "description": "Endpoint: https://fal.run/fal-ai/wan/v2.2-a14b/image-to-video/lora",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "image_url",
+        "type": "image",
+        "label": "Image Url",
+        "group": "basic"
+      },
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_frames",
+        "type": "number",
+        "label": "Num Frames",
+        "group": "basic"
+      },
+      {
+        "key": "frames_per_second",
+        "type": "number",
+        "label": "Frames Per Second",
+        "group": "basic"
+      },
+      {
+        "key": "resolution",
+        "type": "string",
+        "label": "Resolution",
+        "group": "basic"
+      },
+      {
+        "key": "aspect_ratio",
+        "type": "string",
+        "label": "Aspect Ratio",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "enable_safety_checker",
+        "type": "boolean",
+        "label": "Enable Safety Checker",
+        "group": "basic"
+      },
+      {
+        "key": "enable_prompt_expansion",
+        "type": "boolean",
+        "label": "Enable Prompt Expansion",
+        "group": "basic"
+      },
+      {
+        "key": "acceleration",
+        "type": "string",
+        "label": "Acceleration",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale_2",
+        "type": "number",
+        "label": "Guidance Scale 2",
+        "group": "basic"
+      },
+      {
+        "key": "shift",
+        "type": "number",
+        "label": "Shift",
+        "group": "basic"
+      },
+      {
+        "key": "interpolator_model",
+        "type": "string",
+        "label": "Interpolator Model",
+        "group": "basic"
+      },
+      {
+        "key": "num_interpolated_frames",
+        "type": "number",
+        "label": "Num Interpolated Frames",
+        "group": "basic"
+      },
+      {
+        "key": "adjust_fps_for_interpolation",
+        "type": "boolean",
+        "label": "Adjust Fps For Interpolation",
+        "group": "basic"
+      },
+      {
+        "key": "video_quality",
+        "type": "video",
+        "label": "Video Quality",
+        "group": "basic"
+      },
+      {
+        "key": "video_write_mode",
+        "type": "video",
+        "label": "Video Write Mode",
+        "group": "basic"
+      },
+      {
+        "key": "loras",
+        "type": "json",
+        "label": "Loras",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "image_url": "https://storage.googleapis.com/falserverless/gallery/car_720p.png",
+      "prompt": "Cars racing in slow motion",
+      "num_frames": 81,
+      "frames_per_second": 16,
+      "resolution": "720p",
+      "aspect_ratio": "auto",
+      "num_inference_steps": 27,
+      "enable_safety_checker": true,
+      "enable_prompt_expansion": false,
+      "acceleration": "regular",
+      "guidance_scale": 3.5,
+      "guidance_scale_2": 4,
+      "shift": 5,
+      "interpolator_model": "film",
+      "num_interpolated_frames": 1,
+      "adjust_fps_for_interpolation": true,
+      "video_quality": "high",
+      "video_write_mode": "balanced",
+      "loras": []
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/qwen-image",
+    "name": "Qwen Image Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/qwen-image",
+    "description": "Endpoint: https://fal.run/fal-ai/qwen-image",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/aura-flow",
+    "name": "AuraFlow Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/aura-flow",
+    "description": "Endpoint: https://fal.run/fal-ai/aura-flow",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "prompt",
+        "type": "text",
+        "label": "Prompt",
+        "group": "basic"
+      },
+      {
+        "key": "num_images",
+        "type": "number",
+        "label": "Num Images",
+        "group": "basic"
+      },
+      {
+        "key": "guidance_scale",
+        "type": "number",
+        "label": "Guidance Scale",
+        "group": "basic"
+      },
+      {
+        "key": "num_inference_steps",
+        "type": "number",
+        "label": "Num Inference Steps",
+        "group": "basic"
+      },
+      {
+        "key": "expand_prompt",
+        "type": "boolean",
+        "label": "Expand Prompt",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "prompt": "Close-up portrait of a majestic iguana with vibrant blue-green scales, piercing amber eyes, and orange spiky crest. Intricate textures and details visible on scaly skin. Wrapped in dark hood, giving regal appearance. Dramatic lighting against black background. Hyper-realistic, high-resolution image showcasing the reptile's expressive features and coloration.",
+      "num_images": 1,
+      "guidance_scale": 3.5,
+      "num_inference_steps": 50,
+      "expand_prompt": true
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux/schnell",
+    "name": "FLUX.1 [schnell] Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux/schnell",
+    "description": "Endpoint: https://fal.run/fal-ai/flux/schnell",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux/dev",
+    "name": "FLUX.1 [dev] Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux/dev",
+    "description": "Endpoint: https://fal.run/fal-ai/flux/dev",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-realism",
+    "name": "Flux Realism Private",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-realism",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-realism",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  },
+  {
+    "id": "fal-ai/flux-lora",
+    "name": "FLUX.1 [dev] with LoRAs Text to Image",
+    "category": "image",
+    "docs": "https://fal.ai/models/fal-ai/flux-lora",
+    "description": "Endpoint: https://fal.run/fal-ai/flux-lora",
+    "implemented": false,
+    "outputs": "images",
+    "tags": [],
+    "inputs": [
+      {
+        "key": "width",
+        "type": "number",
+        "label": "Width",
+        "group": "basic"
+      },
+      {
+        "key": "height",
+        "type": "number",
+        "label": "Height",
+        "group": "basic"
+      }
+    ],
+    "inputExample": {
+      "width": 1280,
+      "height": 720
+    },
+    "supportsQueue": true
+  }
+]

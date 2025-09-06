@@ -86,16 +86,18 @@ if (aboutSite) {
 const subtabButtons = Array.from(document.querySelectorAll('.subtab-btn'));
 const subOverview = document.getElementById('main-overview');
 const subConfigure = document.getElementById('main-configure');
+const subFiles = document.getElementById('main-files');
 const subRules = document.getElementById('main-rules');
 const subReports = document.getElementById('main-reports');
 function switchSubtab(name) {
-  const map = { overview: subOverview, configure: subConfigure, rules: subRules, reports: subReports };
+  const map = { overview: subOverview, configure: subConfigure, files: subFiles, rules: subRules, reports: subReports };
   Object.entries(map).forEach(([key, pane]) => {
     if (!pane) return;
     if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
   });
   subtabButtons.forEach((b) => b.classList.toggle('active', b.dataset.subtab === name));
   try { localStorage.setItem('ui:lastSubtab', name); } catch {}
+  if (name === 'files') { try { fsEnsureInit(); } catch {} }
 }
 subtabButtons.forEach((b) => b.addEventListener('click', () => switchSubtab(b.dataset.subtab)));
 
@@ -202,6 +204,7 @@ function renderRecents() {
 async function openProject(dir) {
   const set = await window.foundry.setProjectDir(dir);
   if (set && set.ok) {
+    try { localStorage.setItem('foundry:lastProjectDir', dir); } catch {}
     addRecent(dir);
     showView('app');
     await loadConfigUI();
@@ -223,6 +226,7 @@ document.getElementById('proj-create').addEventListener('click', async () => {
   const res = await window.foundry.chooseProjectDir();
   if (res && res.ok && res.projectDir) {
     await window.foundry.setProjectDir(res.projectDir);
+    try { localStorage.setItem('foundry:lastProjectDir', res.projectDir); } catch {}
     addRecent(res.projectDir);
     const init = await window.foundry.run(['init']);
     log(init.ok ? init.stdout : init.error);
@@ -234,6 +238,7 @@ document.getElementById('proj-create').addEventListener('click', async () => {
 document.getElementById('btn-launcher-browse').addEventListener('click', async () => {
   const res = await window.foundry.chooseProjectDir();
   if (res && res.ok && res.projectDir) {
+    try { localStorage.setItem('foundry:lastProjectDir', res.projectDir); } catch {}
     await openProject(res.projectDir);
   }
 });
@@ -258,6 +263,108 @@ const irLayerList = document.getElementById('ir-layer-list');
 const irRefresh = document.getElementById('ir-refresh');
 const irAddFolder = document.getElementById('ir-add-folder');
 const irNameMode = document.getElementById('ir-name-mode');
+
+// File Explorer elements and state
+let fsCwd = '';
+let fsInited = false;
+const fsUp = document.getElementById('fs-up');
+const fsPath = document.getElementById('fs-path');
+const fsRefresh = document.getElementById('fs-refresh');
+const fsOpenExplorer = document.getElementById('fs-open-explorer');
+const fsNewFolder = document.getElementById('fs-new-folder');
+const fsUpload = document.getElementById('fs-upload');
+const fsRename = document.getElementById('fs-rename');
+const fsDelete = document.getElementById('fs-delete');
+const fsList = document.getElementById('fs-list');
+let fsSelected = new Set();
+
+function fsJoin(a, b) { const norm = (s)=>String(s||'').replace(/\\/g,'/'); const x = (norm(a).replace(/\/$/,'')); const y = String(b||'').replace(/^\//,''); return (x ? (x + '/' + y) : y); }
+function fsParent(p) { const s = String(p||'').replace(/[\\/]+/g,'/').replace(/\/$/,''); const i = s.lastIndexOf('/'); return (i <= 0) ? '' : s.slice(0, i); }
+function fsEnsureInit() { if (fsInited) { fsRenderList(); return; } fsInited = true; fsAttachHandlers(); fsRenderList(); }
+
+function fsAttachHandlers() {
+  fsUp && fsUp.addEventListener('click', () => { fsCwd = fsParent(fsCwd); fsRenderList(); });
+  fsRefresh && fsRefresh.addEventListener('click', () => fsRenderList());
+  fsOpenExplorer && fsOpenExplorer.addEventListener('click', async () => { await window.foundry.openInExplorer(fsCwd || '.'); });
+  fsPath && fsPath.addEventListener('keydown', (e) => { if ((e.key||e.code) === 'Enter') { fsCwd = (fsPath.value||'').replace(/^[\\/]+|[\\/]+$/g,''); fsRenderList(); } });
+  fsNewFolder && fsNewFolder.addEventListener('click', async () => {
+    const name = prompt('New folder name:', 'folder');
+    if (!name) return;
+    const rel = fsJoin(fsCwd, name.replace(/[\\]+/g,'/'));
+    const res = await window.foundry.ensureDirs([rel]);
+    if (!res.ok) log(res.error || 'Failed to create folder');
+    fsRenderList();
+  });
+  fsUpload && fsUpload.addEventListener('change', async () => {
+    const files = Array.from(fsUpload.files || []);
+    for (const f of files) {
+      try {
+        const data = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(f); });
+        const b64 = String(data).split(',')[1] || '';
+        await window.foundry.saveBase64(b64, fsJoin(fsCwd, f.name));
+      } catch (e) { log('Upload failed: ' + (e?.message || e)); }
+    }
+    fsUpload.value = '';
+    fsRenderList();
+  });
+  fsRename && fsRename.addEventListener('click', async () => {
+    const arr = Array.from(fsSelected);
+    if (arr.length !== 1) { log('Select a single item to rename.'); return; }
+    const cur = String(arr[0]);
+    const isDir = cur.endsWith('/');
+    const base = isDir ? cur.slice(0, -1) : cur;
+    const next = prompt('Rename to:', base);
+    if (!next || next === base) return;
+    const from = fsJoin(fsCwd, cur);
+    const to = fsJoin(fsCwd, isDir ? (next.replace(/[\\/]+$/,'') + '/') : next);
+    // Backend renameFiles expects file paths without trailing slash; ensure consistent
+    const res = await window.foundry.renameFiles([{ from, to }]);
+    if (!res.ok) { log(res.error || 'Rename failed'); return; }
+    fsSelected.clear();
+    fsRenderList();
+  });
+  fsDelete && fsDelete.addEventListener('click', async () => {
+    const arr = Array.from(fsSelected);
+    if (!arr.length) return;
+    if (!confirm(`Delete ${arr.length} item(s)? This cannot be undone.`)) return;
+    for (const name of arr) {
+      const p = fsJoin(fsCwd, String(name).replace(/\/$/,''));
+      const res = await window.foundry.deletePath(p);
+      if (!res.ok) { log(res.error || ('Failed to delete ' + name)); break; }
+    }
+    fsSelected.clear();
+    fsRenderList();
+  });
+}
+
+async function fsRenderList() {
+  if (!fsList) return;
+  try {
+    const res = await window.foundry.listDir(fsCwd || '.');
+    fsPath && (fsPath.value = '/' + (fsCwd || ''));
+    fsList.innerHTML = '';
+    fsSelected = new Set();
+    if (!res.ok || !Array.isArray(res.items)) { return; }
+    const items = res.items.slice().sort((a,b) => {
+      const ad = a.endsWith('/') ? 0 : 1; const bd = b.endsWith('/') ? 0 : 1; if (ad !== bd) return ad - bd; return a.localeCompare(b);
+    });
+    for (const name of items) {
+      const row = document.createElement('div');
+      row.className = 'fs-row';
+      const label = document.createElement('div');
+      label.textContent = name;
+      label.style.cursor = 'pointer';
+      const meta = document.createElement('div');
+      meta.className = 'muted mini';
+      meta.textContent = name.endsWith('/') ? 'Folder' : '';
+      row.appendChild(label);
+      row.appendChild(meta);
+      row.addEventListener('click', (e) => { e.stopPropagation(); if (row.classList.contains('selected')) { row.classList.remove('selected'); fsSelected.delete(name); } else { row.classList.add('selected'); fsSelected.add(name); } });
+      row.addEventListener('dblclick', () => { if (name.endsWith('/')) { fsCwd = fsJoin(fsCwd, name.replace(/\/$/,'')); fsRenderList(); } });
+      fsList.appendChild(row);
+    }
+  } catch (e) { /* ignore */ }
+}
 const irBaseName = document.getElementById('ir-base-name');
 const irStart = document.getElementById('ir-start');
 const irPad = document.getElementById('ir-pad');
@@ -1170,7 +1277,17 @@ optReset && optReset.addEventListener('click', () => {
 (async function startup() {
   applyUiFromStorage();
   renderRecents();
-  const base = await window.foundry.getProjectDir();
+  // Restore last project selection if main process doesn't yet have one
+  let base = await window.foundry.getProjectDir();
+  if (!base || !base.projectDir) {
+    try {
+      const last = localStorage.getItem('foundry:lastProjectDir');
+      if (last) {
+        const set = await window.foundry.setProjectDir(last);
+        if (set && set.ok) base = await window.foundry.getProjectDir();
+      }
+    } catch {}
+  }
   if (base && base.projectDir) {
     showView('app');
     await loadConfigUI();
@@ -1862,6 +1979,162 @@ function attachHelpAnchors() {
 }
 
 // FAL AI generation
+// Catalog structures for advanced mode
+type FalParamType = 'string' | 'text' | 'number' | 'boolean' | 'select' | 'image' | 'mask' | 'video' | 'audio' | 'json';
+type FalCategory = 'image' | 'video' | 'audio' | 'llm' | 'tool';
+interface FalParam { key: string; type: FalParamType; label: string; placeholder?: string; min?: number; max?: number; step?: number; required?: boolean; options?: Array<{ value: string; label: string }>; default?: any; help?: string; group?: 'basic' | 'advanced'; }
+interface FalModel { id: string; name: string; category: FalCategory; status?: 'active'|'deprecated'|'placeholder'; docs?: string; description?: string; inputs: FalParam[]; outputs?: 'images'|'video'|'audio'|'text'|'json'; tags?: string[]; implemented?: boolean; }
+
+const FAL_CATALOG_DEFAULT: FalModel[] = [
+  {
+    id: 'flux/dev',
+    name: 'Flux Dev',
+    category: 'image',
+    docs: 'https://fal.ai',
+    description: 'Fast image generation model for iteration and previews.',
+    implemented: true,
+    outputs: 'images',
+    tags: ['image','flux','txt2img'],
+    inputs: [
+      { key: 'prompt', type: 'text', label: 'Prompt', placeholder: 'Describe your image', required: true, group: 'basic' },
+      { key: 'image_size', type: 'select', label: 'Size', options: [
+        { value: '512x512', label: '512 x 512' },
+        { value: '768x768', label: '768 x 768' },
+        { value: '1024x1024', label: '1024 x 1024' },
+        { value: '1280x720', label: '1280 x 720' },
+        { value: '1920x1080', label: '1920 x 1080' },
+      ], default: '512x512', group: 'basic' },
+      { key: 'num_images', type: 'number', label: 'Images', min: 1, max: 4, step: 1, default: 1, group: 'basic' },
+      { key: 'negative_prompt', type: 'text', label: 'Negative Prompt', placeholder: 'Unwanted details', group: 'advanced' },
+      { key: 'seed', type: 'number', label: 'Seed', min: 0, max: 4294967295, step: 1, group: 'advanced' },
+    ],
+  },
+  {
+    id: 'flux-pro/v1.0',
+    name: 'Flux Pro v1.0',
+    category: 'image',
+    docs: 'https://fal.ai',
+    description: 'High-quality image generation with more detail and coherence.',
+    implemented: true,
+    outputs: 'images',
+    tags: ['image','flux','pro'],
+    inputs: [
+      { key: 'prompt', type: 'text', label: 'Prompt', placeholder: 'Describe your image', required: true, group: 'basic' },
+      { key: 'image_size', type: 'select', label: 'Size', options: [
+        { value: '512x512', label: '512 x 512' },
+        { value: '768x768', label: '768 x 768' },
+        { value: '1024x1024', label: '1024 x 1024' },
+        { value: '1280x720', label: '1280 x 720' },
+        { value: '1920x1080', label: '1920 x 1080' },
+      ], default: '768x768', group: 'basic' },
+      { key: 'num_images', type: 'number', label: 'Images', min: 1, max: 4, step: 1, default: 1, group: 'basic' },
+      { key: 'negative_prompt', type: 'text', label: 'Negative Prompt', placeholder: 'Unwanted details', group: 'advanced' },
+      { key: 'seed', type: 'number', label: 'Seed', min: 0, max: 4294967295, step: 1, group: 'advanced' },
+      { key: 'guidance_scale', type: 'number', label: 'Guidance', min: 0, max: 20, step: 0.1, default: 7.5, group: 'advanced' },
+    ],
+  },
+  {
+    id: 'image/edit',
+    name: 'Image Editing (placeholder)',
+    category: 'image',
+    docs: 'https://fal.ai',
+    description: 'Edit an image with optional mask and prompt.',
+    implemented: false,
+    status: 'placeholder',
+    outputs: 'images',
+    tags: ['image','img2img','inpaint'],
+    inputs: [
+      { key: 'image', type: 'image', label: 'Input Image', required: true, group: 'basic' },
+      { key: 'prompt', type: 'text', label: 'Prompt', placeholder: 'Describe edits', group: 'basic' },
+      { key: 'mask', type: 'mask', label: 'Mask (optional)', group: 'advanced' },
+      { key: 'strength', type: 'number', label: 'Strength', min: 0, max: 1, step: 0.05, default: 0.7, group: 'advanced' },
+      { key: 'seed', type: 'number', label: 'Seed', min: 0, max: 4294967295, step: 1, group: 'advanced' },
+    ],
+  },
+  {
+    id: 'image/upscale',
+    name: 'Upscale (placeholder)',
+    category: 'image',
+    docs: 'https://fal.ai',
+    description: 'Increase resolution while preserving details.',
+    implemented: false,
+    status: 'placeholder',
+    outputs: 'images',
+    tags: ['image','upscale'],
+    inputs: [
+      { key: 'image', type: 'image', label: 'Input Image', required: true, group: 'basic' },
+      { key: 'scale', type: 'select', label: 'Scale', options: [
+        { value: '2', label: '2x' },
+        { value: '4', label: '4x' }
+      ], default: '2', group: 'basic' },
+      { key: 'face_enhance', type: 'boolean', label: 'Face Enhance', default: false, group: 'advanced' },
+    ],
+  },
+  {
+    id: 'video/generate',
+    name: 'Video Generation (placeholder)',
+    category: 'video',
+    docs: 'https://fal.ai',
+    description: 'Generate short videos from text prompts.',
+    implemented: false,
+    status: 'placeholder',
+    outputs: 'video',
+    tags: ['video'],
+    inputs: [
+      { key: 'prompt', type: 'text', label: 'Prompt', placeholder: 'Describe your video', required: true, group: 'basic' },
+      { key: 'duration', type: 'number', label: 'Duration (s)', min: 1, max: 20, step: 1, default: 4, group: 'basic' },
+      { key: 'fps', type: 'number', label: 'FPS', min: 8, max: 60, step: 1, default: 24, group: 'advanced' },
+      { key: 'seed', type: 'number', label: 'Seed', min: 0, max: 4294967295, step: 1, group: 'advanced' },
+    ],
+  },
+  {
+    id: 'audio/music',
+    name: 'Music Generation (placeholder)',
+    category: 'audio',
+    docs: 'https://fal.ai',
+    description: 'Create short music clips from prompts.',
+    implemented: false,
+    status: 'placeholder',
+    outputs: 'audio',
+    tags: ['audio','music'],
+    inputs: [
+      { key: 'prompt', type: 'text', label: 'Prompt', placeholder: 'Genre, mood, instruments', required: true, group: 'basic' },
+      { key: 'duration', type: 'number', label: 'Duration (s)', min: 1, max: 60, step: 1, default: 10, group: 'basic' },
+    ],
+  },
+  {
+    id: 'llm/chat',
+    name: 'Chat (placeholder)',
+    category: 'llm',
+    docs: 'https://fal.ai',
+    description: 'Conversational LLM with system and user messages.',
+    implemented: false,
+    status: 'placeholder',
+    outputs: 'text',
+    tags: ['llm','chat'],
+    inputs: [
+      { key: 'system', type: 'text', label: 'System Prompt', placeholder: 'Assistant persona', group: 'basic' },
+      { key: 'messages', type: 'json', label: 'Messages JSON', placeholder: '[{"role":"user","content":"Hi"}]', group: 'basic' },
+      { key: 'temperature', type: 'number', label: 'Temperature', min: 0, max: 2, step: 0.1, default: 0.7, group: 'advanced' },
+      { key: 'max_tokens', type: 'number', label: 'Max Tokens', min: 1, max: 8192, step: 1, group: 'advanced' },
+    ],
+  }
+];
+
+function falLoadCatalog(): FalModel[] {
+  try { const raw = localStorage.getItem('fal:catalog'); if (raw) return JSON.parse(raw); } catch {}
+  return FAL_CATALOG_DEFAULT;
+}
+function falSaveCatalog(models: FalModel[]) {
+  try { localStorage.setItem('fal:catalog', JSON.stringify(models)); } catch {}
+}
+let falCatalog: FalModel[] = falLoadCatalog();
+let falFavorites: Set<string> = new Set();
+try { const fav = localStorage.getItem('fal:favorites'); if (fav) falFavorites = new Set(JSON.parse(fav)); } catch {}
+function falSaveFavorites() { try { localStorage.setItem('fal:favorites', JSON.stringify(Array.from(falFavorites))); } catch {} }
+
+let falCurrentModel: FalModel | null = null;
+
 const falKeyEl = document.getElementById('fal-key');
 const falPromptEl = document.getElementById('fal-prompt');
 const falGenerateBtn = document.getElementById('fal-generate');
@@ -1873,6 +2146,29 @@ const falCountEl = document.getElementById('fal-count');
 const falResultsEl = document.getElementById('fal-results');
 const falSavedEl = document.getElementById('fal-saved');
 const falOpenFolderBtn = document.getElementById('fal-open-folder');
+const falAdvancedEl = document.getElementById('fal-advanced') as HTMLInputElement | null;
+const falCatalogControls = document.getElementById('fal-catalog-controls');
+const falBasicControls = document.getElementById('fal-basic-controls');
+const falSearchEl = document.getElementById('fal-search') as HTMLInputElement | null;
+const falCategoryEl = document.getElementById('fal-category') as HTMLSelectElement | null;
+const falModelListEl = document.getElementById('fal-model-list');
+const falParamsCard = document.getElementById('fal-params-card');
+const falModelTitle = document.getElementById('fal-model-title');
+const falDocsLink = document.getElementById('fal-docs-link') as HTMLAnchorElement | null;
+const falParamEditor = document.getElementById('fal-param-editor');
+const falRunBtn = document.getElementById('fal-run');
+const falDryRunBtn = document.getElementById('fal-dryrun');
+const falQueueModeEl = document.getElementById('fal-queue-mode') as HTMLInputElement | null;
+const falQueueLogsEl = document.getElementById('fal-queue-logs') as HTMLInputElement | null;
+const falWebhookUrlEl = document.getElementById('fal-webhook-url') as HTMLInputElement | null;
+const falBodyShapeEl = document.getElementById('fal-body-shape') as HTMLSelectElement | null;
+const falResetParamsBtn = document.getElementById('fal-reset-params');
+const falShowJsonEl = document.getElementById('fal-show-json') as HTMLInputElement | null;
+const falSaveAllBtn = document.getElementById('fal-save-all');
+const falRefreshCatalogBtn = document.getElementById('fal-refresh-catalog');
+const falImportCatalogEl = document.getElementById('fal-import-catalog') as HTMLInputElement | null;
+const falExportCatalogBtn = document.getElementById('fal-export-catalog');
+const falResetCatalogBtn = document.getElementById('fal-reset-catalog');
 
 if (falKeyEl) {
   try { falKeyEl.value = localStorage.getItem('fal:key') || ''; } catch {}
@@ -1901,6 +2197,434 @@ if (falOpenFolderBtn) {
   });
 }
 
+// Advanced mode toggle
+function applyFalMode() {
+  const adv = !!(falAdvancedEl && falAdvancedEl.checked);
+  if (falCatalogControls) falCatalogControls.style.display = adv ? '' : 'none';
+  if (falBasicControls) falBasicControls.style.display = adv ? 'none' : '';
+  if (falParamsCard) falParamsCard.style.display = adv ? '' : 'none';
+}
+if (falAdvancedEl) {
+  try { const saved = localStorage.getItem('fal:advanced'); falAdvancedEl.checked = saved ? (saved === '1') : true; } catch {}
+  applyFalMode();
+  falAdvancedEl.addEventListener('change', () => {
+    try { localStorage.setItem('fal:advanced', falAdvancedEl.checked ? '1' : '0'); } catch {}
+    applyFalMode();
+  });
+}
+
+function falRenderModelList() {
+  if (!falModelListEl) return;
+  const query = (falSearchEl?.value || '').toLowerCase();
+  const cat = (falCategoryEl?.value || 'all') as 'all'|FalCategory;
+  const wrap = document.createElement('div');
+  falModelListEl.innerHTML = '';
+  falCatalog
+    .filter(m => (cat==='all' || m.category===cat))
+    .filter(m => !query || (m.name.toLowerCase().includes(query) || (m.tags||[]).some(t => t.toLowerCase().includes(query)) || m.id.toLowerCase().includes(query)))
+    .sort((a,b) => {
+      const af = falFavorites.has(a.id) ? 1 : 0; const bf = falFavorites.has(b.id) ? 1 : 0;
+      if (af!==bf) return bf-af; // favorites first
+      return a.name.localeCompare(b.name);
+    })
+    .forEach((m) => {
+      const row = document.createElement('div');
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '1fr auto';
+      row.style.gap = '8px';
+      row.style.alignItems = 'center';
+      row.style.padding = '6px 8px';
+      row.style.borderRadius = '6px';
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', () => falSelectModel(m));
+      const left = document.createElement('div');
+      const title = document.createElement('div');
+      title.textContent = m.name;
+      title.style.fontWeight = '600';
+      const meta = document.createElement('div');
+      meta.className = 'mini muted';
+      meta.textContent = `${m.category}${m.status==='placeholder'?' · placeholder':''} · ${m.id}`;
+      left.appendChild(title);
+      left.appendChild(meta);
+      const right = document.createElement('div');
+      const fav = document.createElement('button');
+      fav.className = 'btn-ghost';
+      fav.textContent = falFavorites.has(m.id) ? '★' : '☆';
+      fav.title = 'Favorite';
+      fav.addEventListener('click', (ev) => { ev.stopPropagation(); if (falFavorites.has(m.id)) falFavorites.delete(m.id); else falFavorites.add(m.id); falSaveFavorites(); falRenderModelList(); });
+      right.appendChild(fav);
+      row.appendChild(left);
+      row.appendChild(right);
+      row.addEventListener('mouseenter', () => { row.style.background = 'var(--panel-floating)'; });
+      row.addEventListener('mouseleave', () => { row.style.background = 'transparent'; });
+      falModelListEl.appendChild(row);
+    });
+}
+function falResetToDefaultCatalog() { falCatalog = FAL_CATALOG_DEFAULT.slice(); falSaveCatalog(falCatalog); falRenderModelList(); }
+function falExportCatalog() {
+  try {
+    const blob = new Blob([JSON.stringify(falCatalog, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'fal-catalog.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch {}
+}
+function falSelectModel(m: FalModel) {
+  falCurrentModel = m;
+  if (falModelTitle) falModelTitle.textContent = `${m.name}`;
+  if (falDocsLink) { falDocsLink.href = m.docs || '#'; falDocsLink.style.display = m.docs ? '' : 'none'; }
+  // Seed defaults from inputExample if no saved params
+  try {
+    const key = 'fal:params:'+m.id;
+    const has = !!localStorage.getItem(key);
+    const anyExample: any = (m as any).inputExample;
+    if (!has && anyExample && typeof anyExample==='object') {
+      localStorage.setItem(key, JSON.stringify(anyExample));
+    }
+  } catch {}
+  // If model lacks inputs but has example, derive quick inputs
+  const anyInputs = (m as any).inputs as any[];
+  const anyExample = (m as any).inputExample as any;
+  if ((!Array.isArray(anyInputs) || anyInputs.length===0) && anyExample && typeof anyExample==='object') {
+    const derived: any[] = Object.entries(anyExample).map(([key, val]: [string, any]) => {
+      let type: any = 'string';
+      if (typeof val === 'number') type = 'number';
+      else if (typeof val === 'boolean') type = 'boolean';
+      else if (Array.isArray(val)) type = 'json';
+      else if (val && typeof val === 'object') type = 'json';
+      if (/image_url$/i.test(key)) type = 'image';
+      if (/image_urls$/i.test(key)) type = 'json';
+      if (/mask/i.test(key)) type = 'mask';
+      if (/audio/i.test(key)) type = 'audio';
+      if (/video/i.test(key)) type = 'video';
+      if (/prompt/i.test(key) && typeof val === 'string') type = 'text';
+      return { key, type, label: key.replace(/_/g,' ').replace(/\b\w/g, (c)=>c.toUpperCase()), group: 'basic' };
+    });
+    (m as any).inputs = derived;
+  }
+  // Auto-enable queue if catalog suggests
+  try { const supportsQueue = (m as any).supportsQueue; if (falQueueModeEl && typeof supportsQueue==='boolean') falQueueModeEl.checked = !!supportsQueue; } catch {}
+  falRenderParamEditor(m);
+}
+
+function falRenderParamEditor(m: FalModel) {
+  if (!falParamEditor) return;
+  falParamEditor.innerHTML = '';
+  const stored = (() => { try { const raw = localStorage.getItem('fal:params:'+m.id); if (raw) return JSON.parse(raw); } catch {} return {}; })();
+  const inputs: FalParam[] = Array.isArray((m as any).inputs) ? ((m as any).inputs as FalParam[]) : [];
+  function addField(p: FalParam) {
+    const wrap = document.createElement('div');
+    (wrap as any).dataset.key = p.key;
+    const label = document.createElement('label'); label.textContent = p.label + (p.required?' *':'');
+    wrap.appendChild(label);
+    let input: HTMLElement;
+    const val = stored[p.key] !== undefined ? stored[p.key] : (p.default !== undefined ? p.default : '');
+    const setVal = (v:any) => { stored[p.key] = v; try { localStorage.setItem('fal:params:'+m.id, JSON.stringify(stored)); } catch {} };
+    switch (p.type) {
+      case 'text': {
+        const ta = document.createElement('textarea'); ta.rows = 3; ta.placeholder = p.placeholder || ''; ta.value = String(val||''); ta.addEventListener('input', () => setVal(ta.value)); input = ta; break;
+      }
+      case 'string': {
+        const inp = document.createElement('input'); inp.placeholder = p.placeholder || ''; inp.value = String(val||''); inp.addEventListener('input', () => setVal(inp.value)); input = inp; break;
+      }
+      case 'number': {
+        const inp = document.createElement('input'); inp.type = 'number'; if (p.min!=null) inp.min = String(p.min); if (p.max!=null) inp.max = String(p.max); if (p.step!=null) inp.step = String(p.step); inp.value = (val!=='' && val!==undefined) ? String(val) : (p.default!==undefined? String(p.default):''); inp.addEventListener('input', () => setVal(parseFloat(inp.value))); input = inp; break;
+      }
+      case 'boolean': {
+        const lbl = document.createElement('label'); lbl.style.display='inline-flex'; lbl.style.alignItems='center'; lbl.style.gap='6px'; const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!val; cb.addEventListener('change', ()=> setVal(cb.checked)); lbl.appendChild(cb); lbl.appendChild(document.createTextNode(' Enabled')); input = lbl; break;
+      }
+      case 'select': {
+        const sel = document.createElement('select'); (p.options||[]).forEach(o=>{ const opt = document.createElement('option'); opt.value=o.value; opt.textContent=o.label; sel.appendChild(opt); }); sel.value = String(val || p.default || ''); sel.addEventListener('change', ()=> setVal(sel.value)); input = sel; break;
+      }
+      case 'image':
+      case 'mask':
+      case 'video':
+      case 'audio': {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept = (p.type==='image'||p.type==='mask')? 'image/*' : (p.type==='video'?'video/*':'audio/*'); inp.addEventListener('change', ()=> { const f = (inp as HTMLInputElement).files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ()=> setVal(String(r.result)); r.readAsDataURL(f); }); input = inp; break;
+      }
+      case 'json': {
+        const ta = document.createElement('textarea'); ta.rows = 5; ta.placeholder = p.placeholder || '{ }'; ta.value = typeof val==='string'? val : JSON.stringify(val||{}, null, 2); ta.addEventListener('input', () => setVal(ta.value)); input = ta; break;
+      }
+      default: {
+        const inp = document.createElement('input'); inp.placeholder = p.placeholder || ''; inp.value = String(val||''); inp.addEventListener('input', () => setVal(inp.value)); input = inp; break;
+      }
+    }
+    if (p.help) { const mini = document.createElement('div'); mini.className='mini muted'; mini.textContent = p.help; wrap.appendChild(mini); }
+    wrap.appendChild(input);
+    if (p.group==='advanced') { wrap.style.opacity = '.9'; }
+    falParamEditor.appendChild(wrap);
+  }
+  if (!inputs.length) {
+    const mini = document.createElement('div');
+    mini.className = 'mini muted';
+    mini.textContent = 'No inputs defined for this model. Use Add Field or import a catalog with inputs.';
+    falParamEditor.appendChild(mini);
+    return;
+  }
+  // Basic first then advanced
+  inputs.filter(i=>i.group!=='advanced').forEach(addField);
+  inputs.filter(i=>i.group==='advanced').forEach(addField);
+}
+
+function falBuildPayload(m: FalModel): any {
+  // read stored params for model and construct payload expected by endpoint
+  const stored = (() => { try { const raw = localStorage.getItem('fal:params:'+m.id); if (raw) return JSON.parse(raw); } catch {} return {}; })();
+  if (m.implemented) {
+    if (m.id==='flux/dev' || m.id==='flux-pro/v1.0') {
+      const { prompt = '', image_size = '512x512', num_images = 1 } = stored;
+      return { prompt, image_size, num_images };
+    }
+  }
+  return stored;
+}
+
+function falRenderResults(data: any, m: FalModel) {
+  if (!falResultsEl) return;
+  const addInfo = (txt:string)=>{ const d=document.createElement('div'); d.className='mini muted'; d.textContent = txt; falResultsEl.appendChild(d); };
+  const maybeImages: string[] = [];
+  const collectImages = (obj:any) => {
+    if (!obj) return;
+    if (Array.isArray(obj.images)) {
+      obj.images.forEach((im:any)=>{ if (im?.url) maybeImages.push(im.url); else if (im?.b64_json) maybeImages.push(`data:image/png;base64,${im.b64_json}`); });
+    }
+    if (obj.image_base64) maybeImages.push(`data:image/png;base64,${obj.image_base64}`);
+    if (obj.image?.url) maybeImages.push(obj.image.url);
+    if (obj.output?.images) collectImages(obj.output);
+    if (obj.result?.images) collectImages(obj.result);
+  };
+  collectImages(data);
+  if (m.outputs==='images' || maybeImages.length) {
+    const images = maybeImages;
+    images.forEach((src: string, idx: number) => {
+      const wrap = document.createElement('div'); wrap.className='gallery-item'; const img = document.createElement('img'); img.src = src; const btn=document.createElement('button'); btn.textContent='Save'; btn.className='btn-ghost'; btn.addEventListener('click', async ()=>{
+        let b64: string;
+        if (src.startsWith('data:')) { b64 = src.split(',')[1]; }
+        else { const buf = await fetch(src).then(r=>r.arrayBuffer()); let binary=''; const bytes=new Uint8Array(buf); for (let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]); b64= btoa(binary); }
+        const name = `${(m.id||'image').replace(/\//g,'-')}-${Date.now()}-${idx+1}.png`;
+        await window.foundry.saveBase64(b64, `fal/${name}`); loadFalSaved();
+      }); wrap.appendChild(img); wrap.appendChild(btn); falResultsEl.appendChild(wrap);
+    });
+    if (!images.length) addInfo('No images in response');
+    return;
+  }
+  const findVideoUrl = (obj:any): string | null => {
+    if (!obj) return null;
+    if (typeof obj.video_url === 'string') return obj.video_url;
+    if (obj.video?.url) return obj.video.url;
+    if (Array.isArray(obj.videos)) { const v = obj.videos.find((x:any)=>x?.url); if (v) return v.url; }
+    if (obj.data) return findVideoUrl(obj.data);
+    if (obj.output) return findVideoUrl(obj.output);
+    if (obj.result) return findVideoUrl(obj.result);
+    return null;
+  };
+  const vurl = findVideoUrl(data);
+  if (m.outputs==='video' || vurl) {
+    if (vurl) { const wrap = document.createElement('div'); wrap.className='gallery-item'; const vid = document.createElement('video'); vid.controls = true; vid.src = vurl; vid.style.maxWidth='100%'; wrap.appendChild(vid); falResultsEl.appendChild(wrap); }
+    else addInfo('No video in response');
+    return;
+  }
+  const findAudioUrl = (obj:any): string | null => {
+    if (!obj) return null;
+    if (typeof obj.audio_url==='string') return obj.audio_url;
+    if (obj.audio?.url) return obj.audio.url;
+    if (obj.data) return findAudioUrl(obj.data);
+    if (obj.output) return findAudioUrl(obj.output);
+    if (obj.result) return findAudioUrl(obj.result);
+    return null;
+  };
+  const aurl = findAudioUrl(data);
+  if (m.outputs==='audio' || aurl) {
+    if (aurl) { const wrap = document.createElement('div'); wrap.className='gallery-item'; const aud = document.createElement('audio'); aud.controls = true; aud.src = aurl; wrap.appendChild(aud); falResultsEl.appendChild(wrap); }
+    else addInfo('No audio in response');
+    return;
+  } else if (m.outputs==='text' && data.text) {
+    const pre = document.createElement('pre'); pre.textContent = data.text; falResultsEl.appendChild(pre);
+  } else {
+    const pre = document.createElement('pre'); pre.textContent = JSON.stringify(data, null, 2); falResultsEl.appendChild(pre);
+  }
+}
+
+function falEndpointFor(m: FalModel): string | null {
+  if (!m || !m.id) return null;
+  if (/^https?:\/\//i.test(m.id)) return m.id;
+  if (/^fal-ai\//i.test(m.id)) return `https://fal.run/${m.id}`;
+  return `https://fal.run/fal-ai/${m.id}`;
+}
+
+function appendPath(base: string, suffix: string): string {
+  if (!base.endsWith('/')) base += '/';
+  return base + suffix.replace(/^\//,'');
+}
+
+async function falRunQueueCurrent() {
+  if (!falCurrentModel || !falStatusEl) return;
+  const key = (falKeyEl && (falKeyEl as HTMLInputElement).value || '').trim();
+  const endpoint = falEndpointFor(falCurrentModel);
+  if (!endpoint) { falStatusEl.textContent = 'Model has no id/endpoint.'; return; }
+  const payload = falBuildPayload(falCurrentModel);
+  const webhookUrl = (falWebhookUrlEl?.value || '').trim();
+  const submitUrl = appendPath(endpoint, 'queue/submit');
+  const statusUrl = appendPath(endpoint, 'queue/status');
+  const resultUrl = appendPath(endpoint, 'queue/result');
+  falStatusEl.textContent = 'Queue: submitting…';
+  if (falResultsEl) falResultsEl.innerHTML = '';
+  try {
+    const body: any = { input: payload };
+    if (webhookUrl) body.webhookUrl = webhookUrl;
+    const resp = await fetch(submitUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify(body) });
+    if (resp.status === 404) {
+      falStatusEl.textContent = 'Queue not supported. Running sync…';
+      // Fallback to sync runner
+      await falRunSyncCurrent(payload);
+      return;
+    }
+    const data = await resp.json();
+    const reqId = data.request_id || data.requestId || data.id;
+    if (!reqId) { falStatusEl.textContent = 'Queue: submit failed (no request id).'; return; }
+    falStatusEl.textContent = `Queue: submitted (${reqId}), polling…`;
+    const pollLogs = !!(falQueueLogsEl && falQueueLogsEl.checked);
+    let done = false;
+    for (let i=0;i<300;i++) { // up to ~10 minutes if 2s interval
+      await new Promise(r=>setTimeout(r, 2000));
+      const st = await fetch(statusUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify({ requestId: reqId, logs: pollLogs }) }).then(r=>r.json()).catch(()=>null);
+      if (!st) continue;
+      const status = st.status || st.state || st.phase;
+      if (pollLogs && Array.isArray(st.logs)) { st.logs.map((l:any)=>l?.message).filter(Boolean).forEach((msg:string)=>{ const d=document.createElement('div'); d.className='mini muted'; d.textContent = msg; falResultsEl?.appendChild(d); }); }
+      if (String(status).toUpperCase()==='COMPLETED' || String(status).toUpperCase()==='DONE') { done = true; break; }
+      if (String(status).toUpperCase()==='FAILED' || String(status).toUpperCase()==='ERROR') { falStatusEl.textContent = 'Queue: failed.'; return; }
+      falStatusEl.textContent = `Queue: ${status || 'IN_PROGRESS'}…`;
+    }
+    if (!done) { falStatusEl.textContent = 'Queue: timeout waiting for completion.'; return; }
+    const result = await fetch(resultUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify({ requestId: reqId }) }).then(r=>r.json());
+    falStatusEl.textContent = '';
+    falRenderResults(result, falCurrentModel);
+  } catch (e) {
+    falStatusEl.textContent = 'Queue error: ' + (e as any)?.message || String(e);
+  }
+}
+
+async function falRunSyncCurrent(payloadOverride?: any) {
+  if (!falCurrentModel || !falStatusEl) return;
+  const key = (falKeyEl && (falKeyEl as HTMLInputElement).value || '').trim();
+  const model = falCurrentModel;
+  const payload = payloadOverride || falBuildPayload(model);
+  // Clear previous field errors
+  try { Array.from((falParamEditor?.children||[]) as any).forEach((el: any)=> el.classList && el.classList.remove('field-error')); } catch{}
+  const missing: string[] = [];
+  const inputsArr: any[] = Array.isArray((model as any).inputs) ? (model as any).inputs as any[] : [];
+  inputsArr.filter(i => i.required).forEach(p => { const v = (payload as any)[p.key]; if (v===undefined || v===null || v==='') missing.push(p.key); });
+  if (!Object.keys(payload||{}).length || missing.length) {
+    falStatusEl.textContent = missing.length ? ('Missing required: ' + missing.join(', ')) : 'Add inputs before running.';
+    // Highlight missing
+    missing.forEach(k => { const el = falParamEditor?.querySelector(`[data-key="${k}"]`) as HTMLElement | null; if (el) el.classList.add('field-error'); });
+    return;
+  }
+  try {
+    const endpoint = falEndpointFor(model);
+    if (!endpoint) { falStatusEl.textContent = 'Model has no id/endpoint.'; return; }
+    // Determine body shape
+    const bodyShape = (falBodyShapeEl?.value || 'auto');
+    let resp: Response;
+    if (bodyShape === 'raw') {
+      resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify(payload) });
+    } else if (bodyShape === 'input-wrap') {
+      resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify({ input: payload }) });
+    } else {
+      // auto
+      resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify(payload) });
+      if (!resp.ok) {
+        try {
+          const resp2 = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Key ${key}` }, body: JSON.stringify({ input: payload }) });
+          if (resp2.ok) resp = resp2;
+        } catch {}
+      }
+    }
+    let data: any = {};
+    try { data = await resp.json(); } catch { data = {}; }
+    if (!resp.ok) {
+      const msg = (data && (data.error || data.message)) ? (data.error || data.message) : `HTTP ${resp.status}`;
+      falStatusEl.textContent = `Error: ${msg}`;
+      if (falShowJsonEl && falShowJsonEl.checked) { const pre = document.createElement('pre'); pre.textContent = JSON.stringify(data, null, 2); falResultsEl?.appendChild(pre); }
+      return;
+    }
+    falStatusEl.textContent = '';
+    falRenderResults(data, model);
+    // Optional JSON
+    if (falShowJsonEl && falShowJsonEl.checked) {
+      const pre = document.createElement('pre'); pre.textContent = JSON.stringify(data, null, 2); falResultsEl?.appendChild(pre);
+    }
+  } catch (err) {
+    falStatusEl.textContent = 'Error: ' + err;
+  }
+}
+
+async function falRunCurrent() {
+  if (!falCurrentModel || !falStatusEl) return;
+  const key = (falKeyEl && (falKeyEl as HTMLInputElement).value || '').trim();
+  const model = falCurrentModel;
+  const payload = falBuildPayload(model);
+  falStatusEl.textContent = 'Running…';
+  if (falResultsEl) falResultsEl.innerHTML = '';
+  try {
+    if (falQueueModeEl && falQueueModeEl.checked) {
+      await falRunQueueCurrent();
+      return;
+    }
+    await falRunSyncCurrent(payload);
+  } catch (err) {
+    falStatusEl.textContent = 'Error: ' + err;
+  }
+}
+
+if (falSearchEl) falSearchEl.addEventListener('input', falRenderModelList);
+if (falCategoryEl) falCategoryEl.addEventListener('change', falRenderModelList);
+if (falRefreshCatalogBtn) falRefreshCatalogBtn.addEventListener('click', () => { falRenderModelList(); });
+if (falExportCatalogBtn) falExportCatalogBtn.addEventListener('click', falExportCatalog);
+if (falResetCatalogBtn) falResetCatalogBtn.addEventListener('click', falResetToDefaultCatalog);
+if (falImportCatalogEl) falImportCatalogEl.addEventListener('change', async () => {
+  const f = falImportCatalogEl.files?.[0]; if (!f) return; const text = await f.text(); try { const models = JSON.parse(text); if (Array.isArray(models)) { falCatalog = models; falSaveCatalog(falCatalog); falRenderModelList(); } else { alert('Invalid catalog JSON'); } } catch (e) { alert('Failed to parse catalog: '+e); }
+});
+
+if (falRunBtn) falRunBtn.addEventListener('click', falRunCurrent);
+if (falDryRunBtn) falDryRunBtn.addEventListener('click', async ()=>{
+  if (!falCurrentModel || !falStatusEl) return; const payload = falBuildPayload(falCurrentModel); const str = JSON.stringify({ endpoint: `https://fal.run/fal-ai/${falCurrentModel.id}`, payload }, null, 2); try { await navigator.clipboard.writeText(str); falStatusEl.textContent = 'Copied request payload to clipboard.'; } catch (e) { falStatusEl.textContent = 'Unable to copy payload.'; }
+});
+
+// Reset params to example
+if (falResetParamsBtn) falResetParamsBtn.addEventListener('click', () => {
+  if (!falCurrentModel) return;
+  const key = 'fal:params:'+falCurrentModel.id;
+  const anyExample: any = (falCurrentModel as any).inputExample;
+  if (anyExample && typeof anyExample==='object') {
+    try { localStorage.setItem(key, JSON.stringify(anyExample)); } catch {}
+    falRenderParamEditor(falCurrentModel);
+    if (falStatusEl) falStatusEl.textContent = 'Fields reset to example.';
+    setTimeout(()=>{ if (falStatusEl && falStatusEl.textContent==='Fields reset to example.') falStatusEl.textContent=''; }, 1200);
+  }
+});
+
+// Save All images in results
+if (falSaveAllBtn) falSaveAllBtn.addEventListener('click', async () => {
+  if (!falCurrentModel) return;
+  const items = Array.from(document.querySelectorAll('#fal-results img')) as HTMLImageElement[];
+  let idx = 0;
+  for (const img of items) {
+    const src = img.src;
+    try {
+      let b64: string;
+      if (src.startsWith('data:')) { b64 = src.split(',')[1]; }
+      else { const buf = await fetch(src).then(r=>r.arrayBuffer()); let binary=''; const bytes=new Uint8Array(buf); for (let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]); b64= btoa(binary); }
+      const name = `${(falCurrentModel.id||'image').replace(/\//g,'-')}-${Date.now()}-${++idx}.png`;
+      await window.foundry.saveBase64(b64, `fal/${name}`);
+    } catch (e) {}
+  }
+  if (falStatusEl) falStatusEl.textContent = items.length ? `Saved ${items.length} image(s).` : 'No images to save.';
+  setTimeout(()=>{ if (falStatusEl) falStatusEl.textContent=''; }, 1200);
+});
+
+// Initialize list and default selection
+falRenderModelList();
+if (!falCurrentModel && falCatalog.length) falSelectModel(falCatalog[0]);
+
 if (falGenerateBtn) {
   falGenerateBtn.addEventListener('click', async () => {
     const key = (falKeyEl.value || '').trim();
@@ -1912,7 +2636,7 @@ if (falGenerateBtn) {
     falStatusEl.textContent = 'Generating...';
     falResultsEl.innerHTML = '';
     try {
-      const resp = await fetch(`https://api.fal.ai/${model}`, {
+      const resp = await fetch(`https://fal.run/fal-ai/${model}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2039,3 +2763,48 @@ function showHelpPopover(topicId, anchorEl) {
   window.addEventListener('keydown', keyHandler, { once: true });
   window.addEventListener('resize', resizeHandler);
 }
+
+// --- Fal Advanced Extras: dynamic catalog URL + param editing bindings ---
+const falCatalogUrlEl_extra = document.getElementById('fal-catalog-url') as HTMLInputElement | null;
+const falFetchCatalogUrlBtn_extra = document.getElementById('fal-fetch-catalog-url');
+const falAddFieldBtn_extra = document.getElementById('fal-add-field');
+const falSaveModelBtn_extra = document.getElementById('fal-save-model');
+
+if (falAddFieldBtn_extra) falAddFieldBtn_extra.addEventListener('click', () => {
+  if (!falCurrentModel) return;
+  const spec = (window as any).prompt?.('New field (key:type:label)', 'custom:string:Custom Field');
+  if (!spec) return;
+  const parts = String(spec).split(':');
+  const key = (parts[0]||'').trim();
+  const type = (parts[1]||'string').trim() as any;
+  const label = (parts[2]||key||'Custom').trim();
+  if (!key) return;
+  const param: any = { key, type, label, group: 'advanced' };
+  if (!falCurrentModel.inputs) falCurrentModel.inputs = [] as any;
+  falCurrentModel.inputs.push(param);
+  falRenderParamEditor(falCurrentModel as any);
+});
+
+if (falSaveModelBtn_extra) falSaveModelBtn_extra.addEventListener('click', () => {
+  if (!falCurrentModel) return;
+  const idx = falCatalog.findIndex((m: any) => m.id === (falCurrentModel as any).id);
+  if (idx >= 0) falCatalog[idx] = falCurrentModel as any; else falCatalog.push(falCurrentModel as any);
+  falSaveCatalog(falCatalog as any);
+  falRenderModelList();
+  if (falStatusEl) falStatusEl.textContent = 'Model saved.';
+  setTimeout(()=>{ if (falStatusEl && falStatusEl.textContent==='Model saved.') falStatusEl.textContent=''; }, 1200);
+});
+
+if (falFetchCatalogUrlBtn_extra) falFetchCatalogUrlBtn_extra.addEventListener('click', async () => {
+  const url = (falCatalogUrlEl_extra?.value || '').trim(); if (!url) return;
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    const json = await res.json();
+    if (!Array.isArray(json)) { alert('URL did not return an array'); return; }
+    const ok = json.every((m:any)=> typeof m.id==='string' && typeof m.name==='string' && Array.isArray(m.inputs));
+    if (!ok) { alert('Catalog JSON has invalid shape'); return; }
+    falCatalog = json as any;
+    falSaveCatalog(falCatalog as any);
+    falRenderModelList();
+  } catch (e) { alert('Fetch failed: ' + (e?.message || e)); }
+});

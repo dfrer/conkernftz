@@ -158,10 +158,24 @@ export function initProjectIpc(): void {
 
   electron.ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
     try {
-      const dir = path.isAbsolute(relativePath || '') ? (relativePath || '') : (projectDir ? path.join(projectDir, relativePath || '') : (relativePath || ''));
-      const dirents = await fs.readdir(dir, { withFileTypes: true });
-      const items = dirents.map((d) => (d.isDirectory() ? d.name + '/' : d.name));
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      if (!fileManager) fileManager = new FileManager(projectDir);
+      const entries = await fileManager.listDir(relativePath || '.');
+      const items = entries.map((e) => (e.isDir ? e.name + '/' : e.name));
       return { ok: true, items };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message ?? e) };
+    }
+  });
+
+  // Delete a file or directory (recursive) inside the project
+  electron.ipcMain.handle('foundry:deletePath', async (_evt, relativePath: string) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      if (!relativePath || typeof relativePath !== 'string') return { ok: false, error: 'Invalid path' };
+      if (!fileManager) fileManager = new FileManager(projectDir);
+      await fileManager.deletePath(relativePath);
+      return { ok: true };
     } catch (e: any) {
       return { ok: false, error: String(e?.message ?? e) };
     }

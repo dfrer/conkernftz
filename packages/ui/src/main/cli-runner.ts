@@ -1,7 +1,7 @@
 import * as electron from 'electron';
 import path from 'path';
 import fssync from 'node:fs';
-import { execFile, fork } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { getProjectDir, setProjectDir } from './ipc-project.js';
 
@@ -10,9 +10,19 @@ const baseDir = __dirname;
 const execFileAsync = promisify(execFile);
 
 async function runPnpm(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
-  const cmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-  const { stdout, stderr } = await execFileAsync(cmd, args, { cwd });
-  return { stdout: String(stdout ?? ''), stderr: String(stderr ?? '') };
+  const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+  const corepackCmd = process.platform === 'win32' ? 'corepack.cmd' : 'corepack';
+  try {
+    const { stdout, stderr } = await execFileAsync(pnpmCmd, args, { cwd });
+    return { stdout: String(stdout ?? ''), stderr: String(stderr ?? '') };
+  } catch (e: any) {
+    // If pnpm is not installed or not in PATH, try via Corepack
+    if (e && (e.code === 'ENOENT' || /not recognized|not found/i.test(String(e.message || '')))) {
+      const { stdout, stderr } = await execFileAsync(corepackCmd, ['pnpm', ...args], { cwd });
+      return { stdout: String(stdout ?? ''), stderr: String(stderr ?? '') };
+    }
+    throw e;
+  }
 }
 
 async function ensureCliAndDepsBuilt(): Promise<void> {
@@ -37,11 +47,18 @@ async function ensureCliAndDepsBuilt(): Promise<void> {
   } catch (e) {
     console.warn('ensureCliAndDepsBuilt: build step failed:', e);
   }
+  // Final check: if CLI is still missing, surface a clear guidance error
+  if (!fssync.existsSync(cliDist)) {
+    throw new Error(
+      'CLI is not built (missing packages/cli/dist/bin.js). ' +
+        'Please run "corepack enable" (once), then run "pnpm install" and "pnpm build" at the repository root.'
+    );
+  }
 }
 
 function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve, reject) => {
-    const child = fork(binPath, args, { cwd, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    const child = spawn(process.execPath, [binPath, ...args], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     child.stdout?.on('data', (d) => { stdout += String(d); });

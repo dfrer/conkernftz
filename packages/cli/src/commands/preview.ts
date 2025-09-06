@@ -9,6 +9,8 @@ export function previewCmd(): Command {
     .description('Generate N random previews')
     .option('--count <n>', 'number of previews', '10')
     .option('--seed <s>', 'seed for RNG', 'preview')
+    .option('--max-attempts <n>', 'max attempts per edition (uniqueness)', '500')
+    .option('--allow-duplicates', 'allow duplicate DNA in preview output')
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
@@ -25,12 +27,31 @@ export function previewCmd(): Command {
         delimiter: parsed.rarity.delimiter,
         defaultWeight: parsed.rarity.defaultWeight,
       });
-      const editions = generateEditionsConstrained(
-        catalog,
-        Number(opts.count),
-        { seed: opts.seed },
-        { rules: parsed.rules ?? {}, uniqueness: parsed.uniqueness },
-      );
+      const count = Number(opts.count);
+      const maxAttempts = Number(opts.maxAttempts ?? '500');
+
+      function makeConstraints(allowDupes: boolean) {
+        return {
+          rules: parsed.rules ?? {},
+          uniqueness: allowDupes ? undefined : parsed.uniqueness,
+          maxAttemptsPerEdition: maxAttempts,
+        } as const;
+      }
+
+      let editions;
+      try {
+        editions = generateEditionsConstrained(catalog, count, { seed: opts.seed }, makeConstraints(!!opts.allowDuplicates));
+      } catch (e) {
+        // If uniqueness is the culprit and user did not explicitly allow duplicates, fall back for previews only.
+        const wantsDupes = !!opts.allowDuplicates;
+        if (!wantsDupes) {
+          console.warn(String(e));
+          console.warn('Falling back to allowing duplicates for preview generation...');
+          editions = generateEditionsConstrained(catalog, count, { seed: opts.seed }, makeConstraints(true));
+        } else {
+          throw e;
+        }
+      }
 
       function normalizeOutDir(p: string): string {
         const trimmed = p.replace(/[\\/]+$/, '');
@@ -78,5 +99,4 @@ export function previewCmd(): Command {
     });
   return cmd;
 }
-
 

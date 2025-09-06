@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Nano Banana Image to Image",
+    "pageUrl": "https://fal.ai/models/fal-ai/nano-banana/edit",
+    "endpoint": "https://fal.run/fal-ai/nano-banana/edit",
+    "id": "fal-ai/nano-banana/edit",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/nano-banana/edit"
+    ]
+  },
+  {
+    "name": "Nano Banana Image to Image",
+    "pageUrl": "https://fal.ai/models/fal-ai/nano-banana/edit/api",
+    "endpoint": "https://fal.run/fal-ai/nano-banana/edit",
+    "id": "fal-ai/nano-banana/edit",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/nano-banana/edit"
+    ]
+  },
+  {
+    "name": "Kling 2.1 Master Image to Video",
+    "pageUrl": "https://fal.ai/models/fal-ai/kling-video/v2.1/master/image-to-video",
+    "endpoint": "https://fal.run/fal-ai/kling-video/v2.1/master/image-to-video",
+    "id": "fal-ai/kling-video/v2.1/master/image-to-video",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/kling-video/v2.1/master/image-to-video"
+    ]
+  },
+  {
+    "name": "Kling 2.1 Master Image to Video",
+    "pageUrl": "https://fal.ai/models/fal-ai/kling-video/v2.1/master/image-to-video/api",
+    "endpoint": "https://fal.run/fal-ai/kling-video/v2.1/master/image-to-video",
+    "id": "fal-ai/kling-video/v2.1/master/image-to-video",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/kling-video/v2.1/master/image-to-video"
+    ]
+  },
+  {
+    "name": "Marey Realism V1.5 Image to Video",
+    "pageUrl": "https://fal.ai/models/moonvalley/marey/i2v",
+    "endpoint": null,
+    "id": null,
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=moonvalley/marey/i2v"
+    ]
+  },
+  {
+    "name": "Marey Realism V1.5 Image to Video",
+    "pageUrl": "https://fal.ai/models/moonvalley/marey/i2v/api",
+    "endpoint": null,
+    "id": null,
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=moonvalley/marey/i2v"
+    ]
+  },
+  {
+    "name": "Ideogram V3 Character Edit Image to Image",
+    "pageUrl": "https://fal.ai/models/fal-ai/ideogram/character/edit",
+    "endpoint": "https://fal.run/fal-ai/ideogram/character/edit",
+    "id": "fal-ai/ideogram/character/edit",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/ideogram/character/edit"
+    ]
+  },
+  {
+    "name": "Ideogram V3 Character Edit Image to Image",
+    "pageUrl": "https://fal.ai/models/fal-ai/ideogram/character/edit/api",
+    "endpoint": "https://fal.run/fal-ai/ideogram/character/edit",
+    "id": "fal-ai/ideogram/character/edit",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/ideogram/character/edit"
+    ]
+  },
+  {
+    "name": "MiniMax Hailuo 02 [Standard] (Image to Video) Image to Video",
+    "pageUrl": "https://fal.ai/models/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "endpoint": "https://fal.run/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "id": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/minimax/hailuo-02/standard/image-to-video"
+    ]
+  },
+  {
+    "name": "MiniMax Hailuo 02 [Standard] (Image to Video) Image to Video",
+    "pageUrl": "https://fal.ai/models/fal-ai/minimax/hailuo-02/standard/image-to-video/api",
+    "endpoint": "https://fal.run/fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "id": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+    "jsonLinks": [
+      "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/minimax/hailuo-02/standard/image-to-video"
+    ]
+  }
+]
