@@ -1,4 +1,4 @@
-# conkernftz – NFT Art Foundry (Monorepo)
+﻿# conkernftz – NFT Art Foundry (Monorepo)
 
 Modern, type‑safe, open‑source NFT art foundry. Compose layered artwork, enforce trait rules, generate editions, preview, upload to storage, and mint on Solana (Umi/Token Metadata). Comes with a CLI and optional Electron/Tauri GUIs.
 
@@ -249,6 +249,13 @@ Notes
 
 Fal AI page
 - Generate images via [fal.ai](https://fal.ai); choose models, set size/count, and save to your project folder.
+
+Customization & Accessibility
+- Theme & accent: Use the Options tab to switch Light/Dark and pick an accent color. Accent derivatives (`--accent-2`, `--accent-soft`, `--accent-glow`) update automatically.
+- UI tokens: The GUI consumes `design-system/tokens.css`; avoid inline hex colors. Radius/blur/noise controls apply to `:root` variables and persist.
+- Keyboard-friendly tabs: Primary tabs and subtabs support Arrow Left/Right, Home/End; current tab is marked with ARIA attributes and `tabindex`.
+- Reduced motion: The app respects `prefers-reduced-motion` and tones down hover transforms.
+- Icons: Common actions (open, save, run, refresh) get consistent SVG icons via lightweight injection.
 
 ---
 

@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-#### v4.0.0 — 2025-08-24
+#### Unreleased
+
+- UI/UX overhaul (Electron GUI)
+  - Added theme toggle + persistent customization (theme, accent, radius, blur, noise)
+  - Derived accent tokens (`--accent-2`, `--accent-soft`, `--accent-glow`) to ensure consistent theming
+  - Rebuilt panels/forms using reusable classes (`panel(-soft)`, `form-grid`, `form-row`)
+  - Introduced layout utilities (`row`, `column`, `gap-*`, `mt-*`, `layout-2col`, `auto-fit-*`); removed inline styles
+  - Improved accessibility for tabs/subtabs (ARIA roles, keyboard navigation) and reduced-motion support
+  - Clean icon injection for common actions (folder/save/run/refresh/edit/trash/plus/check)
+  - Normalized glyphs (UTF‑8/entities) throughout the UI
+  - Synced dist assets and updated build/start guidance
+
+#### v4.0.0 – 2025-08-24
 
 - Documentation
   - README streamlined; clarified quick start, configuration, and command usage
@@ -61,5 +73,4 @@ Note: Requires Node.js >= 18.18 and pnpm 9.x.
 - Storage providers: Arweave Bundlr, IPFS
 - Solana chain adapter and basic minting flow
 - Optional Electron/Tauri UI scaffolds
-
 

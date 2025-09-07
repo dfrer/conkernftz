@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 // In the browser, module imports need explicit extensions
 import { tokens } from "../design-system/tokens.js";
 console.debug("Design tokens loaded", tokens);
@@ -21,6 +21,23 @@ if (!('foundry' in window)) (window as any).foundry = {
   listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }),
   renameFiles: async () => ({ ok: false, error: 'preload not loaded' }),
 };
+// Theme handling (delegates to applyUiFromStorage)
+try {
+  const themeBtn = document.getElementById('btn-theme') as HTMLButtonElement | null;
+  const setLabel = (mode: string) => { if (themeBtn) themeBtn.textContent = mode === 'light' ? 'Dark' : 'Light'; };
+  const current = (localStorage.getItem('ui:theme') || 'dark');
+  setLabel(current);
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const now = (localStorage.getItem('ui:theme') || 'dark');
+      const next = now === 'light' ? 'dark' : 'light';
+      try { localStorage.setItem('ui:theme', next); } catch {}
+      setLabel(next);
+      try { (window as any).__applyUi ? (window as any).__applyUi() : null; } catch {}
+    });
+  }
+} catch {}
+
 // Views & Tabs
 const viewLauncher = document.getElementById('view-launcher');
 const viewApp = document.getElementById('view-app');
@@ -35,9 +52,16 @@ function switchTab(name) {
   const map = { main: tabMain, mint: tabMint, options: tabOptions, fal: tabFal, help: tabHelp, about: tabAbout };
   Object.entries(map).forEach(([key, pane]) => {
     if (!pane) return;
-    if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+    const isActive = key === name;
+    if (isActive) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+    pane.setAttribute('aria-hidden', String(!isActive));
   });
-  tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  tabButtons.forEach((b: HTMLButtonElement) => {
+    const isActive = b.dataset.tab === name;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+    b.tabIndex = isActive ? 0 : -1;
+  });
   try { localStorage.setItem('ui:lastTab', name); } catch {}
   // Ensure subtabs default when entering Main
   if (name === 'main') {
@@ -50,14 +74,30 @@ function switchTab(name) {
   // Re-attach help icons in the newly shown tab
   attachHelpAnchors();
 }
-tabButtons.forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+tabButtons.forEach((b) => b.addEventListener('click', () => switchTab((b as HTMLElement).dataset.tab)));
+
+// Keyboard navigation for primary tabs
+const tablist = document.querySelector('.tabs');
+if (tablist) {
+  tablist.addEventListener('keydown', (e: KeyboardEvent) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tabs [role="tab"]'));
+    const current = document.activeElement as HTMLButtonElement;
+    let idx = tabs.indexOf(current);
+    if (e.key === 'Home') idx = 0; else if (e.key === 'End') idx = tabs.length - 1; else if (e.key === 'ArrowRight') idx = (idx + 1 + tabs.length) % tabs.length; else if (e.key === 'ArrowLeft') idx = (idx - 1 + tabs.length) % tabs.length;
+    const next = tabs[idx];
+    if (next) { next.focus(); switchTab(next.dataset.tab); }
+  });
+}
 function showView(which) {
   if (which === 'app') { viewApp.classList.remove('hidden'); viewLauncher.classList.add('hidden'); }
   else { viewLauncher.classList.remove('hidden'); viewApp.classList.add('hidden'); }
 }
-document.getElementById('btn-switch-project').addEventListener('click', () => showView('launcher'));
-const logoOverlayEl = document.querySelector('.logo-overlay');
-logoOverlayEl && logoOverlayEl.addEventListener('click', () => showView('launcher'));
+  document.getElementById('btn-switch-project').addEventListener('click', () => showView('launcher'));
+  const logoOverlayEl = document.querySelector('.logo-overlay');
+  logoOverlayEl && logoOverlayEl.addEventListener('click', () => showView('launcher'));
 
 // External links (NASA + Twitter) and brand popup
 const btnNasa = document.getElementById('btn-nasa');
@@ -86,20 +126,42 @@ if (aboutSite) {
 const subtabButtons = Array.from(document.querySelectorAll('.subtab-btn'));
 const subOverview = document.getElementById('main-overview');
 const subConfigure = document.getElementById('main-configure');
-const subFiles = document.getElementById('main-files');
 const subRules = document.getElementById('main-rules');
 const subReports = document.getElementById('main-reports');
 function switchSubtab(name) {
-  const map = { overview: subOverview, configure: subConfigure, files: subFiles, rules: subRules, reports: subReports };
+  const map: Record<string, HTMLElement | null> = { overview: subOverview, configure: subConfigure, rules: subRules, reports: subReports };
   Object.entries(map).forEach(([key, pane]) => {
     if (!pane) return;
-    if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+    const isActive = key === name;
+    if (isActive) pane.classList.remove('hidden'); else pane.classList.add('hidden');
+    pane.setAttribute('aria-hidden', String(!isActive));
   });
-  subtabButtons.forEach((b) => b.classList.toggle('active', b.dataset.subtab === name));
+  subtabButtons.forEach((b: HTMLButtonElement) => {
+    const isActive = b.dataset.subtab === name;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+    b.tabIndex = isActive ? 0 : -1;
+  });
   try { localStorage.setItem('ui:lastSubtab', name); } catch {}
-  if (name === 'files') { try { fsEnsureInit(); } catch {} }
+  // files subtab removed
 }
 subtabButtons.forEach((b) => b.addEventListener('click', () => switchSubtab(b.dataset.subtab)));
+
+// Keyboard navigation for subtabs
+const subtablist = document.querySelector('.subtabs');
+if (subtablist) {
+  subtablist.addEventListener('keydown', (e: KeyboardEvent) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.subtabs [role="tab"]'));
+    const current = document.activeElement as HTMLButtonElement;
+    let idx = tabs.indexOf(current);
+    if (e.key === 'Home') idx = 0; else if (e.key === 'End') idx = tabs.length - 1; else if (e.key === 'ArrowRight') idx = (idx + 1 + tabs.length) % tabs.length; else if (e.key === 'ArrowLeft') idx = (idx - 1 + tabs.length) % tabs.length;
+    const next = tabs[idx];
+    if (next) { next.focus(); switchSubtab(next.dataset.subtab); }
+  });
+}
 
 // Recent projects (localStorage)
 function readRecents() {
@@ -1204,6 +1266,8 @@ function applyUiFromStorage() {
   const glow = Number(localStorage.getItem('ui:glow') || '0.3');
   
   document.documentElement.classList.toggle('theme-light', theme === 'light');
+  const themeBtn2 = document.getElementById('btn-theme') as HTMLButtonElement | null;
+  if (themeBtn2) themeBtn2.textContent = theme === 'light' ? 'Dark' : 'Light';
   
   // Update form controls
   document.getElementById('opt-theme') && (document.getElementById('opt-theme').value = theme);
@@ -1213,10 +1277,36 @@ function applyUiFromStorage() {
   document.getElementById('opt-noise') && (document.getElementById('opt-noise').value = String(noise));
   document.getElementById('opt-glow') && (document.getElementById('opt-glow').value = String(glow));
   
+  // Helper: derive accent variations
+  const hexToRgb = (hex: string) => {
+    const clean = hex.replace('#','');
+    const bigint = parseInt(clean.length === 3 ? clean.split('').map(c=>c+c).join('') : clean, 16);
+    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+  };
+  const rgbToHex = (r:number,g:number,b:number) => '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const rgbToHsl = (r:number,g:number,b:number) => {
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h=0,s=0,l=(max+min)/2;
+    if(max!==min){ const d=max-min; s=l>0.5? d/(2-max-min): d/(max+min); switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;} h/=6; }
+    return {h,s,l};
+  };
+  const hslToRgb = (h:number,s:number,l:number) => {
+    let r:number,g:number,b:number;
+    if(s===0){ r=g=b=l; } else {
+      const hue2rgb=(p:number,q:number,t:number)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+      const q=l<0.5? l*(1+s): l+s-l*s; const p=2*l-q;
+      r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+    }
+    return { r: Math.round(r*255), g: Math.round(g*255), b: Math.round(b*255) };
+  };
+  const deriveAccent2 = (hex:string) => { const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,g,b); const rr=hslToRgb(h, Math.min(1,s*1.05), Math.min(1, l*1.05)); return rgbToHex(rr.r, rr.g, rr.b); };
+  const accentSoft = (hex:string, a=0.15) => { const {r,g,b}=hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
+  const accentGlow = (hex:string, glow:number) => { const {r,g,b}=hexToRgb(hex); const blur = Math.round(20*glow); const alpha = Math.min(0.45, 0.25 + glow*0.5); return `0 0 ${blur}px rgba(${r},${g},${b},${alpha})`; };
+
   // Apply CSS variables
   document.documentElement.style.setProperty('--accent', accent);
-  const accent2 = accent === '#6a8dff' ? '#ff6adf' : '#6a8dff';
-  document.documentElement.style.setProperty('--accent-2', accent2);
+  document.documentElement.style.setProperty('--accent-2', deriveAccent2(accent));
   document.documentElement.style.setProperty('--radius', radius + 'px');
   document.documentElement.style.setProperty('--radius-sm', Math.max(6, radius - 6) + 'px');
   document.documentElement.style.setProperty('--radius-lg', Math.min(28, radius + 6) + 'px');
@@ -1225,7 +1315,8 @@ function applyUiFromStorage() {
   document.documentElement.style.setProperty('--blur-subtle', Math.max(2, blur - 6) + 'px');
   document.documentElement.style.setProperty('--blur-heavy', Math.min(24, blur + 8) + 'px');
   document.documentElement.style.setProperty('--noise-opacity', String(noise));
-  document.documentElement.style.setProperty('--accent-glow', `0 0 ${20 * glow}px rgba(106,141,255,${glow})`);
+  document.documentElement.style.setProperty('--accent-soft', accentSoft(accent, 0.15));
+  document.documentElement.style.setProperty('--accent-glow', accentGlow(accent, glow));
   
   // Add floating class to eligible elements (excluding large windows) - always enabled
   // Apply to small elements only
@@ -1249,6 +1340,79 @@ function applyUiFromStorage() {
     }
   });
 }
+// expose for header theme button lazy call
+(window as any).__applyUi = applyUiFromStorage;
+
+// Icon injection for key buttons (keeps HTML clean)
+function injectIcon(btnId: string, pathD: string, viewBox = '0 0 24 24') {
+  const btn = document.getElementById(btnId) as HTMLButtonElement | HTMLAnchorElement | null;
+  if (!btn) return;
+  // Avoid double inject
+  if (btn.querySelector('.icon')) return;
+  const span = document.createElement('span');
+  span.className = 'icon';
+  span.setAttribute('aria-hidden', 'true');
+  span.innerHTML = `<svg viewBox="${viewBox}" width="16" height="16"><path d="${pathD}"/></svg>`;
+  btn.prepend(span);
+}
+
+function injectCoreIcons() {
+  // folder icon
+  const folder = 'M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z';
+  injectIcon('fal-open-folder', folder);
+  injectIcon('btn-open-rarity', folder);
+  injectIcon('fs-open-explorer', folder);
+  injectIcon('fs-new-folder', folder);
+  injectIcon('btn-open-project', folder);
+  // save icon
+  const save = 'M17 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l4-4V5a2 2 0 0 0-2-2zM12 3v6';
+  injectIcon('fal-save-all', save);
+  injectIcon('btn-save-rules', save);
+  injectIcon('fal-save-model', save);
+  // play icon
+  const play = 'M8 5v14l11-7z';
+  injectIcon('fal-run', play);
+  injectIcon('fal-generate', play);
+  // refresh icon
+  const refresh = 'M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-5.65z';
+  injectIcon('ir-refresh', refresh);
+  injectIcon('fs-refresh', refresh);
+  injectIcon('lp-reset', refresh);
+  injectIcon('fal-reset-params', refresh);
+  injectIcon('fal-refresh-catalog', refresh);
+  injectIcon('opt-reset', refresh);
+  // edit icon
+  const edit = 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z';
+  injectIcon('ir-bulk-rename', edit);
+  injectIcon('fs-rename', edit);
+  // delete icon
+  const trash = 'M3 6h18M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2';
+  injectIcon('fs-delete', trash);
+  injectIcon('fal-reset-catalog', trash);
+  // plus icon
+  const plus = 'M12 5v14M5 12h14';
+  injectIcon('fal-add-field', plus);
+  injectIcon('ir-add-folder', plus);
+  // docs / link icon
+  const link = 'M10 13a5 5 0 0 1 7.07 0l1.41 1.41a5 5 0 0 1-7.07 7.07l-1.41-1.41M14 11a5 5 0 0 1-7.07 0L5.5 9.59A5 5 0 1 1 12.57 2.5L14 3.93';
+  injectIcon('fal-docs-link', link);
+  // run/dry-run
+  const build = 'M3 3h18v4H3zM3 10h18v11H3z';
+  injectIcon('fal-dryrun', build);
+  // validate (check)
+  const check = 'M20 6L9 17l-5-5';
+  injectIcon('btn-validate-rules', check);
+  // export/download
+  const download = 'M12 3v12m0 0l-4-4m4 4l4-4M5 21h14';
+  injectIcon('fal-export-catalog', download);
+  // close icon for LP and renamer close
+  const close = 'M6 6l12 12M6 18L18 6';
+  injectIcon('lp-close', close);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  try { injectCoreIcons(); } catch {}
+});
 const optTheme = document.getElementById('opt-theme');
 const optAccent = document.getElementById('opt-accent');
 const optRadius = document.getElementById('opt-radius');
@@ -1276,6 +1440,7 @@ optReset && optReset.addEventListener('click', () => {
 // Startup: decide view, render recents, load config if project set
 (async function startup() {
   applyUiFromStorage();
+  
   renderRecents();
   // Restore last project selection if main process doesn't yet have one
   let base = await window.foundry.getProjectDir();
@@ -2588,6 +2753,17 @@ if (falRunBtn) falRunBtn.addEventListener('click', falRunCurrent);
 if (falDryRunBtn) falDryRunBtn.addEventListener('click', async ()=>{
   if (!falCurrentModel || !falStatusEl) return; const payload = falBuildPayload(falCurrentModel); const str = JSON.stringify({ endpoint: `https://fal.run/fal-ai/${falCurrentModel.id}`, payload }, null, 2); try { await navigator.clipboard.writeText(str); falStatusEl.textContent = 'Copied request payload to clipboard.'; } catch (e) { falStatusEl.textContent = 'Unable to copy payload.'; }
 });
+// Thumb size slider for Fal results
+const falThumbSizeEl = document.getElementById('fal-thumb-size') as HTMLInputElement | null;
+function applyFalThumbSize() {
+  const size = Math.max(80, Math.min(280, Number(falThumbSizeEl?.value || 160)));
+  try { document.documentElement.style.setProperty('--thumb', size + 'px'); } catch {}
+}
+if (falThumbSizeEl) {
+  try { const saved = localStorage.getItem('fal:thumb'); if (saved) falThumbSizeEl.value = saved; } catch {}
+  applyFalThumbSize();
+  falThumbSizeEl.addEventListener('input', () => { try { localStorage.setItem('fal:thumb', (falThumbSizeEl as HTMLInputElement).value); } catch {}; applyFalThumbSize(); });
+}
 
 // Reset params to example
 if (falResetParamsBtn) falResetParamsBtn.addEventListener('click', () => {
@@ -2808,3 +2984,201 @@ if (falFetchCatalogUrlBtn_extra) falFetchCatalogUrlBtn_extra.addEventListener('c
     falRenderModelList();
   } catch (e) { alert('Fetch failed: ' + (e?.message || e)); }
 });
+
+// --- Live Preview overlay ---
+const lpOverlay = document.getElementById('live-preview') as HTMLElement | null;
+const lpGrid = document.getElementById('lp-grid') as HTMLElement | null;
+const lpToggleBtn = document.getElementById('live-prev-toggle');
+const lpRefreshBtn = document.getElementById('live-prev-refresh');
+const lpExportBtn = document.getElementById('live-prev-export');
+const lpSaveBtn = document.getElementById('live-prev-save');
+const lpAutoEl = document.getElementById('live-prev-auto') as HTMLInputElement | null;
+const lpCountEl = document.getElementById('live-prev-count') as HTMLInputElement | null;
+const lpWidthEl = document.getElementById('lp-width') as HTMLInputElement | null;
+const lpHeightEl = document.getElementById('lp-height') as HTMLInputElement | null;
+const lpCloseBtn = document.getElementById('lp-close');
+const lpResetBtn = document.getElementById('lp-reset');
+const lpHeader = document.getElementById('lp-header');
+const lpResize = document.getElementById('lp-resize');
+
+function lpApplyBounds() {
+  if (!lpOverlay) return;
+  const w = Math.max(240, Number(lpWidthEl?.value || lpOverlay.style.width || 420));
+  const h = Math.max(200, Number(lpHeightEl?.value || lpOverlay.style.height || 320));
+  lpOverlay.style.width = `${w}px`;
+  lpOverlay.style.height = `${h}px`;
+}
+
+function lpLoadState() {
+  if (!lpOverlay) return;
+  try {
+    const x = Number(localStorage.getItem('lp:x') || '');
+    const y = Number(localStorage.getItem('lp:y') || '');
+    const w = Number(localStorage.getItem('lp:w') || '');
+    const h = Number(localStorage.getItem('lp:h') || '');
+    if (!Number.isNaN(w) && w) lpOverlay.style.width = `${w}px`;
+    if (!Number.isNaN(h) && h) lpOverlay.style.height = `${h}px`;
+    if (!Number.isNaN(x) && !Number.isNaN(y)) {
+      lpOverlay.style.right = 'auto';
+      lpOverlay.style.bottom = 'auto';
+      lpOverlay.style.left = `${Math.max(0, x)}px`;
+      lpOverlay.style.top = `${Math.max(0, y)}px`;
+    }
+  } catch {}
+  lpApplyBounds();
+}
+
+function lpSaveState() {
+  if (!lpOverlay) return;
+  try {
+    const rect = lpOverlay.getBoundingClientRect();
+    localStorage.setItem('lp:x', String(rect.left));
+    localStorage.setItem('lp:y', String(rect.top));
+    localStorage.setItem('lp:w', String(rect.width));
+    localStorage.setItem('lp:h', String(rect.height));
+  } catch {}
+}
+
+async function lpListPreviewImages(): Promise<string[]> {
+  try {
+    const cfg = await window.foundry.readConfig();
+    if (!cfg.ok) return [];
+    const outDir = (cfg.json.export?.previewOutDir) || (cfg.json.export?.outDir) || 'build';
+    const base = await window.foundry.getProjectDir();
+    const projectBase = (base && base.projectDir) ? base.projectDir.replace(/\\/g,'/') : '';
+    function isPreviewDir(p:string){ return /(\\|\/)preview$/i.test(String(p || '').replace(/[\\/]+$/,'')); }
+    const cleanedOutDir = outDir.replace(/\\+$/,'').replace(/\/+$/,'');
+    const primary = (cfg.json.export?.previewOutDir) ? cleanedOutDir : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
+    const list = await window.foundry.listDir(primary);
+    if (!list.ok || !Array.isArray(list.items)) return [];
+    const files = list.items.filter((n:string)=>!n.endsWith('/') && /\.(png|webp|gif)$/i.test(n));
+    return files.map((name:string)=> `file://${projectBase}/${primary.replace(/\\/g,'/')}/${encodeURIComponent(name).replace(/%23/g,'#')}`);
+  } catch { return []; }
+}
+
+async function lpRender() {
+  if (!lpGrid) return;
+  const urls = await lpListPreviewImages();
+  lpGrid.innerHTML = '';
+  urls.forEach((u)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'gallery-item';
+    const img = document.createElement('img');
+    img.src = u;
+    wrap.appendChild(img);
+    lpGrid.appendChild(wrap);
+  });
+}
+
+async function lpRunPreview() {
+  const count = Math.max(1, Number(lpCountEl?.value || 4));
+  await window.foundry.run(['preview', '--count', String(count), '--allow-duplicates']);
+  await lpRender();
+}
+
+let lpTimer: any = null;
+function lpStartAuto() {
+  if (lpTimer) clearInterval(lpTimer);
+  if (lpAutoEl && lpAutoEl.checked) {
+    lpTimer = setInterval(() => { lpRender(); }, 3000);
+  }
+}
+
+function lpShow() {
+  if (!lpOverlay) return;
+  lpOverlay.classList.remove('hidden');
+  lpOverlay.setAttribute('aria-hidden','false');
+  lpLoadState();
+  lpRender();
+  lpStartAuto();
+}
+
+function lpHide() {
+  if (!lpOverlay) return;
+  lpOverlay.classList.add('hidden');
+  lpOverlay.setAttribute('aria-hidden','true');
+  if (lpTimer) { clearInterval(lpTimer); lpTimer = null; }
+}
+
+if (lpToggleBtn) lpToggleBtn.addEventListener('click', () => { if (lpOverlay?.classList.contains('hidden')) lpShow(); else lpHide(); });
+if (lpRefreshBtn) lpRefreshBtn.addEventListener('click', lpRunPreview);
+if (lpExportBtn) lpExportBtn.addEventListener('click', async () => {
+  if (!lpGrid) return;
+  const imgs = Array.from(lpGrid.querySelectorAll('img')) as HTMLImageElement[];
+  if (!imgs.length) return;
+  // Make a simple contact sheet
+  const cols = Math.ceil(Math.sqrt(imgs.length));
+  const rows = Math.ceil(imgs.length / cols);
+  const tile = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * tile; canvas.height = rows * tile;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  let i = 0;
+  for (const img of imgs) {
+    const c = i % cols, r = Math.floor(i / cols); i++;
+    ctx.drawImage(img, c*tile, r*tile, tile, tile);
+  }
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  try { await window.foundry.saveBase64(b64, `preview/live_export_${Date.now()}.png`); } catch {}
+});
+if (lpSaveBtn) lpSaveBtn.addEventListener('click', async () => {
+  if (!lpGrid) return;
+  const wrap = document.createElement('canvas');
+  const rect = lpGrid.getBoundingClientRect();
+  const scale = window.devicePixelRatio || 1;
+  // fallback: reuse export method with tile sheet (better reliability without DOM snapshot libs)
+  const imgs = Array.from(lpGrid.querySelectorAll('img')) as HTMLImageElement[];
+  if (!imgs.length) return;
+  const cols = Math.ceil(Math.sqrt(imgs.length));
+  const rows = Math.ceil(imgs.length / cols);
+  const tile = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * tile; canvas.height = rows * tile;
+  const ctx = canvas.getContext('2d'); if (!ctx) return;
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  let i = 0; for (const img of imgs) { const c = i % cols, r = Math.floor(i/cols); i++; ctx.drawImage(img, c*tile, r*tile, tile, tile); }
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  try { await window.foundry.saveBase64(b64, `preview/live_preview_${Date.now()}.png`); } catch {}
+});
+
+// Reset overlay position to default bottom-right
+if (lpResetBtn && lpOverlay) lpResetBtn.addEventListener('click', () => {
+  try {
+    localStorage.removeItem('lp:x');
+    localStorage.removeItem('lp:y');
+    // Keep user width/height preferences unless cleared; apply current inputs
+    lpOverlay.style.left = 'auto';
+    lpOverlay.style.top = 'auto';
+    lpOverlay.style.right = '24px';
+    lpOverlay.style.bottom = '24px';
+    lpApplyBounds();
+  } catch {}
+});
+
+// Dragging
+if (lpHeader && lpOverlay) {
+  let dragging = false; let sx = 0, sy = 0, ox = 0, oy = 0;
+  lpHeader.addEventListener('mousedown', (e:MouseEvent) => {
+    dragging = true; sx = e.clientX; sy = e.clientY; const r = lpOverlay.getBoundingClientRect(); ox = r.left; oy = r.top; e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if (!dragging) return; const dx = e.clientX - sx; const dy = e.clientY - sy; lpOverlay.style.left = `${Math.max(0, ox+dx)}px`; lpOverlay.style.top = `${Math.max(0, oy+dy)}px`; lpOverlay.style.right = 'auto'; lpOverlay.style.bottom = 'auto';
+  });
+  window.addEventListener('mouseup', ()=>{ if (dragging) { dragging = false; lpSaveState(); } });
+}
+
+// Resizing
+if (lpResize && lpOverlay) {
+  let resizing = false; let sw = 0, sh = 0, sx = 0, sy = 0;
+  lpResize.addEventListener('mousedown', (e)=>{ const r = lpOverlay.getBoundingClientRect(); sw = r.width; sh = r.height; sx = e.clientX; sy = e.clientY; resizing = true; e.preventDefault(); });
+  window.addEventListener('mousemove', (e)=>{ if (!resizing) return; const w = Math.max(240, sw + (e.clientX - sx)); const h = Math.max(200, sh + (e.clientY - sy)); lpOverlay.style.width = `${w}px`; lpOverlay.style.height = `${h}px`; if (lpWidthEl) lpWidthEl.value = String(Math.round(w)); if (lpHeightEl) lpHeightEl.value = String(Math.round(h)); });
+  window.addEventListener('mouseup', ()=>{ if (resizing) { resizing = false; lpSaveState(); } });
+}
+
+if (lpWidthEl) lpWidthEl.addEventListener('change', lpApplyBounds);
+if (lpHeightEl) lpHeightEl.addEventListener('change', lpApplyBounds);
+if (lpCloseBtn) lpCloseBtn.addEventListener('click', lpHide);
+if (lpAutoEl) lpAutoEl.addEventListener('change', lpStartAuto);
+

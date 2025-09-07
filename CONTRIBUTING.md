@@ -26,10 +26,20 @@ pnpm build
 #### Making changes
 
 1. Prefer small, focused edits with clear descriptions.
-2. Keep code readable and type‑safe; avoid unnecessary complexity.
+2. Keep code readable and type-safe; avoid unnecessary complexity.
 3. Add or update tests where meaningful (`packages/*/src/__tests__`).
 4. Ensure `pnpm build`, `pnpm test`, and `pnpm lint` are green.
 5. Follow the existing code style and naming guidelines; avoid deep nesting and prefer early returns.
+
+#### UI guidelines (packages/ui)
+
+- Design tokens: use variables from `packages/ui/src/design-system/tokens.css` for colors, borders, radii, and shadows. Do not hardcode hex colors in components.
+- Utilities: prefer the shared utility classes in `styles.css` (e.g., `row`, `wrap`, `gap-*`, `mt-*`, `column`, `layout-2col`, `auto-fit-*`) instead of inline `style` attributes. Add small utilities if truly reusable.
+- Panels/forms: reuse `panel`/`panel-soft` and `form-grid`/`form-row` for layout consistency. Avoid one-off card styles.
+- Accessibility: tabs and subtabs should use ARIA roles. Maintain `aria-selected`, `tabindex`, and `aria-hidden` in code, and support keyboard navigation (Left/Right/Home/End) as shown in `renderer/app.ts`.
+- Motion: respect `prefers-reduced-motion`; avoid adding animations that don’t degrade gracefully.
+- Icons: inject small SVGs via the icon helper in `renderer/app.ts` (keeps HTML clean). Avoid baking SVGs directly into markup unless necessary.
+- Text: use UTF‑8 or HTML entities (e.g., `&hellip;`, `&ndash;`) for punctuation to prevent encoding issues.
 
 #### Commit style
 
@@ -55,5 +65,4 @@ Examples:
 - Update `CHANGELOG.md` and add `RELEASE_NOTES_vX.Y.Z.md`.
 - Build and run tests.
 - Commit with `chore(release): vX.Y.Z` and tag the commit (`git tag -a vX.Y.Z -m "vX.Y.Z"`).
-
 

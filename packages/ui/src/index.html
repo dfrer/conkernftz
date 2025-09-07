@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -22,16 +22,17 @@
           </div>
         </div>
         <div class="header-actions">
-          <div class="tabs">
-            <button class="tab-btn active" data-tab="main">Main</button>
-            <button class="tab-btn" data-tab="mint">Mint</button>
-            <button class="tab-btn" data-tab="options">Options</button>
-            <button class="tab-btn" data-tab="fal">Fal AI</button>
-            <button class="tab-btn" data-tab="help">Help</button>
-            <button class="tab-btn" data-tab="about">About</button>
+          <div class="tabs" role="tablist" aria-label="Primary Tabs">
+            <button class="tab-btn active" id="tab-btn-main" role="tab" aria-selected="true" aria-controls="tab-main" tabindex="0" data-tab="main">Main</button>
+            <button class="tab-btn" id="tab-btn-mint" role="tab" aria-selected="false" aria-controls="tab-mint" tabindex="-1" data-tab="mint">Mint</button>
+            <button class="tab-btn" id="tab-btn-options" role="tab" aria-selected="false" aria-controls="tab-options" tabindex="-1" data-tab="options">Options</button>
+            <button class="tab-btn" id="tab-btn-fal" role="tab" aria-selected="false" aria-controls="tab-fal" tabindex="-1" data-tab="fal">Fal AI</button>
+            <button class="tab-btn" id="tab-btn-help" role="tab" aria-selected="false" aria-controls="tab-help" tabindex="-1" data-tab="help">Help</button>
+            <button class="tab-btn" id="tab-btn-about" role="tab" aria-selected="false" aria-controls="tab-about" tabindex="-1" data-tab="about">About</button>
           </div>
           <div id="current-project-label" class="project-label">No project</div>
           <button class="switch-project" id="btn-switch-project">Switch Project</button>
+          <button class="header-btn" id="btn-theme" title="Toggle theme">Theme</button>
         </div>
     </header>
     
@@ -41,31 +42,32 @@
           <div class="launcher-card">
             <div class="launcher-head">
               <h2>Choose a Project</h2>
-              <button class="btn-primary" id="btn-launcher-browse">Browse…</button>
+              <button class="btn-primary" id="btn-launcher-browse">Browse&hellip;</button>
             </div>
             <div class="projects-grid" id="projects-grid">
               <!-- Recent projects will render here -->
               <div class="proj-card proj-create" id="proj-create">
-                <div class="proj-plus">＋</div>
+                <div class="proj-plus">+</div>
                 <div style="opacity:.8; font-size:13px; margin-top:8px;">Create or add project</div>
               </div>
             </div>
           </div>
-        </div>
-
+      </div>
+      
+      
         <!-- App View / Tabs -->
         <div id="view-app" class="view tabview hidden">
-          <section id="tab-main" class="tabpane">
+          <section id="tab-main" class="tabpane" role="tabpanel" aria-labelledby="tab-btn-main">
             <div class="actions-grid">
       <div class="sidebar">
                 <div class="sidebar-group">
                   <div class="group-title" data-help="sidebar-project">Project</div>
                   <div id="current-project-mini" class="mini muted">No project selected</div>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                  <div class="row wrap mt-8">
                     <button id="btn-choose">Choose</button>
                     <button id="btn-open-project" class="btn-secondary">Open Folder</button>
         </div>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                  <div class="row wrap mt-8">
                     <button id="btn-init" class="btn-ghost" data-help="init">Init</button>
                     <button id="btn-validate" class="btn-ghost" data-help="validate">Validate</button>
         </div>
@@ -82,14 +84,33 @@
           <input id="build-count" type="number" value="10"/>
                   <button id="btn-build" class="btn-primary" data-help="build">Build Collection</button>
         </div>
+                <!-- Live Preview controls (moved into left sidebar) -->
+                <div class="sidebar-group">
+                  <div class="group-title">Live Preview</div>
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end;">
+                    <div>
+                      <label for="live-prev-count">Items</label>
+                      <input id="live-prev-count" type="number" min="1" value="4" />
+                    </div>
+                    <div class="row">
+                      <input id="live-prev-auto" type="checkbox" checked />
+                      <label for="live-prev-auto" class="mini">Auto-refresh</label>
+                    </div>
+                  </div>
+                  <div class="row wrap mt-8">
+                    <button id="live-prev-toggle" class="btn-secondary btn-sm" aria-controls="live-preview">Show Preview</button>
+                    <button id="live-prev-refresh" class="btn-ghost btn-sm">Refresh</button>
+                    <button id="live-prev-export" class="btn-ghost btn-sm">Export</button>
+                    <button id="live-prev-save" class="btn-ghost btn-sm">Save</button>
+                  </div>
+                </div>
       </div>
       <div class="content">
-                <div class="subtabs">
-                  <button class="subtab-btn active" data-subtab="overview">Overview</button>
-                  <button class="subtab-btn" data-subtab="configure">Configure</button>
-                  <button class="subtab-btn" data-subtab="files">Files</button>
-                  <button class="subtab-btn" data-subtab="rules">Rules & Export</button>
-                  <button class="subtab-btn" data-subtab="reports">Reports</button>
+                <div class="subtabs" role="tablist" aria-label="Main Sections">
+                  <button class="subtab-btn active" id="subtab-btn-overview" role="tab" aria-selected="true" aria-controls="main-overview" tabindex="0" data-subtab="overview">Overview</button>
+                  <button class="subtab-btn" id="subtab-btn-configure" role="tab" aria-selected="false" aria-controls="main-configure" tabindex="-1" data-subtab="configure">Configure</button>
+                  <button class="subtab-btn" id="subtab-btn-rules" role="tab" aria-selected="false" aria-controls="main-rules" tabindex="-1" data-subtab="rules">Rules &amp; Export</button>
+                  <button class="subtab-btn" id="subtab-btn-reports" role="tab" aria-selected="false" aria-controls="main-reports" tabindex="-1" data-subtab="reports">Reports</button>
                 </div>
                 <div id="task-progress" class="top-progress hidden" role="status" aria-live="polite">
                   <div class="bar-wrap">
@@ -100,19 +121,19 @@
                     <div id="task-progress-percent" class="percent">0%</div>
                   </div>
                 </div>
-                <div id="main-overview" class="subpane">
+                <div id="main-overview" class="subpane" role="tabpanel" aria-labelledby="subtab-btn-overview">
         <div class="gallery-card">
           <div class="gallery-header" data-help="previews">
-            <h3 style="margin:0;">Previews</h3>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <button id="btn-open-previews" class="btn-secondary" style="padding:6px 10px; font-size:12px;">Open folder</button>
-              <div id="gallery-meta" style="opacity:.75; font-size:12px;"></div>
+            <h3 class="m-0">Previews</h3>
+            <div class="row">
+              <button id="btn-open-previews" class="btn-secondary btn-sm"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></span>Open folder</button>
+              <div id="gallery-meta" class="mini op-75"></div>
             </div>
           </div>
           <div id="previews" class="gallery-grid" data-help="preview-grid"></div>
                     <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" to generate sample images.</div>
         </div>
-                  <div style="margin-top:16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                  <div class="form-grid auto-fit-180" style="margin-top:16px; gap:12px;">
                     <div class="gallery-card" style="padding: 10px 12px;">
                       <div class="mini muted">Collection</div>
                       <div id="stat-collection" style="font-weight:600; margin-top:4px;">—</div>
@@ -130,40 +151,40 @@
                       <div id="stat-layers" style="font-weight:600; margin-top:4px;">—</div>
                     </div>
                   </div>
-                  <div id="console-card" style="margin-top:16px;" class="gallery-card">
+                  <div id="console-card" class="gallery-card mt-16">
                     <div class="gallery-header">
-                      <h3 style="margin:0;">Console</h3>
-                      <button id="btn-toggle-console" class="btn-secondary" style="padding:6px 10px; font-size:12px;">Hide</button>
+                      <h3 class="m-0">Console</h3>
+                      <button id="btn-toggle-console" class="btn-secondary btn-sm">Hide</button>
                     </div>
           <pre id="out"></pre>
         </div>
                 </div>
                 <div id="main-files" class="subpane hidden">
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Project Files</legend>
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
-                <button id="fs-up" class="btn-ghost" title="Go Up" style="background:#30363d;">Up</button>
-                <input id="fs-path" placeholder="/ (project root)" style="flex:1; min-width:300px;" />
-                <button id="fs-refresh" class="btn-ghost" style="background:#30363d;">Refresh</button>
-                <button id="fs-open-explorer" class="btn-secondary">Open</button>
+              <div class="row wrap mb-8">
+                <button id="fs-up" class="btn-ghost btn-sm" title="Go Up">Up</button>
+                <input id="fs-path" class="flex-1 minw-300" placeholder="/ (project root)" />
+                <button id="fs-refresh" class="btn-ghost btn-sm">Refresh</button>
+                <button id="fs-open-explorer" class="btn-secondary btn-sm">Open</button>
               </div>
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
-                <button id="fs-new-folder" class="btn-primary">New Folder</button>
-                <label class="btn-secondary" style="position:relative; overflow:hidden;">
-                  <input id="fs-upload" type="file" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
-                  Upload Files…
+              <div class="row wrap mb-8">
+                <button id="fs-new-folder" class="btn-primary btn-sm">New Folder</button>
+                <label class="btn-secondary btn-sm relative overflow-hidden">
+                  <input id="fs-upload" type="file" multiple class="absolute inset-0 op-0 pointer" />
+                  Upload Files&hellip;
                 </label>
-                <button id="fs-rename" class="btn-ghost" style="background:#30363d;">Rename</button>
-                <button id="fs-delete" class="btn-ghost" style="background:#30363d;">Delete</button>
+                <button id="fs-rename" class="btn-ghost btn-sm">Rename</button>
+                <button id="fs-delete" class="btn-ghost btn-sm">Delete</button>
               </div>
-              <div id="fs-list" style="display:grid; grid-template-columns: 1fr auto; gap:6px; max-height:340px; overflow:auto; border:1px solid #30363d; border-radius:6px; padding:6px;"></div>
+              <div id="fs-list" style="display:grid; grid-template-columns: 1fr auto; gap:6px; max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:6px;"></div>
               <div class="mini muted">Tip: Click items to select. Double-click folders to open.</div>
             </fieldset>
                 </div>
-                <div id="main-configure" class="subpane hidden">
+                <div id="main-configure" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-configure" aria-hidden="true">
           <h3 data-help="config">Project Config</h3>
-          <div id="config-editor" style="display:flex; flex-direction: column; gap: 12px;">
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+          <div id="config-editor" class="column gap-12">
+            <div class="form-grid cols-4">
               <div>
                 <label>Name</label>
                 <input id="cfg-name" placeholder="Collection name" />
@@ -223,11 +244,11 @@
 
             <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-layers">
               <legend>Layers</legend>
-              <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
-                <div style="opacity:.85;">Configure order, paths, and rarity strategy per layer.</div>
-                <div style="display:flex; gap:8px;">
-                  <button id="btn-refresh-assets" type="button" class="btn-secondary">Refresh Counts</button>
-                  <button id="btn-create-folders" type="button" class="btn-secondary">Create Folders</button>
+              <div class="row justify-between mb-8">
+                <div class="op-85">Configure order, paths, and rarity strategy per layer.</div>
+                <div class="row">
+                  <button id="btn-refresh-assets" type="button" class="btn-secondary btn-sm">Refresh Counts</button>
+                  <button id="btn-create-folders" type="button" class="btn-secondary btn-sm">Create Folders</button>
                   <button id="btn-add-layer" type="button">Add Layer</button>
                   <button id="btn-save-config" type="button" class="btn-primary">Save Config</button>
                 </div>
@@ -250,19 +271,19 @@
               </table>
             </fieldset>
 
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;" data-help="config-renamer">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;" data-help="config-renamer">
               <legend>Image Renamer</legend>
-              <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap:8px;">
-                <div style="opacity:.85;">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
-                <div style="display:flex; gap:8px;">
-                  <button id="ir-refresh" type="button" class="btn-ghost" style="background:#30363d;">Refresh</button>
-                  <button id="ir-add-folder" type="button" class="btn-ghost" style="background:#30363d;">Add Folder…</button>
+              <div class="row justify-between mb-8">
+                <div class="op-85">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
+                <div class="row">
+                  <button id="ir-refresh" type="button" class="btn-ghost btn-sm">Refresh</button>
+                  <button id="ir-add-folder" type="button" class="btn-ghost btn-sm">Add Folder&hellip;</button>
                 </div>
               </div>
               <div id="ir-layer-list" class="mini" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:8px; margin-bottom:8px;"></div>
 
-              <div class="mini muted" style="margin-top:4px;">Naming</div>
-              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <div class="mini muted" class="mt-4">Naming</div>
+              <div class="form-grid cols-4">
                 <div>
                   <label>Mode</label>
                   <select id="ir-name-mode">
@@ -286,15 +307,15 @@
               </div>
               <div>
                 <label>Random Name List (one per line)</label>
-                <textarea id="ir-name-list" rows="3" placeholder="Alpha\nBeta\nGamma" style="width:100%; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:8px;"></textarea>
+                <textarea id="ir-name-list" rows="3" placeholder="Alpha\nBeta\nGamma"></textarea>
               </div>
-              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                <label style="display:flex; align-items:center; gap:6px;"><input id="ir-include-layer" type="checkbox"/> Include layer name prefix</label>
-                <label style="display:flex; align-items:center; gap:6px;"><input id="ir-keep-ext" type="checkbox" checked disabled/> Keep file extension</label>
+              <div class="row gap-12 wrap">
+                <label class="row gap-6"><input id="ir-include-layer" type="checkbox"/> Include layer name prefix</label>
+                <label class="row gap-6"><input id="ir-keep-ext" type="checkbox" checked disabled/> Keep file extension</label>
               </div>
 
-              <div class="mini muted" style="margin-top:8px;">Rarity</div>
-              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <div class="mini muted" class="mt-8">Rarity</div>
+              <div class="form-grid cols-4">
                 <div>
                   <label>Delimiter</label>
                   <input id="ir-delim" placeholder="#" />
@@ -312,35 +333,35 @@
                   <input id="ir-weight" type="number" min="1" value="1" />
                 </div>
                 <div>
-                  <label>Random Min–Max</label>
-                  <div style="display:flex; gap:6px;">
+                  <label>Random Min&ndash;Max</label>
+                  <div class="row gap-6">
                     <input id="ir-min" type="number" min="1" value="1" />
                     <input id="ir-max" type="number" min="1" value="10" />
                   </div>
                 </div>
               </div>
 
-              <div style="display:flex; gap:8px; margin-top:10px;">
+              <div class="row mt-10">
                 <button id="ir-bulk-rename" type="button" class="btn-primary">Bulk Rename Selected</button>
-                <button id="ir-open-step" type="button" class="btn-secondary">Step-through Renamer…</button>
+                <button id="ir-open-step" type="button" class="btn-secondary">Step-through Renamer&hellip;</button>
               </div>
             </fieldset>
                   </div>
                 </div>
-                <div id="main-rules" class="subpane hidden">
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+                <div id="main-rules" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-rules" aria-hidden="true">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Rules (advanced)</legend>
-              <div style="display:grid; grid-template-columns: 1fr; gap: 8px;">
-                <textarea id="rules-json" rows="6" style="width:100%; background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px; padding:8px;" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
-                <div style="display:flex; gap:8px;">
-                  <button id="btn-validate-rules" type="button" style="background:#8957e5;">Validate Rules</button>
-                  <button id="btn-save-rules" type="button" style="background:#2f81f7;">Save Rules</button>
+              <div class="form-grid cols-1">
+                <textarea id="rules-json" rows="6" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
+                <div class="row">
+                  <button id="btn-validate-rules" type="button" class="btn-secondary">Validate Rules</button>
+                  <button id="btn-save-rules" type="button" class="btn-primary">Save Rules</button>
                 </div>
               </div>
             </fieldset>
-                  <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px; margin-top:12px;">
+                  <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;">
               <legend>Export</legend>
-              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items:end;">
+              <div class="form-grid cols-4" style="align-items:end;">
                 <div>
                   <label>Out Dir</label>
                   <input id="export-outdir" placeholder="build" />
@@ -364,11 +385,11 @@
               </div>
             </fieldset>
                 </div>
-                <div id="main-reports" class="subpane hidden">
-            <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
+                <div id="main-reports" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-reports" aria-hidden="true">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend data-help="rarity-report">Rarity Report</legend>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <button id="btn-open-rarity" type="button" style="background:#1f6feb;">Open rarity.json</button>
+              <div class="row">
+                <button id="btn-open-rarity" type="button" class="btn-secondary btn-sm">Open rarity.json</button>
                 <span style="opacity:.8;">Generated after Build</span>
               </div>
               <pre id="rarity-out" style="margin-top:8px; max-height:260px;"></pre>
@@ -377,11 +398,11 @@
         </div>
             </div>
           </section>
-          <section id="tab-about" class="tabpane hidden">
+          <section id="tab-about" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-about" aria-hidden="true">
             <div class="content" style="padding: 16px;">
               <div class="gallery-card">
                 <div class="gallery-header">
-                  <h3 style="margin:0;">About</h3>
+                  <h3 class="m-0">About</h3>
                 </div>
                 <div style="display:grid; gap:12px;">
                   <p style="margin:0; opacity:.95;">
@@ -391,11 +412,11 @@
                   <p style="margin:0; opacity:.95;">
                     Built and designed by <strong>Conker</strong>.
                   </p>
-                  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                    <a id="about-twitter" href="https://twitter.com/conkernasa" rel="noreferrer noopener" class="header-btn" style="text-decoration:none;">
+                  <div class="row gap-10 wrap mt-6">
+                    <a id="about-twitter" href="https://twitter.com/conkernasa" rel="noreferrer noopener" class="header-btn" class="no-underline">
                       <span>Follow @conkernasa</span>
                     </a>
-                    <a id="about-site" href="https://northamericansurveillanceassociation.com" rel="noreferrer noopener" class="header-btn nasa-btn" style="text-decoration:none;">
+                    <a id="about-site" href="https://northamericansurveillanceassociation.com" rel="noreferrer noopener" class="header-btn nasa-btn" class="no-underline">
                       <span>northamericansurveillanceassociation.com</span>
                     </a>
                   </div>
@@ -430,7 +451,7 @@
               <div class="content">
                 <div class="gallery-card">
                   <div class="gallery-header">
-                    <h3 style="margin:0;">Minting</h3>
+                    <h3 class="m-0">Minting</h3>
                     <div style="opacity:.75; font-size:12px;">Upload assets and mint your collection</div>
                   </div>
                   <div style="color:var(--muted);">We will expand this page later with progress indicators, logs, and provider configuration. For now, use the controls in the sidebar to upload and mint.</div>
@@ -438,8 +459,8 @@
               </div>
             </div>
           </section>
-          <section id="tab-options" class="tabpane hidden">
-            <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
+          <section id="tab-options" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-options" aria-hidden="true">
+            <div class="layout-2col">
               <div class="sidebar" data-help="sidebar-options">
                 <div>
                   <label data-help="ui-theme">Theme</label>
@@ -484,7 +505,7 @@
               <div class="content">
                 <div class="gallery-card">
                   <div class="gallery-header">
-                    <h3 style="margin:0;">Customization</h3>
+                    <h3 class="m-0">Customization</h3>
                     <div style="opacity:.75; font-size:12px;">Tune the look and feel</div>
                   </div>
                   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
@@ -501,7 +522,7 @@
               </div>
             </div>
           </section>
-          <section id="tab-fal" class="tabpane hidden">
+          <section id="tab-fal" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-fal" aria-hidden="true">
             <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
               <div class="sidebar" data-help="sidebar-fal">
                 <div class="sidebar-group">
@@ -510,11 +531,11 @@
                     <label>API Key</label>
                     <input id="fal-key" type="password" placeholder="FAL key" />
                   </div>
-                  <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
-                    <label style="display:flex; align-items:center; gap:6px;"><input id="fal-advanced" type="checkbox" /> Advanced</label>
+                  <div class="row gap-10 mt-8">
+                    <label class="row gap-6"><input id="fal-advanced" type="checkbox" /> Advanced</label>
                     <button id="fal-open-folder" class="btn-ghost" title="Open saved folder">Open Folder</button>
                   </div>
-                  <div id="fal-status" class="mini muted" style="margin-top:8px;"></div>
+                  <div id="fal-status" class="mini muted mt-8"></div>
                 </div>
 
                 <div class="sidebar-group" id="fal-basic-controls">
@@ -544,7 +565,7 @@
                     <label>Images</label>
                     <input id="fal-count" type="number" value="1" min="1" max="4" />
                   </div>
-                  <div style="display:flex; gap:8px; align-items:center;">
+                  <div class="row">
                     <button id="fal-generate" class="btn-primary">Generate</button>
                   </div>
                 </div>
@@ -552,7 +573,7 @@
                 <div class="sidebar-group" id="fal-catalog-controls" style="display:none;">
                   <div class="group-title">Explore Models</div>
                   <div style="display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center;">
-                    <input id="fal-search" placeholder="Search models, tags…" />
+                    <input id="fal-search" placeholder="Search models, tags&hellip;" />
                     <select id="fal-category">
                       <option value="all">All</option>
                       <option value="image">Images</option>
@@ -563,16 +584,15 @@
                     </select>
                   </div>
                   <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px;">
-                    <input id="fal-catalog-url" placeholder="Catalog JSON URL (https://…)" />
+                    <input id="fal-catalog-url" placeholder="Catalog JSON URL (https://&hellip;)" />
                     <button id="fal-fetch-catalog-url" class="btn-secondary">Fetch</button>
                   </div>
                   <div id="fal-model-list" style="margin-top:8px; max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:6px;"></div>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                  <div class="row wrap mt-8">
                     <button id="fal-refresh-catalog" class="btn-secondary">Refresh</button>
-                    <label class="btn-secondary" style="position:relative; overflow:hidden;">
-                      <input id="fal-import-catalog" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
-                      Import JSON…
-                    </label>
+                    <label class="btn-secondary relative overflow-hidden">
+                      <input id="fal-import-catalog" type="file" accept="application/json" class="absolute inset-0 op-0 pointer" />
+                      Import JSON…</label>
                     <button id="fal-export-catalog" class="btn-ghost">Export</button>
                     <button id="fal-reset-catalog" class="btn-ghost">Reset</button>
                   </div>
@@ -584,16 +604,16 @@
                 <div class="gallery-card" id="fal-params-card" style="display:none;">
                   <div class="gallery-header">
                     <h3 id="fal-model-title" style="margin:0;">Model & Parameters</h3>
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div class="row wrap">
                       <a id="fal-docs-link" class="btn-ghost" href="#" target="_blank" rel="noreferrer">Docs</a>
-                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                      <label class="mini row gap-6">
                         <input id="fal-queue-mode" type="checkbox" /> Queue
                       </label>
-                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                      <label class="mini row gap-6">
                         <input id="fal-queue-logs" type="checkbox" checked /> Logs
                       </label>
-                      <input id="fal-webhook-url" placeholder="Webhook URL (optional)" style="min-width:220px;" />
-                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                      <input id="fal-webhook-url" class="minw-220" placeholder="Webhook URL (optional)" />
+                      <label class="mini row gap-6">
                         Body:
                         <select id="fal-body-shape">
                           <option value="auto" selected>Auto</option>
@@ -602,7 +622,7 @@
                         </select>
                       </label>
                       <button id="fal-reset-params" class="btn-ghost" title="Reset fields to example">Reset</button>
-                      <label class="mini" style="display:flex; align-items:center; gap:6px;">
+                      <label class="mini row gap-6">
                         <input id="fal-show-json" type="checkbox" /> Show JSON
                       </label>
                       <button id="fal-add-field" class="btn-ghost" title="Add custom field">Add Field</button>
@@ -611,28 +631,30 @@
                       <button id="fal-run" class="btn-primary">Run</button>
                     </div>
                   </div>
-                  <div id="fal-param-editor" style="display:grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap:10px;"></div>
+                  <div id="fal-param-editor" class="form-grid" style="grid-template-columns: repeat(2, minmax(280px, 1fr)); gap:10px;"></div>
                 </div>
 
                 <div class="gallery-card">
                   <div class="gallery-header">
-                    <h3 style="margin:0;">Results</h3>
-                    <div style="display:flex; gap:8px; align-items:center;">
+                    <h3 class="m-0">Results</h3>
+                    <div class="row">
+                      <label class="mini">Size</label>
+                      <input id="fal-thumb-size" type="range" min="80" max="280" value="160" />
                       <button id="fal-save-all" class="btn-ghost">Save All</button>
                     </div>
                   </div>
                   <div id="fal-results" class="gallery-grid"></div>
                 </div>
-                <div class="gallery-card" style="margin-top:16px;">
+                <div class="gallery-card mt-16">
                   <div class="gallery-header">
-                    <h3 style="margin:0;">Saved Images</h3>
+                    <h3 class="m-0">Saved Images</h3>
                   </div>
                   <div id="fal-saved" class="gallery-grid"></div>
                 </div>
               </div>
             </div>
           </section>
-          <section id="tab-help" class="tabpane hidden">
+          <section id="tab-help" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-help" aria-hidden="true">
             <div class="help-page">
               <aside class="help-toc">
                 <div class="toc-card">
@@ -643,10 +665,10 @@
               <div class="help-content">
                 <div class="card">
                   <div class="gallery-header">
-                    <h3 style="margin:0;">Help & Documentation</h3>
+                    <h3 class="m-0">Help & Documentation</h3>
                     <div style="opacity:.75; font-size:12px;">Comprehensive guide to using CONKERNFTZ. Click any <span class="badge-link">?</span> icon in the app to see context help.</div>
                   </div>
-                  <div id="help-content"></div>
+                  <div id="help-content" class="p-12"></div>
                 </div>
               </div>
             </div>
@@ -655,17 +677,17 @@
     </main>
     </div>
     <div id="lightbox" class="lightbox" aria-hidden="true">
-      <button id="lb-close" class="lb-close" aria-label="Close">✕</button>
-      <button id="lb-prev" class="lb-nav lb-prev" aria-label="Previous">‹</button>
+      <button id="lb-close" class="lb-close" aria-label="Close">&times;</button>
+      <button id="lb-prev" class="lb-nav lb-prev" aria-label="Previous">&lsaquo;</button>
       <img id="lb-image" alt="Preview" />
-      <button id="lb-next" class="lb-nav lb-next" aria-label="Next">›</button>
+      <button id="lb-next" class="lb-nav lb-next" aria-label="Next">&rsaquo;</button>
     </div>
     <div id="renamer" class="renamer" aria-hidden="true">
       <div class="renamer-card">
         <div class="gallery-header">
-          <h3 style="margin:0;">Step-through Renamer</h3>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button id="rn-choose-folder" class="btn-ghost" style="background:#30363d;">Choose Folder…</button>
+          <h3 class="m-0">Step-through Renamer</h3>
+          <div class="row">
+            <button id="rn-choose-folder" class="btn-ghost btn-sm">Choose Folder&hellip;</button>
             <button id="rn-close" class="btn-ghost">Close</button>
           </div>
         </div>
@@ -677,7 +699,7 @@
             </div>
           </div>
           <div>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+            <div class="form-grid cols-3">
               <div>
                 <label>Base Name</label>
                 <input id="rn-name" placeholder="Name" />
@@ -691,20 +713,46 @@
                 <input id="rn-delim" placeholder="#" />
               </div>
             </div>
-            <div style="display:flex; gap:8px; margin-top:8px;">
+            <div class="row mt-8">
               <button id="rn-random-name" class="btn-secondary">Random Name</button>
               <button id="rn-random-weight" class="btn-secondary">Random Weight</button>
-              <label style="display:flex; align-items:center; gap:6px;"><input id="rn-include-layer" type="checkbox"/> Include layer prefix</label>
+              <label class="row gap-6"><input id="rn-include-layer" type="checkbox"/> Include layer prefix</label>
             </div>
-            <div style="display:flex; gap:8px; margin-top:10px;">
-              <button id="rn-prev" class="btn-ghost">← Prev</button>
-              <button id="rn-apply-next" class="btn-primary">Apply & Next →</button>
+            <div class="row mt-10">
+              <button id="rn-prev" class="btn-ghost">&larr; Prev</button>
+              <button id="rn-apply-next" class="btn-primary">Apply &amp; Next &rarr;</button>
               <button id="rn-skip" class="btn-secondary">Skip</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-        <script type="module" src="renderer/app.js"></script>
+    <!-- Live Preview floating overlay -->
+    <div id="live-preview" class="live-preview hidden" aria-hidden="true">
+      <div class="lp-header" id="lp-header">
+        <div>Live Preview</div>
+        <div class="lp-controls">
+          <label>W</label>
+          <input id="lp-width" type="number" min="240" value="420" />
+          <label>H</label>
+          <input id="lp-height" type="number" min="200" value="320" />
+          <button id="lp-reset" class="btn-ghost" title="Reset position" aria-label="Reset position">Reset</button>
+          <button id="lp-close" class="btn-ghost">✕</button>
+        </div>
+      </div>
+      <div class="lp-body">
+        <div id="lp-grid" class="lp-grid"></div>
+      </div>
+      <div id="lp-resize" class="lp-resize"></div>
+    </div>
+    <script type="module" src="renderer/app.js"></script>
   </body>
   </html>
+
+
+
+
+
+
+
+
