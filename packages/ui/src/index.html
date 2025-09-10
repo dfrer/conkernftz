@@ -87,19 +87,21 @@
                 <!-- Live Preview controls (moved into left sidebar) -->
                 <div class="sidebar-group">
                   <div class="group-title">Live Preview</div>
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end;">
+                  <div style="display:none;">
+                    <!-- Hidden: Items + Auto-refresh -->
                     <div>
                       <label for="live-prev-count">Items</label>
-                      <input id="live-prev-count" type="number" min="1" value="4" />
+                      <input id="live-prev-count" type="number" min="1" value="1" />
                     </div>
                     <div class="row">
-                      <input id="live-prev-auto" type="checkbox" checked />
+                      <input id="live-prev-auto" type="checkbox" />
                       <label for="live-prev-auto" class="mini">Auto-refresh</label>
                     </div>
                   </div>
                   <div class="row wrap mt-8">
                     <button id="live-prev-toggle" class="btn-secondary btn-sm" aria-controls="live-preview">Show Preview</button>
-                    <button id="live-prev-refresh" class="btn-ghost btn-sm">Refresh</button>
+                    <!-- Hidden: Refresh -->
+                    <button id="live-prev-refresh" class="btn-ghost btn-sm" style="display:none;">Refresh</button>
                     <button id="live-prev-export" class="btn-ghost btn-sm">Export</button>
                     <button id="live-prev-save" class="btn-ghost btn-sm">Save</button>
                   </div>
@@ -730,20 +732,23 @@
     <!-- Live Preview floating overlay -->
     <div id="live-preview" class="live-preview hidden" aria-hidden="true">
       <div class="lp-header" id="lp-header">
-        <div>Live Preview</div>
+        <div class="lp-title">Live Preview</div>
         <div class="lp-controls">
-          <label>W</label>
-          <input id="lp-width" type="number" min="240" value="420" />
-          <label>H</label>
-          <input id="lp-height" type="number" min="200" value="320" />
-          <button id="lp-reset" class="btn-ghost" title="Reset position" aria-label="Reset position">Reset</button>
-          <button id="lp-close" class="btn-ghost">✕</button>
+          
+          
+          <label class="mini">Fit</label>
+          <select id="lp-fit"><option value="contain">Contain</option><option value="cover">Cover</option><option value="actual">Actual</option></select>
+          <label class="mini">BG</label>
+          <select id="lp-bg"><option value="check">Check</option><option value="dark">Dark</option><option value="light">Light</option></select>
+          <button id="lp-reroll" class="btn-ghost" title="Generate a new preview">Reroll</button>
+          
+          
+          <button id="lp-close" class="btn-ghost" aria-label="Close">✕</button>
         </div>
       </div>
       <div class="lp-body">
         <div id="lp-grid" class="lp-grid"></div>
       </div>
-      <div id="lp-resize" class="lp-resize"></div>
     </div>
     <script type="module" src="renderer/app.js"></script>
   </body>

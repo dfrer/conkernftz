@@ -13,6 +13,20 @@ All notable changes to this project will be documented in this file.
   - Clean icon injection for common actions (folder/save/run/refresh/edit/trash/plus/check)
   - Normalized glyphs (UTF‑8/entities) throughout the UI
   - Synced dist assets and updated build/start guidance
+  - Live Preview overlay: single-image preview with accurate core compositor via IPC, canvas fallback, draggable window, reroll, fit/background controls
+
+- Core
+  - Effects pipeline and presets exposed at the catalog level; per-asset overrides are merged into resolved effects
+  - Compositor: uses Sharp fast-path when possible and CPU fallback for advanced blend modes; supports glow, stroke, shadow, extrude, color overlay
+  - Generator: constrained generation optimized (precomputed rule lookups, early exits) with uniqueness and max-occurrence tracking
+
+- CLI
+  - preview: added `--max-attempts` and `--allow-duplicates` (fallback when uniqueness is too tight), normalized preview output dir, clears previous previews
+  - build: added `--seed`, improved batching and progress reporting (with IPC-friendly progress messages)
+
+- Docs
+  - Added `docs/QUALITY_REVIEW.md` with audit findings and recommendations
+  - README updated with Live Preview details and CLI option updates
 
 #### v4.0.0 – 2025-08-24
 

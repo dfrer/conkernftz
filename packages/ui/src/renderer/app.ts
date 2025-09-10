@@ -1,6 +1,7 @@
 ﻿// @ts-nocheck
 // In the browser, module imports need explicit extensions
 import { tokens } from "../design-system/tokens.js";
+import "./live-preview.js";
 console.debug("Design tokens loaded", tokens);
 
 // Renderer logic extracted from index.html
@@ -128,6 +129,26 @@ const subOverview = document.getElementById('main-overview');
 const subConfigure = document.getElementById('main-configure');
 const subRules = document.getElementById('main-rules');
 const subReports = document.getElementById('main-reports');
+let previewsAutoTimer = null;
+function startPreviewsAutoRefresh() {
+  if (previewsAutoTimer) clearInterval(previewsAutoTimer);
+  previewsAutoTimer = setInterval(() => {
+    try { refreshPreviews(); } catch {}
+  }, 2000);
+}
+function stopPreviewsAutoRefresh() {
+  if (previewsAutoTimer) { clearInterval(previewsAutoTimer); previewsAutoTimer = null; }
+}
+let assetCountsAutoTimer = null;
+function startAssetCountsAutoRefresh() {
+  if (assetCountsAutoTimer) clearInterval(assetCountsAutoTimer);
+  assetCountsAutoTimer = setInterval(() => {
+    try { updateAssetCounts(); } catch {}
+  }, 3000);
+}
+function stopAssetCountsAutoRefresh() {
+  if (assetCountsAutoTimer) { clearInterval(assetCountsAutoTimer); assetCountsAutoTimer = null; }
+}
 function switchSubtab(name) {
   const map: Record<string, HTMLElement | null> = { overview: subOverview, configure: subConfigure, rules: subRules, reports: subReports };
   Object.entries(map).forEach(([key, pane]) => {
@@ -144,6 +165,19 @@ function switchSubtab(name) {
   });
   try { localStorage.setItem('ui:lastSubtab', name); } catch {}
   // files subtab removed
+  if (name === 'overview') {
+    refreshPreviews();
+    startPreviewsAutoRefresh();
+    stopAssetCountsAutoRefresh();
+  } else {
+    stopPreviewsAutoRefresh();
+    if (name === 'configure') {
+      updateAssetCounts();
+      startAssetCountsAutoRefresh();
+    } else {
+      stopAssetCountsAutoRefresh();
+    }
+  }
 }
 subtabButtons.forEach((b) => b.addEventListener('click', () => switchSubtab(b.dataset.subtab)));
 
@@ -384,6 +418,9 @@ function fsAttachHandlers() {
     if (!res.ok) { log(res.error || 'Rename failed'); return; }
     fsSelected.clear();
     fsRenderList();
+    // Keep dependent UIs in sync
+    updateAssetCounts();
+    refreshPreviews();
   });
   fsDelete && fsDelete.addEventListener('click', async () => {
     const arr = Array.from(fsSelected);
@@ -440,8 +477,41 @@ const irMax = document.getElementById('ir-max');
 const irBulkRename = document.getElementById('ir-bulk-rename');
 const irOpenStep = document.getElementById('ir-open-step');
 let currentConfig = null;
-function log(msg) { out.textContent = String(msg || '') }
+const LOG_MAX_CHARS = 40000;
+const LOG_LEVELS = ['error', 'warn', 'info', 'debug'] as const;
+type LogLevel = typeof LOG_LEVELS[number];
+function getLogLevel(): LogLevel {
+  const s = localStorage.getItem('ui:loglevel') || 'info';
+  return (LOG_LEVELS as readonly string[]).includes(s) ? (s as LogLevel) : 'info';
+}
+function setLogLevel(lvl: LogLevel) {
+  try { localStorage.setItem('ui:loglevel', lvl); } catch {}
+  const btn = document.getElementById('btn-log-level') as HTMLButtonElement | null;
+  if (btn) btn.textContent = 'Log: ' + lvl;
+}
+function levelToNum(lvl: LogLevel): number { return { error: 0, warn: 1, info: 2, debug: 3 }[lvl]; }
+function shouldLog(lvl: LogLevel): boolean { return levelToNum(lvl) <= levelToNum(getLogLevel()); }
+function appendLogLine(text: string) {
+  if (!out) return;
+  out.textContent = (out.textContent || '') + text;
+  if ((out.textContent || '').length > LOG_MAX_CHARS) {
+    out.textContent = out.textContent.slice(-LOG_MAX_CHARS);
+  }
+  try { out.scrollTop = out.scrollHeight; } catch {}
+}
+function logAt(level: LogLevel, msg: unknown) {
+  if (!shouldLog(level)) return;
+  const ts = new Date().toISOString().replace('T', ' ').replace('Z', '');
+  const prefix = level === 'error' ? 'ERROR: ' : level === 'warn' ? 'WARN: ' : '';
+  appendLogLine(`[${ts}] ${prefix}${String(msg || '')}\n`);
+}
+function log(msg: unknown) { logAt('info', msg); }
+function logInfo(msg: unknown) { logAt('info', msg); }
+function logWarn(msg: unknown) { logAt('warn', msg); }
+function logError(msg: unknown) { logAt('error', msg); }
+function logDebug(msg: unknown) { logAt('debug', msg); }
 let galleryUrls = [];
+let galleryKeys = [] as string[]; // stable keys without cache-bust
 let cacheBustToken = 0;
 let currentIndex = -1;
 function setGalleryMeta() {
@@ -466,33 +536,64 @@ function fileUrl(baseDir, folder, name) {
   return encodeURI(url).replace(/#/g, '%23');
 }
 function mountThumbGrid(baseDir, folder, files) {
-  previews.innerHTML = '';
-  galleryUrls = files.map((name) => {
-    const u = fileUrl(baseDir, folder, name);
-    const sep = u.includes('?') ? '&' : '?';
-    return u + sep + 'v=' + cacheBustToken;
-  });
-  setGalleryMeta();
-  if (!galleryUrls.length) {
-    previewsEmpty.style.display = 'block';
+  // Build stable keys without cache-busting for seamless diffing
+  const keys = files.map((name) => fileUrl(baseDir, folder, name).replace(/\?.*$/, ''));
+
+  // If nothing changed, keep as-is to avoid flicker
+  const same = keys.length === galleryKeys.length && keys.every((k, i) => k === galleryKeys[i]);
+  if (same) {
+    setGalleryMeta();
     return;
   }
-  previewsEmpty.style.display = 'none';
-  galleryUrls.forEach((url, i) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'thumb';
-    wrap.dataset.index = String(i);
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'Preview ' + (i + 1);
-    img.onerror = () => { wrap.remove(); };
-    const badge = document.createElement('div');
-    badge.className = 'badge';
-    badge.textContent = String(i + 1);
-    wrap.appendChild(img);
-    wrap.appendChild(badge);
-    previews.appendChild(wrap);
+
+  // Underlying set changed: bump cache-bust and diff DOM
+  cacheBustToken = Date.now();
+  const urls = keys.map((u) => u + (u.includes('?') ? '&' : '?') + 'v=' + cacheBustToken);
+  galleryKeys = keys;
+  galleryUrls = urls;
+  setGalleryMeta();
+
+  // Index existing nodes by their base url (without v)
+  const byKey = new Map();
+  Array.from(previews.children).forEach((child) => {
+    const el = child as HTMLElement;
+    const img = el.querySelector('img') as HTMLImageElement | null;
+    if (!img) return;
+    const base = String(img.src).replace(/\?.*$/, '');
+    byKey.set(base, el);
   });
+
+  // Build new order using reuse when possible
+  const frag = document.createDocumentFragment();
+  urls.forEach((url, i) => {
+    const base = url.replace(/\?.*$/, '');
+    let wrap = byKey.get(base) as HTMLElement | undefined;
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'thumb';
+      const img = document.createElement('img');
+      img.alt = 'Preview ' + (i + 1);
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      wrap.appendChild(img);
+      wrap.appendChild(badge);
+    }
+    wrap.dataset.index = String(i);
+    const imgEl = wrap.querySelector('img') as HTMLImageElement;
+    if (imgEl && imgEl.src.replace(/\?.*$/, '') !== base) {
+      // Source changed materially (not just v): set full URL
+      imgEl.src = url;
+    } else if (imgEl && imgEl.src !== url) {
+      // Only cache-bust changed: update without reflow flicker
+      imgEl.src = url;
+    }
+    const badge = wrap.querySelector('.badge') as HTMLElement;
+    if (badge) badge.textContent = String(i + 1);
+    frag.appendChild(wrap);
+  });
+  // Replace children in one shot to minimize flicker
+  previews.replaceChildren(frag);
+  previewsEmpty.style.display = urls.length ? 'none' : 'block';
 }
 function openLightbox(index) {
   if (!galleryUrls.length) return;
@@ -512,22 +613,21 @@ function nav(delta) {
 }
 async function refreshPreviews() {
   try {
-    previews.innerHTML = '';
-    previewsEmpty.style.display = 'none';
-    cacheBustToken = Date.now();
+    // Do not clear to avoid flash; empty state handled inside mountThumbGrid
     const cfg = await window.foundry.readConfig();
     if (!cfg.ok) return;
     const outDir = (cfg.json.export?.previewOutDir) || (cfg.json.export?.outDir) || 'build';
     const base = await window.foundry.getProjectDir();
     function isPreviewDir(p) { return /(\\|\/)preview$/i.test(String(p || '').replace(/[\\/]+$/,'')); }
     const cleanedOutDir = outDir.replace(/\\+$/,'').replace(/\/+$/,'');
+    // If a previewOutDir is provided, prefer it but ensure it points at a preview folder
     const primary = (cfg.json.export?.previewOutDir)
-      ? cleanedOutDir
+      ? (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'))
       : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
     const altPreview = isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview');
     const fallbacks = Array.from(new Set([altPreview, outDir, 'preview'])).filter(p => p !== primary);
     btnOpenPreviews.onclick = () => window.foundry.openInExplorer(primary);
-    log('Scanning previews in: ' + primary);
+    logDebug('Scanning previews in: ' + primary);
     const projectBase = (base && base.projectDir) ? base.projectDir : '';
     async function listAndRender(dir) {
       const list = await window.foundry.listDir(dir);
@@ -547,11 +647,11 @@ async function refreshPreviews() {
             const nb = Number((b.match(/preview_(\d+)/i) || [])[1] || 0);
             return na - nb;
           });
-        log(`Found ${files.length} image(s) in ${dir}`);
+        logDebug(`Found ${files.length} image(s) in ${dir}`);
         mountThumbGrid(projectBase, dir, files);
         return true;
       }
-      if (!list.ok) log(`Failed to list ${dir}: ${list.error || 'unknown error'}`);
+      if (!list.ok) logWarn(`Failed to list ${dir}: ${list.error || 'unknown error'}`);
       return false;
     }
     // Try primary location then fallbacks
@@ -580,7 +680,7 @@ async function refreshPreviews() {
     }
     if (!rendered) {
       previewsEmpty.style.display = 'block';
-      log('No previews found in: ' + primary);
+      logWarn('No previews found in: ' + primary);
     }
   } catch {
     previewsEmpty.style.display = 'block';
@@ -597,10 +697,10 @@ function blendOptionsHtml(selected) {
 }
 function layerRowTemplate(idx, layer) {
   return `
-    <tr data-idx="${idx}" style="border-bottom:1px solid #21262d;">
+    <tr data-type="layer" data-idx="${idx}" style="border-bottom:1px solid #21262d;">
       <td style="padding:4px 6px; white-space:nowrap;">
-        <button class="btn-up" title="Move up" style="padding:4px 6px; background:#30363d;">▲</button>
-        <button class="btn-down" title="Move down" style="padding:4px 6px; background:#30363d;">▼</button>
+        <button class="btn-up" title="Move up" style="padding:4px 6px; background:#30363d;">?</button>
+        <button class="btn-down" title="Move down" style="padding:4px 6px; background:#30363d;">?</button>
       </td>
       <td style="padding:4px 6px;">
         <input class="layer-name" value="${layer.name || ''}">
@@ -627,11 +727,175 @@ function layerRowTemplate(idx, layer) {
         <input class="layer-opacity" type="number" min="0" max="1" step="0.01" value="${(typeof layer.opacity === 'number' ? layer.opacity : 1)}">
       </td>
       <td style="padding:4px 6px;">
-        <span class="layer-assets" style="opacity:.8;">—</span>
+        <span class="layer-assets" style="opacity:.8;">-</span>
       </td>
       <td style="padding:4px 6px;">
         <button class="btn-remove" style="background:#da3633;">Remove</button>
         <button class="btn-open-folder" title="Open folder" style="padding:4px 6px; background:#30363d; margin-left:6px;">Open</button>
+        <button class="btn-effects" title="Layer effects" style="padding:4px 6px; background:#30363d; margin-left:6px;">Effects</button>
+        <button class="btn-overrides" title="Per-asset effects" style="padding:4px 6px; background:#30363d; margin-left:6px;">Overrides</button>
+      </td>
+    </tr>`;
+}
+
+function effectsRowTemplate(idx, layer) {
+  const eff = (layer && (layer as any).effects) || {};
+  const bool = (v) => (v ? 'checked' : '');
+  const val = (v, d='') => (v===0 || v ? String(v) : d);
+  const pos = (p) => `<option value="outside" ${p==='outside'?'selected':''}>outside</option><option value="inside" ${p==='inside'?'selected':''}>inside</option><option value="center" ${p==='center'?'selected':''}>center</option>`;
+  return `
+    <tr data-type="effects" data-idx="${idx}">
+      <td colspan="9" style="padding:10px; background:var(--panel-soft); border-top:1px solid var(--border);">
+        <div class="effects-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Glow</div>
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-glow-en" ${bool(eff.glow)} /> Enable</label>
+            <label>Preset</label>
+            <select class="fx-glow-preset">
+              <option value="">(none)</option>
+              <option ${eff.glow?.preset==='subtle'?'selected':''} value="subtle">subtle</option>
+              <option ${eff.glow?.preset==='medium'?'selected':''} value="medium">medium</option>
+              <option ${eff.glow?.preset==='strong'?'selected':''} value="strong">strong</option>
+              <option ${eff.glow?.preset==='neon'?'selected':''} value="neon">neon</option>
+            </select>
+            <label>Color</label>
+            <input class="fx-glow-color" type="color" value="${val(eff.glow?.color, '#ffffff')}" />
+            <label>Radius</label>
+            <input class="fx-glow-radius" type="number" min="0" value="${val(eff.glow?.radius, '12')}" />
+            <label>Opacity</label>
+            <input class="fx-glow-opacity" type="number" step="0.01" min="0" max="1" value="${val(eff.glow?.opacity, '0.4')}" />
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-glow-inner" ${bool(eff.glow?.inner)} /> Inner</label>
+          </div>
+
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Shadow</div>
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-shadow-en" ${bool(eff.shadow)} /> Enable</label>
+            <label>Preset</label>
+            <select class="fx-shadow-preset">
+              <option value="">(none)</option>
+              <option ${eff.shadow?.preset==='soft'?'selected':''} value="soft">soft</option>
+              <option ${eff.shadow?.preset==='hard'?'selected':''} value="hard">hard</option>
+              <option ${eff.shadow?.preset==='long'?'selected':''} value="long">long</option>
+            </select>
+            <label>Color</label>
+            <input class="fx-shadow-color" type="color" value="${val(eff.shadow?.color, '#000000')}" />
+            <label>Blur</label>
+            <input class="fx-shadow-blur" type="number" min="0" value="${val(eff.shadow?.blur, '16')}" />
+            <label>Offset X</label>
+            <input class="fx-shadow-offx" type="number" value="${val(eff.shadow?.offsetX, '8')}" />
+            <label>Offset Y</label>
+            <input class="fx-shadow-offy" type="number" value="${val(eff.shadow?.offsetY, '8')}" />
+            <label>Opacity</label>
+            <input class="fx-shadow-opacity" type="number" step="0.01" min="0" max="1" value="${val(eff.shadow?.opacity, '0.35')}" />
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-shadow-inner" ${bool(eff.shadow?.inner)} /> Inner</label>
+          </div>
+
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Stroke</div>
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-stroke-en" ${bool(eff.stroke)} /> Enable</label>
+            <label>Preset</label>
+            <select class="fx-stroke-preset">
+              <option value="">(none)</option>
+              <option ${eff.stroke?.preset==='thin'?'selected':''} value="thin">thin</option>
+              <option ${eff.stroke?.preset==='medium'?'selected':''} value="medium">medium</option>
+              <option ${eff.stroke?.preset==='thick'?'selected':''} value="thick">thick</option>
+              <option ${eff.stroke?.preset==='white'?'selected':''} value="white">white</option>
+            </select>
+            <label>Color</label>
+            <input class="fx-stroke-color" type="color" value="${val(eff.stroke?.color, '#000000')}" />
+            <label>Width</label>
+            <input class="fx-stroke-width" type="number" min="1" value="${val(eff.stroke?.width, '2')}" />
+            <label>Opacity</label>
+            <input class="fx-stroke-opacity" type="number" step="0.01" min="0" max="1" value="${val(eff.stroke?.opacity, '1')}" />
+            <label>Position</label>
+            <select class="fx-stroke-position">${pos(eff.stroke?.position || 'outside')}</select>
+          </div>
+
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Extrude (3D)</div>
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-extrude-en" ${bool(eff.extrude)} /> Enable</label>
+            <label>Preset</label>
+            <select class="fx-extrude-preset">
+              <option value="">(none)</option>
+              <option ${eff.extrude?.preset==='short'?'selected':''} value="short">short</option>
+              <option ${eff.extrude?.preset==='long'?'selected':''} value="long">long</option>
+              <option ${eff.extrude?.preset==='isometric'?'selected':''} value="isometric">isometric</option>
+            </select>
+            <label>Color</label>
+            <input class="fx-extrude-color" type="color" value="${val(eff.extrude?.color, '#000000')}" />
+            <label>Depth</label>
+            <input class="fx-extrude-depth" type="number" min="1" value="${val(eff.extrude?.depth, '6')}" />
+            <label>Angle</label>
+            <input class="fx-extrude-angle" type="number" value="${val(eff.extrude?.angle, '135')}" />
+            <label>Opacity</label>
+            <input class="fx-extrude-opacity" type="number" step="0.01" min="0" max="1" value="${val(eff.extrude?.opacity, '0.3')}" />
+            <label>Soften</label>
+            <input class="fx-extrude-soften" type="number" min="0" value="${val(eff.extrude?.soften, '0')}" />
+          </div>
+
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Adjustments</div>
+            <label>Blur</label>
+            <input class="fx-blur" type="number" min="0" value="${val(eff.blur, '0')}" />
+            <div class="mini muted mt-6">Modulate</div>
+            <label>Hue (deg)</label>
+            <input class="fx-mod-hue" type="number" min="-360" max="360" value="${val(eff.modulate?.hue, '')}" />
+            <label>Saturation (x)</label>
+            <input class="fx-mod-sat" type="number" step="0.1" value="${val(eff.modulate?.saturation, '')}" />
+            <label>Brightness (x)</label>
+            <input class="fx-mod-bri" type="number" step="0.1" value="${val(eff.modulate?.brightness, '')}" />
+          </div>
+
+          <div class="fx-card" style="border:1px solid var(--border); border-radius:8px; padding:8px;">
+            <div style="font-weight:600;">Color Overlay</div>
+            <label class="row gap-6 mt-6"><input type="checkbox" class="fx-colovl-en" ${bool(eff.colorOverlay)} /> Enable</label>
+            <label>Preset</label>
+            <select class="fx-colovl-preset">
+              <option value="">(none)</option>
+              <option ${eff.colorOverlay?.preset==='tint'?'selected':''} value="tint">tint</option>
+              <option ${eff.colorOverlay?.preset==='shade'?'selected':''} value="shade">shade</option>
+              <option ${eff.colorOverlay?.preset==='highlight'?'selected':''} value="highlight">highlight</option>
+            </select>
+            <label>Color</label>
+            <input class="fx-colovl-color" type="color" value="${val(eff.colorOverlay?.color, '#ffffff')}" />
+            <div class="row gap-8 mt-8">
+              <button class="fx-preview-run btn-primary btn-sm">Preview</button>
+              <img class="fx-preview-img" alt="preview" style="max-width: 160px; max-height: 120px; display:none; border:1px solid var(--border); border-radius:6px;" />
+            </div>
+            <label>Opacity</label>
+            <input class="fx-colovl-opacity" type="number" step="0.01" min="0" max="1" value="${val(eff.colorOverlay?.opacity, '0.25')}" />
+            <label>Blend</label>
+            <select class="fx-colovl-blend"><option value="">Inherit</option>${blendOptionsHtml(eff.colorOverlay?.blend || '')}</select>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+}
+
+function assetOverridesRowTemplate(idx, layer) {
+  return `
+    <tr data-type="overrides" data-idx="${idx}">
+      <td colspan="9" style="padding:8px 10px; background:var(--panel-soft); border-top:1px solid var(--border);">
+        <div class="asset-overrides" style="display:flex; flex-direction:column; gap:8px;">
+          <div class="ov-controls" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label class="muted">Asset:</label>
+            <select class="ov-asset" style="min-width:200px;"></select>
+            <label class="muted">Blend:</label>
+            <select class="ov-blend"><option value="">Inherit</option>${blendOptionsHtml('')}</select>
+            <label class="muted">Opacity:</label>
+            <input class="ov-opacity" type="number" min="0" max="1" step="0.01" placeholder="inherit" style="width:90px;">
+            <label class="muted">Offset X:</label>
+            <input class="ov-offx" type="number" step="1" value="0" style="width:80px;">
+            <label class="muted">Offset Y:</label>
+            <input class="ov-offy" type="number" step="1" value="0" style="width:80px;">
+            <button class="ov-add btn-primary">Add/Update</button>
+          </div>
+          <div class="ov-advanced" style="display:grid; gap:6px; margin-top:6px;">
+            <label class="muted">Advanced Effects JSON (optional)</label>
+            <textarea class="ov-json" rows="3" placeholder='{"glow": {"preset":"neon"}, "stroke": {"width": 3, "color": "#fff"}}'></textarea>
+          </div>
+          <div class="ov-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
       </td>
     </tr>`;
 }
@@ -640,10 +904,222 @@ function renderLayersTable() {
   tbody.innerHTML = '';
   (currentConfig.layers || []).forEach((layer, i) => {
     const tmpl = document.createElement('tbody');
-    tmpl.innerHTML = layerRowTemplate(i, layer);
-    const row = tmpl.firstElementChild;
+    tmpl.innerHTML = layerRowTemplate(i, layer) + effectsRowTemplate(i, layer) + assetOverridesRowTemplate(i, layer);
+    const row = tmpl.firstElementChild as HTMLElement;
+    const effRow = row.nextElementSibling as HTMLElement;
+    const ovRow = effRow.nextElementSibling as HTMLElement;
+    ovRow.classList.add('hidden');
+    ovRow.setAttribute('aria-hidden', 'true');
+    effRow.classList.add('hidden');
+    effRow.setAttribute('aria-hidden', 'true');
+    populateOverridesRowFromConfig(ovRow, (layer && (layer as any).overrides) || []);
     tbody.appendChild(row);
+    tbody.appendChild(effRow);
+    tbody.appendChild(ovRow);
   });
+}
+
+function collectEffectsFromRow(effRow: HTMLElement | null): any {
+  if (!effRow || effRow.getAttribute('data-type') !== 'effects') return undefined;
+  const q = (sel: string) => effRow.querySelector(sel) as HTMLInputElement | HTMLSelectElement | null;
+  const effects: any = {};
+  // Glow
+  const glowEn = (q('.fx-glow-en') as HTMLInputElement)?.checked;
+  if (glowEn) {
+    effects.glow = {
+      preset: (q('.fx-glow-preset') as HTMLSelectElement)?.value || undefined,
+      color: (q('.fx-glow-color') as HTMLInputElement)?.value || undefined,
+      radius: Number((q('.fx-glow-radius') as HTMLInputElement)?.value || '0'),
+      opacity: Number((q('.fx-glow-opacity') as HTMLInputElement)?.value || '0'),
+      inner: (q('.fx-glow-inner') as HTMLInputElement)?.checked || false,
+    };
+  }
+  // Shadow
+  const shEn = (q('.fx-shadow-en') as HTMLInputElement)?.checked;
+  if (shEn) {
+    effects.shadow = {
+      preset: (q('.fx-shadow-preset') as HTMLSelectElement)?.value || undefined,
+      color: (q('.fx-shadow-color') as HTMLInputElement)?.value || undefined,
+      blur: Number((q('.fx-shadow-blur') as HTMLInputElement)?.value || '0'),
+      offsetX: Number((q('.fx-shadow-offx') as HTMLInputElement)?.value || '0'),
+      offsetY: Number((q('.fx-shadow-offy') as HTMLInputElement)?.value || '0'),
+      opacity: Number((q('.fx-shadow-opacity') as HTMLInputElement)?.value || '0'),
+      inner: (q('.fx-shadow-inner') as HTMLInputElement)?.checked || false,
+    };
+  }
+  // Stroke
+  const stEn = (q('.fx-stroke-en') as HTMLInputElement)?.checked;
+  if (stEn) {
+    effects.stroke = {
+      preset: (q('.fx-stroke-preset') as HTMLSelectElement)?.value || undefined,
+      color: (q('.fx-stroke-color') as HTMLInputElement)?.value || undefined,
+      width: Number((q('.fx-stroke-width') as HTMLInputElement)?.value || '0'),
+      opacity: Number((q('.fx-stroke-opacity') as HTMLInputElement)?.value || '0'),
+      position: (q('.fx-stroke-position') as HTMLSelectElement)?.value || 'outside',
+    };
+  }
+  // Extrude
+  const exEn = (q('.fx-extrude-en') as HTMLInputElement)?.checked;
+  if (exEn) {
+    effects.extrude = {
+      preset: (q('.fx-extrude-preset') as HTMLSelectElement)?.value || undefined,
+      color: (q('.fx-extrude-color') as HTMLInputElement)?.value || undefined,
+      depth: Number((q('.fx-extrude-depth') as HTMLInputElement)?.value || '0'),
+      angle: Number((q('.fx-extrude-angle') as HTMLInputElement)?.value || '0'),
+      opacity: Number((q('.fx-extrude-opacity') as HTMLInputElement)?.value || '0'),
+      soften: Number((q('.fx-extrude-soften') as HTMLInputElement)?.value || '0'),
+    };
+  }
+  // Blur
+  const blur = Number((q('.fx-blur') as HTMLInputElement)?.value || '0');
+  if (blur > 0) effects.blur = blur;
+  // Modulate
+  const hueRaw = (q('.fx-mod-hue') as HTMLInputElement)?.value || '';
+  const satRaw = (q('.fx-mod-sat') as HTMLInputElement)?.value || '';
+  const briRaw = (q('.fx-mod-bri') as HTMLInputElement)?.value || '';
+  if (hueRaw !== '' || satRaw !== '' || briRaw !== '') {
+    effects.modulate = {};
+    if (hueRaw !== '') effects.modulate.hue = Number(hueRaw);
+    if (satRaw !== '') effects.modulate.saturation = Number(satRaw);
+    if (briRaw !== '') effects.modulate.brightness = Number(briRaw);
+  }
+  // Color overlay
+  const coEn = (q('.fx-colovl-en') as HTMLInputElement)?.checked;
+  if (coEn) {
+    const blend = (q('.fx-colovl-blend') as HTMLSelectElement)?.value || '';
+    effects.colorOverlay = {
+      preset: (q('.fx-colovl-preset') as HTMLSelectElement)?.value || undefined,
+      color: (q('.fx-colovl-color') as HTMLInputElement)?.value || undefined,
+      opacity: Number((q('.fx-colovl-opacity') as HTMLInputElement)?.value || '0'),
+      blend: blend || undefined,
+    };
+  }
+  return Object.keys(effects).length ? effects : undefined;
+}
+
+function findOverrideRowForLayerRow(layerTr) {
+  if (!layerTr) return null;
+  const next = layerTr.nextElementSibling as HTMLElement | null;
+  if (!next) return null;
+  const maybeOv = (next.getAttribute('data-type') === 'effects') ? (next.nextElementSibling as HTMLElement | null) : next;
+  if (maybeOv && maybeOv.getAttribute('data-type') === 'overrides') return maybeOv;
+  return null;
+}
+
+function isImageName(name) {
+  return /\.(png|webp|gif)$/i.test(String(name || ''));
+}
+
+async function refreshOverrideAssetSelect(ovRow) {
+  if (!ovRow) return;
+  const idx = ovRow.getAttribute('data-idx');
+  const layerRow = ovRow.previousElementSibling as HTMLElement | null;
+  if (!layerRow) return;
+  const pathInput = layerRow.querySelector('.layer-path') as HTMLInputElement | null;
+  const select = ovRow.querySelector('.ov-asset') as HTMLSelectElement | null;
+  if (!select) return;
+  select.innerHTML = '';
+  const rel = pathInput ? (pathInput.value || '').trim() : '';
+  if (!rel) return;
+  try {
+    const listing = await window.foundry.listDir(rel);
+    if (listing.ok && Array.isArray(listing.items)) {
+      const files = listing.items.filter((n) => !n.endsWith('/') && isImageName(n));
+      files.forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+    }
+  } catch {}
+}
+
+function summarizeEffects(eff) {
+  const parts = [];
+  if (eff.blend) parts.push(String(eff.blend));
+  if (eff.opacity !== undefined && eff.opacity !== null && String(eff.opacity) !== '') parts.push(`opacity ${eff.opacity}`);
+  const ox = Number(eff.offsetX || 0);
+  const oy = Number(eff.offsetY || 0);
+  if (ox || oy) parts.push(`offset ${ox>=0?'+':''}${ox},${oy>=0?'+':''}${oy}`);
+  return parts.length ? parts.join(', ') : 'no overrides';
+}
+
+function makeOverrideItemEl(ov) {
+  const div = document.createElement('div');
+  div.className = 'ov-item';
+  div.dataset.target = ov.target || 'filename';
+  div.dataset.match = ov.match || '';
+  const eff = ov.effects || {};
+  if (eff.blend !== undefined) div.dataset.blend = String(eff.blend);
+  if (eff.opacity !== undefined) div.dataset.opacity = String(eff.opacity);
+  if (eff.offsetX !== undefined) div.dataset.offsetx = String(eff.offsetX);
+  if (eff.offsetY !== undefined) div.dataset.offsety = String(eff.offsetY);
+  // Persist any extra effect fields as JSON for roundtrip
+  const extra = {} as any;
+  ['glow', 'shadow', 'stroke', 'extrude', 'blur', 'modulate', 'colorOverlay'].forEach((k) => {
+    if ((eff as any)[k] !== undefined) (extra as any)[k] = (eff as any)[k];
+  });
+  const knownKeys = new Set(['blend', 'opacity', 'offsetX', 'offsetY']);
+  const hasExtra = Object.keys(extra).some((k) => !knownKeys.has(k));
+  if (hasExtra) {
+    try { (div as any).dataset.extra = JSON.stringify(extra); } catch {}
+  }
+  div.style.display = 'flex';
+  div.style.alignItems = 'center';
+  div.style.gap = '8px';
+  div.style.border = '1px solid var(--border)';
+  div.style.borderRadius = '8px';
+  div.style.padding = '6px 8px';
+  const name = document.createElement('span');
+  name.style.fontWeight = '600';
+  name.textContent = ov.match || '';
+  const summary = document.createElement('span');
+  summary.className = 'muted';
+  summary.style.marginLeft = 'auto';
+  summary.textContent = summarizeEffects(eff);
+  const btn = document.createElement('button');
+  btn.className = 'ov-remove';
+  btn.textContent = 'Remove';
+  btn.style.background = '#30363d';
+  div.appendChild(name);
+  div.appendChild(summary);
+  div.appendChild(btn);
+  return div;
+}
+
+function populateOverridesRowFromConfig(ovRow, overrides) {
+  const list = ovRow.querySelector('.ov-list');
+  if (!list) return;
+  list.innerHTML = '';
+  (overrides || []).forEach((ov) => {
+    try { list.appendChild(makeOverrideItemEl(ov)); } catch {}
+  });
+}
+
+function collectOverridesFromRow(ovRow) {
+  const out = [];
+  const items = ovRow ? Array.from(ovRow.querySelectorAll('.ov-item')) : [];
+  for (const el of items as HTMLElement[]) {
+    const target = el.dataset.target || 'filename';
+    const match = el.dataset.match || '';
+    const eff: any = {};
+    if (el.dataset.blend) eff.blend = el.dataset.blend;
+    if (el.dataset.opacity !== undefined) {
+      const v = el.dataset.opacity;
+      if (v !== undefined && v !== '' && v !== null) eff.opacity = Number(v);
+    }
+    if (el.dataset.offsetx !== undefined) eff.offsetX = Number(el.dataset.offsetx || '0');
+    if (el.dataset.offsety !== undefined) eff.offsetY = Number(el.dataset.offsety || '0');
+    if ((el as any).dataset.extra) {
+      try {
+        const extra = JSON.parse((el as any).dataset.extra || '{}');
+        Object.assign(eff, extra);
+      } catch {}
+    }
+    out.push({ target, match, effects: eff });
+  }
+  return out;
 }
 // Progress UI elements and helpers
 const progressRoot = document.getElementById('task-progress');
@@ -671,7 +1147,7 @@ function startProgress(message, estimateMs) {
   const duration = Math.max(2000, Number(estimateMs) || 10000);
   progressIntervalId = setInterval(() => {
     const elapsed = Date.now() - start;
-    const frac = Math.min(0.9, (elapsed / duration) * 0.9);
+    const frac = Math.min(0.98, (elapsed / duration) * 0.98);
     setProgress(Math.round(frac * 100), message || 'Working…');
   }, 200);
 }
@@ -681,20 +1157,26 @@ function endProgress(message, ok = true) {
   setTimeout(() => { showProgressUI(false); }, 1000);
 }
 function readLayersFromTable() {
-  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const rows = Array.from(tbody.querySelectorAll('tr[data-type="layer"]')) as HTMLElement[];
   return rows.map((tr) => {
+    const ovRow = findOverrideRowForLayerRow(tr);
+    const overrides = ovRow ? collectOverridesFromRow(ovRow) : [];
+    const effRow = tr.nextElementSibling as HTMLElement | null;
+    const effects = effRow && effRow.getAttribute('data-type') === 'effects' ? collectEffectsFromRow(effRow) : undefined;
     return {
-      name: tr.querySelector('.layer-name').value.trim(),
-      path: tr.querySelector('.layer-path').value.trim(),
-      rarity: tr.querySelector('.layer-rarity').value,
-      required: tr.querySelector('.layer-required').checked,
-      blend: tr.querySelector('.layer-blend').value,
-      opacity: Math.max(0, Math.min(1, Number(tr.querySelector('.layer-opacity').value) || 1)),
-    };
+      name: (tr.querySelector('.layer-name') as HTMLInputElement).value.trim(),
+      path: (tr.querySelector('.layer-path') as HTMLInputElement).value.trim(),
+      rarity: (tr.querySelector('.layer-rarity') as HTMLSelectElement).value,
+      required: (tr.querySelector('.layer-required') as HTMLInputElement).checked,
+      blend: (tr.querySelector('.layer-blend') as HTMLSelectElement).value,
+      opacity: Math.max(0, Math.min(1, Number((tr.querySelector('.layer-opacity') as HTMLInputElement).value) || 1)),
+      effects,
+      overrides,
+    } as any;
   });
 }
 async function updateAssetCounts() {
-  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const rows = Array.from(tbody.querySelectorAll('tr[data-type="layer"]'));
   for (const tr of rows) {
     const pathInput = tr.querySelector('.layer-path');
     const assetsSpan = tr.querySelector('.layer-assets');
@@ -715,34 +1197,173 @@ async function updateAssetCounts() {
 function bindLayerTableEvents() {
   tbody.addEventListener('click', (e) => {
     const target = e.target;
-    const tr = target.closest('tr');
+    const tr = target.closest('tr[data-type="layer"]');
     if (!tr) return;
+    const ovRow = findOverrideRowForLayerRow(tr);
+    const effRow = tr.nextElementSibling && tr.nextElementSibling.getAttribute('data-type') === 'effects' ? tr.nextElementSibling : null;
     if (target.classList.contains('btn-remove')) {
+      if (ovRow) ovRow.remove();
       tr.remove();
       updateAssetCounts();
     } else if (target.classList.contains('btn-up')) {
-      const prev = tr.previousElementSibling;
-      if (prev) tbody.insertBefore(tr, prev);
+      // Move current layer group (layer + effects + overrides) above the previous layer group
+      // Find the previous layer row
+      let prevLayer: HTMLElement | null = tr.previousElementSibling as HTMLElement | null;
+      while (prevLayer && prevLayer.getAttribute('data-type') !== 'layer') {
+        prevLayer = prevLayer.previousElementSibling as HTMLElement | null;
+      }
+      if (prevLayer) {
+        const effRow = tr.nextElementSibling as HTMLElement | null;
+        const ovRow2 = findOverrideRowForLayerRow(tr);
+        tbody.insertBefore(tr, prevLayer);
+        if (effRow) tbody.insertBefore(effRow, prevLayer);
+        if (ovRow2) tbody.insertBefore(ovRow2, prevLayer);
+      }
     } else if (target.classList.contains('btn-down')) {
-      const next = tr.nextElementSibling;
-      if (next) tbody.insertBefore(next, tr);
+      // Move current layer group below the next layer group
+      let cursor = tr.nextElementSibling as HTMLElement | null;
+      let nextLayer: HTMLElement | null = null;
+      while (cursor) {
+        if (cursor.getAttribute('data-type') === 'layer') { nextLayer = cursor; break; }
+        cursor = cursor.nextElementSibling as HTMLElement | null;
+      }
+      if (nextLayer) {
+        // Determine insertion point after the next group's overrides row
+        const afterNextGroup = (() => {
+          let c = nextLayer as HTMLElement | null;
+          // skip effects
+          c = c?.nextElementSibling as HTMLElement | null;
+          if (c && c.getAttribute('data-type') === 'effects') c = c.nextElementSibling as HTMLElement | null;
+          // c should be overrides
+          const nextAfter = c ? c.nextElementSibling as HTMLElement | null : nextLayer.nextElementSibling as HTMLElement | null;
+          return nextAfter;
+        })();
+        const effRow = tr.nextElementSibling as HTMLElement | null;
+        const ovRow2 = findOverrideRowForLayerRow(tr);
+        const insertPos = afterNextGroup;
+        if (ovRow2) tbody.insertBefore(ovRow2, insertPos);
+        if (effRow) tbody.insertBefore(effRow, insertPos);
+        tbody.insertBefore(tr, insertPos);
+      }
     } else if (target.classList.contains('btn-browse')) {
       window.foundry.chooseDirInsideProject().then((res) => {
         if (res.ok && res.path) {
           const input = tr.querySelector('.layer-path');
           input.value = res.path;
           updateAssetCounts();
+          const row = findOverrideRowForLayerRow(tr);
+          if (row && !row.classList.contains('hidden')) refreshOverrideAssetSelect(row);
         }
       });
     } else if (target.classList.contains('btn-open-folder')) {
       const rel = tr.querySelector('.layer-path').value.trim();
       if (rel) window.foundry.openInExplorer(rel);
+    } else if (target.classList.contains('btn-overrides')) {
+      const row = findOverrideRowForLayerRow(tr);
+      if (!row) return;
+      const isHidden = row.classList.contains('hidden');
+      row.classList.toggle('hidden', !isHidden);
+      row.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+      if (isHidden) {
+        // Now visible; refresh asset select
+        refreshOverrideAssetSelect(row);
+      }
+    } else if (target.classList.contains('btn-effects')) {
+      const row = tr.nextElementSibling as HTMLElement | null;
+      if (!row || row.getAttribute('data-type') !== 'effects') return;
+      const isHidden = row.classList.contains('hidden');
+      row.classList.toggle('hidden', !isHidden);
+      row.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+    } else if ((target as HTMLElement).classList.contains('fx-preview-run')) {
+      const effRow = (target as HTMLElement).closest('tr[data-type="effects"]') as HTMLElement | null;
+      if (!effRow) return;
+      const iw = document.getElementById('cfg-image-w') as HTMLInputElement | null;
+      const ih = document.getElementById('cfg-image-h') as HTMLInputElement | null;
+      const ib = document.getElementById('cfg-image-bg') as HTMLInputElement | null;
+      const cfg: any = { image: { width: Number(iw?.value || '1024'), height: Number(ih?.value || '1024'), background: String(ib?.value || 'transparent') }, layers: readLayersFromTable() };
+      (async () => {
+        try {
+          const res = await (window as any).foundry.previewEffects(cfg);
+          if (res && res.ok && res.b64) {
+            const dataUrl = 'data:image/png;base64,' + res.b64;
+            const img = effRow.querySelector('.fx-preview-img') as HTMLImageElement | null;
+            if (img) { img.src = dataUrl; img.style.display = 'block'; }
+            try { (lpPushLive as any)(dataUrl); } catch {}
+          } else {
+            console.error('Preview failed', res && res.error);
+          }
+        } catch (e) { console.error('Preview failed', e); }
+      })();
     }
   });
   tbody.addEventListener('change', (e) => {
     const target = e.target;
     if (target.classList.contains('layer-path')) {
       updateAssetCounts();
+      const tr = target.closest('tr[data-type="layer"]');
+      const row = findOverrideRowForLayerRow(tr);
+      if (row && !row.classList.contains('hidden')) refreshOverrideAssetSelect(row);
+    }
+    scheduleLiveUpdate();
+  });
+  tbody.addEventListener('input', () => { scheduleLiveUpdate(); });
+}
+
+function bindOverridesEvents() {
+  // Add or update override
+  tbody.addEventListener('click', async (e) => {
+    const el = e.target as HTMLElement;
+    if (!el || !(el as any).classList) return;
+    if (el.classList.contains('ov-add')) {
+      const ovRow = el.closest('tr[data-type="overrides"]') as HTMLElement | null;
+      if (!ovRow) return;
+      const select = ovRow.querySelector('.ov-asset') as HTMLSelectElement | null;
+      if (!select || !select.value) return;
+      const blendSel = ovRow.querySelector('.ov-blend') as HTMLSelectElement | null;
+      const opacityInput = ovRow.querySelector('.ov-opacity') as HTMLInputElement | null;
+      const offxInput = ovRow.querySelector('.ov-offx') as HTMLInputElement | null;
+      const offyInput = ovRow.querySelector('.ov-offy') as HTMLInputElement | null;
+      const jsonExtra = ovRow.querySelector('.ov-json') as HTMLTextAreaElement | null;
+      const list = ovRow.querySelector('.ov-list') as HTMLElement | null;
+      if (!list) return;
+      const match = select.value;
+      // Build override object
+      const eff: any = {};
+      const blendVal = blendSel ? (blendSel.value || '') : '';
+      if (blendVal) eff.blend = blendVal;
+      const opRaw = opacityInput ? opacityInput.value : '';
+      if (opRaw !== '' && opRaw !== null && opRaw !== undefined) eff.opacity = Math.max(0, Math.min(1, Number(opRaw)));
+      eff.offsetX = Number(offxInput ? (offxInput.value || '0') : '0');
+      eff.offsetY = Number(offyInput ? (offyInput.value || '0') : '0');
+      // Merge advanced JSON
+      let extra: any = null;
+      const raw = jsonExtra ? (jsonExtra.value || '').trim() : '';
+      if (raw) {
+        try { extra = JSON.parse(raw); } catch { extra = null; }
+      }
+      if (extra && typeof extra === 'object') {
+        Object.assign(eff, extra);
+      }
+      // If item exists, update it; else append new
+      const existing = Array.from(list.querySelectorAll('.ov-item')) as HTMLElement[];
+      const found = existing.find((n) => (n.dataset.match || '') === match);
+      if (found) {
+        // Update dataset
+        found.dataset.blend = eff.blend !== undefined ? String(eff.blend) : '';
+        if (eff.opacity !== undefined) found.dataset.opacity = String(eff.opacity); else delete (found.dataset as any).opacity;
+        found.dataset.offsetx = String(eff.offsetX || 0);
+        found.dataset.offsety = String(eff.offsetY || 0);
+        if (extra) found.dataset.extra = JSON.stringify(extra);
+        const s = found.querySelector('.muted') as HTMLElement | null;
+        if (s) s.textContent = summarizeEffects(eff);
+      } else {
+        const newEl = makeOverrideItemEl({ target: 'filename', match, effects: eff });
+        if (extra) (newEl as any).dataset.extra = JSON.stringify(extra);
+        list.appendChild(newEl);
+      }
+    } else if (el.classList.contains('ov-remove')) {
+      const item = el.closest('.ov-item');
+      if (item) item.remove();
     }
   });
 }
@@ -778,8 +1399,19 @@ async function loadConfigUI() {
 }
 btnAddLayer.addEventListener('click', () => {
   const tr = document.createElement('tbody');
-  tr.innerHTML = layerRowTemplate(tbody.children.length, { name: '', path: 'layers/', rarity: 'filename', required: false, blend: 'normal', opacity: 1 });
-  tbody.appendChild(tr.firstElementChild);
+  const layerObj = { name: '', path: 'layers/', rarity: 'filename', required: false, blend: 'normal', opacity: 1, overrides: [] } as any;
+  tr.innerHTML = layerRowTemplate(tbody.querySelectorAll('tr[data-type="layer"]').length, layerObj) + effectsRowTemplate(0, layerObj) + assetOverridesRowTemplate(0, layerObj);
+  const row = tr.firstElementChild as HTMLElement;
+  const effRow = row.nextElementSibling as HTMLElement;
+  const ovRow = effRow.nextElementSibling as HTMLElement;
+  ovRow.classList.add('hidden');
+  ovRow.setAttribute('aria-hidden', 'true');
+  effRow.classList.add('hidden');
+  effRow.setAttribute('aria-hidden', 'true');
+  populateOverridesRowFromConfig(ovRow, []);
+  tbody.appendChild(row);
+  tbody.appendChild(effRow);
+  tbody.appendChild(ovRow);
   updateAssetCounts();
   if (irLayerList) renderIrLayerList();
 });
@@ -790,7 +1422,7 @@ if (btnCreateFolders) btnCreateFolders.addEventListener('click', async () => {
   log(res.ok ? 'Folders ensured.' : (res.error || 'Failed to create folders.'));
   updateAssetCounts();
 });
-if (btnRefreshAssets) btnRefreshAssets.addEventListener('click', () => updateAssetCounts());
+if (btnRefreshAssets) btnRefreshAssets.addEventListener('click', () => { updateAssetCounts(); refreshPreviews(); });
 
 function renderIrLayerList() {
   if (!irLayerList) return;
@@ -1032,6 +1664,7 @@ if (btnSaveConfig) btnSaveConfig.addEventListener('click', async () => {
   updated.layers = readLayersFromTable();
   const res = await window.foundry.writeConfig(updated);
   log(res.ok ? 'Config saved.' : (res.error || 'Failed to save config.'));
+  try { if (res && res.ok) window.dispatchEvent(new CustomEvent('foundry:config-saved')); } catch {}
 });
 document.getElementById('btn-validate-rules').addEventListener('click', async () => {
   try {
@@ -1053,6 +1686,7 @@ document.getElementById('btn-save-rules').addEventListener('click', async () => 
     if (res.ok) {
       currentConfig = updated;
       log('Rules saved.');
+      try { window.dispatchEvent(new CustomEvent('foundry:config-saved')); } catch {}
     } else {
       log(res.error || 'Failed to save rules');
     }
@@ -1085,7 +1719,39 @@ if (btnToggleConsole && consoleCard) {
     pre.style.display = hidden ? 'block' : 'none';
     btnToggleConsole.textContent = hidden ? 'Hide' : 'Show';
   });
+  // Inject a Clear button for convenience
+  const header = consoleCard.querySelector('h3');
+  if (header) {
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'btn-clear-console';
+    clearBtn.className = 'btn-secondary btn-sm';
+    clearBtn.textContent = 'Clear';
+    clearBtn.style.marginLeft = '8px';
+    header.insertAdjacentElement('afterend', clearBtn);
+    clearBtn.addEventListener('click', () => { if (out) out.textContent = ''; });
+
+    // Add log level toggle (Info -> Warn -> Error -> Debug)
+    const lvlBtn = document.createElement('button');
+    lvlBtn.id = 'btn-log-level';
+    lvlBtn.className = 'btn-secondary btn-sm';
+    lvlBtn.style.marginLeft = '8px';
+    const cycle = ['info','warn','error','debug'] as const;
+    function updateLabel() { lvlBtn.textContent = 'Log: ' + getLogLevel(); }
+    updateLabel();
+    lvlBtn.addEventListener('click', () => {
+      const cur = getLogLevel();
+      const idx = cycle.indexOf(cur as any);
+      const next = cycle[(idx + 1) % cycle.length] as any;
+      setLogLevel(next);
+      updateLabel();
+    });
+    header.insertAdjacentElement('afterend', lvlBtn);
+  }
 }
+
+// Global error capture to console
+window.addEventListener('error', (e) => { try { logError('Unhandled error: ' + (e?.message || e)); } catch {} });
+window.addEventListener('unhandledrejection', (e) => { try { logError('Unhandled rejection: ' + (e?.reason?.message || e?.reason || 'unknown')); } catch {} });
 
 // Project label helpers
 const projectLabel = document.getElementById('current-project-label');
@@ -1134,7 +1800,7 @@ if (brandHome) {
     }
     // Clear active tab highlight when returning home
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  });
+});
 }
 
 // Hover intent to keep brand popout open while moving mouse
@@ -1192,7 +1858,27 @@ lightbox.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
+// Global refresh hooks: when window regains focus or becomes visible, refresh UI state
+function refreshVisibleUi() {
+  // Only refresh heavy bits if app view is visible
+  const appVisible = !document.getElementById('view-app').classList.contains('hidden');
+  if (!appVisible) return;
+  try { refreshProjectLabels(); } catch {}
+  try { updateAssetCounts(); } catch {}
+  try { refreshPreviews(); } catch {}
+  // Refresh any visible overrides asset selects
+  try {
+    const openOvRows = Array.from(document.querySelectorAll('tr[data-type="overrides"]')) as HTMLElement[];
+    openOvRows.filter((r) => !r.classList.contains('hidden')).forEach((r) => refreshOverrideAssetSelect(r));
+  } catch {}
+  // File explorer: refresh if visible
+  try { fsRenderList(); } catch {}
+}
+window.addEventListener('focus', () => { refreshVisibleUi(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshVisibleUi(); });
+
 bindLayerTableEvents();
+bindOverridesEvents();
 document.getElementById('btn-choose').onclick = async () => {
   const res = await window.foundry.chooseProjectDir();
   log(res.ok ? ('Project: ' + res.projectDir) : res.error);
@@ -1255,6 +1941,61 @@ if (btnOpenProject) btnOpenProject.addEventListener('click', async () => {
   const base = await window.foundry.getProjectDir();
   if (base && base.projectDir) await window.foundry.openInExplorer(base.projectDir);
 });
+
+// Override core task handlers to always complete progress and improve logging
+async function runTaskWithProgress(label, estimateMs, fn) {
+  startProgress(label, estimateMs);
+  let ok = false; let message = label + ' done';
+  try {
+    const res = await fn();
+    ok = !!(res && res.ok);
+    message = ok ? (label + ' complete') : (label + ' failed');
+    if (res && (res.stdout || res.error)) {
+      log(ok ? res.stdout : res.error);
+    }
+    return res;
+  } catch (e) {
+    logError(String(e?.message || e));
+    message = label + ' failed';
+    return null;
+  } finally {
+    endProgress(message, ok);
+  }
+}
+
+// Rebind buttons to use robust runner
+document.getElementById('btn-init').onclick = async () => {
+  const res = await runTaskWithProgress('Initializing project.', 4000, () => window.foundry.run(['init']));
+  if (res && res.ok) await loadConfigUI();
+};
+document.getElementById('btn-validate').onclick = async () => {
+  await runTaskWithProgress('Validating rules.', 3000, () => window.foundry.run(['validate']));
+};
+document.getElementById('btn-preview').onclick = async () => {
+  const cRaw = document.getElementById('preview-count').value;
+  const cNum = Math.max(1, Number(cRaw) || 9);
+  // Randomize seed so previews differ every run
+  const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const res = await runTaskWithProgress('Generating previews.', Math.min(60000, 500 * cNum + 2000), () => window.foundry.run(['preview', '--count', String(cNum), '--seed', seed]));
+  if (res && res.ok) setTimeout(() => refreshPreviews(), 200);
+};
+document.getElementById('btn-build').onclick = async () => {
+  const cRaw = document.getElementById('build-count').value;
+  const cNum = Math.max(1, Number(cRaw) || 10);
+  const res = await runTaskWithProgress('Building collection.', Math.min(120000, 700 * cNum + 3000), () => window.foundry.run(['build', '--count', String(cNum)]));
+  if (res) refreshPreviews();
+};
+document.getElementById('btn-upload').onclick = async () => {
+  const provider = document.getElementById('upload-provider').value;
+  const conc = document.getElementById('upload-concurrency').value;
+  await runTaskWithProgress('Uploading assets.', 20000, () => window.foundry.run(['upload', '--provider', String(provider), '--concurrency', String(conc)]));
+};
+document.getElementById('btn-mint').onclick = async () => {
+  const from = document.getElementById('mint-from').value;
+  const countRaw = document.getElementById('mint-count').value;
+  const countNum = Math.max(1, Number(countRaw) || 1);
+  await runTaskWithProgress('Minting.', Math.min(180000, 5000 * countNum), () => window.foundry.run(['mint', '--from', String(from), '--count', String(countNum)]));
+};
 // Enhanced UI Options wiring
 function applyUiFromStorage() {
   const theme = localStorage.getItem('ui:theme') || 'dark';
@@ -1440,33 +2181,14 @@ optReset && optReset.addEventListener('click', () => {
 // Startup: decide view, render recents, load config if project set
 (async function startup() {
   applyUiFromStorage();
-  
   renderRecents();
-  // Restore last project selection if main process doesn't yet have one
-  let base = await window.foundry.getProjectDir();
-  if (!base || !base.projectDir) {
-    try {
-      const last = localStorage.getItem('foundry:lastProjectDir');
-      if (last) {
-        const set = await window.foundry.setProjectDir(last);
-        if (set && set.ok) base = await window.foundry.getProjectDir();
-      }
-    } catch {}
-  }
-  if (base && base.projectDir) {
-    showView('app');
-    await loadConfigUI();
-    await updateAssetCounts();
-    await refreshPreviews();
-    switchTab(localStorage.getItem('ui:lastTab') || 'main');
-    switchSubtab(localStorage.getItem('ui:lastSubtab') || 'overview');
-    await refreshProjectLabels();
-    // Build help content and attach contextual help icons
-    buildHelpPage();
-    attachHelpAnchors();
-  } else {
-    showView('launcher');
-  }
+  // Always start at launcher for clarity
+  showView('launcher');
+  switchTab('main');
+  switchSubtab('overview');
+  await refreshProjectLabels();
+  buildHelpPage();
+  attachHelpAnchors();
 })();
 
 // Populate stats from config
@@ -1606,7 +2328,7 @@ const HELP_TOPICS = {
     title: 'Init: create config and folders',
     short: 'Generate a starter foundry.config.json and scaffold directories.',
     body: `
-      <p>Use <b>Init</b> to create a default <code>foundry.config.json</code> and recommended folders. Edit the config in the <b>Main → Configure</b> subtab to set name, edition size, image dimensions, and layers.</p>
+      <p>Use <b>Init</b> to create a default <code>foundry.config.json</code> and recommended folders. Edit the config in the <b>Main ? Configure</b> subtab to set name, edition size, image dimensions, and layers.</p>
       <ul>
         <li>Re-run Init safely; it won’t overwrite existing files.</li>
         <li>After editing the config, click <b>Validate</b> to check for issues.</li>
@@ -1739,7 +2461,7 @@ const HELP_TOPICS = {
   'ui-theme': {
     title: 'Theme',
     short: 'Switch between dark and light modes.',
-    body: `<p>Use <b>Options</b> → <b>Theme</b> to toggle. Your choice is saved locally.</p>`,
+    body: `<p>Use <b>Options</b> ? <b>Theme</b> to toggle. Your choice is saved locally.</p>`,
     related: ['ui-accent']
   },
   'ui-accent': {
@@ -1880,7 +2602,7 @@ Calm#8.png
       <p>Click a preview to open the lightbox.</p>
       <ul>
         <li>Use on-screen arrows to navigate between images.</li>
-        <li>Close with the <b>✕</b> button.</li>
+        <li>Close with the <b>?</b> button.</li>
       </ul>
     `
   },
@@ -2347,7 +3069,8 @@ async function loadFalSaved() {
   const base = proj.projectDir.replace(/\\/g, '/');
   (list.files || []).forEach((name) => {
     const img = document.createElement('img');
-    img.src = `file://${base}/fal/${name}`;
+    // Use proper file URL with triple slash to work on Windows and others
+    img.src = fileUrl(base, 'fal', name);
     const wrap = document.createElement('div');
     wrap.className = 'gallery-item';
     wrap.appendChild(img);
@@ -2414,7 +3137,7 @@ function falRenderModelList() {
       const right = document.createElement('div');
       const fav = document.createElement('button');
       fav.className = 'btn-ghost';
-      fav.textContent = falFavorites.has(m.id) ? '★' : '☆';
+      fav.textContent = falFavorites.has(m.id) ? '?' : '?';
       fav.title = 'Favorite';
       fav.addEventListener('click', (ev) => { ev.stopPropagation(); if (falFavorites.has(m.id)) falFavorites.delete(m.id); else falFavorites.add(m.id); falSaveFavorites(); falRenderModelList(); });
       right.appendChild(fav);
@@ -2985,7 +3708,7 @@ if (falFetchCatalogUrlBtn_extra) falFetchCatalogUrlBtn_extra.addEventListener('c
   } catch (e) { alert('Fetch failed: ' + (e?.message || e)); }
 });
 
-// --- Live Preview overlay ---
+/* --- Live Preview overlay (disabled, replaced by renderer/live-preview.ts) ---
 const lpOverlay = document.getElementById('live-preview') as HTMLElement | null;
 const lpGrid = document.getElementById('lp-grid') as HTMLElement | null;
 const lpToggleBtn = document.getElementById('live-prev-toggle');
@@ -3000,6 +3723,24 @@ const lpCloseBtn = document.getElementById('lp-close');
 const lpResetBtn = document.getElementById('lp-reset');
 const lpHeader = document.getElementById('lp-header');
 const lpResize = document.getElementById('lp-resize');
+const lpModeFolderBtn = document.getElementById('lp-mode-folder') as HTMLButtonElement | null;
+const lpModeLiveBtn = document.getElementById('lp-mode-live') as HTMLButtonElement | null;
+const lpZoomEl = document.getElementById('lp-zoom') as HTMLInputElement | null;
+const lpFitEl = document.getElementById('lp-fit') as HTMLSelectElement | null;
+const lpBgEl = document.getElementById('lp-bg') as HTMLSelectElement | null;
+const lpClearBtn = document.getElementById('lp-clear') as HTMLButtonElement | null;
+const lpRerollBtn = document.getElementById('lp-reroll') as HTMLButtonElement | null;
+
+// Default to Live mode so opening the overlay generates immediately
+let lpMode: 'folder' | 'live' = 'live';
+let lpZoom = 1.0;
+let lpFit: 'contain' | 'cover' | 'actual' = 'cover';
+let lpBg: 'check' | 'dark' | 'light' = 'check';
+let lpLiveImages: string[] = [];
+let lpLiveDebounce: any = null;
+
+// Ensure UI reflects default fit
+if (lpFitEl) { try { lpFitEl.value = 'cover'; } catch {} }
 
 function lpApplyBounds() {
   if (!lpOverlay) return;
@@ -3048,39 +3789,164 @@ async function lpListPreviewImages(): Promise<string[]> {
     const projectBase = (base && base.projectDir) ? base.projectDir.replace(/\\/g,'/') : '';
     function isPreviewDir(p:string){ return /(\\|\/)preview$/i.test(String(p || '').replace(/[\\/]+$/,'')); }
     const cleanedOutDir = outDir.replace(/\\+$/,'').replace(/\/+$/,'');
-    const primary = (cfg.json.export?.previewOutDir) ? cleanedOutDir : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
+    // If a previewOutDir is provided, prefer it but ensure it points at a preview folder
+    const primary = (cfg.json.export?.previewOutDir)
+      ? (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'))
+      : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
     const list = await window.foundry.listDir(primary);
     if (!list.ok || !Array.isArray(list.items)) return [];
     const files = list.items.filter((n:string)=>!n.endsWith('/') && /\.(png|webp|gif)$/i.test(n));
-    return files.map((name:string)=> `file://${projectBase}/${primary.replace(/\\/g,'/')}/${encodeURIComponent(name).replace(/%23/g,'#')}`);
+    // Build robust file URLs (handles absolute/relative preview dirs and encodes '#')
+    return files.map((name:string)=> fileUrl(projectBase, primary, name));
   } catch { return []; }
 }
 
 async function lpRender() {
   if (!lpGrid) return;
-  const urls = await lpListPreviewImages();
   lpGrid.innerHTML = '';
-  urls.forEach((u)=>{
+  let urls: string[] = [];
+  if (lpMode === 'folder') urls = await lpListPreviewImages(); else urls = lpLiveImages.slice();
+  // If a single image is present, fill the entire overlay area
+  if (urls.length === 1) {
+    (lpGrid as HTMLElement).style.display = 'block';
+    (lpGrid as HTMLElement).style.gridTemplateColumns = '';
+    (lpGrid as HTMLElement).style.width = '100%';
+    (lpGrid as HTMLElement).style.height = '100%';
     const wrap = document.createElement('div');
     wrap.className = 'gallery-item';
+    (wrap.style as any).aspectRatio = 'auto';
+    wrap.style.width = '100%';
+    wrap.style.height = '100%';
     const img = document.createElement('img');
-    img.src = u;
+    img.src = urls[0]!;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit; // contain, cover, actual
     wrap.appendChild(img);
+    wrap.addEventListener('click', () => {
+      try { galleryUrls = urls as any; openLightbox(0); } catch {}
+    });
     lpGrid.appendChild(wrap);
-  });
+  } else {
+    // Grid of thumbnails
+    const size = Math.round(200 * lpZoom);
+    (lpGrid as HTMLElement).style.display = 'grid';
+    (lpGrid as HTMLElement).style.gridTemplateColumns = `repeat(auto-fill, minmax(${Math.max(120, size)}px, 1fr))`;
+    (lpGrid as HTMLElement).style.width = '';
+    (lpGrid as HTMLElement).style.height = '';
+    urls.forEach((u)=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'gallery-item';
+      // Let CSS grid control sizing; no explicit width/height
+      const img = document.createElement('img');
+      img.src = u;
+      img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit;
+      wrap.appendChild(img);
+      wrap.addEventListener('click', () => {
+        try {
+          galleryUrls = urls as any;
+          openLightbox(urls.indexOf(u));
+        } catch {}
+      });
+      lpGrid.appendChild(wrap);
+    });
+  }
+  // Grid background
+  if (lpBg === 'dark') {
+    lpGrid.style.background = '#111';
+  } else if (lpBg === 'light') {
+    lpGrid.style.background = '#eee';
+  } else {
+    lpGrid.style.background = 'repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 16px 16px';
+  }
+}
+
+// --- Live Preview: local fallback compositor (no native deps) ---
+function lpMapBlend(mode?: string): GlobalCompositeOperation {
+  const m = String(mode || '').toLowerCase();
+  switch (m) {
+    case 'normal':
+    case 'over':
+    default:
+      return 'source-over';
+    case 'multiply': return 'multiply';
+    case 'screen': return 'screen';
+    case 'overlay': return 'overlay';
+    case 'darken': return 'darken';
+    case 'lighten': return 'lighten';
+    case 'color-dodge': return 'lighter';
+    case 'colour-dodge': return 'lighter';
+    case 'difference': return 'difference';
+    case 'exclusion': return 'exclusion';
+  }
+}
+
+function lpIsImageName(n: string): boolean { return /\.(png|webp|gif)$/i.test(String(n || '')); }
+
+async function lpDrawLocalOne(cfg: any): Promise<string | null> {
+  try {
+    const baseRes = await (window as any).foundry.getProjectDir();
+    const baseDir = (baseRes && baseRes.projectDir) ? String(baseRes.projectDir).replace(/\\/g,'/') : '';
+    const width = Number(cfg?.image?.width || 1024);
+    const height = Number(cfg?.image?.height || 1024);
+    const bg = String(cfg?.image?.background || 'transparent');
+    const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+    if (!layers.length) return null;
+    const picks: Array<{ url: string; blend: GlobalCompositeOperation; opacity: number; x: number; y: number }> = [];
+    for (const layer of layers) {
+      if (!layer || !layer.path) continue;
+      const listing = await (window as any).foundry.listDir(layer.path);
+      if (!listing || !listing.ok || !Array.isArray(listing.items)) continue;
+      const files = (listing.items as string[]).filter((n)=>!n.endsWith('/') && lpIsImageName(n));
+      if (!files.length) continue;
+      const name = files[0]!; // deterministic first item
+      const url = fileUrl(baseDir, layer.path, name);
+      const blend = lpMapBlend(layer.blend ?? layer.effects?.blend);
+      const opacity = typeof layer.opacity === 'number' ? layer.opacity : (typeof layer.effects?.opacity === 'number' ? layer.effects.opacity : 1);
+      const x = Number(layer.effects?.offsetX || 0);
+      const y = Number(layer.effects?.offsetY || 0);
+      picks.push({ url, blend, opacity: Math.max(0, Math.min(1, Number(opacity) || 1)), x, y });
+    }
+    if (!picks.length) return null;
+    const imgs = await Promise.all(
+      picks.map((p) => new Promise<HTMLImageElement>((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('img load failed')); img.src = p.url; }))
+    ).catch(() => null as any);
+    if (!imgs || !Array.isArray(imgs)) return null;
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d'); if (!ctx) return null;
+    if (bg && bg !== 'transparent') { ctx.fillStyle = bg; ctx.fillRect(0,0,width,height); }
+    for (let i = 0; i < picks.length; i++) {
+      const p = picks[i]!; const img = imgs[i]!;
+      ctx.globalCompositeOperation = p.blend || 'source-over';
+      ctx.globalAlpha = typeof p.opacity === 'number' ? p.opacity : 1;
+      try { ctx.drawImage(img, (p.x||0), (p.y||0), width, height); } catch {}
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    const b64 = canvas.toDataURL('image/png').split(',')[1] || '';
+    return 'data:image/png;base64,' + b64;
+  } catch { return null; }
 }
 
 async function lpRunPreview() {
   const count = Math.max(1, Number(lpCountEl?.value || 4));
-  await window.foundry.run(['preview', '--count', String(count), '--allow-duplicates']);
-  await lpRender();
+  if (lpMode === 'live') {
+    await runLivePreviewFromConfig();
+  } else {
+    await window.foundry.run(['preview', '--count', String(count), '--allow-duplicates']);
+    await lpRender();
+  }
 }
 
 let lpTimer: any = null;
 function lpStartAuto() {
   if (lpTimer) clearInterval(lpTimer);
   if (lpAutoEl && lpAutoEl.checked) {
-    lpTimer = setInterval(() => { lpRender(); }, 3000);
+    // Fire once immediately for responsiveness
+    if (lpMode === 'live') runLivePreviewFromConfig(); else lpRender();
+    lpTimer = setInterval(() => {
+      if (lpMode === 'live') runLivePreviewFromConfig();
+      else lpRender();
+    }, 2000);
   }
 }
 
@@ -3088,8 +3954,16 @@ function lpShow() {
   if (!lpOverlay) return;
   lpOverlay.classList.remove('hidden');
   lpOverlay.setAttribute('aria-hidden','false');
+  // Ensure UI reflects current mode and generate immediately in Live
+  if (lpMode === 'live') {
+    lpModeLiveBtn && lpModeLiveBtn.classList.add('active');
+    lpModeFolderBtn && lpModeFolderBtn.classList.remove('active');
+  } else {
+    lpModeFolderBtn && lpModeFolderBtn.classList.add('active');
+    lpModeLiveBtn && lpModeLiveBtn.classList.remove('active');
+  }
   lpLoadState();
-  lpRender();
+  if (lpMode === 'live') runLivePreviewFromConfig(); else lpRender();
   lpStartAuto();
 }
 
@@ -3102,6 +3976,14 @@ function lpHide() {
 
 if (lpToggleBtn) lpToggleBtn.addEventListener('click', () => { if (lpOverlay?.classList.contains('hidden')) lpShow(); else lpHide(); });
 if (lpRefreshBtn) lpRefreshBtn.addEventListener('click', lpRunPreview);
+if (lpModeFolderBtn) lpModeFolderBtn.addEventListener('click', () => { lpMode = 'folder'; lpModeFolderBtn.classList.add('active'); lpModeLiveBtn && lpModeLiveBtn.classList.remove('active'); lpRender(); lpStartAuto(); });
+if (lpModeLiveBtn) lpModeLiveBtn.addEventListener('click', () => { lpMode = 'live'; lpModeLiveBtn.classList.add('active'); lpModeFolderBtn && lpModeFolderBtn.classList.remove('active'); runLivePreviewFromConfig(); lpStartAuto(); });
+if (lpZoomEl) lpZoomEl.addEventListener('input', () => { lpZoom = Math.max(0.5, Math.min(2, Number(lpZoomEl.value||'100')/100)); lpRender(); });
+if (lpFitEl) lpFitEl.addEventListener('change', () => { const v = (lpFitEl.value||'contain') as any; lpFit = (v==='actual'||v==='cover')?v:'contain'; lpRender(); });
+if (lpBgEl) lpBgEl.addEventListener('change', () => { const v = lpBgEl.value as any; lpBg = (v==='dark'||v==='light')?v:'check'; lpRender(); });
+if (lpCountEl) lpCountEl.addEventListener('input', () => { if (lpMode==='live') scheduleLiveUpdate(); });
+if (lpClearBtn) lpClearBtn.addEventListener('click', () => { lpLiveImages = []; if (lpMode==='live') lpRender(); });
+if (lpRerollBtn) lpRerollBtn.addEventListener('click', () => { lpMode = 'live'; runLivePreviewFromConfig(); });
 if (lpExportBtn) lpExportBtn.addEventListener('click', async () => {
   if (!lpGrid) return;
   const imgs = Array.from(lpGrid.querySelectorAll('img')) as HTMLImageElement[];
@@ -3161,7 +4043,15 @@ if (lpResetBtn && lpOverlay) lpResetBtn.addEventListener('click', () => {
 if (lpHeader && lpOverlay) {
   let dragging = false; let sx = 0, sy = 0, ox = 0, oy = 0;
   lpHeader.addEventListener('mousedown', (e:MouseEvent) => {
-    dragging = true; sx = e.clientX; sy = e.clientY; const r = lpOverlay.getBoundingClientRect(); ox = r.left; oy = r.top; e.preventDefault();
+    const target = e.target as HTMLElement | null;
+    // Only start dragging when user grabs the title area; ignore clicks on controls
+    if (target && target.closest('.lp-controls')) return;
+    if (e.button !== 0) return; // left button only
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    const r = lpOverlay.getBoundingClientRect();
+    ox = r.left; oy = r.top;
+    e.preventDefault();
   });
   window.addEventListener('mousemove', (e)=>{
     if (!dragging) return; const dx = e.clientX - sx; const dy = e.clientY - sy; lpOverlay.style.left = `${Math.max(0, ox+dx)}px`; lpOverlay.style.top = `${Math.max(0, oy+dy)}px`; lpOverlay.style.right = 'auto'; lpOverlay.style.bottom = 'auto';
@@ -3177,8 +4067,79 @@ if (lpResize && lpOverlay) {
   window.addEventListener('mouseup', ()=>{ if (resizing) { resizing = false; lpSaveState(); } });
 }
 
-if (lpWidthEl) lpWidthEl.addEventListener('change', lpApplyBounds);
-if (lpHeightEl) lpHeightEl.addEventListener('change', lpApplyBounds);
+if (lpWidthEl) { lpWidthEl.addEventListener('change', lpApplyBounds); lpWidthEl.addEventListener('input', lpApplyBounds); }
+if (lpHeightEl) { lpHeightEl.addEventListener('change', lpApplyBounds); lpHeightEl.addEventListener('input', lpApplyBounds); }
 if (lpCloseBtn) lpCloseBtn.addEventListener('click', lpHide);
 if (lpAutoEl) lpAutoEl.addEventListener('change', lpStartAuto);
+// Trigger live updates from image config changes as well
+const cfgW = document.getElementById('cfg-image-w') as HTMLInputElement | null;
+const cfgH = document.getElementById('cfg-image-h') as HTMLInputElement | null;
+const cfgBg = document.getElementById('cfg-image-bg') as HTMLInputElement | null;
+if (cfgW) { cfgW.addEventListener('input', scheduleLiveUpdate); cfgW.addEventListener('change', scheduleLiveUpdate); }
+if (cfgH) { cfgH.addEventListener('input', scheduleLiveUpdate); cfgH.addEventListener('change', scheduleLiveUpdate); }
+if (cfgBg) { cfgBg.addEventListener('input', scheduleLiveUpdate); cfgBg.addEventListener('change', scheduleLiveUpdate); }
 
+ 
+// Debounced live previews from current form
+function scheduleLiveUpdate() {
+  lpMode = 'live';
+  if (lpModeLiveBtn) lpModeLiveBtn.classList.add('active');
+  if (lpModeFolderBtn) lpModeFolderBtn.classList.remove('active');
+  if (!lpOverlay || lpOverlay.classList.contains('hidden')) lpShow();
+  if (lpLiveDebounce) clearTimeout(lpLiveDebounce);
+  lpLiveDebounce = setTimeout(runLivePreviewFromConfig, 300);
+}
+
+async function runLivePreviewFromConfig() {
+  try {
+    const iw = document.getElementById('cfg-image-w') as HTMLInputElement | null;
+    const ih = document.getElementById('cfg-image-h') as HTMLInputElement | null;
+    const ib = document.getElementById('cfg-image-bg') as HTMLInputElement | null;
+    const cfg: any = { image: { width: Number(iw?.value || '1024'), height: Number(ih?.value || '1024'), background: String(ib?.value || 'transparent') }, layers: readLayersFromTable() };
+    const count = 1;
+    const seed = 'ui-' + Date.now().toString(36) + '-' + Math.floor(Math.random()*1e6);
+    const res = await (window as any).foundry.previewLive(cfg, count, seed);
+    if (res && res.ok && Array.isArray(res.images) && res.images.length) {
+      lpLiveImages = res.images.map((b64: string) => 'data:image/png;base64,' + b64);
+      lpRender();
+      return;
+    }
+    // Fallback 1: single composite via previewEffects (accurate effects)
+    try {
+      const one = await (window as any).foundry.previewEffects(cfg);
+      if (one && one.ok && one.b64) {
+        lpLiveImages = ['data:image/png;base64,' + String(one.b64)];
+        lpRender();
+        return;
+      }
+    } catch {}
+    // Fallback 2: local canvas compositor without native deps
+    try {
+      const oneUrl = await lpDrawLocalOne(cfg);
+      if (oneUrl) {
+        lpLiveImages = [oneUrl];
+        lpRender();
+        return;
+      }
+    } catch {}
+    // Fallback 3: use last generated preview images from folder
+    try {
+      lpLiveImages = await lpListPreviewImages();
+      lpRender();
+    } catch {}
+  } catch (e) { console.error('runLivePreviewFromConfig failed', e); }
+}
+
+
+function lpPushLive(dataUrl: string) {
+  if (!dataUrl) return;
+  lpLiveImages.unshift(dataUrl);
+  if (lpLiveImages.length > 24) lpLiveImages.pop();
+  lpMode = 'live';
+  if (lpModeLiveBtn) lpModeLiveBtn.classList.add('active');
+  if (lpModeFolderBtn) lpModeFolderBtn.classList.remove('active');
+  lpShow();
+  lpRender();
+}
+
+*/

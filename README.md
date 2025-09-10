@@ -9,12 +9,15 @@ Modern, type‑safe, open‑source NFT art foundry. Compose layered artwork, enf
 - Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
 - Rules engine: `mutuallyExclusive`, `requires`, `maxOccurrences`
 - Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable defaults
-- Compositor supports per‑layer blend/opacity; preview contact sheet + rarity report
+- Compositor supports per-layer blend/opacity and visual effects (glow, stroke, shadow, 3D extrude) with presets; preview contact sheet + rarity report
 - Storage: Arweave Bundlr and IPFS (NFT.Storage/Pinata)
 - Solana mint via Umi/Token Metadata with optional pNFT and ruleset PDA
 - TypeScript throughout; Zod schemas; Vitest; ESLint/Prettier
 - Electron GUI with Fal AI image generation page
 - Tauri packaging option
+
+Live Preview overlay (UI)
+- Toggle an overlay to preview a single edition at any time. The UI asks the core to render accurate images via IPC when possible; it falls back to a canvas compositor for a quick approximation when core rendering is unavailable. The overlay can be dragged, rerolled, and configured for fit (contain/cover/actual) and background (checker/dark/light).
 
 ---
 
@@ -175,7 +178,7 @@ foundry e2e
 
 Key options per command
 - `preview`: `--count <n>`, `--seed <s>`, `--max-attempts <n>`, `--allow-duplicates`
-- `build`: `--count <n>` (defaults to `editionSize`)
+- `build`: `--count <n>` (defaults to `editionSize`), `--seed <s>`
 - `upload`: `--provider <arweave|ipfs>`, `--concurrency <n>`
 - `mint`: `--count <n>`, `--from <n>`
 
@@ -196,6 +199,44 @@ Run `foundry init` to create `foundry.config.json` and starter folders. Importan
 Asset naming for rarity
 - Use `Trait#<weight>.png` to assign weights per asset within a layer.
 - If you omit weights, defaults from `rarity` config apply.
+
+Effects on layers and overrides
+- Each layer can define `effects` (plus legacy `blend`/`opacity`) that apply to all assets in the layer.
+- Per-asset `overrides` can refine any effect fields by matching `filename` or derived trait `value`.
+- Supported effects: `glow`, `shadow`, `stroke`, `extrude` (simple 3D), `blur`, `modulate` (hue/saturation/brightness), and `colorOverlay`. Presets are available where applicable.
+  - `glow.inner: true` enables inner glow (clipped to the shape)
+  - `shadow.inner: true` enables inner shadow (clipped to the shape)
+  - `stroke.position: "outside"|"inside"|"center"` controls stroke placement
+
+Available presets
+- `glow`: `subtle`, `medium`, `strong`, `neon`
+- `stroke`: `thin`, `medium`, `thick`, `white`
+- `shadow`: `soft`, `hard`, `long`
+- `extrude`: `short`, `long`, `isometric`
+- `colorOverlay`: `tint`, `shade`, `highlight`
+
+Example layer snippet
+```
+{
+  "name": "Eyes",
+  "path": "./assets/eyes",
+  "effects": {
+    "glow": { "preset": "subtle", "color": "#00eaff", "inner": true },
+    "stroke": { "preset": "thin", "color": "#000", "position": "center" }
+  },
+  "overrides": [
+    {
+      "target": "value",
+      "match": "Laser",
+      "effects": {
+        "glow": { "preset": "neon", "inner": false },
+        "shadow": { "preset": "long", "opacity": 0.25, "inner": true },
+        "extrude": { "preset": "short", "angle": 120 }
+      }
+    }
+  ]
+}
+```
 
 ---
 
