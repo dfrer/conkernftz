@@ -39,6 +39,204 @@ try {
   }
 } catch {}
 
+// Progress update listener
+// Prefer preload bridge to subscribe to progress; fallback to electron require if available
+if (typeof window !== 'undefined' && (window as any).foundry && typeof (window as any).foundry.onBuildProgress === 'function') {
+  (window as any).foundry.onBuildProgress((data: any) => {
+    if (window.currentProgress) {
+      updateProgress(data.current, data.total, data.message);
+      if (typeof data.isPaused === 'boolean') {
+        isPaused = !!data.isPaused;
+        showBuildControls(isBuilding, isPaused);
+      }
+    }
+  });
+} else if (typeof window !== 'undefined' && (window as any).require) {
+  const { ipcRenderer } = (window as any).require('electron');
+  ipcRenderer.on('build-progress', (_event: any, data: any) => {
+    if (window.currentProgress) {
+      updateProgress(data.current, data.total, data.message);
+      if (typeof data.isPaused === 'boolean') {
+        isPaused = !!data.isPaused;
+        showBuildControls(isBuilding, isPaused);
+      }
+    }
+  });
+}
+
+// Preview progress subscription
+if (typeof window !== 'undefined' && (window as any).foundry && typeof (window as any).foundry.onPreviewProgress === 'function') {
+  (window as any).foundry.onPreviewProgress((data: any) => {
+    if (window.currentProgress) {
+      updateProgress(data.current, data.total, data.message);
+    }
+  });
+}
+
+// Live preview variables - declared early to avoid ReferenceError
+let lpMode: 'folder' | 'live' = 'live';
+let lpLiveDebounce: any = null;
+let lpTimer: any = null;
+let lpZoom = 1.0;
+let lpFit: 'contain' | 'cover' | 'actual' = 'cover';
+let lpBg: 'check' | 'dark' | 'light' = 'check';
+let lpLiveImages: string[] = [];
+
+// Live preview DOM elements - declared early to avoid ReferenceError
+const lpModeLiveBtn = document.getElementById('lp-mode-live') as HTMLButtonElement | null;
+const lpModeFolderBtn = document.getElementById('lp-mode-folder') as HTMLButtonElement | null;
+const lpOverlay = document.getElementById('live-preview') as HTMLElement | null;
+const lpGrid = document.getElementById('lp-grid') as HTMLElement | null;
+const lpAutoEl = document.getElementById('live-prev-auto') as HTMLInputElement | null;
+
+// Live preview function forward declarations - for functions called but defined later
+function lpLoadState(): void;
+async function lpListPreviewImages(): Promise<string[]>;
+async function lpDrawLocalOne(cfg: any): Promise<string | null>;
+function readLayersFromTable(): any[];
+function openLightbox(index: number): void;
+
+// Live preview function implementations - moved here to avoid ReferenceError
+function lpShow() {
+  if (!lpOverlay) return;
+  lpOverlay.classList.remove('hidden');
+  lpOverlay.setAttribute('aria-hidden','false');
+  
+  // Set default size and position if not already set
+  if (!lpOverlay.style.width || !lpOverlay.style.height) {
+    lpOverlay.style.width = '420px';
+    lpOverlay.style.height = '320px';
+  }
+  if (!lpOverlay.style.left && !lpOverlay.style.right) {
+    lpOverlay.style.right = '24px';
+    lpOverlay.style.top = '50px';
+  }
+  
+  // Ensure UI reflects current mode and generate immediately in Live
+  if (lpMode === 'live') {
+    lpModeLiveBtn && lpModeLiveBtn.classList.add('active');
+    lpModeFolderBtn && lpModeFolderBtn.classList.remove('active');
+  } else {
+    lpModeFolderBtn && lpModeFolderBtn.classList.add('active');
+    lpModeLiveBtn && lpModeLiveBtn.classList.remove('active');
+  }
+  lpLoadState();
+  if (lpMode === 'live') runLivePreviewFromConfig(); else lpRender();
+  lpStartAuto();
+}
+
+function lpHide() {
+  if (!lpOverlay) return;
+  lpOverlay.classList.add('hidden');
+  lpOverlay.setAttribute('aria-hidden','true');
+  if (lpTimer) { clearInterval(lpTimer); lpTimer = null; }
+}
+
+async function lpRender() {
+  if (!lpGrid) return;
+  lpGrid.innerHTML = '';
+  let urls: string[] = [];
+  if (lpMode === 'folder') urls = await lpListPreviewImages(); else urls = lpLiveImages.slice();
+  // If a single image is present, fill the entire overlay area
+  if (urls.length === 1) {
+    (lpGrid as HTMLElement).style.display = 'block';
+    (lpGrid as HTMLElement).style.gridTemplateColumns = '';
+    (lpGrid as HTMLElement).style.width = '100%';
+    (lpGrid as HTMLElement).style.height = '100%';
+    const wrap = document.createElement('div');
+    wrap.className = 'gallery-item';
+    (wrap.style as any).aspectRatio = 'auto';
+    wrap.style.width = '100%';
+    wrap.style.height = '100%';
+    const img = document.createElement('img');
+    img.src = urls[0]!;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit; // contain, cover, actual
+    wrap.appendChild(img);
+    wrap.addEventListener('click', () => {
+      try { galleryUrls = urls as any; openLightbox(0); } catch {}
+    });
+    lpGrid.appendChild(wrap);
+  } else {
+    // Grid of thumbnails
+    const size = Math.round(200 * lpZoom);
+    (lpGrid as HTMLElement).style.display = 'grid';
+    (lpGrid as HTMLElement).style.gridTemplateColumns = `repeat(auto-fill, ${size}px)`;
+    (lpGrid as HTMLElement).style.width = '';
+    (lpGrid as HTMLElement).style.height = '';
+    urls.forEach((url, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'gallery-item';
+      wrap.style.width = `${size}px`;
+      wrap.style.height = `${size}px`;
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit;
+      wrap.appendChild(img);
+      wrap.addEventListener('click', () => {
+        try { galleryUrls = urls as any; openLightbox(i); } catch {}
+      });
+      lpGrid.appendChild(wrap);
+    });
+  }
+  if (lpBg === 'dark') lpGrid.style.background = '#111';
+  else if (lpBg === 'light') lpGrid.style.background = '#eee';
+  else lpGrid.style.background = 'repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 16px 16px';
+}
+
+async function runLivePreviewFromConfig() {
+  try {
+    const iw = document.getElementById('cfg-image-w') as HTMLInputElement | null;
+    const ih = document.getElementById('cfg-image-h') as HTMLInputElement | null;
+    const ib = document.getElementById('cfg-image-bg') as HTMLInputElement | null;
+    const cfg: any = { image: { width: Number(iw?.value || '1024'), height: Number(ih?.value || '1024'), background: String(ib?.value || 'transparent') }, layers: readLayersFromTable() };
+    const count = 1;
+    const seed = 'ui-' + Date.now().toString(36) + '-' + Math.floor(Math.random()*1e6);
+    const res = await (window as any).foundry.previewLive(cfg, count, seed);
+    if (res && res.ok && Array.isArray(res.images) && res.images.length) {
+      lpLiveImages = res.images.map((b64: string) => 'data:image/png;base64,' + b64);
+      lpRender();
+      return;
+    }
+    // Fallback 1: single composite via previewEffects (accurate effects)
+    try {
+      const one = await (window as any).foundry.previewEffects(cfg);
+      if (one && one.ok && one.b64) {
+        lpLiveImages = ['data:image/png;base64,' + String(one.b64)];
+        lpRender();
+        return;
+      }
+    } catch {}
+    // Fallback 2: local canvas compositor without native deps
+    try {
+      const oneUrl = await lpDrawLocalOne(cfg);
+      if (oneUrl) {
+        lpLiveImages = [oneUrl];
+        lpRender();
+        return;
+      }
+    } catch {}
+    // Fallback 3: use last generated preview images from folder
+    try {
+      lpLiveImages = await lpListPreviewImages();
+      lpRender();
+    } catch {}
+  } catch (e) { console.error('runLivePreviewFromConfig failed', e); }
+}
+
+// Debounced live previews from current form
+function scheduleLiveUpdate() {
+  lpMode = 'live';
+  if (lpModeLiveBtn) lpModeLiveBtn.classList.add('active');
+  if (lpModeFolderBtn) lpModeFolderBtn.classList.remove('active');
+  if (!lpOverlay || lpOverlay.classList.contains('hidden')) lpShow();
+  if (lpLiveDebounce) clearTimeout(lpLiveDebounce);
+  lpLiveDebounce = setTimeout(runLivePreviewFromConfig, 300);
+}
+
 // Views & Tabs
 const viewLauncher = document.getElementById('view-launcher');
 const viewApp = document.getElementById('view-app');
@@ -1013,26 +1211,65 @@ function isImageName(name) {
 async function refreshOverrideAssetSelect(ovRow) {
   if (!ovRow) return;
   const idx = ovRow.getAttribute('data-idx');
-  const layerRow = ovRow.previousElementSibling as HTMLElement | null;
-  if (!layerRow) return;
+  // Find the layer row by looking for the previous sibling that has data-type="layer"
+  let layerRow = ovRow.previousElementSibling as HTMLElement | null;
+  while (layerRow && layerRow.getAttribute('data-type') !== 'layer') {
+    layerRow = layerRow.previousElementSibling as HTMLElement | null;
+  }
+  if (!layerRow) {
+    console.log('refreshOverrideAssetSelect: Could not find layer row');
+    return;
+  }
   const pathInput = layerRow.querySelector('.layer-path') as HTMLInputElement | null;
   const select = ovRow.querySelector('.ov-asset') as HTMLSelectElement | null;
   if (!select) return;
   select.innerHTML = '';
   const rel = pathInput ? (pathInput.value || '').trim() : '';
-  if (!rel) return;
+  console.log('refreshOverrideAssetSelect: Layer path value:', rel, 'for layer:', layerRow.querySelector('.layer-name')?.value);
+  if (!rel) {
+    // Add a placeholder option when no path is specified
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'Select a layer path first';
+    opt.disabled = true;
+    select.appendChild(opt);
+    return;
+  }
   try {
     const listing = await window.foundry.listDir(rel);
     if (listing.ok && Array.isArray(listing.items)) {
       const files = listing.items.filter((n) => !n.endsWith('/') && isImageName(n));
-      files.forEach((name) => {
+      if (files.length === 0) {
+        // Add a placeholder when no image files are found
         const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
+        opt.value = '';
+        opt.textContent = 'No image files found';
+        opt.disabled = true;
         select.appendChild(opt);
-      });
+      } else {
+        files.forEach((name) => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      }
+    } else {
+      // Add error message when listDir fails
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'Error loading assets';
+      opt.disabled = true;
+      select.appendChild(opt);
     }
-  } catch {}
+  } catch (error) {
+    // Add error message when an exception occurs
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'Error loading assets';
+    opt.disabled = true;
+    select.appendChild(opt);
+  }
 }
 
 function summarizeEffects(eff) {
@@ -1139,22 +1376,29 @@ function setProgress(percent, message) {
   progressPercent.textContent = p + '%';
   if (message) progressText.textContent = String(message);
 }
+
+function updateProgress(current, total, message) {
+  if (!window.currentProgress) return;
+  window.currentProgress.current = current;
+  window.currentProgress.total = total;
+  if (message) window.currentProgress.message = message;
+  
+  const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+  setProgress(percent, window.currentProgress.message);
+}
 function startProgress(message, estimateMs) {
   if (progressIntervalId) { clearInterval(progressIntervalId); progressIntervalId = null; }
   showProgressUI(true);
   setProgress(0, message || 'Working…');
-  const start = Date.now();
-  const duration = Math.max(2000, Number(estimateMs) || 10000);
-  progressIntervalId = setInterval(() => {
-    const elapsed = Date.now() - start;
-    const frac = Math.min(0.98, (elapsed / duration) * 0.98);
-    setProgress(Math.round(frac * 100), message || 'Working…');
-  }, 200);
+  // Store progress state for manual updates
+  window.currentProgress = { current: 0, total: 100, message: message || 'Working…' };
 }
 function endProgress(message, ok = true) {
   if (progressIntervalId) { clearInterval(progressIntervalId); progressIntervalId = null; }
   setProgress(100, message || (ok ? 'Completed.' : 'Failed.'));
-  setTimeout(() => { showProgressUI(false); }, 1000);
+  // Keep the progress bar visible longer on failure so the message is readable
+  const delay = ok ? 1200 : 6000;
+  setTimeout(() => { showProgressUI(false); }, delay);
 }
 function readLayersFromTable() {
   const rows = Array.from(tbody.querySelectorAll('tr[data-type="layer"]')) as HTMLElement[];
@@ -1264,10 +1508,8 @@ function bindLayerTableEvents() {
       const isHidden = row.classList.contains('hidden');
       row.classList.toggle('hidden', !isHidden);
       row.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
-      if (isHidden) {
-        // Now visible; refresh asset select
-        refreshOverrideAssetSelect(row);
-      }
+      // Always refresh asset select when overrides button is clicked
+      refreshOverrideAssetSelect(row);
     } else if (target.classList.contains('btn-effects')) {
       const row = tr.nextElementSibling as HTMLElement | null;
       if (!row || row.getAttribute('data-type') !== 'effects') return;
@@ -1900,15 +2142,39 @@ document.getElementById('btn-validate').onclick = async () => {
 document.getElementById('btn-preview').onclick = async () => {
   const cRaw = document.getElementById('preview-count').value;
   const cNum = Math.max(1, Number(cRaw) || 9);
-  // Randomize seed so previews differ every run
-  const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-  startProgress('Generating previews…', Math.min(60000, 500 * cNum + 2000));
-  const res = await window.foundry.run(['preview', '--count', String(cNum), '--seed', seed]);
-  log((res.ok ? res.stdout : res.error) + (res.ok ? ('\nSeed: ' + seed) : ''));
-  endProgress(res.ok ? 'Previews generated' : 'Preview failed', res.ok);
-  // Give the FS a moment to flush writes on Windows
-  setTimeout(() => refreshPreviews(), 200);
+  startProgress('Generating previews…', 0);
+  updateProgress(0, cNum, 'Starting preview…');
+  // Toggle preview controls
+  const pPause = document.getElementById('btn-preview-pause') as HTMLButtonElement | null;
+  const pResume = document.getElementById('btn-preview-resume') as HTMLButtonElement | null;
+  const pStop = document.getElementById('btn-preview-stop') as HTMLButtonElement | null;
+  if (pPause && pResume && pStop) { pPause.style.display = 'block'; pResume.style.display = 'none'; pStop.style.display = 'block'; }
+  try {
+    const res = await window.foundry.previewWithProgress(cNum);
+    if (res && res.ok) {
+      updateProgress(cNum, cNum, 'Previews generated');
+      endProgress('Previews generated', true);
+      setTimeout(() => refreshPreviews(), 200);
+    } else {
+      const msg = res && res.error ? String(res.error) : 'Preview failed';
+      logError(msg);
+      endProgress(msg, false);
+    }
+  } catch (e) {
+    const msg = String((e as any)?.message || e || 'Preview failed');
+    logError(msg);
+    endProgress(msg, false);
+  }
+  if (pPause && pResume && pStop) { pPause.style.display = 'none'; pResume.style.display = 'none'; pStop.style.display = 'none'; }
 }
+
+// Preview controls
+const prevPauseBtn = document.getElementById('btn-preview-pause') as HTMLButtonElement | null;
+const prevResumeBtn = document.getElementById('btn-preview-resume') as HTMLButtonElement | null;
+const prevStopBtn = document.getElementById('btn-preview-stop') as HTMLButtonElement | null;
+if (prevPauseBtn) prevPauseBtn.onclick = async () => { try { await window.foundry.pausePreview(); prevPauseBtn.style.display = 'none'; if (prevResumeBtn) prevResumeBtn.style.display = 'block'; } catch {} };
+if (prevResumeBtn) prevResumeBtn.onclick = async () => { try { await window.foundry.resumePreview(); prevResumeBtn.style.display = 'none'; if (prevPauseBtn) prevPauseBtn.style.display = 'block'; } catch {} };
+if (prevStopBtn) prevStopBtn.onclick = async () => { try { await window.foundry.stopPreview(); if (prevPauseBtn) prevPauseBtn.style.display = 'none'; if (prevResumeBtn) prevResumeBtn.style.display = 'none'; prevStopBtn.style.display = 'none'; endProgress('Preview stopped', false); } catch {} };
 document.getElementById('btn-build').onclick = async () => {
   const cRaw = document.getElementById('build-count').value;
   const cNum = Math.max(1, Number(cRaw) || 10);
@@ -1974,16 +2240,107 @@ document.getElementById('btn-validate').onclick = async () => {
 document.getElementById('btn-preview').onclick = async () => {
   const cRaw = document.getElementById('preview-count').value;
   const cNum = Math.max(1, Number(cRaw) || 9);
-  // Randomize seed so previews differ every run
-  const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-  const res = await runTaskWithProgress('Generating previews.', Math.min(60000, 500 * cNum + 2000), () => window.foundry.run(['preview', '--count', String(cNum), '--seed', seed]));
-  if (res && res.ok) setTimeout(() => refreshPreviews(), 200);
+  startProgress('Generating previews…', 0);
+  updateProgress(0, cNum, 'Starting preview…');
+  try {
+    const res = await window.foundry.previewWithProgress(cNum);
+    if (res && res.ok) {
+      updateProgress(cNum, cNum, 'Previews generated');
+      endProgress('Previews generated', true);
+      setTimeout(() => refreshPreviews(), 200);
+    } else {
+      const msg = res && res.error ? String(res.error) : 'Preview failed';
+      logError(msg);
+      endProgress(msg, false);
+    }
+  } catch (e) {
+    const msg = String((e as any)?.message || e || 'Preview failed');
+    logError(msg);
+    endProgress(msg, false);
+  }
 };
+// Build state management
+let isBuilding = false;
+let isPaused = false;
+
+function showBuildControls(building: boolean, paused: boolean) {
+  const buildBtn = document.getElementById('btn-build') as HTMLButtonElement;
+  const pauseBtn = document.getElementById('btn-pause') as HTMLButtonElement;
+  const resumeBtn = document.getElementById('btn-resume') as HTMLButtonElement;
+  const stopBtn = document.getElementById('btn-stop') as HTMLButtonElement;
+  if (!buildBtn || !pauseBtn || !resumeBtn || !stopBtn) return;
+  if (building) {
+    buildBtn.style.display = 'none';
+    pauseBtn.style.display = paused ? 'none' : 'block';
+    resumeBtn.style.display = paused ? 'block' : 'none';
+    stopBtn.style.display = 'block';
+  } else {
+    buildBtn.style.display = 'block';
+    pauseBtn.style.display = 'none';
+    resumeBtn.style.display = 'none';
+    stopBtn.style.display = 'none';
+  }
+}
+
 document.getElementById('btn-build').onclick = async () => {
   const cRaw = document.getElementById('build-count').value;
   const cNum = Math.max(1, Number(cRaw) || 10);
-  const res = await runTaskWithProgress('Building collection.', Math.min(120000, 700 * cNum + 3000), () => window.foundry.run(['build', '--count', String(cNum)]));
-  if (res) refreshPreviews();
+  isBuilding = true;
+  isPaused = false;
+  showBuildControls(true, false);
+  
+  startProgress('Building collection...', 0);
+  updateProgress(0, cNum, 'Generating traits...');
+  
+  try {
+    const res = await window.foundry.buildWithProgress(cNum);
+    if (res && res.ok) {
+      updateProgress(cNum, cNum, 'Collection built successfully!');
+      endProgress('Collection built successfully!', true);
+      refreshPreviews();
+    } else {
+      const msg = res && res.error ? String(res.error) : 'Build failed';
+      logError(msg);
+      endProgress(msg, false);
+    }
+  } catch (error) {
+    const msg = String((error as any)?.message || error || 'Build failed');
+    logError(msg);
+    endProgress(msg, false);
+  } finally {
+    isBuilding = false;
+    isPaused = false;
+    showBuildControls(false, false);
+  }
+};
+
+const btnPause = document.getElementById('btn-pause');
+if (btnPause) btnPause.onclick = async () => {
+  try {
+    await window.foundry.pauseBuild();
+    isPaused = true;
+    showBuildControls(true, true);
+  } catch {}
+};
+
+const btnResume = document.getElementById('btn-resume');
+if (btnResume) btnResume.onclick = async () => {
+  try {
+    await window.foundry.resumeBuild();
+    isPaused = false;
+    showBuildControls(true, false);
+  } catch {}
+};
+
+const btnStop = document.getElementById('btn-stop');
+if (btnStop) btnStop.onclick = async () => {
+  try {
+    await window.foundry.stopBuild();
+    isBuilding = false;
+    isPaused = false;
+    showBuildControls(false, false);
+    endProgress('Build stopped by user', false);
+  } catch {}
 };
 document.getElementById('btn-upload').onclick = async () => {
   const provider = document.getElementById('upload-provider').value;
@@ -3709,7 +4066,6 @@ if (falFetchCatalogUrlBtn_extra) falFetchCatalogUrlBtn_extra.addEventListener('c
 });
 
 /* --- Live Preview overlay (disabled, replaced by renderer/live-preview.ts) ---
-const lpOverlay = document.getElementById('live-preview') as HTMLElement | null;
 const lpGrid = document.getElementById('lp-grid') as HTMLElement | null;
 const lpToggleBtn = document.getElementById('live-prev-toggle');
 const lpRefreshBtn = document.getElementById('live-prev-refresh');
@@ -3723,8 +4079,6 @@ const lpCloseBtn = document.getElementById('lp-close');
 const lpResetBtn = document.getElementById('lp-reset');
 const lpHeader = document.getElementById('lp-header');
 const lpResize = document.getElementById('lp-resize');
-const lpModeFolderBtn = document.getElementById('lp-mode-folder') as HTMLButtonElement | null;
-const lpModeLiveBtn = document.getElementById('lp-mode-live') as HTMLButtonElement | null;
 const lpZoomEl = document.getElementById('lp-zoom') as HTMLInputElement | null;
 const lpFitEl = document.getElementById('lp-fit') as HTMLSelectElement | null;
 const lpBgEl = document.getElementById('lp-bg') as HTMLSelectElement | null;
@@ -3732,12 +4086,10 @@ const lpClearBtn = document.getElementById('lp-clear') as HTMLButtonElement | nu
 const lpRerollBtn = document.getElementById('lp-reroll') as HTMLButtonElement | null;
 
 // Default to Live mode so opening the overlay generates immediately
-let lpMode: 'folder' | 'live' = 'live';
 let lpZoom = 1.0;
 let lpFit: 'contain' | 'cover' | 'actual' = 'cover';
 let lpBg: 'check' | 'dark' | 'light' = 'check';
 let lpLiveImages: string[] = [];
-let lpLiveDebounce: any = null;
 
 // Ensure UI reflects default fit
 if (lpFitEl) { try { lpFitEl.value = 'cover'; } catch {} }
@@ -3799,66 +4151,6 @@ async function lpListPreviewImages(): Promise<string[]> {
     // Build robust file URLs (handles absolute/relative preview dirs and encodes '#')
     return files.map((name:string)=> fileUrl(projectBase, primary, name));
   } catch { return []; }
-}
-
-async function lpRender() {
-  if (!lpGrid) return;
-  lpGrid.innerHTML = '';
-  let urls: string[] = [];
-  if (lpMode === 'folder') urls = await lpListPreviewImages(); else urls = lpLiveImages.slice();
-  // If a single image is present, fill the entire overlay area
-  if (urls.length === 1) {
-    (lpGrid as HTMLElement).style.display = 'block';
-    (lpGrid as HTMLElement).style.gridTemplateColumns = '';
-    (lpGrid as HTMLElement).style.width = '100%';
-    (lpGrid as HTMLElement).style.height = '100%';
-    const wrap = document.createElement('div');
-    wrap.className = 'gallery-item';
-    (wrap.style as any).aspectRatio = 'auto';
-    wrap.style.width = '100%';
-    wrap.style.height = '100%';
-    const img = document.createElement('img');
-    img.src = urls[0]!;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit; // contain, cover, actual
-    wrap.appendChild(img);
-    wrap.addEventListener('click', () => {
-      try { galleryUrls = urls as any; openLightbox(0); } catch {}
-    });
-    lpGrid.appendChild(wrap);
-  } else {
-    // Grid of thumbnails
-    const size = Math.round(200 * lpZoom);
-    (lpGrid as HTMLElement).style.display = 'grid';
-    (lpGrid as HTMLElement).style.gridTemplateColumns = `repeat(auto-fill, minmax(${Math.max(120, size)}px, 1fr))`;
-    (lpGrid as HTMLElement).style.width = '';
-    (lpGrid as HTMLElement).style.height = '';
-    urls.forEach((u)=>{
-      const wrap = document.createElement('div');
-      wrap.className = 'gallery-item';
-      // Let CSS grid control sizing; no explicit width/height
-      const img = document.createElement('img');
-      img.src = u;
-      img.style.objectFit = (lpFit === 'actual') ? 'contain' : lpFit;
-      wrap.appendChild(img);
-      wrap.addEventListener('click', () => {
-        try {
-          galleryUrls = urls as any;
-          openLightbox(urls.indexOf(u));
-        } catch {}
-      });
-      lpGrid.appendChild(wrap);
-    });
-  }
-  // Grid background
-  if (lpBg === 'dark') {
-    lpGrid.style.background = '#111';
-  } else if (lpBg === 'light') {
-    lpGrid.style.background = '#eee';
-  } else {
-    lpGrid.style.background = 'repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 16px 16px';
-  }
 }
 
 // --- Live Preview: local fallback compositor (no native deps) ---
@@ -3948,30 +4240,6 @@ function lpStartAuto() {
       else lpRender();
     }, 2000);
   }
-}
-
-function lpShow() {
-  if (!lpOverlay) return;
-  lpOverlay.classList.remove('hidden');
-  lpOverlay.setAttribute('aria-hidden','false');
-  // Ensure UI reflects current mode and generate immediately in Live
-  if (lpMode === 'live') {
-    lpModeLiveBtn && lpModeLiveBtn.classList.add('active');
-    lpModeFolderBtn && lpModeFolderBtn.classList.remove('active');
-  } else {
-    lpModeFolderBtn && lpModeFolderBtn.classList.add('active');
-    lpModeLiveBtn && lpModeLiveBtn.classList.remove('active');
-  }
-  lpLoadState();
-  if (lpMode === 'live') runLivePreviewFromConfig(); else lpRender();
-  lpStartAuto();
-}
-
-function lpHide() {
-  if (!lpOverlay) return;
-  lpOverlay.classList.add('hidden');
-  lpOverlay.setAttribute('aria-hidden','true');
-  if (lpTimer) { clearInterval(lpTimer); lpTimer = null; }
 }
 
 if (lpToggleBtn) lpToggleBtn.addEventListener('click', () => { if (lpOverlay?.classList.contains('hidden')) lpShow(); else lpHide(); });
@@ -4078,57 +4346,6 @@ const cfgBg = document.getElementById('cfg-image-bg') as HTMLInputElement | null
 if (cfgW) { cfgW.addEventListener('input', scheduleLiveUpdate); cfgW.addEventListener('change', scheduleLiveUpdate); }
 if (cfgH) { cfgH.addEventListener('input', scheduleLiveUpdate); cfgH.addEventListener('change', scheduleLiveUpdate); }
 if (cfgBg) { cfgBg.addEventListener('input', scheduleLiveUpdate); cfgBg.addEventListener('change', scheduleLiveUpdate); }
-
- 
-// Debounced live previews from current form
-function scheduleLiveUpdate() {
-  lpMode = 'live';
-  if (lpModeLiveBtn) lpModeLiveBtn.classList.add('active');
-  if (lpModeFolderBtn) lpModeFolderBtn.classList.remove('active');
-  if (!lpOverlay || lpOverlay.classList.contains('hidden')) lpShow();
-  if (lpLiveDebounce) clearTimeout(lpLiveDebounce);
-  lpLiveDebounce = setTimeout(runLivePreviewFromConfig, 300);
-}
-
-async function runLivePreviewFromConfig() {
-  try {
-    const iw = document.getElementById('cfg-image-w') as HTMLInputElement | null;
-    const ih = document.getElementById('cfg-image-h') as HTMLInputElement | null;
-    const ib = document.getElementById('cfg-image-bg') as HTMLInputElement | null;
-    const cfg: any = { image: { width: Number(iw?.value || '1024'), height: Number(ih?.value || '1024'), background: String(ib?.value || 'transparent') }, layers: readLayersFromTable() };
-    const count = 1;
-    const seed = 'ui-' + Date.now().toString(36) + '-' + Math.floor(Math.random()*1e6);
-    const res = await (window as any).foundry.previewLive(cfg, count, seed);
-    if (res && res.ok && Array.isArray(res.images) && res.images.length) {
-      lpLiveImages = res.images.map((b64: string) => 'data:image/png;base64,' + b64);
-      lpRender();
-      return;
-    }
-    // Fallback 1: single composite via previewEffects (accurate effects)
-    try {
-      const one = await (window as any).foundry.previewEffects(cfg);
-      if (one && one.ok && one.b64) {
-        lpLiveImages = ['data:image/png;base64,' + String(one.b64)];
-        lpRender();
-        return;
-      }
-    } catch {}
-    // Fallback 2: local canvas compositor without native deps
-    try {
-      const oneUrl = await lpDrawLocalOne(cfg);
-      if (oneUrl) {
-        lpLiveImages = [oneUrl];
-        lpRender();
-        return;
-      }
-    } catch {}
-    // Fallback 3: use last generated preview images from folder
-    try {
-      lpLiveImages = await lpListPreviewImages();
-      lpRender();
-    } catch {}
-  } catch (e) { console.error('runLivePreviewFromConfig failed', e); }
-}
 
 
 function lpPushLive(dataUrl: string) {

@@ -3,6 +3,16 @@ declare global {
   interface Window {
     foundry: {
       run(args: string[]): Promise<{ ok: boolean; stdout?: string; error?: string }>;
+      buildWithProgress(count: number): Promise<{ ok: boolean; stdout?: string; error?: string }>;
+      pauseBuild(): Promise<{ ok: boolean }>;
+      resumeBuild(): Promise<{ ok: boolean }>;
+      stopBuild(): Promise<{ ok: boolean }>;
+      onBuildProgress(handler: (data: any) => void): void;
+      previewWithProgress(count: number): Promise<{ ok: boolean; stdout?: string; error?: string }>;
+      pausePreview(): Promise<{ ok: boolean }>;
+      resumePreview(): Promise<{ ok: boolean }>;
+      stopPreview(): Promise<{ ok: boolean }>;
+      onPreviewProgress(handler: (data: any) => void): void;
       chooseProjectDir(): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
       getProjectDir(): Promise<{ ok: boolean; projectDir?: string }>;
       setProjectDir(dir: string): Promise<{ ok: boolean; projectDir?: string; error?: string }>;

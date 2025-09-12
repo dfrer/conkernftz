@@ -54,34 +54,44 @@ export function generateEditionsConstrained(
   const maxOccRules = constraints.rules?.maxOccurrences ?? [];
   const occCounts = new Map<string, number>(); // key like "Layer:Value"
 
+  // Pre-compute rule lookups for better performance
+  const ruleLookup = new Map<string, { max: number; layer: string; value: string }>();
+  for (const rule of maxOccRules) {
+    const [layer, value] = rule.trait.split(':');
+    if (layer && value) {
+      ruleLookup.set(rule.trait, { max: rule.max, layer, value });
+    }
+  }
+
+  // Pre-filter catalog entries with options
+  const validEntries = catalog.filter(entry => entry.options.length > 0);
+
   for (let i = 0; i < count; i++) {
     let attempts = 0;
     let accepted: GeneratedEdition | null = null;
+    
     while (attempts++ < maxAttempts) {
-      // draft one edition
+      // draft one edition - optimized loop
       const traits: TraitKV = {};
       const picks: Array<{ layer: string; option: LayerAssetOption }> = [];
-      for (const entry of catalog) {
-        if (entry.options.length === 0) continue;
+      
+      for (const entry of validEntries) {
         const pick = weightedPick(entry.options, rng.next());
         traits[entry.spec.name] = pick.value;
         picks.push({ layer: entry.spec.name, option: pick });
       }
 
-      // rules check
+      // Early exit for rules check
       if (engine) {
         const res = engine.validate(traits);
         if (!res.ok) continue;
       }
 
-      // max occurrences check
-      if (maxOccRules.length > 0) {
+      // Optimized max occurrences check
+      if (ruleLookup.size > 0) {
         let violates = false;
-        for (const rule of maxOccRules) {
-          const key = rule.trait;
-          const [layer, value] = key.split(':');
-          if (!layer || !value) continue;
-          if (traits[layer] === value) {
+        for (const [key, rule] of ruleLookup) {
+          if (traits[rule.layer] === rule.value) {
             const used = occCounts.get(key) ?? 0;
             if (used >= rule.max) {
               violates = true;
@@ -92,29 +102,26 @@ export function generateEditionsConstrained(
         if (violates) continue;
       }
 
-      // uniqueness check
+      // Optimized uniqueness check
       if (constraints.uniqueness) {
         const dna = makeDna(traits, constraints.uniqueness);
         if (seenDna.has(dna)) {
           continue;
         }
-        // accept
         seenDna.add(dna);
       }
 
       accepted = { traits, picks };
       break;
     }
+    
     if (!accepted) {
       throw new Error(`Failed to generate a valid unique edition after ${maxAttempts} attempts. Consider relaxing rules or uniqueness.`);
     }
 
-    // update occurrence counts
-    for (const rule of maxOccRules) {
-      const key = rule.trait;
-      const [layer, value] = key.split(':');
-      if (!layer || !value) continue;
-      if (accepted.traits[layer] === value) {
+    // Update occurrence counts efficiently
+    for (const [key, rule] of ruleLookup) {
+      if (accepted.traits[rule.layer] === rule.value) {
         occCounts.set(key, (occCounts.get(key) ?? 0) + 1);
       }
     }

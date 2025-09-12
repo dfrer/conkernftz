@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import type { BlendMode } from './types.js';
+import type { ResolvedEffects } from './effects.js';
 
 export type SharpBlendMode =
   | 'clear'
@@ -33,7 +34,10 @@ export type SharpBlendMode =
 export interface CompositeLayerInput {
   path: string; // absolute path to image asset
   blend?: BlendMode;
-  opacity?: number; // 0..1
+  opacity?: number; // 0..1 (applied to the whole layer group)
+  offsetX?: number; // pixels
+  offsetY?: number; // pixels
+  effects?: ResolvedEffects; // optional visual effects and per-layer controls
 }
 
 export interface CompositeOptions {
@@ -64,19 +68,18 @@ export async function compositeLayers(
 
     const composites: sharp.OverlayOptions[] = [];
     for (const layer of layers) {
-      let pipeline = sharp(layer.path)
-        .resize(options.width, options.height, { fit: 'fill' })
-        .ensureAlpha();
-      if (layer.opacity !== undefined && layer.opacity >= 0 && layer.opacity <= 1 && layer.opacity !== 1) {
-        // Scale alpha channel by desired opacity
-        pipeline = pipeline.linear([1, 1, 1, clamp01(layer.opacity)], [0, 0, 0, 0]);
+      const group = await renderLayerGroup(layer, options);
+      const sharpBlend = mapBlendModeToSharp(layer.blend ?? layer.effects?.blend ?? 'normal');
+      // Group-level opacity scaling
+      let groupBuf = group;
+      const op = layer.opacity ?? layer.effects?.opacity;
+      if (op !== undefined && op >= 0 && op <= 1 && op !== 1) {
+        groupBuf = await sharp(groupBuf).ensureAlpha().linear([1, 1, 1, clamp01(op)], [0, 0, 0, 0]).toBuffer();
       }
-      const overlay = await pipeline.toBuffer();
-      const sharpBlend = mapBlendModeToSharp(layer.blend ?? 'normal');
       composites.push({
-        input: overlay,
-        top: 0,
-        left: 0,
+        input: groupBuf,
+        top: Math.round(layer.offsetY ?? layer.effects?.offsetY ?? 0),
+        left: Math.round(layer.offsetX ?? layer.effects?.offsetX ?? 0),
         blend: (sharpBlend as sharp.OverlayOptions['blend']) ?? 'over',
       });
     }
@@ -200,16 +203,21 @@ async function compositeLayersCpu(
   let outPixels = new Uint8ClampedArray(baseRaw.buffer, baseRaw.byteOffset, baseRaw.byteLength);
 
   for (const layer of layers) {
-    const overlayRaw = await sharp(layer.path)
-      .resize(width, height, { fit: 'fill' })
-      .ensureAlpha()
-      .raw()
-      .toBuffer();
+    // Render layer + effects to a flattened RGBA buffer
+    const group = await renderLayerGroup(layer, options);
+    let prepared = sharp(group).ensureAlpha();
+    const op = layer.opacity ?? layer.effects?.opacity;
+    if (op !== undefined && op >= 0 && op <= 1 && op !== 1) {
+      prepared = prepared.linear([1, 1, 1, clamp01(op)], [0, 0, 0, 0]);
+    }
+    const overlayRaw = await prepared.raw().toBuffer();
     const overlayPixels = new Uint8ClampedArray(overlayRaw.buffer, overlayRaw.byteOffset, overlayRaw.byteLength);
 
-    const mode = layer.blend ?? 'normal';
-    const opacity = clamp01(layer.opacity ?? 1);
-    outPixels = blendPixelArrays(outPixels, overlayPixels, width, height, mode, opacity);
+    const mode = layer.blend ?? layer.effects?.blend ?? 'normal';
+    const opacity = 1; // already applied above
+    const offX = Math.round(layer.offsetX ?? layer.effects?.offsetX ?? 0);
+    const offY = Math.round(layer.offsetY ?? layer.effects?.offsetY ?? 0);
+    outPixels = blendPixelArrays(outPixels, overlayPixels, width, height, mode, opacity, offX, offY);
   }
 
   const png = await sharp(Buffer.from(outPixels), {
@@ -220,6 +228,193 @@ async function compositeLayersCpu(
   return png;
 }
 
+// Render a single layer and its effects into a flattened RGBA buffer the size of the canvas,
+// on a transparent background. The returned buffer can be composited with the requested blend
+// mode and offsets.
+async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOptions): Promise<Buffer> {
+  const width = options.width;
+  const height = options.height;
+  let base = sharp(layer.path).resize(width, height, { fit: 'fill' }).ensureAlpha();
+  const effects = layer.effects;
+  // Base adjustments before any behind/around effects
+  if (effects?.modulate) {
+    base = base.modulate({
+      hue: typeof effects.modulate.hue === 'number' ? effects.modulate.hue : undefined,
+      saturation: typeof effects.modulate.saturation === 'number' ? effects.modulate.saturation : undefined,
+      brightness: typeof effects.modulate.brightness === 'number' ? effects.modulate.brightness : undefined,
+    } as any);
+  }
+  if (typeof effects?.blur === 'number' && effects.blur > 0) {
+    base = base.blur(Math.max(0, effects.blur));
+  }
+  const baseBuf = await base.png().toBuffer();
+
+  const overlays: sharp.OverlayOptions[] = [];
+
+  // Shadow (behind)
+  // Note: effects referenced as const above
+  if (effects?.shadow) {
+    const sil = await makeSilhouette(layer.path, width, height, effects.shadow.color ?? '#000000');
+    let shadowBuf = await sharp(sil)
+      .ensureAlpha()
+      .linear([1, 1, 1, clamp01(effects.shadow.opacity ?? 0.35)], [0, 0, 0, 0])
+      .blur(Math.max(0, effects.shadow.blur ?? 16))
+      .png()
+      .toBuffer();
+    // Offset shadow
+    const offY = Math.round(effects.shadow.offsetY ?? 8);
+    const offX = Math.round(effects.shadow.offsetX ?? 8);
+    // If inner shadow, mask by original silhouette
+    if (effects.shadow.inner) {
+      const maskSil = await makeSilhouette(layer.path, width, height, '#ffffff');
+      shadowBuf = await sharp(shadowBuf).composite([{ input: maskSil, blend: 'dest-in' }]).png().toBuffer();
+      overlays.push({ input: shadowBuf, top: offY, left: offX, blend: 'over' });
+    } else {
+      overlays.push({ input: shadowBuf, top: offY, left: offX, blend: 'over' });
+    }
+  }
+
+  // Extrude (behind)
+  if (effects?.extrude) {
+    const sil = await makeSilhouette(layer.path, width, height, effects.extrude.color ?? '#000000');
+    const depth = Math.max(1, Math.min(128, effects.extrude.depth ?? 6));
+    const angle = (typeof effects.extrude.angle === 'number' ? effects.extrude.angle : 135) * (Math.PI / 180);
+    const stepX = Math.round(Math.cos(angle));
+    const stepY = Math.round(Math.sin(angle));
+    const soften = Math.max(0, effects.extrude.soften ?? 0);
+    for (let i = 1; i <= depth; i++) {
+      let buf = await sharp(sil)
+        .ensureAlpha()
+        .linear([1, 1, 1, clamp01(effects.extrude.opacity ?? 0.3)], [0, 0, 0, 0])
+        .png()
+        .toBuffer();
+      if (soften > 0) {
+        buf = await sharp(buf).blur(soften).png().toBuffer();
+      }
+      overlays.push({ input: buf, top: stepY * i, left: stepX * i, blend: 'over' });
+    }
+  }
+
+  // Glow (behind or inside)
+  if (effects?.glow) {
+    const sil = await makeSilhouette(layer.path, width, height, effects.glow.color ?? '#ffffff');
+    let glowBuf = await sharp(sil)
+      .ensureAlpha()
+      .linear([1, 1, 1, clamp01(effects.glow.opacity ?? 0.4)], [0, 0, 0, 0])
+      .blur(Math.max(0, effects.glow.radius ?? 12))
+      .png()
+      .toBuffer();
+    if (effects.glow.inner) {
+      const maskSil = await makeSilhouette(layer.path, width, height, '#ffffff');
+      glowBuf = await sharp(glowBuf).composite([{ input: maskSil, blend: 'dest-in' }]).png().toBuffer();
+    }
+    overlays.push({ input: glowBuf, top: 0, left: 0, blend: 'over' });
+  }
+
+  // Stroke (outside/inside/center)
+  if (effects?.stroke) {
+    const widthPx = Math.max(1, Math.min(64, effects.stroke.width ?? 2));
+    const opacity = clamp01(effects.stroke.opacity ?? 1);
+    const color = effects.stroke.color ?? '#000000';
+    const position = effects.stroke.position ?? 'outside';
+    const silColor = await makeSilhouette(layer.path, width, height, color);
+    const expOutside = await makeExpandedSilhouette(silColor, width, height, opacity, widthPx);
+    const origMask = await makeSilhouette(layer.path, width, height, '#ffffff');
+    if (position === 'outside') {
+      // outside ring = expanded - original
+      const outsideRing = await sharp(expOutside).composite([{ input: origMask, blend: 'dest-out' }]).png().toBuffer();
+      overlays.push({ input: outsideRing, top: 0, left: 0, blend: 'over' });
+    } else if (position === 'inside') {
+      // inside ring = expanded ∩ original
+      const insideRing = await sharp(expOutside).composite([{ input: origMask, blend: 'dest-in' }]).png().toBuffer();
+      overlays.push({ input: insideRing, top: 0, left: 0, blend: 'over' });
+    } else {
+      // center = half inside + half outside
+      const halfOut = Math.ceil(widthPx / 2);
+      const halfIn = Math.floor(widthPx / 2);
+      const expOut = await makeExpandedSilhouette(silColor, width, height, opacity, halfOut);
+      const outRing = await sharp(expOut).composite([{ input: origMask, blend: 'dest-out' }]).png().toBuffer();
+      const expIn = await makeExpandedSilhouette(silColor, width, height, opacity, halfIn);
+      const inRing = await sharp(expIn).composite([{ input: origMask, blend: 'dest-in' }]).png().toBuffer();
+      const merged = await sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+        .composite([{ input: outRing }, { input: inRing }])
+        .png()
+        .toBuffer();
+      overlays.push({ input: merged, top: 0, left: 0, blend: 'over' });
+    }
+  }
+
+  // Base content last
+  // Optional color overlay applied atop base content, then base
+  if (effects?.colorOverlay) {
+    const sil = await makeSilhouette(layer.path, width, height, effects.colorOverlay.color ?? '#ffffff');
+    const colBuf = await sharp(sil)
+      .ensureAlpha()
+      .linear([1, 1, 1, clamp01(effects.colorOverlay.opacity ?? 0.25)], [0, 0, 0, 0])
+      .png()
+      .toBuffer();
+    const blend = (effects.colorOverlay.blend as sharp.OverlayOptions['blend']) || 'over';
+    overlays.push({ input: colBuf, top: 0, left: 0, blend });
+  }
+  overlays.push({ input: baseBuf, top: 0, left: 0, blend: 'over' });
+
+  const transparent = sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  });
+  const out = await transparent.composite(overlays).png().toBuffer();
+  return out;
+}
+
+// Create a solid-color silhouette of the input image using its alpha channel.
+async function makeSilhouette(imgPath: string, width: number, height: number, color: string): Promise<Buffer> {
+  const src = sharp(imgPath).resize(width, height, { fit: 'fill' }).ensureAlpha();
+  const alpha = await src.clone().extractChannel(3).png().toBuffer();
+  const colorImg = sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: color,
+    },
+  });
+  const silhouette = await colorImg.joinChannel(alpha).png().toBuffer();
+  return silhouette;
+}
+
+// Expand a silhouette by offsetting copies; uses step spacing and slight blur for large widths for performance.
+async function makeExpandedSilhouette(silhouette: Buffer, width: number, height: number, opacity: number, px: number): Promise<Buffer> {
+  const dirs: Array<[number, number]> = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
+  const step = px > 24 ? 3 : px > 12 ? 2 : 1;
+  const overlays: sharp.OverlayOptions[] = [];
+  // Base colored silhouette
+  const base = await sharp(silhouette).ensureAlpha().linear([1, 1, 1, clamp01(opacity)], [0, 0, 0, 0]).png().toBuffer();
+  for (let d = step; d <= px; d += step) {
+    for (const [dx, dy] of dirs) {
+      overlays.push({ input: base, top: dy * d, left: dx * d, blend: 'over' });
+    }
+  }
+  const transparent = sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } });
+  let out = await transparent.composite(overlays).png().toBuffer();
+  if (step > 1) {
+    out = await sharp(out).blur(step * 0.75).png().toBuffer();
+  }
+  return out;
+}
+
 function blendPixelArrays(
   base: Uint8ClampedArray,
   src: Uint8ClampedArray,
@@ -227,19 +422,32 @@ function blendPixelArrays(
   height: number,
   mode: BlendMode,
   opacity: number,
+  offsetX: number,
+  offsetY: number,
 ): Uint8ClampedArray {
   const total = width * height * 4;
   const out = new Uint8ClampedArray(base.length);
-  for (let i = 0; i < total; i += 4) {
-    const br = (base[i] ?? 0) / 255;
-    const bg = (base[i + 1] ?? 0) / 255;
-    const bb = (base[i + 2] ?? 0) / 255;
-    const ba = (base[i + 3] ?? 0) / 255;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const br = (base[i] ?? 0) / 255;
+      const bg = (base[i + 1] ?? 0) / 255;
+      const bb = (base[i + 2] ?? 0) / 255;
+      const ba = (base[i + 3] ?? 0) / 255;
 
-    const sr = (src[i] ?? 0) / 255;
-    const sg = (src[i + 1] ?? 0) / 255;
-    const sb = (src[i + 2] ?? 0) / 255;
-    const sa = ((src[i + 3] ?? 0) / 255) * opacity;
+      const sx = x - offsetX;
+      const sy = y - offsetY;
+      let sr = 0,
+        sg = 0,
+        sb = 0,
+        sa = 0;
+      if (sx >= 0 && sy >= 0 && sx < width && sy < height) {
+        const j = (sy * width + sx) * 4;
+        sr = (src[j] ?? 0) / 255;
+        sg = (src[j + 1] ?? 0) / 255;
+        sb = (src[j + 2] ?? 0) / 255;
+        sa = ((src[j + 3] ?? 0) / 255) * opacity;
+      }
 
     if (mode === 'clear') {
       // destination-out: erase destination where source exists
@@ -285,10 +493,11 @@ function blendPixelArrays(
       outB = (cb * sa + bb * ba * (1 - sa)) / outA;
     }
 
-    out[i] = clamp255(outR * 255);
-    out[i + 1] = clamp255(outG * 255);
-    out[i + 2] = clamp255(outB * 255);
-    out[i + 3] = clamp255(outA * 255);
+      out[i] = clamp255(outR * 255);
+      out[i + 1] = clamp255(outG * 255);
+      out[i + 2] = clamp255(outB * 255);
+      out[i + 3] = clamp255(outA * 255);
+    }
   }
   return out;
 }
@@ -503,5 +712,3 @@ function hue2rgb(p: number, q: number, t: number): number {
   if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
   return p;
 }
-
-

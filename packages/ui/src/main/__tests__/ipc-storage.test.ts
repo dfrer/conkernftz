@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi } from 'vitest';
 
 const { handlers, ipcMain, FileManager, listFiles } = vi.hoisted(() => {

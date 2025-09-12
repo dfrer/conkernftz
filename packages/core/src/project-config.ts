@@ -45,6 +45,78 @@ const BlendModeSchema = z.enum([
   'luminosity',
 ]);
 
+const EffectsSchema = z
+  .object({
+    blend: BlendModeSchema.optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    offsetX: z.number().int().optional(),
+    offsetY: z.number().int().optional(),
+    rotate: z.number().optional(),
+    scale: z.number().positive().optional(),
+    glow: z
+      .object({
+        color: z.string().optional(),
+        radius: z.number().int().min(0).optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        preset: z.string().optional(),
+        inner: z.boolean().optional(),
+      })
+      .optional(),
+    stroke: z
+      .object({
+        color: z.string().optional(),
+        width: z.number().int().min(1).optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        preset: z.string().optional(),
+        position: z.enum(['outside', 'inside', 'center']).optional(),
+      })
+      .optional(),
+    shadow: z
+      .object({
+        color: z.string().optional(),
+        blur: z.number().int().min(0).optional(),
+        offsetX: z.number().int().optional(),
+        offsetY: z.number().int().optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        preset: z.string().optional(),
+        inner: z.boolean().optional(),
+      })
+      .optional(),
+    extrude: z
+      .object({
+        color: z.string().optional(),
+        depth: z.number().int().min(1).optional(),
+        angle: z.number().optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        soften: z.number().int().min(0).optional(),
+        preset: z.string().optional(),
+      })
+      .optional(),
+    blur: z.number().min(0).optional(),
+    modulate: z
+      .object({
+        hue: z.number().optional(),
+        saturation: z.number().optional(),
+        brightness: z.number().optional(),
+      })
+      .optional(),
+    colorOverlay: z
+      .object({
+        color: z.string().optional(),
+        opacity: z.number().min(0).max(1).optional(),
+        blend: BlendModeSchema.optional(),
+        preset: z.string().optional(),
+      })
+      .optional(),
+  })
+  .partial();
+
+const AssetOverrideSchema = z.object({
+  target: z.enum(['filename', 'value']),
+  match: z.string(),
+  effects: EffectsSchema,
+});
+
 export const LayerSchema = z.object({
   name: z.string(),
   path: z.string(),
@@ -52,6 +124,8 @@ export const LayerSchema = z.object({
   required: z.boolean().optional(),
   blend: BlendModeSchema.optional(),
   opacity: z.number().min(0).max(1).optional(),
+  effects: EffectsSchema.optional(),
+  overrides: z.array(AssetOverrideSchema).optional(),
 });
 
 export const RulesSchema = z.object({
@@ -131,5 +205,3 @@ export const ProjectConfigSchema = z.object({
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
-
-

@@ -9,6 +9,46 @@ export interface LayerSpec {
   // may override these in the future; for now, they apply to all options of the layer.
   blend?: BlendMode;
   opacity?: number; // 0..1
+  // Optional default effects for all assets in this layer. Individual
+  // per-asset overrides can refine/override these.
+  effects?: AssetEffects;
+  // Optional per-asset overrides. Each entry targets a specific asset in this
+  // layer (by original filename or derived trait value) and can override
+  // compositing parameters and effects for that asset only.
+  overrides?: AssetOverride[];
+}
+
+// Effect knobs that can be applied to a single asset.
+// Not all are necessarily implemented by the compositor yet; unknown fields
+// should be ignored gracefully by downstream code.
+export interface AssetEffects {
+  // Compositing controls
+  blend?: BlendMode;
+  opacity?: number; // 0..1
+  offsetX?: number; // pixels, can be negative
+  offsetY?: number; // pixels, can be negative
+  rotate?: number; // degrees
+  scale?: number; // uniform scale multiplier
+
+  // Visual effects (placeholders for future implementation)
+  glow?: { color?: string; radius?: number; opacity?: number; preset?: string; inner?: boolean };
+  stroke?: { color?: string; width?: number; opacity?: number; preset?: string; position?: 'outside' | 'inside' | 'center' };
+  shadow?: { color?: string; blur?: number; offsetX?: number; offsetY?: number; opacity?: number; preset?: string; inner?: boolean };
+  // Simple 3D extrusion effect by stacking offset silhouettes
+  extrude?: { color?: string; depth?: number; angle?: number; opacity?: number; soften?: number; preset?: string };
+  // Adjustments to the base layer content (applied before other effects)
+  blur?: number; // Gaussian blur radius in px
+  modulate?: { hue?: number; saturation?: number; brightness?: number }; // hue in degrees, others multipliers
+  colorOverlay?: { color?: string; opacity?: number; blend?: BlendMode; preset?: string };
+}
+
+export interface AssetOverride {
+  // How to match the asset in this layer
+  target: 'filename' | 'value';
+  // The string to match against target (e.g. "Hat#10.png" or value "Hat")
+  match: string;
+  // The effect overrides to apply
+  effects: AssetEffects;
 }
 
 export interface RuleEngine {
@@ -87,5 +127,3 @@ export interface ChainAdapter {
     rulesetPda?: string | null;
   }) => Promise<{ mint: string; metadataPda: string }>;
 }
-
-

@@ -4,7 +4,9 @@ export interface SeededRng {
 }
 
 export function createSeededRng(seed: number | string): SeededRng {
-  let state = typeof seed === 'number' ? seed : hashStringToInt(seed);
+  let state = typeof seed === 'number' ? (seed >>> 0) : hashStringToInt(seed);
+  // xorshift32 has a degenerate all-zero state; remap 0 to a fixed non-zero constant
+  if (state === 0) state = 0x9e3779b9; // golden ratio frac as 32-bit
   // xorshift32
   const next = (): number => {
     state ^= state << 13;

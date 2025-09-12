@@ -83,6 +83,11 @@
           <label>Build Count</label>
           <input id="build-count" type="number" value="10"/>
                   <button id="btn-build" class="btn-primary" data-help="build">Build Collection</button>
+                  <div class="row wrap mt-8">
+                    <button id="btn-pause" class="btn-ghost" style="display:none;">Pause</button>
+                    <button id="btn-resume" class="btn-ghost" style="display:none;">Resume</button>
+                    <button id="btn-stop" class="btn-ghost" style="display:none;">Stop</button>
+                  </div>
         </div>
                 <!-- Live Preview controls (moved into left sidebar) -->
                 <div class="sidebar-group">
@@ -104,6 +109,9 @@
                     <button id="live-prev-refresh" class="btn-ghost btn-sm" style="display:none;">Refresh</button>
                     <button id="live-prev-export" class="btn-ghost btn-sm">Export</button>
                     <button id="live-prev-save" class="btn-ghost btn-sm">Save</button>
+                    <button id="btn-preview-pause" class="btn-ghost btn-sm" style="display:none;">Pause</button>
+                    <button id="btn-preview-resume" class="btn-ghost btn-sm" style="display:none;">Resume</button>
+                    <button id="btn-preview-stop" class="btn-ghost btn-sm" style="display:none;">Stop</button>
                   </div>
                 </div>
       </div>
@@ -749,6 +757,7 @@
       <div class="lp-body">
         <div id="lp-grid" class="lp-grid"></div>
       </div>
+      <div id="lp-resize" class="lp-resize"></div>
     </div>
     <script type="module" src="renderer/app.js"></script>
   </body>

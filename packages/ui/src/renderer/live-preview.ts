@@ -270,7 +270,49 @@ function initLivePreview(): void {
   const reroll = cloneResetEl($("lp-reroll")) as HTMLButtonElement | null;
   if (reroll) reroll.onclick = () => { curSeed = newSeed(); renderNow(); };
 
-  // Full-window overlay; no manual resize handle
+  // Make the live preview window draggable
+  const livePreview = $('live-preview');
+  if (livePreview) {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    const header = livePreview.querySelector('.lp-header') as HTMLElement;
+    if (header) {
+      header.style.cursor = 'move';
+      header.addEventListener('mousedown', (e) => {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.closest('.lp-controls') || /^(SELECT|BUTTON|INPUT|LABEL)$/i.test(target.tagName))) {
+          return; // allow interacting with controls
+        }
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = livePreview.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        livePreview.style.position = 'fixed';
+        livePreview.style.left = startLeft + 'px';
+        livePreview.style.top = startTop + 'px';
+        livePreview.style.right = 'auto';
+        e.preventDefault();
+      });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      livePreview.style.left = (startLeft + deltaX) + 'px';
+      livePreview.style.top = (startTop + deltaY) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+  }
 
   // Kick immediately if overlay visible on load
   if (!$('live-preview')?.classList.contains('hidden')) { curSeed = newSeed(); renderNow(); }

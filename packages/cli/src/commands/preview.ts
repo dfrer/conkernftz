@@ -8,7 +8,7 @@ export function previewCmd(): Command {
   cmd
     .description('Generate N random previews')
     .option('--count <n>', 'number of previews', '10')
-    .option('--seed <s>', 'seed for RNG', 'preview')
+    .option('--seed <s>', "seed for RNG ('random' for a new seed per run)", 'preview')
     .option('--max-attempts <n>', 'max attempts per edition (uniqueness)', '500')
     .option('--allow-duplicates', 'allow duplicate DNA in preview output')
     .action(async (opts) => {
@@ -38,16 +38,20 @@ export function previewCmd(): Command {
         } as const;
       }
 
+      const seedInput = String(opts.seed ?? 'preview');
+      const usedSeed = seedInput === 'random'
+        ? `preview:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`
+        : seedInput;
       let editions;
       try {
-        editions = generateEditionsConstrained(catalog, count, { seed: opts.seed }, makeConstraints(!!opts.allowDuplicates));
+        editions = generateEditionsConstrained(catalog, count, { seed: usedSeed }, makeConstraints(!!opts.allowDuplicates));
       } catch (e) {
         // If uniqueness is the culprit and user did not explicitly allow duplicates, fall back for previews only.
         const wantsDupes = !!opts.allowDuplicates;
         if (!wantsDupes) {
           console.warn(String(e));
           console.warn('Falling back to allowing duplicates for preview generation...');
-          editions = generateEditionsConstrained(catalog, count, { seed: opts.seed }, makeConstraints(true));
+          editions = generateEditionsConstrained(catalog, count, { seed: usedSeed }, makeConstraints(true));
         } else {
           throw e;
         }
@@ -59,7 +63,10 @@ export function previewCmd(): Command {
         if (/([\\/])(preview|previews)$/i.test(trimmed)) return trimmed;
         return path.join(trimmed, 'preview');
       }
-      const previewBaseRaw = parsed.export.previewOutDir || normalizeOutDir(parsed.export.outDir);
+      // If a previewOutDir is provided, treat it as a base and ensure it ends with /preview
+      const previewBaseRaw = parsed.export.previewOutDir
+        ? normalizeOutDir(parsed.export.previewOutDir)
+        : normalizeOutDir(parsed.export.outDir);
       const outBase = path.isAbsolute(previewBaseRaw)
         ? previewBaseRaw
         : path.join(process.cwd(), previewBaseRaw);
@@ -82,8 +89,11 @@ export function previewCmd(): Command {
         const buffer = await compositeLayers(
           ed.picks.map((p: any) => ({
             path: p.option.filePath,
-            blend: p.option.blend ?? 'normal',
-            opacity: p.option.opacity ?? 1,
+            blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
+            opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
+            offsetX: p.option.offsetX ?? p.option.effects?.offsetX ?? 0,
+            offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
+            effects: p.option.effects,
           })),
           { width: parsed.image.width, height: parsed.image.height, background: parsed.image.background },
         );
@@ -99,4 +109,3 @@ export function previewCmd(): Command {
     });
   return cmd;
 }
-
