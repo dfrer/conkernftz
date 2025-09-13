@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 #### Unreleased
 
+- Phase 1–3 stability and consistency updates
+  - End‑to‑end image format support: respect `export.imageFormat` (`png|webp`) across preview, build, upload, and UI
+  - Core compositor: added rotate and scale effects; preserved existing effects
+  - Storage: Arweave URIs now normalized to `https://arweave.net/<id>` for wallet/explorer compatibility
+  - CLI build: added `--max-attempts`; unified build pipeline via `core` `buildCollection()`; preview/build progress reporting kept
+  - CLI preview: already supported `--max-attempts`; unchanged
+  - CLI upload: retries with exponential backoff; MIME inference respects configured format
+  - UI (Electron): re‑enabled `webSecurity`; build/preview paths respect format; Configure page has Save button; global Save retained
+  - Chain (Solana): metadata JSON now built via chain adapter inside the unified build path when target is `solana`
+  - CI: added GitHub Actions workflow to build and test on Linux/Windows
+
 - UI/UX overhaul (Electron GUI)
   - Added theme toggle + persistent customization (theme, accent, radius, blur, noise)
   - Derived accent tokens (`--accent-2`, `--accent-soft`, `--accent-glow`) to ensure consistent theming
@@ -22,7 +33,7 @@ All notable changes to this project will be documented in this file.
 
 - CLI
   - preview: added `--max-attempts` and `--allow-duplicates` (fallback when uniqueness is too tight), normalized preview output dir, clears previous previews
-  - build: added `--seed`, improved batching and progress reporting (with IPC-friendly progress messages)
+  - build: added `--seed`, improved batching and progress reporting (with IPC-friendly progress messages); now supports `--max-attempts` and uses core `buildCollection()`
 
 - Docs
   - Added `docs/QUALITY_REVIEW.md` with audit findings and recommendations

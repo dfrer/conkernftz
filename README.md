@@ -9,12 +9,13 @@ Modern, type‑safe, open‑source NFT art foundry. Compose layered artwork, enf
 - Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
 - Rules engine: `mutuallyExclusive`, `requires`, `maxOccurrences`
 - Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable defaults
-- Compositor supports per-layer blend/opacity and visual effects (glow, stroke, shadow, 3D extrude) with presets; preview contact sheet + rarity report
+- Compositor supports per-layer blend/opacity and visual effects (glow, stroke, shadow, 3D extrude, rotate, scale) with presets; preview contact sheet + rarity report
 - Storage: Arweave Bundlr and IPFS (NFT.Storage/Pinata)
 - Solana mint via Umi/Token Metadata with optional pNFT and ruleset PDA
 - TypeScript throughout; Zod schemas; Vitest; ESLint/Prettier
 - Electron GUI with Fal AI image generation page
 - Tauri packaging option
+- End‑to‑end image format selection: `png` or `webp` (configurable)
 
 Live Preview overlay (UI)
 - Toggle an overlay to preview a single edition at any time. The UI asks the core to render accurate images via IPC when possible; it falls back to a canvas compositor for a quick approximation when core rendering is unavailable. The overlay can be dragged, rerolled, and configured for fit (contain/cover/actual) and background (checker/dark/light).
@@ -178,7 +179,7 @@ foundry e2e
 
 Key options per command
 - `preview`: `--count <n>`, `--seed <s>`, `--max-attempts <n>`, `--allow-duplicates`
-- `build`: `--count <n>` (defaults to `editionSize`), `--seed <s>`
+- `build`: `--count <n>` (defaults to `editionSize`), `--seed <s>`, `--max-attempts <n>`
 - `upload`: `--provider <arweave|ipfs>`, `--concurrency <n>`
 - `mint`: `--count <n>`, `--from <n>`
 
@@ -192,7 +193,8 @@ Run `foundry init` to create `foundry.config.json` and starter folders. Importan
 - `rules`: Trait logic (`mutuallyExclusive`, `requires`, `maxOccurrences`).
 - `rarity`: Defaults and filename delimiters.
 - `image`: Output size/background.
-- `export`: Output directories and preview options.
+- `export`: Output directories, image format, and preview options.
+  - `imageFormat`: `png` or `webp` (end‑to‑end). `gif` is not currently supported.
 - `storage`: Provider credentials (Arweave/IPFS).
 - `chain.solana`: Cluster/wallet/fees/creators/pNFT options.
 
@@ -203,7 +205,7 @@ Asset naming for rarity
 Effects on layers and overrides
 - Each layer can define `effects` (plus legacy `blend`/`opacity`) that apply to all assets in the layer.
 - Per-asset `overrides` can refine any effect fields by matching `filename` or derived trait `value`.
-- Supported effects: `glow`, `shadow`, `stroke`, `extrude` (simple 3D), `blur`, `modulate` (hue/saturation/brightness), and `colorOverlay`. Presets are available where applicable.
+- Supported effects: `glow`, `shadow`, `stroke`, `extrude` (simple 3D), `blur`, `modulate` (hue/saturation/brightness), `colorOverlay`, `rotate`, `scale`. Presets are available where applicable.
   - `glow.inner: true` enables inner glow (clipped to the shape)
   - `shadow.inner: true` enables inner shadow (clipped to the shape)
   - `stroke.position: "outside"|"inside"|"center"` controls stroke placement
@@ -245,6 +247,7 @@ Example layer snippet
 Arweave via Bundlr
 - Obtain a Bundlr key and fund the node you choose.
 - Configure `storage.provider = "arweave"` and credentials in `foundry.config.json` (or environment variables if supported by your setup).
+- Uploaded URIs are normalized to HTTPS gateway form: `https://arweave.net/<id>` for broad wallet/explorer compatibility.
 
 IPFS
 - NFT.Storage: create an API token.
@@ -287,6 +290,7 @@ pnpm -C packages/ui start
 Notes
 - On first run, the GUI ensures the CLI and deps are compiled. If `pnpm` isn’t in PATH, it falls back to `corepack pnpm`.
 - If the CLI dist is still missing, the app shows a clear message with the exact fix: run `corepack enable`, then `pnpm install` and `pnpm build` at the repo root.
+- Configure page now has a Save button next to “Project Config” to persist changes from any pane.
 
 Fal AI page
 - Generate images via [fal.ai](https://fal.ai); choose models, set size/count, and save to your project folder.
