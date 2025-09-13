@@ -85,6 +85,7 @@ export function previewCmd(): Command {
 
       let idx = 1;
       const previewPaths: string[] = [];
+      const outFormat = (parsed.export?.imageFormat === 'webp' ? 'webp' : 'png') as 'png' | 'webp';
       for (const ed of editions) {
         const buffer = await compositeLayers(
           ed.picks.map((p: any) => ({
@@ -95,9 +96,9 @@ export function previewCmd(): Command {
             offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
             effects: p.option.effects,
           })),
-          { width: parsed.image.width, height: parsed.image.height, background: parsed.image.background },
+          { width: parsed.image.width, height: parsed.image.height, background: parsed.image.background, format: outFormat },
         );
-        const p = path.join(outDir, `preview_${idx++}.png`);
+        const p = path.join(outDir, `preview_${idx++}.${outFormat}`);
         await fs.writeFile(p, buffer);
         previewPaths.push(p);
       }

@@ -217,7 +217,15 @@ export function initProjectIpc(): void {
       }
 
       if (inputs.length === 0) return { ok: false, error: 'No assets found to preview' };
-      const buffer: Buffer = await compositeLayers(inputs, { width, height, background });
+      const outFormat: 'png' | 'webp' = (effective.export?.imageFormat === 'webp' ? 'webp' : 'png');
+      const buffer: Buffer = await compositeLayers(inputs, {
+        width,
+        height,
+        background,
+        format: outFormat,
+        superSample: Number(effective?.experimental?.compositor?.superSample || 1) || 1,
+        forceCpu: !!(effective?.experimental?.compositor?.forceCpu),
+      });
       return { ok: true, b64: buffer.toString('base64') };
     } catch (e: any) {
       return { ok: false, error: String(e?.message ?? e) };
@@ -337,11 +345,7 @@ export function initProjectIpc(): void {
         }
       }
       const { ProjectConfigSchema } = await importCore(coreBase, 'project-config.js');
-      const { loadLayerCatalog } = await importCore(coreBase, 'catalog.js');
-      const { generateEditionsConstrained } = await importCore(coreBase, 'generator.js');
-      const { compositeLayers } = await importCore(coreBase, 'compositor.js');
-      const { makeDna } = await importCore(coreBase, 'dna.js');
-      const { generateRarityReport } = await importCore(coreBase, 'preview.js');
+      const { buildCollection } = await importCore(coreBase, 'project-build.js');
 
       // Load config
       const cfgPath = path.join(projectDir, 'foundry.config.json');
@@ -353,140 +357,44 @@ export function initProjectIpc(): void {
         throw new Error('Invalid foundry.config.json: ' + String(e?.message || e));
       }
 
-      // Setup output directories
-      const outBase = path.isAbsolute(cfg.export.outDir) ? cfg.export.outDir : path.join(projectDir, cfg.export.outDir);
-      const outDir = path.resolve(outBase);
-      const outImages = path.join(outDir, 'images');
-      const outJson = path.join(outDir, 'json');
-      try {
-        await fs.mkdir(outImages, { recursive: true });
-        await fs.mkdir(outJson, { recursive: true });
-      } catch (e: any) {
-        throw new Error('Failed to create output directories: ' + String(e?.message || e));
-      }
-
-      // Load catalog and generate editions
-      let catalog;
-      try {
-        catalog = await loadLayerCatalog(projectDir, cfg.layers, {
-          mode: 'filenameDelimiter',
-          delimiter: cfg.rarity.delimiter,
-          defaultWeight: cfg.rarity.defaultWeight,
-        });
-      } catch (e: any) {
-        throw new Error('Failed to load layer catalog: ' + String(e?.message || e));
-      }
-
-      let editions: any[];
       const runSeed = `build:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`;
+      // Optionally use chain adapter for JSON building when target is solana
+      let buildJson: ((input: any) => Record<string, unknown>) | undefined;
       try {
-        editions = generateEditionsConstrained(
-          catalog,
-          count,
-          { seed: runSeed },
-          { rules: cfg.rules ?? {}, uniqueness: cfg.uniqueness },
-        );
-      } catch (e: any) {
-        throw new Error(`Edition generation failed: ${String(e?.message || e)}`);
-      }
+        if (cfg.chain?.target === 'solana') {
+          // Resolve adapter from workspace dist
+          const chainBase = path.join(pkgsDir, 'chain-solana', 'dist');
+          const { SolanaJsonAdapter } = await importCore(chainBase, 'index.js');
+          buildJson = (input: any) => SolanaJsonAdapter.buildOffchainJson(input);
+        }
+      } catch {}
 
-      const allMetadata: any[] = [];
-      
-      // Process images in parallel batches for better performance
-      const batchSize = Math.min(20, Math.max(5, Math.floor(editions.length / 8)));
-      const totalBatches = Math.ceil(editions.length / batchSize);
-      
-      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        // Pause control between batches
-        while (buildController && buildController.paused && !buildController.stopped) {
-          await new Promise((r) => setTimeout(r, 100));
-        }
-        if (buildController && buildController.stopped) {
-          buildController = null;
-          return { ok: false, error: 'Build stopped by user' };
-        }
-        const startIdx = batchIndex * batchSize;
-        const endIdx = Math.min(startIdx + batchSize, editions.length);
-        const batch = editions.slice(startIdx, endIdx);
-        
-        // Process batch in parallel
-        const batchPromises = batch.map(async (ed: any, batchOffset: number) => {
-          const i = startIdx + batchOffset;
-          const idx = i + 1;
-          
-          let buffer: Buffer;
-          try {
-            buffer = await compositeLayers(
-              ed.picks.map((p: any) => ({
-                path: p.option.filePath,
-                blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
-                opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-                offsetX: p.option.offsetX ?? p.option.effects?.offsetX ?? 0,
-                offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
-                effects: p.option.effects,
-              })),
-              { width: cfg.image.width, height: cfg.image.height, background: cfg.image.background },
-            );
-          } catch (e: any) {
-            throw new Error(`Compositing failed at edition #${idx}: ${String(e?.message || e)}`);
-          }
-          
-          const imageFilename = `${idx}.png`;
-          
-          // Write files in parallel
-          const [imageWrite, jsonWrite] = await Promise.all([
-            fs.writeFile(path.join(outImages, imageFilename), buffer).catch((e) => { throw new Error(`Write image failed #${idx}: ${String(e?.message||e)}`); }),
+      const res = await buildCollection(
+        { cwd: projectDir, config: cfg, count, seed: runSeed, maxAttemptsPerEdition: 500, buildJson },
+        {
+          onProgress: (p: { current: number; total: number; message?: string }) => {
+            // Pause control between batches
             (async () => {
-              const attributes = Object.entries(ed.traits).map(([trait_type, value]) => ({ trait_type, value }));
-              const json = {
-                name: `${cfg.name} #${idx}`,
-                symbol: cfg.symbol ?? '',
-                description: cfg.description ?? '',
-                image: `./images/${imageFilename}`,
-                attributes,
-                properties: { files: [{ uri: `./images/${imageFilename}`, type: 'image/png' }], category: 'image' },
-                dna: makeDna(ed.traits, cfg.uniqueness),
-                edition: idx,
-              };
-              await fs.writeFile(path.join(outJson, `${idx}.json`), JSON.stringify(json, null, 2)).catch((e) => { throw new Error(`Write metadata failed #${idx}: ${String(e?.message||e)}`); });
-              return json;
-            })()
-          ]);
-          
-          return await jsonWrite;
-        });
-        
-        const batchResults = await Promise.allSettled(batchPromises);
-        const successfulResults = batchResults
-          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-          .map(result => result.value);
-        
-        allMetadata.push(...successfulResults);
-        
-        // Send progress update to renderer
-        const progress = Math.round((endIdx / editions.length) * 100);
-        const mainWindow = electron.BrowserWindow.getAllWindows()[0];
-        if (mainWindow) {
-          mainWindow.webContents.send('build-progress', {
-            current: endIdx,
-            total: editions.length,
-            progress,
-            message: buildController && buildController.paused
-              ? `Paused at batch ${batchIndex + 1}/${totalBatches}`
-              : `Processing batch ${batchIndex + 1}/${totalBatches}`,
-            isPaused: !!(buildController && buildController.paused)
-          });
-        }
-      }
-
-      // Write final metadata and rarity report
-      await fs.writeFile(path.join(outDir, '_metadata.json'), JSON.stringify(allMetadata, null, 2));
-      const rarity = editions.map((e: { traits: Record<string, string> }) => ({ traits: e.traits }));
-      const stats = generateRarityReport(rarity);
-      await fs.writeFile(path.join(outDir, 'rarity.json'), JSON.stringify(stats, null, 2));
-
+              while (buildController && buildController.paused && !buildController.stopped) {
+                await new Promise((r) => setTimeout(r, 100));
+              }
+            })();
+            const mainWindow = electron.BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+              const progress = Math.round((p.current / p.total) * 100);
+              mainWindow.webContents.send('build-progress', {
+                current: p.current,
+                total: p.total,
+                progress,
+                message: p.message || 'Building...',
+                isPaused: !!(buildController && buildController.paused),
+              });
+            }
+          },
+        },
+      );
       buildController = null;
-      return { ok: true, stdout: `Built ${editions.length} editions to ${outDir}` };
+      return { ok: true, stdout: `Built ${res.editions.length} editions to ${res.outDir}` };
     } catch (e: any) {
       buildController = null;
       return { ok: false, error: String(e?.message ?? e) };
@@ -573,8 +481,19 @@ export function initProjectIpc(): void {
         }
 
         idx++;
+        const outFormat: 'png' | 'webp' = (cfg.export?.imageFormat === 'webp' ? 'webp' : 'png');
+        // Optional experimental shuffle of layer order per edition
+        const picks = Array.from(ed.picks);
+        try {
+          if (cfg?.experimental?.generation?.shuffleLayers) {
+            for (let i = picks.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              const tmp = picks[i]; picks[i] = picks[j]; picks[j] = tmp;
+            }
+          }
+        } catch {}
         const buf = await compositeLayers(
-          ed.picks.map((p: any) => ({
+          picks.map((p: any) => ({
             path: p.option.filePath,
             blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
             opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
@@ -582,9 +501,16 @@ export function initProjectIpc(): void {
             offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
             effects: p.option.effects,
           })),
-          { width: cfg.image.width, height: cfg.image.height, background: cfg.image.background },
+          {
+            width: cfg.image.width,
+            height: cfg.image.height,
+            background: cfg.image.background,
+            format: outFormat,
+            superSample: Number(cfg?.experimental?.compositor?.superSample || 1) || 1,
+            forceCpu: !!(cfg?.experimental?.compositor?.forceCpu),
+          },
         );
-        const filePath = path.join(outDir, `preview_${idx}.png`);
+        const filePath = path.join(outDir, `preview_${idx}.${outFormat}`);
         await fs.writeFile(filePath, buf);
         written.push(filePath);
 
@@ -700,8 +626,17 @@ export function initProjectIpc(): void {
       );
       const out: string[] = [];
       for (const ed of editions) {
+        const picks = Array.from(ed.picks);
+        try {
+          if (effective?.experimental?.generation?.shuffleLayers) {
+            for (let i = picks.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              const tmp = picks[i]; picks[i] = picks[j]; picks[j] = tmp;
+            }
+          }
+        } catch {}
         const buf = await compositeLayers(
-          ed.picks.map((p: any) => ({
+          picks.map((p: any) => ({
             path: p.option.filePath,
             blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
             opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
@@ -709,7 +644,13 @@ export function initProjectIpc(): void {
             offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
             effects: p.option.effects,
           })),
-          { width, height, background },
+          {
+            width,
+            height,
+            background,
+            superSample: Number(effective?.experimental?.compositor?.superSample || 1) || 1,
+            forceCpu: !!(effective?.experimental?.compositor?.forceCpu),
+          },
         );
         out.push(buf.toString('base64'));
       }

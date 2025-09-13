@@ -44,20 +44,34 @@ export interface CompositeOptions {
   width: number;
   height: number;
   background?: string; // color or 'transparent'
+  // Output format for the final composited image. Defaults to 'png'.
+  // Note: Intermediate buffers may still use PNG for correctness/performance.
+  format?: 'png' | 'webp';
+  // Experimental: super sample by rendering at N× and downscaling
+  superSample?: number; // 1..4
+  // Experimental: force CPU compositor even if all blends are supported by Sharp
+  forceCpu?: boolean;
 }
 
 export async function compositeLayers(
   layers: CompositeLayerInput[],
   options: CompositeOptions,
 ): Promise<Buffer> {
+  const outFormat: 'png' | 'webp' = options.format === 'webp' ? 'webp' : 'png';
+  const scale = Math.max(1, Math.min(4, Math.floor(options.superSample ?? 1)));
+  const targetWidth = options.width;
+  const targetHeight = options.height;
+  const workWidth = Math.max(1, Math.round(targetWidth * scale));
+  const workHeight = Math.max(1, Math.round(targetHeight * scale));
   const anyUnsupported = layers.some((l) => mapBlendModeToSharp(l.blend ?? 'normal') === null);
+  const useCpu = !!options.forceCpu || anyUnsupported;
 
-  if (!anyUnsupported) {
+  if (!useCpu) {
     // Fast path: all blends supported natively by Sharp
     const base = sharp({
       create: {
-        width: options.width,
-        height: options.height,
+        width: workWidth,
+        height: workHeight,
         channels: 4,
         background:
           options.background && options.background !== 'transparent'
@@ -68,7 +82,7 @@ export async function compositeLayers(
 
     const composites: sharp.OverlayOptions[] = [];
     for (const layer of layers) {
-      const group = await renderLayerGroup(layer, options);
+      const group = await renderLayerGroup(layer, { ...options, width: workWidth, height: workHeight });
       const sharpBlend = mapBlendModeToSharp(layer.blend ?? layer.effects?.blend ?? 'normal');
       // Group-level opacity scaling
       let groupBuf = group;
@@ -84,12 +98,22 @@ export async function compositeLayers(
       });
     }
 
-    const out = await base.composite(composites).png().toBuffer();
-    return out;
+    // Compose at work resolution as PNG, then downscale+encode
+    const bigPng = await base.composite(composites).png().toBuffer();
+    const resized = await sharp(bigPng)
+      .resize(targetWidth, targetHeight, { fit: 'fill' })
+      [outFormat === 'webp' ? 'webp' : 'png'](outFormat === 'webp' ? { quality: 100 } : {})
+      .toBuffer();
+    return resized;
   }
 
   // CPU fallback path: supports advanced Photoshop-like modes
-  return await compositeLayersCpu(layers, options);
+  const cpuOut = await compositeLayersCpu(layers, { ...options, width: workWidth, height: workHeight, format: 'png' });
+  const finalBuf = await sharp(cpuOut)
+    .resize(targetWidth, targetHeight, { fit: 'fill' })
+    [outFormat === 'webp' ? 'webp' : 'png'](outFormat === 'webp' ? { quality: 100 } : {})
+    .toBuffer();
+  return finalBuf;
 }
 
 function clamp01(n: number): number {
@@ -183,6 +207,7 @@ async function compositeLayersCpu(
 ): Promise<Buffer> {
   const width = options.width;
   const height = options.height;
+  const outFormat: 'png' | 'webp' = options.format === 'webp' ? 'webp' : 'png';
 
   // Make initial background in raw RGBA
   const baseRaw = await sharp({
@@ -220,12 +245,12 @@ async function compositeLayersCpu(
     outPixels = blendPixelArrays(outPixels, overlayPixels, width, height, mode, opacity, offX, offY);
   }
 
-  const png = await sharp(Buffer.from(outPixels), {
+  const encoded = await sharp(Buffer.from(outPixels), {
     raw: { width, height, channels: 4 },
   })
-    .png()
+    [outFormat === 'webp' ? 'webp' : 'png']()
     .toBuffer();
-  return png;
+  return encoded;
 }
 
 // Render a single layer and its effects into a flattened RGBA buffer the size of the canvas,
@@ -247,14 +272,19 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
   if (typeof effects?.blur === 'number' && effects.blur > 0) {
     base = base.blur(Math.max(0, effects.blur));
   }
-  const baseBuf = await base.png().toBuffer();
+  let baseBuf = await base.png().toBuffer();
+
+  // Apply pre-transform (scale, rotate) on the flattened base content
+  if (effects?.scale !== undefined || effects?.rotate !== undefined) {
+    baseBuf = await applyScaleAndRotate(baseBuf, width, height, effects?.scale, effects?.rotate);
+  }
 
   const overlays: sharp.OverlayOptions[] = [];
 
   // Shadow (behind)
   // Note: effects referenced as const above
   if (effects?.shadow) {
-    const sil = await makeSilhouette(layer.path, width, height, effects.shadow.color ?? '#000000');
+    const sil = await makeSilhouetteFromBuffer(baseBuf, width, height, effects.shadow.color ?? '#000000');
     let shadowBuf = await sharp(sil)
       .ensureAlpha()
       .linear([1, 1, 1, clamp01(effects.shadow.opacity ?? 0.35)], [0, 0, 0, 0])
@@ -266,7 +296,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
     const offX = Math.round(effects.shadow.offsetX ?? 8);
     // If inner shadow, mask by original silhouette
     if (effects.shadow.inner) {
-      const maskSil = await makeSilhouette(layer.path, width, height, '#ffffff');
+      const maskSil = await makeSilhouetteFromBuffer(baseBuf, width, height, '#ffffff');
       shadowBuf = await sharp(shadowBuf).composite([{ input: maskSil, blend: 'dest-in' }]).png().toBuffer();
       overlays.push({ input: shadowBuf, top: offY, left: offX, blend: 'over' });
     } else {
@@ -276,7 +306,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
 
   // Extrude (behind)
   if (effects?.extrude) {
-    const sil = await makeSilhouette(layer.path, width, height, effects.extrude.color ?? '#000000');
+    const sil = await makeSilhouetteFromBuffer(baseBuf, width, height, effects.extrude.color ?? '#000000');
     const depth = Math.max(1, Math.min(128, effects.extrude.depth ?? 6));
     const angle = (typeof effects.extrude.angle === 'number' ? effects.extrude.angle : 135) * (Math.PI / 180);
     const stepX = Math.round(Math.cos(angle));
@@ -297,7 +327,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
 
   // Glow (behind or inside)
   if (effects?.glow) {
-    const sil = await makeSilhouette(layer.path, width, height, effects.glow.color ?? '#ffffff');
+    const sil = await makeSilhouetteFromBuffer(baseBuf, width, height, effects.glow.color ?? '#ffffff');
     let glowBuf = await sharp(sil)
       .ensureAlpha()
       .linear([1, 1, 1, clamp01(effects.glow.opacity ?? 0.4)], [0, 0, 0, 0])
@@ -305,7 +335,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
       .png()
       .toBuffer();
     if (effects.glow.inner) {
-      const maskSil = await makeSilhouette(layer.path, width, height, '#ffffff');
+      const maskSil = await makeSilhouetteFromBuffer(baseBuf, width, height, '#ffffff');
       glowBuf = await sharp(glowBuf).composite([{ input: maskSil, blend: 'dest-in' }]).png().toBuffer();
     }
     overlays.push({ input: glowBuf, top: 0, left: 0, blend: 'over' });
@@ -317,9 +347,9 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
     const opacity = clamp01(effects.stroke.opacity ?? 1);
     const color = effects.stroke.color ?? '#000000';
     const position = effects.stroke.position ?? 'outside';
-    const silColor = await makeSilhouette(layer.path, width, height, color);
+    const silColor = await makeSilhouetteFromBuffer(baseBuf, width, height, color);
     const expOutside = await makeExpandedSilhouette(silColor, width, height, opacity, widthPx);
-    const origMask = await makeSilhouette(layer.path, width, height, '#ffffff');
+    const origMask = await makeSilhouetteFromBuffer(baseBuf, width, height, '#ffffff');
     if (position === 'outside') {
       // outside ring = expanded - original
       const outsideRing = await sharp(expOutside).composite([{ input: origMask, blend: 'dest-out' }]).png().toBuffer();
@@ -370,9 +400,59 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
   return out;
 }
 
+// Apply scale (around center) and rotation (around center) to a canvas-sized buffer
+async function applyScaleAndRotate(
+  input: Buffer,
+  width: number,
+  height: number,
+  scale?: number,
+  rotate?: number,
+): Promise<Buffer> {
+  let buf = input;
+  const transparent = () =>
+    sharp({
+      create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    });
+  // Scale
+  if (typeof scale === 'number' && Number.isFinite(scale) && scale > 0 && scale !== 1) {
+    const scaledW = Math.max(1, Math.round(width * scale));
+    const scaledH = Math.max(1, Math.round(height * scale));
+    const resized = await sharp(buf).resize(scaledW, scaledH, { fit: 'fill' }).ensureAlpha().png().toBuffer();
+    const left = Math.round((width - scaledW) / 2);
+    const top = Math.round((height - scaledH) / 2);
+    buf = await transparent().composite([{ input: resized, left, top }]).png().toBuffer();
+  }
+  // Rotate
+  if (typeof rotate === 'number' && Number.isFinite(rotate) && rotate % 360 !== 0) {
+    // Rotate with transparent background and fit within original canvas
+    buf = await sharp(buf)
+      .rotate(rotate, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .resize(width, height, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+  }
+  return buf;
+}
+
 // Create a solid-color silhouette of the input image using its alpha channel.
 async function makeSilhouette(imgPath: string, width: number, height: number, color: string): Promise<Buffer> {
   const src = sharp(imgPath).resize(width, height, { fit: 'fill' }).ensureAlpha();
+  const alpha = await src.clone().extractChannel(3).png().toBuffer();
+  const colorImg = sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: color,
+    },
+  });
+  const silhouette = await colorImg.joinChannel(alpha).png().toBuffer();
+  return silhouette;
+}
+
+// Create silhouette from an already prepared buffer (same canvas size)
+async function makeSilhouetteFromBuffer(img: Buffer, width: number, height: number, color: string): Promise<Buffer> {
+  const src = sharp(img).resize(width, height, { fit: 'fill' }).ensureAlpha();
   const alpha = await src.clone().extractChannel(3).png().toBuffer();
   const colorImg = sharp({
     create: {

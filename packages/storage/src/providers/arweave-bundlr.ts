@@ -20,7 +20,9 @@ export async function uploadFileViaBundlr(
   const buffer = await fs.readFile(filePath);
   const contentType = mime.getType(filePath) ?? 'application/octet-stream';
   const tx = await bundlr.upload(buffer, { tags: [{ name: 'Content-Type', value: contentType }] });
-  return { uri: `ar://${tx.id}`, type: contentType };
+  // Normalize to HTTPS gateway URL for broad client compatibility
+  const httpsUri = `https://arweave.net/${tx.id}`;
+  return { uri: httpsUri, type: contentType };
 }
 
 

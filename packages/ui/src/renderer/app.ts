@@ -372,6 +372,9 @@ function switchSubtab(name) {
     if (name === 'configure') {
       updateAssetCounts();
       startAssetCountsAutoRefresh();
+      // Initialize Configure sub-tabs and collapsibles once per entry
+      try { initConfigTabs(); } catch {}
+      try { initCollapsibles(); } catch {}
     } else {
       stopAssetCountsAutoRefresh();
     }
@@ -550,6 +553,8 @@ const lbClose = document.getElementById('lb-close');
 const tbody = document.getElementById('layers-tbody');
 const btnAddLayer = document.getElementById('btn-add-layer');
 const btnSaveConfig = document.getElementById('btn-save-config');
+const btnSaveConfigGlobal = document.getElementById('btn-save-config-global');
+const btnSaveConfigConfigure = document.getElementById('btn-save-config-configure');
 const btnCreateFolders = document.getElementById('btn-create-folders');
 const btnRefreshAssets = document.getElementById('btn-refresh-assets');
 // Image Renamer refs
@@ -1632,11 +1637,69 @@ function populateFormFromConfig(cfg) {
   if (irDelim) irDelim.value = cfg.rarity?.delimiter || '#';
   if (irLayerList) renderIrLayerList();
 }
+
+function initConfigTabs() {
+  const buttons = Array.from(document.querySelectorAll('.config-tab-btn')) as HTMLButtonElement[];
+  const panes: Record<string, HTMLElement | null> = {
+    basics: document.getElementById('cfg-pane-basics'),
+    layers: document.getElementById('cfg-pane-layers'),
+    utility: document.getElementById('cfg-pane-utility'),
+    experimental: document.getElementById('cfg-pane-experimental'),
+  };
+  function switchCfgTab(name: string) {
+    Object.entries(panes).forEach(([key, pane]) => {
+      if (!pane) return;
+      const active = key === name;
+      pane.classList.toggle('hidden', !active);
+      pane.setAttribute('aria-hidden', String(!active));
+    });
+    buttons.forEach((b) => {
+      const active = b.dataset.configtab === name;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+      b.tabIndex = active ? 0 : -1;
+    });
+    try { localStorage.setItem('ui:lastConfigTab', name); } catch {}
+  }
+  const last = localStorage.getItem('ui:lastConfigTab') || 'basics';
+  switchCfgTab(last);
+  buttons.forEach((b) => b.addEventListener('click', () => switchCfgTab(String(b.dataset.configtab))));
+}
+
+function initCollapsibles() {
+  const sets = Array.from(document.querySelectorAll('[data-collapsible="true"]')) as HTMLElement[];
+  sets.forEach((fs) => {
+    const btn = fs.querySelector('.collapse-btn') as HTMLButtonElement | null;
+    const body = fs.querySelector('.collapsible-body') as HTMLElement | null;
+    if (!btn || !body) return;
+    function toggle() {
+      const isOpen = body.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(isOpen));
+      btn.textContent = isOpen ? 'Collapse' : 'Expand';
+    }
+    btn.addEventListener('click', toggle);
+  });
+}
+
+function applyExperimentalToUI(cfg: any) {
+  try {
+    const ss = Number(cfg?.experimental?.compositor?.superSample || 1) || 1;
+    const forceCpu = !!(cfg?.experimental?.compositor?.forceCpu);
+    const shuffleLayers = !!(cfg?.experimental?.generation?.shuffleLayers);
+    const ssEl = document.getElementById('xp-super-sample') as HTMLSelectElement | null;
+    const forceCpuEl = document.getElementById('xp-force-cpu') as HTMLInputElement | null;
+    const shuffleEl = document.getElementById('xp-shuffle-layers') as HTMLInputElement | null;
+    if (ssEl) ssEl.value = String(Math.max(1, Math.min(4, Math.floor(ss))));
+    if (forceCpuEl) forceCpuEl.checked = forceCpu;
+    if (shuffleEl) shuffleEl.checked = shuffleLayers;
+  } catch {}
+}
 async function loadConfigUI() {
   const cfg = await window.foundry.readConfig();
   if (cfg.ok && cfg.json) {
     populateFormFromConfig(cfg.json);
     updateStatsFromConfig(cfg.json);
+    try { applyExperimentalToUI(cfg.json); } catch {}
   }
 }
 btnAddLayer.addEventListener('click', () => {
@@ -1876,38 +1939,64 @@ rnRandomWeight && rnRandomWeight.addEventListener('click', () => {
   const maxVal = Math.max(minVal, irMax ? (Number(irMax.value) || minVal) : minVal);
   if (rnWeight) rnWeight.value = String(Math.floor(minVal + Math.random() * (maxVal - minVal + 1)));
 });
-if (btnSaveConfig) btnSaveConfig.addEventListener('click', async () => {
-  if (!currentConfig) return;
-  const updated = { ...currentConfig };
-  updated.name = document.getElementById('cfg-name').value.trim() || currentConfig.name;
-  updated.symbol = document.getElementById('cfg-symbol').value.trim();
-  updated.editionSize = Number(document.getElementById('cfg-editions').value) || currentConfig.editionSize;
+async function collectUpdatedConfig(): Promise<any | null> {
+  if (!currentConfig) return null;
+  const updated = { ...currentConfig } as any;
+  // Basics
+  updated.name = (document.getElementById('cfg-name') as HTMLInputElement | null)?.value?.trim() || currentConfig.name;
+  updated.symbol = (document.getElementById('cfg-symbol') as HTMLInputElement | null)?.value?.trim();
+  updated.editionSize = Number((document.getElementById('cfg-editions') as HTMLInputElement | null)?.value) || currentConfig.editionSize;
+  // Image
   updated.image = {
-    width: Number(document.getElementById('cfg-image-w').value) || currentConfig.image.width,
-    height: Number(document.getElementById('cfg-image-h').value) || currentConfig.image.height,
-    background: document.getElementById('cfg-image-bg').value || currentConfig.image.background || 'transparent',
+    width: Number((document.getElementById('cfg-image-w') as HTMLInputElement | null)?.value) || currentConfig.image.width,
+    height: Number((document.getElementById('cfg-image-h') as HTMLInputElement | null)?.value) || currentConfig.image.height,
+    background: (document.getElementById('cfg-image-bg') as HTMLInputElement | null)?.value || currentConfig.image.background || 'transparent',
   };
+  // Rarity/Uniqueness (Utility pane)
   updated.rarity = {
     mode: 'filenameDelimiter',
-    delimiter: document.getElementById('rarity-delim').value || '#',
-    defaultWeight: Math.max(1, Number(document.getElementById('rarity-default').value) || 1),
+    delimiter: (document.getElementById('rarity-delim') as HTMLInputElement | null)?.value || '#',
+    defaultWeight: Math.max(1, Number((document.getElementById('rarity-default') as HTMLInputElement | null)?.value || '1')),
   };
-  const ignoreRaw = document.getElementById('uniq-ignore').value || '';
-  updated.uniqueness = {
-    hash: 'sha256',
-    ignore: ignoreRaw.split(',').map(s => s.trim()).filter(Boolean),
-  };
+  const ignoreRaw = (document.getElementById('uniq-ignore') as HTMLInputElement | null)?.value || '';
+  updated.uniqueness = { hash: 'sha256', ignore: ignoreRaw.split(',').map(s => s.trim()).filter(Boolean) };
+  // Export (Utility + Rules panes share same ids)
   updated.export = {
-    outDir: document.getElementById('export-outdir').value || 'build',
-    previewOutDir: (document.getElementById('export-preview-outdir').value || '').trim() || undefined,
-    imageFormat: document.getElementById('export-format').value || 'png',
-    includePreviewContactSheet: document.getElementById('export-contact').checked,
+    outDir: (document.getElementById('export-outdir') as HTMLInputElement | null)?.value || 'build',
+    previewOutDir: (((document.getElementById('export-preview-outdir') as HTMLInputElement | null)?.value || '').trim()) || undefined,
+    imageFormat: (document.getElementById('export-format') as HTMLSelectElement | null)?.value || 'png',
+    includePreviewContactSheet: !!((document.getElementById('export-contact') as HTMLInputElement | null)?.checked),
   };
+  // Layers table
   updated.layers = readLayersFromTable();
-  const res = await window.foundry.writeConfig(updated);
+  // Experimental
+  try {
+    const ssEl = document.getElementById('xp-super-sample') as HTMLSelectElement | null;
+    const forceCpuEl = document.getElementById('xp-force-cpu') as HTMLInputElement | null;
+    const shuffleEl = document.getElementById('xp-shuffle-layers') as HTMLInputElement | null;
+    const ss = Math.max(1, Math.min(4, Math.floor(Number(ssEl && ssEl.value || '1'))));
+    const forceCpu = !!(forceCpuEl && forceCpuEl.checked);
+    const shuffleLayers = !!(shuffleEl && shuffleEl.checked);
+    updated.experimental = { compositor: { superSample: ss, forceCpu }, generation: { shuffleLayers } } as any;
+  } catch {}
+  return updated;
+}
+
+async function saveConfigFromUi(): Promise<void> {
+  const updated = await collectUpdatedConfig();
+  if (!updated) return;
+  const res = await (window as any).foundry.writeConfig(updated);
   log(res.ok ? 'Config saved.' : (res.error || 'Failed to save config.'));
   try { if (res && res.ok) window.dispatchEvent(new CustomEvent('foundry:config-saved')); } catch {}
+}
+
+if (btnSaveConfig) btnSaveConfig.addEventListener('click', async () => {
+  if (!currentConfig) return;
+  await saveConfigFromUi();
 });
+
+if (btnSaveConfigGlobal) btnSaveConfigGlobal.addEventListener('click', async () => { await saveConfigFromUi(); });
+if (btnSaveConfigConfigure) btnSaveConfigConfigure.addEventListener('click', async () => { await saveConfigFromUi(); });
 document.getElementById('btn-validate-rules').addEventListener('click', async () => {
   try {
     const txt = document.getElementById('rules-json').value;

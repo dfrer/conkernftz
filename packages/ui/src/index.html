@@ -192,171 +192,285 @@
             </fieldset>
                 </div>
                 <div id="main-configure" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-configure" aria-hidden="true">
-          <h3 data-help="config">Project Config</h3>
+          <div class="row justify-between align-center">
+            <h3 data-help="config" style="margin:0;">Project Config</h3>
+            <div class="row gap-10">
+              <button id="btn-save-config-configure" type="button" class="btn-primary">Save</button>
+            </div>
+          </div>
+          <div class="config-tabs" role="tablist" aria-label="Configure Sections">
+            <button class="config-tab-btn active" data-configtab="basics" role="tab" aria-selected="true" tabindex="0">Basics</button>
+            <button class="config-tab-btn" data-configtab="layers" role="tab" aria-selected="false" tabindex="-1">Layers</button>
+            <button class="config-tab-btn" data-configtab="utility" role="tab" aria-selected="false" tabindex="-1">Utility</button>
+            <button class="config-tab-btn" data-configtab="experimental" role="tab" aria-selected="false" tabindex="-1">Experimental</button>
+          </div>
           <div id="config-editor" class="column gap-12">
-            <div class="form-grid cols-4">
-              <div>
-                <label>Name</label>
-                <input id="cfg-name" placeholder="Collection name" />
-              </div>
-              <div>
-                <label>Symbol</label>
-                <input id="cfg-symbol" placeholder="SYMB" />
-              </div>
-              <div>
-                <label>Edition Size</label>
-                <input id="cfg-editions" type="number" min="1" />
-              </div>
-              <div>
-                <label>Image Background</label>
-                <input id="cfg-image-bg" placeholder="transparent or #RRGGBB" />
-              </div>
-              <div>
-                <label>Image Width</label>
-                <input id="cfg-image-w" type="number" min="1" />
-              </div>
-              <div>
-                <label>Image Height</label>
-                <input id="cfg-image-h" type="number" min="1" />
+            <!-- Basics Pane -->
+            <div id="cfg-pane-basics" class="config-pane">
+              <div class="form-grid cols-4">
+                <div>
+                  <label>Name</label>
+                  <input id="cfg-name" placeholder="Collection name" />
+                </div>
+                <div>
+                  <label>Symbol</label>
+                  <input id="cfg-symbol" placeholder="SYMB" />
+                </div>
+                <div>
+                  <label>Edition Size</label>
+                  <input id="cfg-editions" type="number" min="1" />
+                </div>
+                <div>
+                  <label>Image Background</label>
+                  <input id="cfg-image-bg" placeholder="transparent or #RRGGBB" />
+                </div>
+                <div>
+                  <label>Image Width</label>
+                  <input id="cfg-image-w" type="number" min="1" />
+                </div>
+                <div>
+                  <label>Image Height</label>
+                  <input id="cfg-image-h" type="number" min="1" />
+                </div>
               </div>
             </div>
 
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-rarity">
-              <legend>Rarity</legend>
-              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                <div>
-                  <label>Filename Delimiter</label>
-                  <input id="rarity-delim" placeholder="#" />
-                </div>
-                <div>
-                  <label>Default Weight</label>
-                  <input id="rarity-default" type="number" min="1" />
-                </div>
-                <div style="align-self:end; opacity:.8; font-size: 12px;">
-                  Example: "Golden Crown#1.png" vs "Blue Cap#10.png"
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-dna">
-              <legend>Uniqueness (DNA)</legend>
-              <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px;">
-                <div>
-                  <label>Hash</label>
-                  <input id="uniq-hash" value="sha256" disabled />
-                </div>
-                <div>
-                  <label>Ignore Traits (comma-separated trait types)</label>
-                  <input id="uniq-ignore" placeholder="Background, ..." />
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-layers">
-              <legend>Layers</legend>
-              <div class="row justify-between mb-8">
-                <div class="op-85">Configure order, paths, and rarity strategy per layer.</div>
-                <div class="row">
-                  <button id="btn-refresh-assets" type="button" class="btn-secondary btn-sm">Refresh Counts</button>
-                  <button id="btn-create-folders" type="button" class="btn-secondary btn-sm">Create Folders</button>
-                  <button id="btn-add-layer" type="button">Add Layer</button>
-                  <button id="btn-save-config" type="button" class="btn-primary">Save Config</button>
-                </div>
-              </div>
-              <table style="width:100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="text-align:left; border-bottom:1px solid var(--border);">
-                    <th style="padding:4px 6px;">Order</th>
-                    <th style="padding:4px 6px;">Name</th>
-                    <th style="padding:4px 6px;">Path</th>
-                    <th style="padding:4px 6px;">Rarity</th>
-                    <th style="padding:4px 6px;">Required</th>
-                    <th style="padding:4px 6px;">Blend</th>
-                    <th style="padding:4px 6px;">Opacity</th>
-                    <th style="padding:4px 6px;">Assets</th>
-                    <th style="padding:4px 6px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="layers-tbody"></tbody>
-              </table>
-            </fieldset>
-
-            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;" data-help="config-renamer">
-              <legend>Image Renamer</legend>
-              <div class="row justify-between mb-8">
-                <div class="op-85">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
-                <div class="row">
-                  <button id="ir-refresh" type="button" class="btn-ghost btn-sm">Refresh</button>
-                  <button id="ir-add-folder" type="button" class="btn-ghost btn-sm">Add Folder&hellip;</button>
-                </div>
-              </div>
-              <div id="ir-layer-list" class="mini" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:8px; margin-bottom:8px;"></div>
-
-              <div class="mini muted" class="mt-4">Naming</div>
-              <div class="form-grid cols-4">
-                <div>
-                  <label>Mode</label>
-                  <select id="ir-name-mode">
-                    <option value="preset-seq">Preset + Sequence</option>
-                    <option value="random-list">Random from List</option>
-                    <option value="keep">Keep Filenames</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Base Name</label>
-                  <input id="ir-base-name" placeholder="e.g. Trait" />
-                </div>
-                <div>
-                  <label>Start Index</label>
-                  <input id="ir-start" type="number" min="0" value="1" />
-                </div>
-                <div>
-                  <label>Pad Width</label>
-                  <input id="ir-pad" type="number" min="0" value="0" />
-                </div>
-              </div>
-              <div>
-                <label>Random Name List (one per line)</label>
-                <textarea id="ir-name-list" rows="3" placeholder="Alpha\nBeta\nGamma"></textarea>
-              </div>
-              <div class="row gap-12 wrap">
-                <label class="row gap-6"><input id="ir-include-layer" type="checkbox"/> Include layer name prefix</label>
-                <label class="row gap-6"><input id="ir-keep-ext" type="checkbox" checked disabled/> Keep file extension</label>
-              </div>
-
-              <div class="mini muted" class="mt-8">Rarity</div>
-              <div class="form-grid cols-4">
-                <div>
-                  <label>Delimiter</label>
-                  <input id="ir-delim" placeholder="#" />
-                </div>
-                <div>
-                  <label>Mode</label>
-                  <select id="ir-rarity-mode">
-                    <option value="keep">Keep</option>
-                    <option value="uniform">Uniform</option>
-                    <option value="random-range">Random Range</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Weight (uniform)</label>
-                  <input id="ir-weight" type="number" min="1" value="1" />
-                </div>
-                <div>
-                  <label>Random Min&ndash;Max</label>
-                  <div class="row gap-6">
-                    <input id="ir-min" type="number" min="1" value="1" />
-                    <input id="ir-max" type="number" min="1" value="10" />
+            <!-- Layers Pane -->
+            <div id="cfg-pane-layers" class="config-pane hidden" aria-hidden="true">
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-layers" data-collapsible="true">
+                <legend>Layers</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Configure order, paths, and rarity strategy per layer.</div>
+                  <div class="row">
+                    <button id="btn-refresh-assets" type="button" class="btn-secondary btn-sm">Refresh Counts</button>
+                    <button id="btn-create-folders" type="button" class="btn-secondary btn-sm">Create Folders</button>
+                    <button id="btn-add-layer" type="button">Add Layer</button>
+                    <button id="btn-save-config" type="button" class="btn-primary">Save Config</button>
+                    <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
                   </div>
                 </div>
-              </div>
+                <div class="collapsible-body open">
+                  <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="text-align:left; border-bottom:1px solid var(--border);">
+                        <th style="padding:4px 6px;">Order</th>
+                        <th style="padding:4px 6px;">Name</th>
+                        <th style="padding:4px 6px;">Path</th>
+                        <th style="padding:4px 6px;">Rarity</th>
+                        <th style="padding:4px 6px;">Required</th>
+                        <th style="padding:4px 6px;">Blend</th>
+                        <th style="padding:4px 6px;">Opacity</th>
+                        <th style="padding:4px 6px;">Assets</th>
+                        <th style="padding:4px 6px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="layers-tbody"></tbody>
+                  </table>
+                </div>
+              </fieldset>
 
-              <div class="row mt-10">
-                <button id="ir-bulk-rename" type="button" class="btn-primary">Bulk Rename Selected</button>
-                <button id="ir-open-step" type="button" class="btn-secondary">Step-through Renamer&hellip;</button>
-              </div>
-            </fieldset>
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;" data-help="config-renamer" data-collapsible="true">
+                <legend>Image Renamer</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Bulk rename images and set rarity weights. Choose one or more target folders.</div>
+                  <div class="row">
+                    <button id="ir-refresh" type="button" class="btn-ghost btn-sm">Refresh</button>
+                    <button id="ir-add-folder" type="button" class="btn-ghost btn-sm">Add Folder&hellip;</button>
+                    <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
                   </div>
+                </div>
+                <div class="collapsible-body open">
+                  <div id="ir-layer-list" class="mini" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:8px; margin-bottom:8px;"></div>
+
+                  <div class="mini muted" class="mt-4">Naming</div>
+                  <div class="form-grid cols-4">
+                    <div>
+                      <label>Mode</label>
+                      <select id="ir-name-mode">
+                        <option value="preset-seq">Preset + Sequence</option>
+                        <option value="random-list">Random from List</option>
+                        <option value="keep">Keep Filenames</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>Base Name</label>
+                      <input id="ir-base-name" placeholder="e.g. Trait" />
+                    </div>
+                    <div>
+                      <label>Start Index</label>
+                      <input id="ir-start" type="number" min="0" value="1" />
+                    </div>
+                    <div>
+                      <label>Pad Width</label>
+                      <input id="ir-pad" type="number" min="0" value="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label>Random Name List (one per line)</label>
+                    <textarea id="ir-name-list" rows="3" placeholder="Alpha\nBeta\nGamma"></textarea>
+                  </div>
+                  <div class="row gap-12 wrap">
+                    <label class="row gap-6"><input id="ir-include-layer" type="checkbox"/> Include layer name prefix</label>
+                    <label class="row gap-6"><input id="ir-keep-ext" type="checkbox" checked disabled/> Keep file extension</label>
+                  </div>
+
+                  <div class="mini muted" class="mt-8">Rarity</div>
+                  <div class="form-grid cols-4">
+                    <div>
+                      <label>Delimiter</label>
+                      <input id="ir-delim" placeholder="#" />
+                    </div>
+                    <div>
+                      <label>Mode</label>
+                      <select id="ir-rarity-mode">
+                        <option value="keep">Keep</option>
+                        <option value="uniform">Uniform</option>
+                        <option value="random-range">Random Range</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>Weight (uniform)</label>
+                      <input id="ir-weight" type="number" min="1" value="1" />
+                    </div>
+                    <div>
+                      <label>Random Min&ndash;Max</label>
+                      <div class="row gap-6">
+                        <input id="ir-min" type="number" min="1" value="1" />
+                        <input id="ir-max" type="number" min="1" value="10" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mt-10">
+                    <button id="ir-bulk-rename" type="button" class="btn-primary">Bulk Rename Selected</button>
+                    <button id="ir-open-step" type="button" class="btn-secondary">Step-through Renamer&hellip;</button>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+
+            <!-- Utility Pane -->
+            <div id="cfg-pane-utility" class="config-pane hidden" aria-hidden="true">
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-rarity" data-collapsible="true">
+                <legend>Rarity</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Filename-based rarity weights.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <div>
+                      <label>Filename Delimiter</label>
+                      <input id="rarity-delim" placeholder="#" />
+                    </div>
+                    <div>
+                      <label>Default Weight</label>
+                      <input id="rarity-default" type="number" min="1" />
+                    </div>
+                    <div style="align-self:end; opacity:.8; font-size: 12px;">
+                      Example: "Golden Crown#1.png" vs "Blue Cap#10.png"
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-dna" data-collapsible="true">
+                <legend>Uniqueness (DNA)</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Control uniqueness and ignored traits.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px;">
+                    <div>
+                      <label>Hash</label>
+                      <input id="uniq-hash" value="sha256" disabled />
+                    </div>
+                    <div>
+                      <label>Ignore Traits (comma-separated trait types)</label>
+                      <input id="uniq-ignore" placeholder="Background, ..." />
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+                <legend>Export</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Choose output options for previews/builds.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div class="form-grid cols-4" style="align-items:end;">
+                    <div>
+                      <label>Out Dir</label>
+                      <input id="export-outdir" placeholder="build" />
+                    </div>
+                    <div>
+                      <label>Preview Out Dir</label>
+                      <input id="export-preview-outdir" placeholder="Optional: absolute or relative path" />
+                    </div>
+                    <div>
+                      <label>Image Format</label>
+                      <select id="export-format">
+                        <option value="png">png</option>
+                        <option value="webp">webp</option>
+                        <option value="gif">gif</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>Include Contact Sheet</label>
+                      <input id="export-contact" type="checkbox" checked />
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+
+            <!-- Experimental Pane -->
+            <div id="cfg-pane-experimental" class="config-pane hidden" aria-hidden="true">
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+                <legend>Compositor</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Experimental quality/performance toggles.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div class="form-grid cols-3">
+                    <div>
+                      <label>Super Sampling</label>
+                      <select id="xp-super-sample">
+                        <option value="1">1x</option>
+                        <option value="2">2x</option>
+                        <option value="3">3x</option>
+                        <option value="4">4x</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label>Force CPU</label>
+                      <div class="row"><input id="xp-force-cpu" type="checkbox" /><span class="mini">Use CPU compositor always</span></div>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+                <legend>Generation</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Experimental generation behaviors.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div class="form-grid cols-3">
+                    <div>
+                      <label>Shuffle Layer Order</label>
+                      <div class="row"><input id="xp-shuffle-layers" type="checkbox" /><span class="mini">Randomize per edition</span></div>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>
                 </div>
                 <div id="main-rules" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-rules" aria-hidden="true">
             <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">

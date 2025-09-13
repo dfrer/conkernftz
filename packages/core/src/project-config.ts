@@ -202,6 +202,22 @@ export const ProjectConfigSchema = z.object({
   }),
   storage: StorageSchema,
   chain: ChainSchema,
+  experimental: z
+    .object({
+      compositor: z
+        .object({
+          superSample: z.number().int().min(1).max(4).optional(),
+          forceCpu: z.boolean().optional(),
+        })
+        .optional(),
+      generation: z
+        .object({
+          seedJitter: z.number().min(0).max(1).optional(),
+          shuffleLayers: z.boolean().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;

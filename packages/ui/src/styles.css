@@ -1201,6 +1201,19 @@ h3 {
   padding: 12px 8px; 
 }
 
+/* Configure sub-tabs */
+.config-tabs { display:inline-flex; gap:6px; padding:8px; border:1px solid var(--border); border-radius: 999px; background: var(--panel-soft); margin-bottom: 12px; box-shadow: var(--shadow-subtle); }
+.config-tab-btn { background: transparent; color: var(--text); border:1px solid var(--border); padding:6px 12px; border-radius: 999px; font-weight:600; font-size:12px; cursor:pointer; transition: all .2s var(--ease-out-cubic); }
+.config-tab-btn.active { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); border-color: transparent; color:#fff; box-shadow: var(--shadow-colored); }
+.config-pane.hidden { display:none; }
+
+/* Collapsible panels */
+[data-collapsible="true"] .collapsible-header { align-items: center; }
+[data-collapsible="true"] .collapse-btn { min-height: 28px; }
+[data-collapsible="true"] .collapsible-body { overflow: hidden; transition: grid-template-rows .28s var(--ease-out-cubic), opacity .22s var(--ease-out-cubic); display: grid; grid-template-rows: 1fr; }
+[data-collapsible="true"] .collapsible-body:not(.open) { grid-template-rows: 0fr; opacity:.0; }
+[data-collapsible="true"] .collapsible-body > * { min-height: 0; }
+
 /* Enhanced Gallery System */
 .gallery-card { 
   background: 

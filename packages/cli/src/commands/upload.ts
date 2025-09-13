@@ -42,6 +42,20 @@ export function uploadCmd(): Command {
         throw new Error(`Unknown provider: ${opts.provider}`);
       }
 
+      async function uploadWithRetry(filePath: string, attempts = 3): Promise<{ uri: string; type: string }> {
+        let lastErr: unknown = null;
+        for (let i = 0; i < attempts; i++) {
+          try {
+            return await uploadOne(filePath);
+          } catch (e) {
+            lastErr = e;
+            const backoff = Math.min(1000 * Math.pow(2, i), 8000);
+            await new Promise((r) => setTimeout(r, backoff));
+          }
+        }
+        throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+      }
+
       // Upload images with bounded concurrency
       {
         let idx = 0;
@@ -52,7 +66,7 @@ export function uploadCmd(): Command {
             const f = imageFiles[current];
             if (!f) continue;
             const p = path.join(imagesDir, f);
-            const { uri } = await uploadOne(p);
+            const { uri } = await uploadWithRetry(p);
             imgManifest[f] = uri;
           }
         });
@@ -68,7 +82,10 @@ export function uploadCmd(): Command {
         if (newUri) {
           j.image = newUri;
           j.properties = j.properties || {};
-          j.properties.files = [{ uri: newUri, type: newUri.endsWith('.webp') ? 'image/webp' : 'image/png' }];
+          // Infer MIME from configured output format first, falling back to URI suffix
+          const ext = (cfg.export?.imageFormat === 'webp') ? 'image/webp' : 'image/png';
+          const inferred = /\.webp(\b|$)/i.test(newUri) ? 'image/webp' : (/\.png(\b|$)/i.test(newUri) ? 'image/png' : ext);
+          j.properties.files = [{ uri: newUri, type: inferred }];
           await fs.writeFile(p, JSON.stringify(j, null, 2));
         }
       }
@@ -83,7 +100,7 @@ export function uploadCmd(): Command {
             const f = jsonFiles[current];
             if (!f) continue;
             const p = path.join(jsonDir, f);
-            const { uri } = await uploadOne(p);
+            const { uri } = await uploadWithRetry(p);
             jsonManifest[f] = uri;
           }
         });
@@ -92,7 +109,12 @@ export function uploadCmd(): Command {
 
       const manifest = { images: imgManifest, metadata: jsonManifest, provider: opts.provider };
       await fs.writeFile(path.join(outDir, '.upload-manifest.json'), JSON.stringify(manifest, null, 2));
+      const failedImages = (await fs.readdir(imagesDir)).filter((f) => !(f in imgManifest));
+      const failedJson = jsonFiles.filter((f) => !(f in jsonManifest));
       console.log('Upload complete. Local JSON rewritten and manifest saved.');
+      if (failedImages.length || failedJson.length) {
+        console.warn(`Some uploads failed. Images failed: ${failedImages.length}, Metadata failed: ${failedJson.length}`);
+      }
     });
   return cmd;
 }

@@ -20,7 +20,7 @@ function createWindow(): void {
       preload: path.join(appDir, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: false,
+      webSecurity: true,
     },
   });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));

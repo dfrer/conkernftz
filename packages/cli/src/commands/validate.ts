@@ -35,11 +35,36 @@ export function validateCmd(): Command {
           issues.push(required ? `ERROR: ${msg} (layer is required)` : `WARN: ${msg}`);
         }
       }
+      // Sum creators shares = 100
+      if (cfg.chain?.target === 'solana' && Array.isArray(cfg.chain.solana?.creators)) {
+        const sum = cfg.chain.solana.creators.reduce((acc: number, c: any) => acc + Number(c?.share || 0), 0);
+        if (sum !== 100) issues.push(`ERROR: creators share must sum to 100 (got ${sum})`);
+      }
+      // Wallet keypair exists (Solana)
+      if (cfg.chain?.target === 'solana') {
+        const walletPath = cfg.chain.solana?.walletKeypairPath;
+        if (!walletPath) issues.push('ERROR: chain.solana.walletKeypairPath is required');
+        else {
+          const p = path.isAbsolute(walletPath) ? walletPath : path.join(process.cwd(), walletPath);
+          try { await fs.access(p); } catch { issues.push(`ERROR: Wallet keypair not found at ${p}`); }
+        }
+      }
+      // Forbid GIF output (not supported end-to-end)
+      if (cfg.export?.imageFormat === 'gif') {
+        issues.push('ERROR: export.imageFormat "gif" is not supported. Use png or webp.');
+      }
       if (issues.length > 0) {
         for (const i of issues) console.error(i);
         if (issues.some((i) => i.startsWith('ERROR'))) {
           process.exitCode = 1;
           return;
+        }
+      }
+      // Windows OneDrive warning (can cause flaky native builds like sharp)
+      if (process.platform === 'win32') {
+        const cwd = process.cwd();
+        if (/OneDrive/i.test(cwd)) {
+          console.warn('WARN: Your project path appears to be under OneDrive. This can cause flaky native builds (e.g., sharp). Consider moving to a local path like C:\\dev\\conkernftz');
         }
       }
       console.log('Config OK');
