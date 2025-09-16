@@ -1,15 +1,5 @@
-// Lightweight Live Preview rebuilt from scratch
-// - Pure renderer-side (Canvas 2D), no native deps
-// - Reads current config + layers, samples one asset per layer
-// - Draws to canvas in order with basic blend/opacity/offset support
-
-type LayerLike = {
-  name?: string;
-  path: string;
-  blend?: string;
-  opacity?: number;
-  effects?: { blend?: string; opacity?: number; offsetX?: number; offsetY?: number };
-};
+export {};
+// Live Preview: IPC-driven only (core compositor); local canvas fallback removed
 
 function $(id: string): HTMLElement | null { return document.getElementById(id); }
 
@@ -20,18 +10,6 @@ function cloneResetEl(el: HTMLElement | null): HTMLElement | null {
   return clone;
 }
 
-function joinPath(a: string, b: string): string {
-  const norm = (s: string) => String(s || '').replace(/\\/g, '/');
-  const x = norm(a).replace(/\/$/, '');
-  const y = norm(b).replace(/^\//, '');
-  return x ? `${x}/${y}` : y;
-}
-
-function fileUrlAbs(absPath: string): string {
-  const norm = String(absPath || '').replace(/\\/g, '/');
-  return encodeURI('file:///' + norm).replace(/#/g, '%23');
-}
-
 async function readEffectiveConfig(): Promise<any | null> {
   try {
     const cfg = await (window as any).foundry.readConfig();
@@ -40,123 +18,64 @@ async function readEffectiveConfig(): Promise<any | null> {
   } catch { return null; }
 }
 
-async function listImagesIn(dirRelOrAbs: string): Promise<string[]> {
+async function composeLocalFallback(cfg: any): Promise<string | null> {
   try {
-    const res = await (window as any).foundry.listDir(dirRelOrAbs);
-    if (!res || !res.ok || !Array.isArray(res.items)) return [];
-    return res.items.filter((n: string) => !n.endsWith('/') && /\.(png|webp|gif)$/i.test(n));
-  } catch { return []; }
-}
-
-function pick<T>(arr: T[]): T | null {
-  if (!arr.length) return null;
-  const idx = Math.floor(Math.random() * arr.length);
-  const v = (arr as Array<T | undefined>)[idx];
-  return (v === undefined ? null : v);
-}
-
-function mapBlend(mode?: string): GlobalCompositeOperation {
-  const m = String(mode || '').toLowerCase();
-  switch (m) {
-    case 'normal':
-    case 'over':
-    default:
-      return 'source-over';
-    case 'multiply': return 'multiply';
-    case 'screen': return 'screen';
-    case 'overlay': return 'overlay';
-    case 'darken': return 'darken';
-    case 'lighten': return 'lighten';
-    case 'color-dodge': return 'lighter';
-    case 'colour-dodge': return 'lighter';
-    case 'color-burn': return 'source-over';
-    case 'colour-burn': return 'source-over';
-    case 'hard-light': return 'hard-light';
-    case 'soft-light': return 'soft-light';
-    case 'difference': return 'difference';
-    case 'exclusion': return 'exclusion';
-  }
-}
-
-async function drawOne(config: any, seed?: string): Promise<string | null> {
-  // Try accurate compositor via IPC first; includes effects like glow/stroke/shadow
-  try {
-    const res = await (window as any).foundry.previewLive(config, 1, seed || undefined);
-    if (res && res.ok && Array.isArray(res.images) && res.images[0]) {
-      return 'data:image/png;base64,' + String(res.images[0]);
+    const baseRes = await (window as any).foundry.getProjectDir();
+    const baseDir = (baseRes && baseRes.projectDir) ? String(baseRes.projectDir).replace(/\\/g,'/') : '';
+    const width = Number(cfg?.image?.width || 1024);
+    const height = Number(cfg?.image?.height || 1024);
+    const bg = String(cfg?.image?.background || 'transparent');
+    const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+    if (!layers.length) return null;
+    const picks: Array<{ url: string; opacity: number; x: number; y: number }> = [];
+    for (const layer of layers) {
+      if (!layer || !layer.path) continue;
+      const listing = await (window as any).foundry.listDir(layer.path);
+      if (!listing || !listing.ok || !Array.isArray(listing.items)) continue;
+      const files = (listing.items as string[]).filter((n: string) => !n.endsWith('/') && /\.(png|webp|gif)$/i.test(n));
+      if (!files.length) continue;
+      const name = files[0]!;
+      const url = encodeURI('file:///' + baseDir + '/' + String(layer.path).replace(/\\/g,'/').replace(/^\/+/, '') + '/' + name).replace(/#/g, '%23');
+      const opacity = typeof layer.opacity === 'number' ? layer.opacity : (typeof layer.effects?.opacity === 'number' ? layer.effects.opacity : 1);
+      const x = Number(layer.effects?.offsetX || 0);
+      const y = Number(layer.effects?.offsetY || 0);
+      picks.push({ url, opacity: Math.max(0, Math.min(1, Number(opacity) || 1)), x, y });
     }
-  } catch {}
-  const proj = await (window as any).foundry.getProjectDir();
-  const base = (proj && proj.ok && proj.projectDir) ? String(proj.projectDir).replace(/\\/g, '/') : '';
-  const width = Number(config?.image?.width || 1024);
-  const height = Number(config?.image?.height || 1024);
-  const bg = String(config?.image?.background || 'transparent');
-  const layers: LayerLike[] = Array.isArray(config?.layers) ? config.layers : [];
-  if (!layers.length) return null;
-
-  // Collect chosen assets
-  const picks: Array<{ url: string; blend: GlobalCompositeOperation; opacity: number; x: number; y: number }> = [];
-  for (const layer of layers) {
-    if (!layer || !layer.path) continue;
-    const files = await listImagesIn(layer.path);
-    const choice = pick(files);
-    if (!choice) continue;
-    const abs = fileUrlAbs(joinPath(joinPath(base, ''), joinPath(layer.path, choice)));
-    const blend = mapBlend(layer.blend ?? layer.effects?.blend);
-    const op = (typeof layer.opacity === 'number' ? layer.opacity : (typeof layer.effects?.opacity === 'number' ? layer.effects!.opacity : 1));
-    const x = Number(layer.effects?.offsetX || 0);
-    const y = Number(layer.effects?.offsetY || 0);
-    picks.push({ url: abs, blend, opacity: Math.max(0, Math.min(1, Number(op) || 1)), x, y });
-  }
-  if (!picks.length) return null;
-
-  // Load images
-  const imgs = await Promise.all(
-    picks.map((p) => new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('img load failed'));
-      img.src = p.url;
-    }))
-  ).catch(() => null as any);
-  if (!imgs || !Array.isArray(imgs)) return null;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width; canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  if (bg && bg !== 'transparent') { ctx.fillStyle = bg; ctx.fillRect(0, 0, width, height); }
-
-  for (let i = 0; i < picks.length; i++) {
-    const p = picks[i]!;
-    ctx.globalCompositeOperation = p.blend || 'source-over';
-    ctx.globalAlpha = typeof p.opacity === 'number' ? p.opacity : 1;
-    const img = imgs[i]!;
-    try { ctx.drawImage(img, (p.x || 0), (p.y || 0), width, height); } catch {}
-  }
-  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-  const b64 = canvas.toDataURL('image/png').split(',')[1] || '';
-  return 'data:image/png;base64,' + b64;
+    if (!picks.length) return null;
+    const imgs = await Promise.all(
+      picks.map((p) => new Promise<HTMLImageElement>((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('img load failed')); img.src = p.url; }))
+    ).catch(() => null as any);
+    if (!imgs || !Array.isArray(imgs)) return null;
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d'); if (!ctx) return null;
+    if (bg && bg !== 'transparent') { ctx.fillStyle = bg; ctx.fillRect(0,0,width,height); }
+    for (let i = 0; i < picks.length; i++) { const p = picks[i]!; const img = imgs[i]!; ctx.globalAlpha = typeof p.opacity === 'number' ? p.opacity : 1; try { ctx.drawImage(img, (p.x||0), (p.y||0), width, height); } catch {} }
+    ctx.globalAlpha = 1;
+    const b64 = canvas.toDataURL('image/png');
+    return b64 || null;
+  } catch { return null; }
 }
-
 async function runLive(count: number, seed?: string): Promise<string[]> {
   const cfg = await readEffectiveConfig();
   if (!cfg) return [];
-  // Prefer accurate core compositor via IPC (includes effects)
+  const howMany = Math.max(1, Math.min(12, Number(count) || 4));
+  const res = await (window as any).foundry.previewLive(cfg, howMany, seed || undefined).catch(() => null);
+  if (res && res.ok && Array.isArray(res.images)) {
+    // Prefer format returned by IPC; fallback to config to decide MIME
+    const fmtKey = String(res.format || '').toLowerCase() === 'webp' || (cfg?.export?.imageFormat === 'webp') ? 'image/webp' : 'image/png';
+    return res.images.map((b64: string) => `data:${fmtKey};base64,` + String(b64));
+  }
+  // Fallbacks: accurate single-image compositor, then local canvas compose
   try {
-    const howMany = Math.max(1, Math.min(12, Number(count) || 4));
-    const res = await (window as any).foundry.previewLive(cfg, howMany, seed || undefined);
-    if (res && res.ok && Array.isArray(res.images)) {
-      return res.images.map((b64: string) => 'data:image/png;base64,' + String(b64));
+    const one = await (window as any).foundry.previewEffects(cfg);
+    if (one && one.ok && one.b64) {
+      const mime = (String(one?.format||'').toLowerCase() === 'webp') ? 'image/webp' : 'image/png';
+      return [`data:${mime};base64,` + String(one.b64)];
     }
   } catch {}
-  // Fallback to simple client-side composition without effects
-  const out: string[] = [];
-  for (let i = 0; i < Math.max(1, Math.min(12, count || 4)); i++) {
-    const url = await drawOne(cfg, seed);
-    if (url) out.push(url);
-  }
-  return out;
+  const url = await composeLocalFallback(cfg);
+  if (url) return [url];
+  return [];
 }
 
 function mountGrid(urls: string[], fit: 'contain'|'cover'|'actual', bg: 'check'|'dark'|'light'): void {

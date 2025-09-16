@@ -304,7 +304,15 @@ Customization & Accessibility
 
 ---
 
-## 12) Tauri Packaging (Optional)
+## 12) Documentation
+
+- CLI Reference: `docs/CLI_REFERENCE.md`
+- Configuration Reference: `docs/CONFIG_REFERENCE.md`
+- UI Guide: `docs/UI_GUIDE.md`
+
+---
+
+## 13) Tauri Packaging (Optional)
 
 Build steps
 
@@ -320,7 +328,7 @@ The binary is written to `packages/ui-tauri/src-tauri/target/release`.
 
 ---
 
-## 13) Troubleshooting
+## 14) Troubleshooting
 
 Cannot find module `packages/cli/dist/bin.js`
 - Cause: CLI TypeScript not compiled.
@@ -348,7 +356,7 @@ Antivirus interference on Windows
 
 ---
 
-## 14) Development
+## 15) Development
 
 Useful commands
 
@@ -365,7 +373,7 @@ Contributing
 
 ---
 
-## 15) License
+## 16) License
 
 MIT — see `LICENSE`.
 

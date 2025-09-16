@@ -9,6 +9,18 @@ export function uploadCmd(): Command {
     .description('Upload assets to storage (Arweave/IPFS) and rewrite local JSON URIs')
     .option('--provider <name>', 'arweave or ipfs', 'arweave')
     .option('--concurrency <n>', 'parallel uploads', '4')
+    .addHelpText(
+      'afterAll',
+      `
+Credentials:
+  - arweave (Bundlr): set in foundry.config.json -> storage.arweave { bundlrNode, currency, keyPath }
+  - ipfs: set NFT.Storage token or Pinata keys in storage.ipfs { nftStorageKey | pinataKey+pinataSecret }
+
+Examples:
+  foundry upload --provider arweave --concurrency 6
+  foundry upload --provider ipfs --concurrency 4
+`
+    )
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');

@@ -197,7 +197,8 @@ async function runLivePreviewFromConfig() {
     const seed = 'ui-' + Date.now().toString(36) + '-' + Math.floor(Math.random()*1e6);
     const res = await (window as any).foundry.previewLive(cfg, count, seed);
     if (res && res.ok && Array.isArray(res.images) && res.images.length) {
-      lpLiveImages = res.images.map((b64: string) => 'data:image/png;base64,' + b64);
+      const mime = (String(res?.format||'').toLowerCase() === 'webp') ? 'image/webp' : 'image/png';
+      lpLiveImages = res.images.map((b64: string) => `data:${mime};base64,` + b64);
       lpRender();
       return;
     }
@@ -205,7 +206,8 @@ async function runLivePreviewFromConfig() {
     try {
       const one = await (window as any).foundry.previewEffects(cfg);
       if (one && one.ok && one.b64) {
-        lpLiveImages = ['data:image/png;base64,' + String(one.b64)];
+        const mime = (String(one?.format||'').toLowerCase() === 'webp') ? 'image/webp' : 'image/png';
+        lpLiveImages = [`data:${mime};base64,` + String(one.b64)];
         lpRender();
         return;
       }
@@ -1671,6 +1673,7 @@ function initCollapsibles() {
   sets.forEach((fs) => {
     const btn = fs.querySelector('.collapse-btn') as HTMLButtonElement | null;
     const body = fs.querySelector('.collapsible-body') as HTMLElement | null;
+    const legend = fs.querySelector('legend') as HTMLElement | null;
     if (!btn || !body) return;
     function toggle() {
       const isOpen = body.classList.toggle('open');
@@ -1678,6 +1681,7 @@ function initCollapsibles() {
       btn.textContent = isOpen ? 'Collapse' : 'Expand';
     }
     btn.addEventListener('click', toggle);
+    if (legend) legend.addEventListener('click', toggle);
   });
 }
 
@@ -1692,6 +1696,316 @@ function applyExperimentalToUI(cfg: any) {
     if (ssEl) ssEl.value = String(Math.max(1, Math.min(4, Math.floor(ss))));
     if (forceCpuEl) forceCpuEl.checked = forceCpu;
     if (shuffleEl) shuffleEl.checked = shuffleLayers;
+    // Render conditional spawn editors per layer
+    const host = document.getElementById('xp-conds-list');
+    const advHost = document.getElementById('xp-conds-advanced');
+    const optHost = document.getElementById('xp-option-rules');
+    const uiHost = document.getElementById('xp-conds-ui');
+    const uiOptHost = document.getElementById('xp-option-rules-ui');
+    if (host) {
+      host.innerHTML = '';
+      const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+      layers.forEach((layer: any, idx: number) => {
+        const wrap = document.createElement('div');
+        wrap.style.border = '1px solid var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.padding = '8px';
+        wrap.style.background = 'var(--panel-soft)';
+        const val = Array.isArray(layer?.spawnWhenAnyOf) ? (layer.spawnWhenAnyOf as string[]).join(', ') : '';
+        wrap.innerHTML = `
+          <div class="row" style="gap:8px; align-items:center;">
+            <div style="min-width:160px; font-weight:600;">${layer?.name || ('Layer ' + (idx+1))}</div>
+            <input class="xp-cond-input" data-layer-index="${idx}" placeholder="Layer:Value, Layer:Value" value="${val.replace(/\"/g,'&quot;')}">
+            <button class="btn-secondary btn-sm xp-cond-clear" data-layer-index="${idx}">Clear</button>
+          </div>`;
+        host.appendChild(wrap);
+      });
+      // Bind clear buttons
+      host.querySelectorAll('.xp-cond-clear').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const idx = Number(target.getAttribute('data-layer-index') || '0');
+          const input = host.querySelector(`.xp-cond-input[data-layer-index="${idx}"]`) as HTMLInputElement | null;
+          if (input) input.value = '';
+          scheduleLiveUpdate();
+        });
+      });
+      // Input events to refresh live preview
+      host.querySelectorAll('.xp-cond-input').forEach((inp) => {
+        inp.addEventListener('input', () => scheduleLiveUpdate());
+      });
+    }
+    if (advHost) {
+      advHost.innerHTML = '';
+      const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+      layers.forEach((layer: any, idx: number) => {
+        const wrap = document.createElement('div');
+        wrap.style.border = '1px dashed var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.padding = '8px';
+        const whenVal = layer?.spawnWhen ? JSON.stringify(layer.spawnWhen, null, 0) : '';
+        const unlessVal = layer?.spawnUnless ? JSON.stringify(layer.spawnUnless, null, 0) : '';
+        wrap.innerHTML = `
+          <div style="font-weight:600; margin-bottom:6px;">${layer?.name || ('Layer ' + (idx+1))}</div>
+          <div class="form-grid cols-2">
+            <div>
+              <label class="mini">When (JSON)</label>
+              <textarea class="xp-cond-when" data-layer-index="${idx}" rows="3" placeholder='{"allOf":["Character:Angel"]}'>${whenVal}</textarea>
+            </div>
+            <div>
+              <label class="mini">Unless (JSON)</label>
+              <textarea class="xp-cond-unless" data-layer-index="${idx}" rows="3" placeholder='{"noneOf":["Background:Gold"]}'>${unlessVal}</textarea>
+            </div>
+          </div>`;
+        advHost.appendChild(wrap);
+      });
+      advHost.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => scheduleLiveUpdate()));
+    }
+    if (optHost) {
+      optHost.innerHTML = '';
+      const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+      layers.forEach((layer: any, idx: number) => {
+        const wrap = document.createElement('div');
+        wrap.style.border = '1px dashed var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.padding = '8px';
+        const list = Array.isArray(layer?.optionRules) ? layer.optionRules : [];
+        const json = list.length ? JSON.stringify(list, null, 2) : '';
+        wrap.innerHTML = `
+          <div style="font-weight:600; margin-bottom:6px;">${layer?.name || ('Layer ' + (idx+1))}</div>
+          <label class="mini">Option Rules (JSON array)</label>
+          <textarea class="xp-option-rules" data-layer-index="${idx}" rows="4" placeholder='[{"match":{"target":"value","pattern":"Hat"},"when":{"anyOf":["Character:Angel"]},"weightMultiply":0.5}]'>${json}</textarea>`;
+        optHost.appendChild(wrap);
+      });
+      optHost.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => scheduleLiveUpdate()));
+    }
+    // Non-JSON UI - per-layer form
+    if (uiHost) {
+      uiHost.innerHTML = '';
+      const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+      layers.forEach((layer: any, idx: number) => {
+        const wrap = document.createElement('div');
+        wrap.style.border = '1px solid var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.padding = '8px';
+        wrap.style.background = 'var(--panel-soft)';
+        const anyList = Array.isArray(layer?.spawnWhen?.anyOf) ? layer.spawnWhen.anyOf : [];
+        const allList = Array.isArray(layer?.spawnWhen?.allOf) ? layer.spawnWhen.allOf : [];
+        const noneList = Array.isArray(layer?.spawnWhen?.noneOf) ? layer.spawnWhen.noneOf : [];
+        const unlessAnyList = Array.isArray(layer?.spawnUnless?.anyOf) ? layer.spawnUnless.anyOf : [];
+        const unlessVals = (Array.isArray(layer?.spawnUnless?.allOf) || Array.isArray(layer?.spawnUnless?.noneOf)) ? JSON.stringify(layer.spawnUnless) : '';
+        wrap.innerHTML = `
+          <div style="font-weight:600; margin-bottom:6px;">${layer?.name || ('Layer ' + (idx+1))}</div>
+          <div class="form-grid cols-3">
+            <div class="chip-group" data-layer-index="${idx}" data-kind="any">
+              <label class="mini">Any Of</label>
+              <div class="xp-chip-list" data-layer-index="${idx}" data-kind="any" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+              <div class="row" style="gap:6px; margin-top:4px;">
+                <input class="xp-chip-input" data-layer-index="${idx}" data-kind="any" placeholder="Layer:Value">
+                <button class="btn-secondary btn-sm xp-chip-add" data-layer-index="${idx}" data-kind="any" type="button">Add</button>
+              </div>
+            </div>
+            <div class="chip-group" data-layer-index="${idx}" data-kind="all">
+              <label class="mini">All Of</label>
+              <div class="xp-chip-list" data-layer-index="${idx}" data-kind="all" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+              <div class="row" style="gap:6px; margin-top:4px;">
+                <input class="xp-chip-input" data-layer-index="${idx}" data-kind="all" placeholder="Layer:Value">
+                <button class="btn-secondary btn-sm xp-chip-add" data-layer-index="${idx}" data-kind="all" type="button">Add</button>
+              </div>
+            </div>
+            <div class="chip-group" data-layer-index="${idx}" data-kind="none">
+              <label class="mini">None Of</label>
+              <div class="xp-chip-list" data-layer-index="${idx}" data-kind="none" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+              <div class="row" style="gap:6px; margin-top:4px;">
+                <input class="xp-chip-input" data-layer-index="${idx}" data-kind="none" placeholder="Layer:Value">
+                <button class="btn-secondary btn-sm xp-chip-add" data-layer-index="${idx}" data-kind="none" type="button">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="chip-group" data-layer-index="${idx}" data-kind="unless-any" style="margin-top:8px;">
+            <label class="mini">Unless anyOf</label>
+            <div class="xp-chip-list" data-layer-index="${idx}" data-kind="unless-any" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+            <div class="row" style="gap:6px; margin-top:4px;">
+              <input class="xp-chip-input" data-layer-index="${idx}" data-kind="unless-any" placeholder="Layer:Value">
+              <button class="btn-secondary btn-sm xp-chip-add" data-layer-index="${idx}" data-kind="unless-any" type="button">Add</button>
+            </div>
+          </div>
+          <div style="margin-top:6px;" class="mini muted">Optional NOT (advanced):</div>
+          <textarea class="xp-ui-not" data-layer-index="${idx}" rows="2" placeholder='{"anyOf":["Accessory:Umbrella"]}'>${(layer?.spawnWhen?.not ? JSON.stringify(layer.spawnWhen.not) : '')}</textarea>
+          <div style="margin-top:6px;" class="mini muted">Unless (skip when true):</div>
+          <textarea class="xp-ui-unless" data-layer-index="${idx}" rows="2" placeholder='{"allOf":["Background:Gold"]}'>${unlessVals}</textarea>
+        `;
+        uiHost.appendChild(wrap);
+        // Populate chips
+        function appendChip(listEl: HTMLElement, value: string) {
+          const chip = document.createElement('span');
+          chip.className = 'xp-chip';
+          chip.setAttribute('data-value', value);
+          chip.style.display = 'inline-flex';
+          chip.style.alignItems = 'center';
+          chip.style.gap = '6px';
+          chip.style.padding = '2px 6px';
+          chip.style.border = '1px solid var(--border)';
+          chip.style.borderRadius = '14px';
+          chip.style.background = 'var(--panel)';
+          chip.innerHTML = `<span class="mini">${value.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span><button class="xp-chip-remove btn-ghost btn-sm" title="Remove" type="button">×</button>`;
+          listEl.appendChild(chip);
+        }
+        const anyListEl = wrap.querySelector('.xp-chip-list[data-kind="any"]') as HTMLElement | null;
+        const allListEl = wrap.querySelector('.xp-chip-list[data-kind="all"]') as HTMLElement | null;
+        const noneListEl = wrap.querySelector('.xp-chip-list[data-kind="none"]') as HTMLElement | null;
+        const unlessAnyEl = wrap.querySelector('.xp-chip-list[data-kind="unless-any"]') as HTMLElement | null;
+        anyList.forEach((v: string) => { if (anyListEl) appendChip(anyListEl, v); });
+        allList.forEach((v: string) => { if (allListEl) appendChip(allListEl, v); });
+        noneList.forEach((v: string) => { if (noneListEl) appendChip(noneListEl, v); });
+        unlessAnyList.forEach((v: string) => { if (unlessAnyEl) appendChip(unlessAnyEl, v); });
+      });
+      // Add/remove chip events
+      uiHost.addEventListener('click', (e) => {
+        const el = e.target as HTMLElement;
+        if (!el) return;
+        if (el.classList.contains('xp-chip-add')) {
+          const kind = el.getAttribute('data-kind') || '';
+          const layerIdx = Number(el.getAttribute('data-layer-index') || '0');
+          const input = uiHost.querySelector(`.xp-chip-input[data-kind="${kind}"][data-layer-index="${layerIdx}"]`) as HTMLInputElement | null;
+          const list = uiHost.querySelector(`.xp-chip-list[data-kind="${kind}"][data-layer-index="${layerIdx}"]`) as HTMLElement | null;
+          if (!input || !list) return;
+          const raw = (input.value || '').trim();
+          if (!raw) return;
+          // prevent duplicates
+          const exists = Array.from(list.querySelectorAll('.xp-chip')).some((c) => (c as HTMLElement).getAttribute('data-value') === raw);
+          if (!exists) {
+            const chip = document.createElement('span');
+            chip.className = 'xp-chip';
+            chip.setAttribute('data-value', raw);
+            chip.style.display = 'inline-flex';
+            chip.style.alignItems = 'center';
+            chip.style.gap = '6px';
+            chip.style.padding = '2px 6px';
+            chip.style.border = '1px solid var(--border)';
+            chip.style.borderRadius = '14px';
+            chip.style.background = 'var(--panel)';
+            chip.innerHTML = `<span class="mini">${raw.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span><button class="xp-chip-remove btn-ghost btn-sm" title="Remove" type="button">×</button>`;
+            list.appendChild(chip);
+            input.value = '';
+            scheduleLiveUpdate();
+          }
+        } else if (el.classList.contains('xp-chip-remove')) {
+          const chip = el.closest('.xp-chip') as HTMLElement | null;
+          if (chip) { chip.remove(); scheduleLiveUpdate(); }
+        }
+      });
+      uiHost.addEventListener('keydown', (e: any) => {
+        const el = e.target as HTMLElement;
+        if (!el || !el.classList.contains('xp-chip-input')) return;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const btn = el.parentElement?.querySelector('.xp-chip-add') as HTMLButtonElement | null;
+          if (btn) btn.click();
+        }
+      });
+      uiHost.querySelectorAll('textarea').forEach((el) => el.addEventListener('input', () => scheduleLiveUpdate()));
+    }
+    if (uiOptHost) {
+      uiOptHost.innerHTML = '';
+      const layers = Array.isArray(cfg?.layers) ? cfg.layers : [];
+      layers.forEach((layer: any, idx: number) => {
+        const wrap = document.createElement('div');
+        wrap.style.border = '1px solid var(--border)';
+        wrap.style.borderRadius = '8px';
+        wrap.style.padding = '8px';
+        wrap.style.background = 'var(--panel-soft)';
+        const list = Array.isArray(layer?.optionRules) ? layer.optionRules : [];
+        const rowsHtml = (list.length ? list : [{}]).map((r, rIdx) => `
+          <div class="row xp-ui-opt-row" data-layer-index="${idx}" data-rule-index="${rIdx}" style="gap:8px; align-items:center; margin-bottom:6px;">
+            <select class="xp-ui-opttarget" data-layer-index="${idx}" data-rule-index="${rIdx}">
+              <option value="value" ${r?.match?.target==='value'?'selected':''}>value</option>
+              <option value="filename" ${r?.match?.target==='filename'?'selected':''}>filename</option>
+            </select>
+            <input class="xp-ui-optpattern" data-layer-index="${idx}" data-rule-index="${rIdx}" placeholder="Pattern" value="${(r?.match?.pattern||'').replace(/\"/g,'&quot;')}">
+            <select class="xp-ui-optaction" data-layer-index="${idx}" data-rule-index="${rIdx}">
+              <option value="weight" ${(r?.exclude? '': 'selected')}>weight x</option>
+              <option value="exclude" ${r?.exclude? 'selected': ''}>exclude</option>
+            </select>
+            <input class="xp-ui-optweight" data-layer-index="${idx}" data-rule-index="${rIdx}" type="number" step="0.1" min="0" value="${(r?.weightMultiply ?? 1)}" ${r?.exclude? 'disabled':''} style="width:90px;">
+            <input class="xp-ui-opt-when-any" data-layer-index="${idx}" data-rule-index="${rIdx}" placeholder="when anyOf" value="${Array.isArray(r?.when?.anyOf)? r.when.anyOf.join(', ') : ''}">
+            <input class="xp-ui-opt-unless-any" data-layer-index="${idx}" data-rule-index="${rIdx}" placeholder="unless anyOf" value="${Array.isArray(r?.unless?.anyOf)? r.unless.anyOf.join(', ') : ''}">
+            <button class="btn-secondary btn-sm xp-ui-opt-add" data-layer-index="${idx}" type="button">Add</button>
+            <button class="btn-ghost btn-sm xp-ui-opt-del" data-layer-index="${idx}" data-rule-index="${rIdx}" type="button">Del</button>
+          </div>`).join('');
+        wrap.innerHTML = `
+          <div style="font-weight:600;">${layer?.name || ('Layer ' + (idx+1))}</div>
+          <div class="column xp-ui-opt-rows" data-layer-index="${idx}" style="margin-top:6px;">${rowsHtml}</div>
+          <div class="row" style="margin-top:6px;">
+            <button class="btn-primary btn-sm xp-ui-opt-add-row" data-layer-index="${idx}" type="button">Add rule</button>
+          </div>
+        `;
+        uiOptHost.appendChild(wrap);
+      });
+      function newOptRowHtml(layerIdx: number): string {
+        const rIdx = (uiOptHost.querySelectorAll(`.xp-ui-opt-row[data-layer-index="${layerIdx}"]`) || []).length;
+        return `
+          <div class="row xp-ui-opt-row" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" style="gap:8px; align-items:center; margin-bottom:6px;">
+            <select class="xp-ui-opttarget" data-layer-index="${layerIdx}" data-rule-index="${rIdx}">
+              <option value="value" selected>value</option>
+              <option value="filename">filename</option>
+            </select>
+            <input class="xp-ui-optpattern" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" placeholder="Pattern" value="">
+            <select class="xp-ui-optaction" data-layer-index="${layerIdx}" data-rule-index="${rIdx}">
+              <option value="weight" selected>weight x</option>
+              <option value="exclude">exclude</option>
+            </select>
+            <input class="xp-ui-optweight" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" type="number" step="0.1" min="0" value="1" style="width:90px;">
+            <input class="xp-ui-opt-when-any" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" placeholder="when anyOf" value="">
+            <input class="xp-ui-opt-unless-any" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" placeholder="unless anyOf" value="">
+            <button class="btn-secondary btn-sm xp-ui-opt-add" data-layer-index="${layerIdx}" type="button">Add</button>
+            <button class="btn-ghost btn-sm xp-ui-opt-del" data-layer-index="${layerIdx}" data-rule-index="${rIdx}" type="button">Del</button>
+          </div>`;
+      }
+      uiOptHost.addEventListener('click', (e) => {
+        const el = e.target as HTMLElement;
+        if (!el) return;
+        if (el.classList.contains('xp-ui-opt-add') || el.classList.contains('xp-ui-opt-add-row')) {
+          const layerIdx = Number(el.getAttribute('data-layer-index') || '0');
+          const container = uiOptHost.querySelector(`.xp-ui-opt-rows[data-layer-index="${layerIdx}"]`);
+          if (container) {
+            const div = document.createElement('div');
+            div.innerHTML = newOptRowHtml(layerIdx);
+            const row = div.firstElementChild as HTMLElement | null;
+            if (row) (container as HTMLElement).appendChild(row);
+            scheduleLiveUpdate();
+          }
+        }
+        if (el.classList.contains('xp-ui-opt-del')) {
+          const row = el.closest('.xp-ui-opt-row') as HTMLElement | null;
+          if (row && row.parentElement) {
+            const container = row.parentElement;
+            row.remove();
+            // Ensure at least one row remains for UX
+            if (container.querySelectorAll('.xp-ui-opt-row').length === 0) {
+              const layerIdx = Number(el.getAttribute('data-layer-index') || '0');
+              const div = document.createElement('div');
+              div.innerHTML = newOptRowHtml(layerIdx);
+              const newRow = div.firstElementChild as HTMLElement | null;
+              if (newRow) container.appendChild(newRow);
+            }
+            scheduleLiveUpdate();
+          }
+        }
+      });
+      uiOptHost.addEventListener('input', () => scheduleLiveUpdate());
+      uiOptHost.addEventListener('change', (e) => {
+        const el = e.target as HTMLElement;
+        if (!el) return;
+        if (el.classList.contains('xp-ui-optaction')) {
+          const row = el.closest('.xp-ui-opt-row') as HTMLElement | null;
+          if (!row) return;
+          const weight = row.querySelector('.xp-ui-optweight') as HTMLInputElement | null;
+          const select = el as HTMLSelectElement;
+          if (weight) weight.disabled = (select.value === 'exclude');
+        }
+      });
+    }
   } catch {}
 }
 async function loadConfigUI() {
@@ -1969,6 +2283,135 @@ async function collectUpdatedConfig(): Promise<any | null> {
   };
   // Layers table
   updated.layers = readLayersFromTable();
+  // Inject Conditional Spawn values captured from Experimental UI
+  try {
+    const host = document.getElementById('xp-conds-list') as HTMLElement | null;
+    const advHost = document.getElementById('xp-conds-advanced') as HTMLElement | null;
+    const optHost = document.getElementById('xp-option-rules') as HTMLElement | null;
+    const uiHost = document.getElementById('xp-conds-ui') as HTMLElement | null;
+    const uiOptHost = document.getElementById('xp-option-rules-ui') as HTMLElement | null;
+    if (host && Array.isArray(updated.layers)) {
+      const inputs = Array.from(host.querySelectorAll('.xp-cond-input')) as HTMLInputElement[];
+      inputs.forEach((inp) => {
+        const idx = Number(inp.getAttribute('data-layer-index') || '0');
+        const raw = String(inp.value || '').trim();
+        const arr = raw.split(',').map((s) => s.trim()).filter(Boolean);
+        if (arr.length > 0) {
+          (updated.layers[idx] as any).spawnWhenAnyOf = arr;
+        } else {
+          // Remove if empty to avoid cluttering config
+          if (updated.layers[idx]) delete (updated.layers[idx] as any).spawnWhenAnyOf;
+        }
+      });
+    }
+    if (advHost && Array.isArray(updated.layers)) {
+      const whens = Array.from(advHost.querySelectorAll('.xp-cond-when')) as HTMLTextAreaElement[];
+      const unlesses = Array.from(advHost.querySelectorAll('.xp-cond-unless')) as HTMLTextAreaElement[];
+      whens.forEach((ta) => {
+        const idx = Number(ta.getAttribute('data-layer-index') || '0');
+        const txt = String(ta.value || '').trim();
+        if (txt) {
+          try { (updated.layers[idx] as any).spawnWhen = JSON.parse(txt); }
+          catch { /* ignore invalid JSON; don't overwrite */ }
+        } else if (updated.layers[idx]) {
+          delete (updated.layers[idx] as any).spawnWhen;
+        }
+      });
+      unlesses.forEach((ta) => {
+        const idx = Number(ta.getAttribute('data-layer-index') || '0');
+        const txt = String(ta.value || '').trim();
+        if (txt) {
+          try { (updated.layers[idx] as any).spawnUnless = JSON.parse(txt); }
+          catch { /* ignore invalid JSON */ }
+        } else if (updated.layers[idx]) {
+          delete (updated.layers[idx] as any).spawnUnless;
+        }
+      });
+    }
+    if (optHost && Array.isArray(updated.layers)) {
+      const ors = Array.from(optHost.querySelectorAll('.xp-option-rules')) as HTMLTextAreaElement[];
+      ors.forEach((ta) => {
+        const idx = Number(ta.getAttribute('data-layer-index') || '0');
+        const txt = String(ta.value || '').trim();
+        if (txt) {
+          try {
+            const arr = JSON.parse(txt);
+            if (Array.isArray(arr)) (updated.layers[idx] as any).optionRules = arr;
+          } catch { /* ignore */ }
+        } else if (updated.layers[idx]) {
+          delete (updated.layers[idx] as any).optionRules;
+        }
+      });
+    }
+    // From non-JSON UI
+    if (uiHost && Array.isArray(updated.layers)) {
+      const notAreas = Array.from(uiHost.querySelectorAll('.xp-ui-not')) as HTMLTextAreaElement[];
+      const unlessAreas = Array.from(uiHost.querySelectorAll('.xp-ui-unless')) as HTMLTextAreaElement[];
+      const mapByIdx = new Map<number, any>();
+      function ensure(idx: number) { if (!mapByIdx.has(idx)) mapByIdx.set(idx, {}); return mapByIdx.get(idx); }
+      // Gather chips
+      const kinds = ['any','all','none'] as const;
+      kinds.forEach((kind) => {
+        const lists = Array.from(uiHost.querySelectorAll(`.xp-chip-list[data-kind="${kind}"]`)) as HTMLElement[];
+        lists.forEach((list) => {
+          const idx = Number(list.getAttribute('data-layer-index') || '0');
+          const values = Array.from(list.querySelectorAll('.xp-chip')).map((c) => (c as HTMLElement).getAttribute('data-value') || '').filter(Boolean);
+          if (values.length) ensure(idx)[kind + 'Of'] = values; else ensure(idx)[kind + 'Of'] = undefined;
+        });
+      });
+      // NOT JSON
+      notAreas.forEach((ta) => {
+        const idx = Number(ta.getAttribute('data-layer-index') || '0');
+        const txt = String(ta.value || '').trim();
+        if (txt) { try { ensure(idx).not = JSON.parse(txt); } catch {} } else { ensure(idx).not = undefined; }
+      });
+      // Unless chips (anyOf)
+      const unlessLists = Array.from(uiHost.querySelectorAll(`.xp-chip-list[data-kind="unless-any"]`)) as HTMLElement[];
+      unlessLists.forEach((list) => {
+        const idx = Number(list.getAttribute('data-layer-index') || '0');
+        const values = Array.from(list.querySelectorAll('.xp-chip')).map((c) => (c as HTMLElement).getAttribute('data-value') || '').filter(Boolean);
+        if (values.length) (updated.layers[idx] as any).spawnUnless = { anyOf: values };
+        else if (updated.layers[idx]) delete (updated.layers[idx] as any).spawnUnless;
+      });
+      // assign spawnWhen, pruning empties
+      for (const [idx, cond] of mapByIdx.entries()) {
+        const clean: any = {};
+        if (Array.isArray(cond.anyOf) && cond.anyOf.length) clean.anyOf = cond.anyOf;
+        if (Array.isArray(cond.allOf) && cond.allOf.length) clean.allOf = cond.allOf;
+        if (Array.isArray(cond.noneOf) && cond.noneOf.length) clean.noneOf = cond.noneOf;
+        if (cond.not) clean.not = cond.not;
+        if (Object.keys(clean).length > 0) (updated.layers[idx] as any).spawnWhen = clean; else delete (updated.layers[idx] as any).spawnWhen;
+      }
+    }
+    if (uiOptHost && Array.isArray(updated.layers)) {
+      // Build optionRules from rows
+      const layers = updated.layers as any[];
+      layers.forEach((_l, idx) => {
+        const targetSel = Array.from(uiOptHost.querySelectorAll(`.xp-ui-opttarget[data-layer-index="${idx}"]`)) as HTMLSelectElement[];
+        const pattInputs = Array.from(uiOptHost.querySelectorAll(`.xp-ui-optpattern[data-layer-index="${idx}"]`)) as HTMLInputElement[];
+        const actSel = Array.from(uiOptHost.querySelectorAll(`.xp-ui-optaction[data-layer-index="${idx}"]`)) as HTMLSelectElement[];
+        const wInputs = Array.from(uiOptHost.querySelectorAll(`.xp-ui-optweight[data-layer-index="${idx}"]`)) as HTMLInputElement[];
+        const whenAny = Array.from(uiOptHost.querySelectorAll(`.xp-ui-opt-when-any[data-layer-index="${idx}"]`)) as HTMLInputElement[];
+        const unlessAny = Array.from(uiOptHost.querySelectorAll(`.xp-ui-opt-unless-any[data-layer-index="${idx}"]`)) as HTMLInputElement[];
+        const rules: any[] = [];
+        for (let r = 0; r < Math.max(targetSel.length, pattInputs.length); r++) {
+          const target = (targetSel[r] && targetSel[r].value) || 'value';
+          const pattern = (pattInputs[r] && pattInputs[r].value.trim()) || '';
+          if (!pattern) continue;
+          const action = (actSel[r] && actSel[r].value) || 'weight';
+          const weightMultiply = Math.max(0, Number((wInputs[r] && wInputs[r].value) || '1'));
+          const whenArr = String((whenAny[r] && whenAny[r].value) || '').split(',').map(s=>s.trim()).filter(Boolean);
+          const unlessArr = String((unlessAny[r] && unlessAny[r].value) || '').split(',').map(s=>s.trim()).filter(Boolean);
+          const rule: any = { match: { target, pattern } };
+          if (action === 'exclude') rule.exclude = true; else rule.weightMultiply = weightMultiply;
+          if (whenArr.length) rule.when = { anyOf: whenArr };
+          if (unlessArr.length) rule.unless = { anyOf: unlessArr };
+          rules.push(rule);
+        }
+        if (rules.length) (updated.layers[idx] as any).optionRules = rules; else delete (updated.layers[idx] as any).optionRules;
+      });
+    }
+  } catch {}
   // Experimental
   try {
     const ssEl = document.getElementById('xp-super-sample') as HTMLSelectElement | null;
@@ -2652,6 +3095,60 @@ function updateStatsFromConfig(cfg) {
 // Help System (4.0.0)
 // =====================
 const HELP_TOPICS = {
+  'live-preview': {
+    title: 'Live Preview overlay',
+    short: 'Quickly view a single composition overlay while you work.',
+    body: `
+      <p>Live Preview shows a floating window with a composition drawn from your current config. Drag it by the header, resize from the corner, and use <b>Reroll</b> for a new sample.</p>
+      <ul>
+        <li><b>Export</b>: Save a contact sheet of the visible thumbnails.</li>
+        <li><b>Save</b>: Save the current grid as an image.</li>
+        <li><b>Performance</b>: Canvas fallback approximates blend modes; final renders via CLI are authoritative.</li>
+      </ul>
+    `,
+    related: ['live-preview-controls']
+  },
+  'conditional-spawn': {
+    title: 'Conditional Layer Spawn',
+    short: 'Gate layers and options based on existing trait selections.',
+    body: `
+      <p>Use boolean trait logic to include/exclude layers or reweight options:</p>
+      <ul>
+        <li><b>Layer gates</b>: <code>spawnWhenAnyOf</code>, <code>spawnWhen</code> (<i>anyOf</i>/<i>allOf</i>/<i>noneOf</i>/<i>not</i>), and <code>spawnUnless</code>.</li>
+        <li><b>Option rules</b>: <code>optionRules</code> entries with <code>exclude</code> or <code>weightMultiply</code> matched by <code>value</code> or <code>filename</code>.</li>
+      </ul>
+      <p><b>Example</b> (exclude a visor when laser eyes are present):</p>
+      <pre><code>{
+  "match": { "target": "value", "pattern": "Visor" },
+  "when": { "anyOf": ["Eyes:Laser"] },
+  "exclude": true
+}</code></pre>
+      <p>Validate rules often and preview to confirm the intended effects on rarity and aesthetics.</p>
+    `,
+    related: ['rules','config-layers']
+  },
+  'live-preview-controls': {
+    title: 'Live Preview controls',
+    short: 'Fit, background, reroll, and close.',
+    body: `
+      <ul>
+        <li><b>Fit</b>: <i>Contain</i> keeps full image visible, <i>Cover</i> fills the frame, <i>Actual</i> renders at 1:1 scale.</li>
+        <li><b>BG</b>: Choose checker, dark, or light background for transparency contrast.</li>
+        <li><b>Reroll</b>: Generate a new sample composition.</li>
+      </ul>
+    `,
+    related: ['lp-fit','lp-bg']
+  },
+  'lp-fit': {
+    title: 'Fit mode',
+    short: 'Contain, Cover, or Actual size.',
+    body: `<p>Use <b>Contain</b> to see the entire image, <b>Cover</b> to fill the preview window, or <b>Actual</b> to render at native pixels.</p>`
+  },
+  'lp-bg': {
+    title: 'Background',
+    short: 'Checker, dark, or light backdrop.',
+    body: `<p>Switch background to evaluate transparency and contrast.</p>`
+  },
   'sidebar-mint': {
     title: 'Mint sidebar',
     short: 'Upload and mint controls overview.',
@@ -2718,6 +3215,181 @@ const HELP_TOPICS = {
         <li><b>Width / Height</b>: Canvas size in pixels.</li>
       </ul>
     `
+  },
+  'config-export': {
+    title: 'Export settings',
+    short: 'Control output directories, formats, and preview contact sheet.',
+    body: `
+      <ul>
+        <li><b>Out Dir</b>: Base folder for build outputs (images/json).</li>
+        <li><b>Preview Out Dir</b>: Optional dedicated folder for previews; defaults to <code><i>outDir</i>/preview</code>.</li>
+        <li><b>Image Format</b>: Choose <code>png</code>, <code>webp</code>, or <code>gif</code> (experimental).</li>
+        <li><b>Include Contact Sheet</b>: Adds a <code>contact-sheet.png</code> when generating previews.</li>
+      </ul>
+    `,
+    related: ['outputs','previews']
+  },
+  // --- Experimental features help ---
+  'experimental-compositor': {
+    title: 'Experimental: Compositor (deep dive)',
+    short: 'Trade-offs between speed, fidelity, and blend mode accuracy.',
+    body: `
+      <p>The core compositor uses GPU-accelerated primitives when possible, and falls back to CPU for unsupported blend modes/effects. These settings influence that behavior:</p>
+      <ul>
+        <li><b>Super Sampling</b> (1x–4x): Renders at N× the target resolution and downsamples. Improves edge quality on strokes/glows and reduces aliasing on thin details. Cost grows ~quadratically with N.</li>
+        <li><b>Force CPU</b>: Bypass GPU fast paths and compute blends/effects per pixel on CPU. Required for full accuracy on modes like <i>color-dodge</i>, <i>linear-burn</i>, etc. Substantially slower on large canvases.</li>
+      </ul>
+      <p><b>Guidelines</b>:</p>
+      <ol>
+        <li>Keep <b>1x</b> for iteration; bump to <b>2x</b> for final preview checks or small canvases.</li>
+        <li>Only enable <b>Force CPU</b> when using advanced blend modes that look incorrect in fast path preview; the <b>Build</b> output will use authoritative rendering regardless.</li>
+        <li>Document your chosen settings alongside the collection to preserve reproducibility.</li>
+      </ol>
+    `,
+    related: ['live-preview','config-layers','build']
+  },
+  'experimental-generation': {
+    title: 'Experimental: Generation (deep dive)',
+    short: 'Control stochastic structure during trait selection and layout.',
+    body: `
+      <ul>
+        <li><b>Shuffle Layer Order</b>: Randomizes drawing order per edition after selection.
+          <ul>
+            <li><i>Pros</i>: Can produce emergent aesthetics with overlays and soft-lighting.</li>
+            <li><i>Cons</i>: May invert intended visual precedence; conflicts with rules relying on fixed order.</li>
+          </ul>
+        </li>
+      </ul>
+      <p><b>When to use</b>: Experimental runs or small special subsets. For main drops, prefer a fixed, documented order.</p>
+    `,
+    related: ['preview','build','rules']
+  },
+  // --- Spawn Editor help ---
+  'config-spawn-editor': {
+    title: 'Spawn Editor (advanced tutorial)',
+    short: 'Deterministic placement using dots, mappings, jitter, and collisions.',
+    body: `
+      <ol>
+        <li><b>Create a spawn map</b>: Author a JSON with an <code>authoringSize</code> (your design canvas in px), an array of <code>dots</code> (each with <code>id</code>, normalized <code>x</code>/<code>y</code> in [0..1], optional <code>weight</code>, <code>jitterRadiusPx</code>, and <code>tags</code>), and optional <code>rules</code>.<br/>
+        <pre><code>{
+  "version": 1,
+  "authoringSize": { "width": 1024, "height": 1024 },
+  "dots": [
+    { "id": "eyeL", "x": 0.36, "y": 0.44, "weight": 2, "jitterRadiusPx": 2 },
+    { "id": "eyeR", "x": 0.64, "y": 0.44, "weight": 2 }
+  ],
+  "mappings": {
+    "layerToDotIds": { "Eyes": ["eyeL","eyeR"] },
+    "assetToDotIds": { "Accessory:Monocle": ["eyeL"] }
+  },
+  "rules": { "selection": "weighted", "fitMode": "contain" }
+}</code></pre></li>
+        <li><b>Wire it in config</b>: In <code>foundry.config.json</code>, set <code>spawn.mapPath</code> to your JSON and optionally <code>spawn.fitMode</code> (<i>contain</i>, <i>cover</i>, or <i>stretch</i>). The editor will load the map and render guides.</li>
+        <li><b>Mappings</b>: Use <code>layerToDotIds</code> to place every pick from a layer at specific dot(s), or <code>assetToDotIds</code> to special-case particular traits using keys like <code>Layer:Value</code>. If multiple dots are listed, selection policy applies (weighted/sequential).</li>
+        <li><b>Selection</b>:
+          <ul>
+            <li><i>weighted</i>: probability ∝ dot <code>weight</code> (default 1). Great for favoring certain anchors.</li>
+            <li><i>sequential</i>: cycle through listed dots in order for even distribution across editions.</li>
+          </ul>
+        </li>
+        <li><b>Jitter</b>: Add <code>jitterRadiusPx</code> per dot or global <code>rules.jitter.defaultRadiusPx</code>. This picks a random offset per placement (uniform or gaussian) to avoid rigidity.</li>
+        <li><b>Collisions</b>: Enable <code>rules.collision.enabled</code> with <code>paddingPx</code>, <code>strategy</code> (<i>retry</i>|<i>skip</i>|<i>fallback</i>), and <code>maxAttemptsPerAsset</code>. This prevents overlapping placements when multiple assets target nearby dots.</li>
+        <li><b>Anchors & scaling</b>: When rendering, normalized coordinates are mapped to output pixels using <code>fitMode</code>. Author on the same aspect ratio as the final canvas for minimal distortion; use <i>contain</i> to preserve aspect and padding.</li>
+        <li><b>Debugging</b>: Start with a few dots and a single mapped layer. Verify placement with Preview. Increase complexity after verifying scale/fit.</li>
+      </ol>
+      <p>Tip: Keep dot IDs semantic (<i>eyeL</i>, <i>hatTop</i>) for readability and reuse across layers.</p>
+    `,
+    related: ['file-structure','config','live-preview']
+  },
+  // --- Fal AI help ---
+  'fal-ai': {
+    title: 'Fal AI integration',
+    short: 'Generate images (and more) via fal.run endpoints.',
+    body: `
+      <p>Enter your FAL API key, pick a model, set prompt and size, and generate images directly into your project.</p>
+      <ul>
+        <li><b>Quick Image</b>: Fast defaults for iteration.</li>
+        <li><b>Advanced</b>: Explore models, edit parameters, and use queue/webhook flows.</li>
+      </ul>
+    `,
+    related: ['fal-quick-image','fal-catalog']
+  },
+  'fal-api-key': {
+    title: 'FAL API Key',
+    short: 'Authenticate with fal.run services.',
+    body: `<p>Get an API key from fal.ai and paste it here. Stored locally only.</p>`
+  },
+  'fal-advanced': {
+    title: 'Advanced mode',
+    short: 'Enable catalog browsing, parameter editing, queue/webhook support.',
+    body: `<p>Toggle to show the model catalog and detailed parameter editor for advanced workflows.</p>`,
+    related: ['fal-catalog','fal-params']
+  },
+  'fal-quick-image': {
+    title: 'Quick Image',
+    short: 'Rapid text-to-image generation.',
+    body: `<p>Pick a model, write a prompt, choose size and count, then Generate.</p>`,
+    related: ['fal-model','fal-prompt','fal-count']
+  },
+  'fal-model': {
+    title: 'Model',
+    short: 'Choose a FAL model endpoint.',
+    body: `<p>Flux Dev is fast for iteration; Flux Pro aims for higher quality. Explore more models in Advanced.</p>`
+  },
+  'fal-prompt': {
+    title: 'Prompt',
+    short: 'Describe what to generate.',
+    body: `<p>Short, clear prompts work best. Use negative prompt in Advanced to steer away from artifacts.</p>`
+  },
+  'fal-width': {
+    title: 'Width',
+    short: 'Output width in pixels.',
+    body: `<p>Some models accept tiered sizes. Match width/height to a supported pair for best results.</p>`
+  },
+  'fal-height': {
+    title: 'Height',
+    short: 'Output height in pixels.',
+    body: `<p>Use sizes like 512×512, 768×768, or 1024×1024 as supported by the model.</p>`
+  },
+  'fal-count': {
+    title: 'Images count',
+    short: 'Number of images to generate per run.',
+    body: `<p>Higher counts may take longer or be limited by the model.</p>`
+  },
+  'fal-catalog': {
+    title: 'Explore Models',
+    short: 'Browse and filter the local model catalog.',
+    body: `<p>Search by name, tag, or category. Favorite models to keep them at the top. Import/export catalogs as JSON.</p>`
+  },
+  'fal-search': {
+    title: 'Search & Category',
+    short: 'Filter the model list.',
+    body: `<p>Use text search and category filters to narrow down models by type (image, video, audio, LLM, tools).</p>`
+  },
+  'fal-catalog-url': {
+    title: 'Catalog URL',
+    short: 'Load a remote model catalog (JSON).',
+    body: `<p>Enter a JSON URL that returns an array of model specs; fields: id, name, inputs[].</p>`
+  },
+  'fal-model-list': {
+    title: 'Model list',
+    short: 'Pick a model to view/edit parameters.',
+    body: `<p>Click a model row to open its parameters. Use the star to favorite.</p>`
+  },
+  'fal-params': {
+    title: 'Model & Parameters',
+    short: 'Edit inputs and run/queue requests.',
+    body: `<p>Use the parameter editor to set inputs. Switch body shape to match endpoint expectations. Reset loads example defaults when available.</p>`
+  },
+  'fal-results': {
+    title: 'Results',
+    short: 'View and save outputs.',
+    body: `<p>Preview images and save them into your project. Use the size slider to adjust thumbnails.</p>`
+  },
+  'fal-saved': {
+    title: 'Saved Images',
+    short: 'Previously saved FAL outputs in your project.',
+    body: `<p>Images saved here are written under your project's <code>fal/</code> folder.</p>`
   },
   'config-rarity': {
     title: 'Rarity settings',
@@ -2841,6 +3513,36 @@ const HELP_TOPICS = {
       </ul>
     `,
     related: ['rarity-report']
+  },
+  'rules-advanced': {
+    title: 'Rules (advanced)',
+    short: 'Schema, examples, and validation for complex trait logic.',
+    body: `
+      <p>Rules operate on trait strings in the form <code>Layer:Value</code> (e.g., <code>Eyes:Laser</code>). Three core sections:</p>
+      <ol>
+        <li><b>mutuallyExclusive</b>: array of arrays. Any pair within a group cannot co-exist.<br/>
+        <pre><code>"mutuallyExclusive": [["Eyes:Laser","Headwear:Visor"],["Mouth:Cigar","Mouth:Pipe"]]</code></pre></li>
+        <li><b>requires</b>: array of objects with <code>if</code> and <code>thenAnyOf</code>. If <code>if</code> is present, require at least one of <code>thenAnyOf</code>.<br/>
+        <pre><code>"requires": [{ "if": "Headwear:Crown", "thenAnyOf": ["Background:Royal","Background:Gold"] }]</code></pre></li>
+        <li><b>maxOccurrences</b>: cap the total count of a trait across the collection.<br/>
+        <pre><code>"maxOccurrences": [{ "trait": "Eyes:Laser", "max": 50 }]</code></pre></li>
+      </ol>
+      <p><b>Advanced gating</b> complements rules:</p>
+      <ul>
+        <li><code>spawnWhenAnyOf</code>: show layer only if any listed trait exists.</li>
+        <li><code>spawnWhen</code>/<code>spawnUnless</code>: boolean logic with <code>anyOf</code>/<code>allOf</code>/<code>noneOf</code>/<code>not</code>.</li>
+        <li><code>optionRules</code>: per-option <code>exclude</code> or <code>weightMultiply</code>.</li>
+      </ul>
+      <p><b>Workflow</b>:</p>
+      <ol>
+        <li>Start with <b>mutuallyExclusive</b> to block obvious conflicts.</li>
+        <li>Add <b>requires</b> for thematic dependencies.</li>
+        <li>Adjust <b>maxOccurrences</b> to tune global rarity caps.</li>
+        <li>Use <b>Validate Rules</b> and re-run <b>Preview</b> to check feasibility. If generation struggles, increase <b>max-attempts</b> or revisit constraints.</li>
+      </ol>
+      <p>Keep trait spelling consistent; the engine treats <code>Laser</code> and <code>laser</code> as different values.</p>
+    `,
+    related: ['rules-examples','config-layers','rarity-report']
   },
   'rarity-report': {
     title: 'Rarity Report',
@@ -3147,10 +3849,12 @@ Calm#8.png
 const HELP_ORDER = [
   { id: 'getting-started', title: 'Getting Started', topics: ['launcher','projects','file-structure','init','validate'] },
   { id: 'ui-overview', title: 'Main Interface', topics: ['sidebar-project','sidebar-generate','sidebar-build','previews','preview-grid','lightbox','console'] },
-  { id: 'config', title: 'Configuration', topics: ['config','config-rarity','config-dna','config-layers','layers-actions','config-renamer'] },
-  { id: 'building', title: 'Build & Outputs', topics: ['preview','generate','build','rules','rules-examples','rarity-report','outputs'] },
+  { id: 'config', title: 'Configuration', topics: ['config','config-rarity','config-dna','config-layers','layers-actions','config-renamer','config-spawn-editor','config-export'] },
+  { id: 'building', title: 'Build & Outputs', topics: ['preview','generate','build','rules','rules-advanced','rules-examples','rarity-report','outputs'] },
   { id: 'renamer', title: 'Renamer', topics: ['renamer','renamer-step'] },
+  { id: 'experimental', title: 'Experimental Features', topics: ['experimental-compositor','experimental-generation','live-preview','live-preview-controls','lp-fit','lp-bg'] },
   { id: 'minting', title: 'Upload, Storage & Chain', topics: ['upload-provider','upload-concurrency','upload','mint-from','mint-count','mint','storage-config','chain-config','metadata-json'] },
+  { id: 'fal', title: 'Fal AI', topics: ['fal-ai','fal-api-key','fal-quick-image','fal-model','fal-prompt','fal-width','fal-height','fal-count','fal-catalog','fal-search','fal-catalog-url','fal-model-list','fal-params','fal-results','fal-saved'] },
   { id: 'ui', title: 'UI Options', topics: ['ui-theme','ui-accent','ui-radius','ui-blur','ui-noise','ui-glow'] },
   { id: 'productivity', title: 'Productivity', topics: ['shortcuts'] },
   { id: 'support', title: 'Troubleshooting & Glossary', topics: ['troubleshooting','glossary'] },
@@ -4449,3 +5153,39 @@ function lpPushLive(dataUrl: string) {
 }
 
 */
+
+// --- Spawn Map: simple import/export buttons under Experimental panel ---
+try {
+  const expPanel = document.querySelector('#cfg-pane-experimental fieldset');
+  if (expPanel) {
+    const imp = document.createElement('button'); imp.className = 'btn-secondary btn-sm'; imp.textContent = 'Import Spawn Map'; imp.style.marginLeft = '8px';
+    const exp = document.createElement('button'); exp.className = 'btn-ghost btn-sm'; exp.textContent = 'Export Spawn Map'; exp.style.marginLeft = '8px';
+    imp.onclick = async () => {
+      try {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
+        input.onchange = async () => {
+          const f = input.files && input.files[0]; if (!f) return;
+          const text = await f.text(); const json = JSON.parse(text);
+          const cfgRes = await (window as any).foundry.readConfig(); if (!cfgRes || !cfgRes.ok) { alert('No project'); return; }
+          const cfg = cfgRes.json || {}; const rel = 'spawn-map.json';
+          await (window as any).foundry.saveJson(rel, json);
+          cfg.spawn = Object.assign({}, cfg.spawn || {}, { mapPath: rel });
+          await (window as any).foundry.writeConfig(cfg);
+          alert('Spawn map imported and linked to foundry.config.json');
+        };
+        input.click();
+      } catch (e:any) { alert('Import failed: ' + String(e?.message || e)); }
+    };
+    exp.onclick = async () => {
+      try {
+        const cfgRes = await (window as any).foundry.readConfig(); if (!cfgRes || !cfgRes.ok) { alert('No project'); return; }
+        const cfg = cfgRes.json || {}; const mapPath = cfg?.spawn?.mapPath || 'spawn-map.json';
+        const raw = await (window as any).foundry.readFile(mapPath);
+        const data = raw && raw.ok ? String(raw.content || '') : '';
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'spawn-map.json'; a.click(); URL.revokeObjectURL(url);
+      } catch (e:any) { alert('Export failed: ' + String(e?.message || e)); }
+    };
+    expPanel.appendChild(imp); expPanel.appendChild(exp);
+  }
+} catch {}

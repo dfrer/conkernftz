@@ -11,6 +11,21 @@ export function previewCmd(): Command {
     .option('--seed <s>', "seed for RNG ('random' for a new seed per run)", 'preview')
     .option('--max-attempts <n>', 'max attempts per edition (uniqueness)', '500')
     .option('--allow-duplicates', 'allow duplicate DNA in preview output')
+    .addHelpText(
+      'afterAll',
+      `
+Examples:
+  # Generate 12 previews deterministically
+  foundry preview --count 12 --seed demo
+
+  # Generate 20 previews, new random seed per run
+  foundry preview --count 20 --seed random
+
+  # If rules are strict, increase search attempts or allow duplicates
+  foundry preview --count 20 --max-attempts 5000
+  foundry preview --count 20 --allow-duplicates
+`
+    )
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');

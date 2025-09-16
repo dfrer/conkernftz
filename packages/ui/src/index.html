@@ -91,7 +91,7 @@
         </div>
                 <!-- Live Preview controls (moved into left sidebar) -->
                 <div class="sidebar-group">
-                  <div class="group-title">Live Preview</div>
+                  <div class="group-title" data-help="live-preview">Live Preview</div>
                   <div style="display:none;">
                     <!-- Hidden: Items + Auto-refresh -->
                     <div>
@@ -105,6 +105,7 @@
                   </div>
                   <div class="row wrap mt-8">
                     <button id="live-prev-toggle" class="btn-secondary btn-sm" aria-controls="live-preview">Show Preview</button>
+                    <button id="btn-open-spawn-editor" class="btn-secondary btn-sm">Spawn Editor</button>
                     <!-- Hidden: Refresh -->
                     <button id="live-prev-refresh" class="btn-ghost btn-sm" style="display:none;">Refresh</button>
                     <button id="live-prev-export" class="btn-ghost btn-sm">Export</button>
@@ -207,32 +208,41 @@
           <div id="config-editor" class="column gap-12">
             <!-- Basics Pane -->
             <div id="cfg-pane-basics" class="config-pane">
-              <div class="form-grid cols-4">
-                <div>
-                  <label>Name</label>
-                  <input id="cfg-name" placeholder="Collection name" />
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+                <legend>Basics</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Basic project settings.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
                 </div>
-                <div>
-                  <label>Symbol</label>
-                  <input id="cfg-symbol" placeholder="SYMB" />
+                <div class="collapsible-body open">
+                  <div class="form-grid cols-4">
+                    <div>
+                      <label>Name</label>
+                      <input id="cfg-name" placeholder="Collection name" />
+                    </div>
+                    <div>
+                      <label>Symbol</label>
+                      <input id="cfg-symbol" placeholder="SYMB" />
+                    </div>
+                    <div>
+                      <label>Edition Size</label>
+                      <input id="cfg-editions" type="number" min="1" />
+                    </div>
+                    <div>
+                      <label>Image Background</label>
+                      <input id="cfg-image-bg" placeholder="transparent or #RRGGBB" />
+                    </div>
+                    <div>
+                      <label>Image Width</label>
+                      <input id="cfg-image-w" type="number" min="1" />
+                    </div>
+                    <div>
+                      <label>Image Height</label>
+                      <input id="cfg-image-h" type="number" min="1" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label>Edition Size</label>
-                  <input id="cfg-editions" type="number" min="1" />
-                </div>
-                <div>
-                  <label>Image Background</label>
-                  <input id="cfg-image-bg" placeholder="transparent or #RRGGBB" />
-                </div>
-                <div>
-                  <label>Image Width</label>
-                  <input id="cfg-image-w" type="number" min="1" />
-                </div>
-                <div>
-                  <label>Image Height</label>
-                  <input id="cfg-image-h" type="number" min="1" />
-                </div>
-              </div>
+              </fieldset>
             </div>
 
             <!-- Layers Pane -->
@@ -266,6 +276,13 @@
                     </thead>
                     <tbody id="layers-tbody"></tbody>
                   </table>
+                </div>
+              </fieldset>
+
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;" data-help="config-spawn-editor" data-collapsible="true">
+                <legend>Spawn Editor</legend>
+                <div class="collapsible-body open">
+                  <div id="sp-embed"></div>
                 </div>
               </fieldset>
 
@@ -394,7 +411,7 @@
                 </div>
               </fieldset>
 
-              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="config-export" data-collapsible="true">
                 <legend>Export</legend>
                 <div class="row justify-between mb-8 collapsible-header">
                   <div class="op-85">Choose output options for previews/builds.</div>
@@ -429,7 +446,7 @@
 
             <!-- Experimental Pane -->
             <div id="cfg-pane-experimental" class="config-pane hidden" aria-hidden="true">
-              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+              <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="experimental-compositor" data-collapsible="true">
                 <legend>Compositor</legend>
                 <div class="row justify-between mb-8 collapsible-header">
                   <div class="op-85">Experimental quality/performance toggles.</div>
@@ -454,7 +471,7 @@
                 </div>
               </fieldset>
 
-              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-collapsible="true">
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="experimental-generation" data-collapsible="true">
                 <legend>Generation</legend>
                 <div class="row justify-between mb-8 collapsible-header">
                   <div class="op-85">Experimental generation behaviors.</div>
@@ -469,11 +486,40 @@
                   </div>
                 </div>
               </fieldset>
+
+              <fieldset style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:10px;" data-help="conditional-spawn" data-collapsible="true">
+                <legend>Conditional Layer Spawn</legend>
+                <div class="row justify-between mb-8 collapsible-header">
+                  <div class="op-85">Gate layers based on presence of other traits <span class="mini">(Layer:Value)</span>.</div>
+                  <button type="button" class="btn-ghost btn-sm collapse-btn" aria-expanded="true">Collapse</button>
+                </div>
+                <div class="collapsible-body open">
+                  <div class="mini muted" style="margin-bottom:8px;">For each layer, enter a comma-separated list like <code>Character:Angel, Character:Demon</code>. If none match, the layer will be skipped.</div>
+                  <div id="xp-conds-list" class="column" style="display:flex; gap:8px;"></div>
+                  <div class="mini" style="margin-top:10px; font-weight:600;">Form Editor (no JSON)</div>
+                  <div id="xp-conds-ui" class="column" style="display:flex; gap:10px; margin-top:6px;"></div>
+                  <div id="xp-option-rules-ui" class="column" style="display:flex; gap:10px; margin-top:10px;"></div>
+                  <div class="row" style="gap:10px; margin-top:8px;">
+                    <details>
+                      <summary class="mini">Advanced per-layer logic</summary>
+                      <div class="mini muted" style="margin-top:6px;">Use JSON to express complex logic. Fields: <code>anyOf</code>, <code>allOf</code>, <code>noneOf</code>, <code>not</code>.</div>
+                      <div id="xp-conds-advanced" class="column" style="display:flex; gap:10px; margin-top:8px;"></div>
+                    </details>
+                  </div>
+                  <div class="row" style="gap:10px; margin-top:12px;">
+                    <details>
+                      <summary class="mini">Per-option rules</summary>
+                      <div class="mini muted" style="margin-top:6px;">Option rules let you exclude or reweight specific options based on traits.</div>
+                      <div id="xp-option-rules" class="column" style="display:flex; gap:10px; margin-top:8px;"></div>
+                    </details>
+                  </div>
+                </div>
+              </fieldset>
             </div>
           </div>
                 </div>
                 <div id="main-rules" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-rules" aria-hidden="true">
-            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="rules-advanced">
               <legend>Rules (advanced)</legend>
               <div class="form-grid cols-1">
                 <textarea id="rules-json" rows="6" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
@@ -483,7 +529,7 @@
                 </div>
               </div>
             </fieldset>
-                  <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;">
+                  <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;" data-help="config-export">
               <legend>Export</legend>
               <div class="form-grid cols-4" style="align-items:end;">
                 <div>
@@ -648,45 +694,45 @@
           </section>
           <section id="tab-fal" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-fal" aria-hidden="true">
             <div style="display:grid; grid-template-columns: minmax(260px, 380px) 1fr; gap:16px;">
-              <div class="sidebar" data-help="sidebar-fal">
+              <div class="sidebar">
                 <div class="sidebar-group">
-                  <div class="group-title">Fal AI</div>
+                  <div class="group-title" data-help="fal-ai">Fal AI</div>
                   <div>
-                    <label>API Key</label>
+                    <label data-help="fal-api-key">API Key</label>
                     <input id="fal-key" type="password" placeholder="FAL key" />
                   </div>
                   <div class="row gap-10 mt-8">
-                    <label class="row gap-6"><input id="fal-advanced" type="checkbox" /> Advanced</label>
+                    <label class="row gap-6" data-help="fal-advanced"><input id="fal-advanced" type="checkbox" /> Advanced</label>
                     <button id="fal-open-folder" class="btn-ghost" title="Open saved folder">Open Folder</button>
                   </div>
                   <div id="fal-status" class="mini muted mt-8"></div>
                 </div>
 
                 <div class="sidebar-group" id="fal-basic-controls">
-                  <div class="group-title">Quick Image</div>
+                  <div class="group-title" data-help="fal-quick-image">Quick Image</div>
                   <div>
-                    <label>Model</label>
+                    <label data-help="fal-model">Model</label>
                     <select id="fal-model">
                       <option value="flux/dev">Flux Dev</option>
                       <option value="flux-pro/v1.0">Flux Pro v1</option>
                     </select>
                   </div>
                   <div>
-                    <label>Prompt</label>
+                    <label data-help="fal-prompt">Prompt</label>
                     <textarea id="fal-prompt" rows="3" placeholder="Describe your image"></textarea>
                   </div>
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <div>
-                      <label>Width</label>
+                      <label data-help="fal-width">Width</label>
                       <input id="fal-width" type="number" value="512" min="64" max="2048" step="64" />
                     </div>
                     <div>
-                      <label>Height</label>
+                      <label data-help="fal-height">Height</label>
                       <input id="fal-height" type="number" value="512" min="64" max="2048" step="64" />
                     </div>
                   </div>
                   <div>
-                    <label>Images</label>
+                    <label data-help="fal-count">Images</label>
                     <input id="fal-count" type="number" value="1" min="1" max="4" />
                   </div>
                   <div class="row">
@@ -695,8 +741,8 @@
                 </div>
 
                 <div class="sidebar-group" id="fal-catalog-controls" style="display:none;">
-                  <div class="group-title">Explore Models</div>
-                  <div style="display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center;">
+                  <div class="group-title" data-help="fal-catalog">Explore Models</div>
+                  <div style="display:grid; grid-template-columns: 1fr 120px; gap:8px; align-items:center;" data-help="fal-search">
                     <input id="fal-search" placeholder="Search models, tags&hellip;" />
                     <select id="fal-category">
                       <option value="all">All</option>
@@ -707,11 +753,11 @@
                       <option value="tool">Tools</option>
                     </select>
                   </div>
-                  <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px;">
+                  <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px;" data-help="fal-catalog-url">
                     <input id="fal-catalog-url" placeholder="Catalog JSON URL (https://&hellip;)" />
                     <button id="fal-fetch-catalog-url" class="btn-secondary">Fetch</button>
                   </div>
-                  <div id="fal-model-list" style="margin-top:8px; max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:6px;"></div>
+                  <div id="fal-model-list" data-help="fal-model-list" style="margin-top:8px; max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:6px;"></div>
                   <div class="row wrap mt-8">
                     <button id="fal-refresh-catalog" class="btn-secondary">Refresh</button>
                     <label class="btn-secondary relative overflow-hidden">
@@ -727,7 +773,7 @@
               <div class="content">
                 <div class="gallery-card" id="fal-params-card" style="display:none;">
                   <div class="gallery-header">
-                    <h3 id="fal-model-title" style="margin:0;">Model & Parameters</h3>
+                    <h3 id="fal-model-title" data-help="fal-params" style="margin:0;">Model & Parameters</h3>
                     <div class="row wrap">
                       <a id="fal-docs-link" class="btn-ghost" href="#" target="_blank" rel="noreferrer">Docs</a>
                       <label class="mini row gap-6">
@@ -760,7 +806,7 @@
 
                 <div class="gallery-card">
                   <div class="gallery-header">
-                    <h3 class="m-0">Results</h3>
+                    <h3 class="m-0" data-help="fal-results">Results</h3>
                     <div class="row">
                       <label class="mini">Size</label>
                       <input id="fal-thumb-size" type="range" min="80" max="280" value="160" />
@@ -771,7 +817,7 @@
                 </div>
                 <div class="gallery-card mt-16">
                   <div class="gallery-header">
-                    <h3 class="m-0">Saved Images</h3>
+                    <h3 class="m-0" data-help="fal-saved">Saved Images</h3>
                   </div>
                   <div id="fal-saved" class="gallery-grid"></div>
                 </div>
@@ -853,14 +899,14 @@
     </div>
     <!-- Live Preview floating overlay -->
     <div id="live-preview" class="live-preview hidden" aria-hidden="true">
-      <div class="lp-header" id="lp-header">
+      <div class="lp-header" id="lp-header" data-help="live-preview-controls">
         <div class="lp-title">Live Preview</div>
         <div class="lp-controls">
           
           
-          <label class="mini">Fit</label>
+          <label class="mini" data-help="lp-fit">Fit</label>
           <select id="lp-fit"><option value="contain">Contain</option><option value="cover">Cover</option><option value="actual">Actual</option></select>
-          <label class="mini">BG</label>
+          <label class="mini" data-help="lp-bg">BG</label>
           <select id="lp-bg"><option value="check">Check</option><option value="dark">Dark</option><option value="light">Light</option></select>
           <button id="lp-reroll" class="btn-ghost" title="Generate a new preview">Reroll</button>
           
@@ -874,6 +920,8 @@
       <div id="lp-resize" class="lp-resize"></div>
     </div>
     <script type="module" src="renderer/app.js"></script>
+    <script type="module" src="renderer/live-preview.js"></script>
+    <script type="module" src="renderer/spawn-editor.js"></script>
   </body>
   </html>
 

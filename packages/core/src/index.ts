@@ -10,4 +10,5 @@ export * from './catalog.js';
 export * from './generator.js';
 export * from './effects.js';
 export * from './project-build.js';
+export * from './placement.js';
 

@@ -5,6 +5,18 @@ export interface LayerSpec {
   path: string;
   rarity?: 'filename' | 'uniform';
   required?: boolean;
+  // Experimental: Only spawn/render this layer if any of these trait strings
+  // (formatted as "Layer:Value", e.g., "Character:Angel") are already present
+  // in the current composition during generation. If omitted or empty, the
+  // layer can spawn unconditionally (subject to other rules).
+  spawnWhenAnyOf?: string[];
+  // Advanced conditional spawning: gate this layer with boolean logic
+  // across trait presence. All specified fields are ANDed together.
+  spawnWhen?: TraitCondition;
+  // Additional negative guard; if true, layer will be skipped.
+  spawnUnless?: TraitCondition;
+  // Option-level conditional rules affecting inclusion/weights.
+  optionRules?: LayerOptionRule[];
   // Default blending for this layer when compositing. Individual asset options
   // may override these in the future; for now, they apply to all options of the layer.
   blend?: BlendMode;
@@ -53,6 +65,30 @@ export interface AssetOverride {
 
 export interface RuleEngine {
   validate(traits: TraitKV): { ok: true } | { ok: false; reason: string };
+}
+
+// Boolean condition over trait presence (strings like "Layer:Value").
+// All provided fields are combined with AND; groups within each field obey
+// their own semantics (anyOf = OR, allOf = AND, noneOf = NOT-OR).
+export interface TraitCondition {
+  anyOf?: string[];
+  allOf?: string[];
+  noneOf?: string[];
+  not?: TraitCondition;
+}
+
+export interface LayerOptionRuleMatch {
+  target: 'value' | 'filename';
+  pattern: string; // exact match
+}
+
+export interface LayerOptionRule {
+  match: LayerOptionRuleMatch;
+  when?: TraitCondition;
+  unless?: TraitCondition;
+  // Actions (exclusive): either exclude matched option, or multiply weight
+  exclude?: boolean;
+  weightMultiply?: number; // e.g., 0.0 to remove, 0.5 to reduce, 2 to boost
 }
 
 // A feature-rich set of Photoshop-like blend modes supported by our compositor.
@@ -126,4 +162,76 @@ export interface ChainAdapter {
     usePnft?: boolean;
     rulesetPda?: string | null;
   }) => Promise<{ mint: string; metadataPda: string }>;
+}
+
+// ---------------- Spawn Dots (author-controlled placement) ----------------
+
+export type FitMode = 'contain' | 'cover' | 'stretch';
+
+export type SelectionPolicy = 'weighted' | 'sequential';
+
+export type Anchor = 'center' | 'top-left' | 'custom';
+
+export interface SpawnDot {
+  id: string; // stable dot id
+  // normalized position within authoring canvas space (0..1)
+  x: number;
+  y: number;
+  weight?: number; // default 1
+  jitterRadiusPx?: number; // optional jitter radius in pixels
+  tags?: string[]; // optional
+  maxPlacementsPerComposition?: number; // optional cap per composition
+}
+
+export interface SpawnMappings {
+  // map layer name -> list of dot ids
+  layerToDotIds?: Record<string, string[]>;
+  // map asset key -> list of dot ids. Asset key convention: "LayerName:TraitValue"
+  assetToDotIds?: Record<string, string[]>;
+}
+
+export interface JitterPolicy {
+  defaultRadiusPx?: number;
+  distribution?: 'uniform' | 'gaussian';
+}
+
+export interface CollisionPolicy {
+  enabled?: boolean;
+  paddingPx?: number; // extra padding for AABB checks
+  strategy?: 'retry' | 'skip' | 'fallback';
+  maxAttemptsPerAsset?: number;
+}
+
+export interface SpawnRules {
+  selection?: SelectionPolicy; // default 'weighted'
+  jitter?: JitterPolicy;
+  collision?: CollisionPolicy;
+  fitMode?: FitMode; // default 'contain'
+  // Preferred asset anchor for bounding box; can be overridden per adapter call
+  anchor?: Anchor;
+}
+
+export interface SpawnMapV1 {
+  version: 1;
+  authoringSize: { width: number; height: number };
+  dots: SpawnDot[];
+  mappings?: SpawnMappings;
+  rules?: SpawnRules;
+}
+
+export type SpawnMap = SpawnMapV1; // future versions can union here
+
+export interface PlacementDecisionLog {
+  assetKey: string; // e.g., "Layer:Value" or file path
+  layer: string;
+  chosenDotId?: string;
+  policy: SelectionPolicy;
+  attempts: number;
+  seed: string | number;
+  finalX: number; // pixel coordinates in output space
+  finalY: number;
+  jitterX?: number;
+  jitterY?: number;
+  collided?: boolean;
+  skipped?: boolean;
 }

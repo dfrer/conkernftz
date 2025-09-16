@@ -9,6 +9,22 @@ export function mintCmd(): Command {
     .description('Mint NFTs on Solana devnet using Umi + Token Metadata')
     .option('--count <n>', 'number to mint', '1')
     .option('--from <n>', 'start index (1-based)', '1')
+    .addHelpText(
+      'afterAll',
+      `
+Notes:
+  - Requires prior 'foundry upload' to create .upload-manifest.json
+  - Uses chain.solana settings from foundry.config.json
+  - You can set SOLANA_RPC_URL env var or put rpcUrl in config
+
+Examples:
+  # Mint the first item only
+  foundry mint --count 1 --from 1
+
+  # Mint items 11..20 on devnet
+  foundry mint --count 10 --from 11
+`
+    )
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');

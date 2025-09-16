@@ -63,7 +63,12 @@ export async function compositeLayers(
   const targetHeight = options.height;
   const workWidth = Math.max(1, Math.round(targetWidth * scale));
   const workHeight = Math.max(1, Math.round(targetHeight * scale));
-  const anyUnsupported = layers.some((l) => mapBlendModeToSharp(l.blend ?? 'normal') === null);
+  // If any layer requests a blend mode that Sharp does not support natively,
+  // switch to the CPU compositor to ensure visual parity with Photoshop-like modes.
+  const anyUnsupported = layers.some((l) => {
+    const desired = (l.blend ?? l.effects?.blend ?? 'normal') as BlendMode;
+    return mapBlendModeToSharp(desired) === null;
+  });
   const useCpu = !!options.forceCpu || anyUnsupported;
 
   if (!useCpu) {

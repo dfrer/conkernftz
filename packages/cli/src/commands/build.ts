@@ -10,6 +10,20 @@ export function buildCmd(): Command {
     .option('--count <n>', 'number of editions to build', undefined)
     .option('--seed <s>', "seed for RNG ('random' for a new seed per run)", 'build')
     .option('--max-attempts <n>', 'max attempts per edition (uniqueness)', '500')
+    .addHelpText(
+      'afterAll',
+      `
+Examples:
+  # Build using editionSize from config
+  foundry build
+
+  # Build 100 editions deterministically
+  foundry build --count 100 --seed 42
+
+  # Increase search attempts when rules are strict
+  foundry build --count 250 --max-attempts 5000
+`
+    )
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');

@@ -1,4 +1,12 @@
 import sharp from 'sharp';
+import path from 'node:path';
+import { loadLayerCatalog } from './catalog.js';
+import { generateEditionsConstrained } from './generator.js';
+import { compositeLayers } from './compositor.js';
+import type { ProjectConfig } from './project-config.js';
+import { loadSpawnMapFile } from './spawn.js';
+import { createSeededRng } from './rng.js';
+import { placeAsset, resolveCandidateDots } from './placement.js';
 
 export async function makeContactSheet(
   imagePaths: string[],
@@ -48,6 +56,87 @@ export function generateRarityReport(
     }
   }
   return { traitCounts: counts, editionCount: editions.length };
+}
+
+export async function renderPreviewEdition(
+  projectRoot: string,
+  config: ProjectConfig,
+  seed: string,
+  count: number,
+): Promise<Buffer[]> {
+  const catalog = await loadLayerCatalog(projectRoot, config.layers, {
+    mode: 'filenameDelimiter',
+    delimiter: config.rarity.delimiter,
+    defaultWeight: config.rarity.defaultWeight,
+  });
+  const editions = generateEditionsConstrained(
+    catalog,
+    Math.max(1, count),
+    { seed },
+    { rules: config.rules ?? {}, uniqueness: undefined, maxAttemptsPerEdition: 100 },
+  );
+
+  const spawnMap = await loadSpawnMapFile(projectRoot, (config as any)?.spawn?.mapPath);
+  const spawnFit = (spawnMap?.rules?.fitMode ?? (config as any)?.spawn?.fitMode ?? 'contain') as any;
+  const out: Buffer[] = [];
+  for (let i = 0; i < editions.length; i++) {
+    const ed = editions[i]!;
+    const picks = Array.from(ed.picks);
+    let placedOffsets: Array<{ offX: number; offY: number }> = [];
+    if (spawnMap) {
+      const rng = createSeededRng(`${seed}:prev:${i + 1}`);
+      const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+      const mapper = { authorWidth: spawnMap.authoringSize.width, authorHeight: spawnMap.authoringSize.height, outWidth: config.image.width, outHeight: config.image.height, fitMode: spawnFit } as any;
+      placedOffsets = picks.map((p: any, k: number) => {
+        const layer = String(p.layer || p.option?.value || `L${k}`);
+        const assetKey = `${layer}:${p.option.value}`;
+        const candidates = resolveCandidateDots(spawnMap, layer, assetKey);
+        const assetSize = { width: config.image.width, height: config.image.height };
+        const pol = spawnMap.rules?.selection ?? 'weighted';
+        const jitterDef = spawnMap.rules?.jitter?.defaultRadiusPx ?? 0;
+        const coll = spawnMap.rules?.collision;
+        const result = placeAsset({
+          globalSeed: `${seed}:${i + 1}:${layer}:${p.option.value}`,
+          layerName: layer,
+          assetKey,
+          candidateDots: candidates,
+          policy: pol,
+          jitterDefaultPx: jitterDef,
+          collision: coll ? { enabled: !!coll.enabled, paddingPx: Math.max(0, coll.paddingPx ?? 0), strategy: (coll.strategy ?? 'retry'), maxAttempts: Math.max(1, coll.maxAttemptsPerAsset ?? 10) } : undefined,
+          mapper,
+          asset: assetSize,
+          anchor: (spawnMap.rules?.anchor ?? 'center'),
+          occupiedBoxes: occupied,
+          rng,
+        });
+        const offX = Math.round(result.x);
+        const offY = Math.round(result.y);
+        occupied.push({ x: result.x, y: result.y, w: result.w, h: result.h });
+        return { offX, offY };
+      });
+    }
+
+    const buffer = await compositeLayers(
+      picks.map((p: any, k: number) => ({
+        path: p.option.filePath,
+        blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
+        opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
+        offsetX: (placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0)),
+        offsetY: (placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0)),
+        effects: p.option.effects,
+      })),
+      {
+        width: config.image.width,
+        height: config.image.height,
+        background: config.image.background,
+        format: (config.export?.imageFormat === 'webp' ? 'webp' : 'png') as any,
+        superSample: Number((config as any)?.experimental?.compositor?.superSample || 1) || 1,
+        forceCpu: !!((config as any)?.experimental?.compositor?.forceCpu),
+      },
+    );
+    out.push(buffer);
+  }
+  return out;
 }
 
 

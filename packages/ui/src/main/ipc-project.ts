@@ -190,6 +190,9 @@ export function initProjectIpc(): void {
       } catch { cfg = {}; }
       const effective = Object.assign({}, cfg, cfgLike || {});
       effective.image = Object.assign({}, cfg.image || {}, (cfgLike && cfgLike.image) || {});
+      // For live preview, force CPU compositor to guarantee advanced blend/effects fidelity
+      effective.experimental = Object.assign({}, cfg.experimental || {}, (cfgLike && (cfgLike as any).experimental) || {});
+      effective.experimental.compositor = Object.assign({}, (cfg.experimental && (cfg.experimental as any).compositor) || {}, (cfgLike && (cfgLike as any).experimental && (cfgLike as any).experimental.compositor) || {}, { forceCpu: true });
       const width = Number(effective.image?.width || 1024);
       const height = Number(effective.image?.height || 1024);
       const background = effective.image?.background || 'transparent';
@@ -226,7 +229,7 @@ export function initProjectIpc(): void {
         superSample: Number(effective?.experimental?.compositor?.superSample || 1) || 1,
         forceCpu: !!(effective?.experimental?.compositor?.forceCpu),
       });
-      return { ok: true, b64: buffer.toString('base64') };
+      return { ok: true, format: outFormat, b64: buffer.toString('base64') };
     } catch (e: any) {
       return { ok: false, error: String(e?.message ?? e) };
     }
@@ -417,6 +420,9 @@ export function initProjectIpc(): void {
       const { generateEditionsConstrained } = await importCore(coreBase, 'generator.js');
       const { compositeLayers } = await importCore(coreBase, 'compositor.js');
       const { makeContactSheet } = await importCore(coreBase, 'preview.js');
+      const { loadSpawnMapFile } = await importCore(coreBase, 'spawn.js');
+      const { placeAsset, resolveCandidateDots } = await importCore(coreBase, 'placement.js');
+      const { createSeededRng } = await importCore(coreBase, 'rng.js');
 
       // Load and validate config
       let cfg: any;
@@ -470,6 +476,8 @@ export function initProjectIpc(): void {
       const mainWindow = electron.BrowserWindow.getAllWindows()[0];
       let idx = 0;
       const written: string[] = [];
+      const spawnMap = await loadSpawnMapFile(projectDir, cfg?.spawn?.mapPath);
+      const spawnFit = (spawnMap?.rules?.fitMode ?? cfg?.spawn?.fitMode ?? 'contain') as any;
       for (const ed of editions) {
         // Pause/stop control
         while (previewController && previewController.paused && !previewController.stopped) {
@@ -492,13 +500,47 @@ export function initProjectIpc(): void {
             }
           }
         } catch {}
+        let placedOffsets: Array<{ offX: number; offY: number }> = [];
+        if (spawnMap) {
+          const rng = createSeededRng(`${runSeed}:prev:${idx}`);
+          const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+          const mapper = { authorWidth: spawnMap.authoringSize.width, authorHeight: spawnMap.authoringSize.height, outWidth: cfg.image.width, outHeight: cfg.image.height, fitMode: spawnFit } as any;
+          placedOffsets = picks.map((p: any, k: number) => {
+            const layer = String(p.layer || p.option?.value || `L${k}`);
+            const assetKey = `${layer}:${p.option.value}`;
+            const candidates = resolveCandidateDots(spawnMap, layer, assetKey);
+            const assetSize = { width: cfg.image.width, height: cfg.image.height };
+            const pol = spawnMap.rules?.selection ?? 'weighted';
+            const jitterDef = spawnMap.rules?.jitter?.defaultRadiusPx ?? 0;
+            const coll = spawnMap.rules?.collision;
+            const result = placeAsset({
+              globalSeed: `${runSeed}:${idx}:${layer}:${p.option.value}`,
+              layerName: layer,
+              assetKey,
+              candidateDots: candidates,
+              policy: pol,
+              jitterDefaultPx: jitterDef,
+              collision: coll ? { enabled: !!coll.enabled, paddingPx: Math.max(0, coll.paddingPx ?? 0), strategy: (coll.strategy ?? 'retry'), maxAttempts: Math.max(1, coll.maxAttemptsPerAsset ?? 10) } : undefined,
+              mapper,
+              asset: assetSize,
+              anchor: (spawnMap.rules?.anchor ?? 'center'),
+              occupiedBoxes: occupied,
+              rng,
+            });
+            const offX = Math.round(result.x);
+            const offY = Math.round(result.y);
+            occupied.push({ x: result.x, y: result.y, w: result.w, h: result.h });
+            return { offX, offY };
+          });
+        }
+
         const buf = await compositeLayers(
-          picks.map((p: any) => ({
+          picks.map((p: any, k: number) => ({
             path: p.option.filePath,
             blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
             opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-            offsetX: p.option.offsetX ?? p.option.effects?.offsetX ?? 0,
-            offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
+            offsetX: (placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0)),
+            offsetY: (placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0)),
             effects: p.option.effects,
           })),
           {
@@ -553,6 +595,10 @@ export function initProjectIpc(): void {
       const { loadLayerCatalog } = await dynamicImportCore(coreBase, 'catalog.js');
       const { generateEditionsConstrained } = await dynamicImportCore(coreBase, 'generator.js');
       const { compositeLayers } = await dynamicImportCore(coreBase, 'compositor.js');
+      const { loadSpawnMapFile } = await dynamicImportCore(coreBase, 'spawn.js');
+      const { placeAsset, resolveCandidateDots } = await dynamicImportCore(coreBase, 'placement.js');
+      const { createSeededRng } = await dynamicImportCore(coreBase, 'rng.js');
+      const { renderPreviewEdition } = await dynamicImportCore(coreBase, 'preview.js');
 
       let cfg: any;
       try {
@@ -608,16 +654,29 @@ export function initProjectIpc(): void {
       const background = effective.image?.background || 'transparent';
       const delimiter = (effective.rarity && effective.rarity.delimiter) || '#';
       const defaultWeight = (effective.rarity && effective.rarity.defaultWeight) || 1;
+      const outFormat: 'png' | 'webp' = (effective.export?.imageFormat === 'webp' ? 'webp' : 'png');
 
+      const howMany = Math.max(1, Math.min(12, Number(count) || 4));
+      const liveSeed = (!seed || seed === 'random')
+        ? `ui-live:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`
+        : seed;
+
+      // Primary: unified core preview
+      try {
+        if (typeof renderPreviewEdition === 'function') {
+          const bufs = await renderPreviewEdition(projectDir, effective as any, liveSeed, howMany);
+          if (Array.isArray(bufs) && bufs.length) {
+            return { ok: true, format: outFormat, images: bufs.map((b: Buffer) => b.toString('base64')) };
+          }
+        }
+      } catch (_e) { /* fall back below */ }
+
+      // Fallback: inline compose (pre-unification path)
       const catalog = await loadLayerCatalog(projectDir, effective.layers, {
         mode: 'filenameDelimiter',
         delimiter,
         defaultWeight,
       });
-      const howMany = Math.max(1, Math.min(12, Number(count) || 4));
-      const liveSeed = (!seed || seed === 'random')
-        ? `ui-live:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`
-        : seed;
       const editions = generateEditionsConstrained(
         catalog,
         howMany,
@@ -625,6 +684,9 @@ export function initProjectIpc(): void {
         { rules: effective.rules ?? {}, uniqueness: undefined, maxAttemptsPerEdition: 50 },
       );
       const out: string[] = [];
+      const spawnMap = await loadSpawnMapFile(projectDir, effective?.spawn?.mapPath);
+      const spawnFit = (spawnMap?.rules?.fitMode ?? effective?.spawn?.fitMode ?? 'contain') as any;
+      let seq = 0;
       for (const ed of editions) {
         const picks = Array.from(ed.picks);
         try {
@@ -635,28 +697,77 @@ export function initProjectIpc(): void {
             }
           }
         } catch {}
+        let placedOffsets: Array<{ offX: number; offY: number }> = [];
+        if (spawnMap) {
+          const rng = createSeededRng(`${liveSeed}:ui:${seq++}`);
+          const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+          const mapper = { authorWidth: spawnMap.authoringSize.width, authorHeight: spawnMap.authoringSize.height, outWidth: width, outHeight: height, fitMode: spawnFit } as any;
+          placedOffsets = picks.map((p: any, k: number) => {
+            const layer = String(p.layer || p.option?.value || `L${k}`);
+            const assetKey = `${layer}:${p.option.value}`;
+            const candidates = resolveCandidateDots(spawnMap, layer, assetKey);
+            const assetSize = { width, height };
+            const pol = spawnMap.rules?.selection ?? 'weighted';
+            const jitterDef = spawnMap.rules?.jitter?.defaultRadiusPx ?? 0;
+            const coll = spawnMap.rules?.collision;
+            const result = placeAsset({
+              globalSeed: `${liveSeed}:${layer}:${p.option.value}`,
+              layerName: layer,
+              assetKey,
+              candidateDots: candidates,
+              policy: pol,
+              jitterDefaultPx: jitterDef,
+              collision: coll ? { enabled: !!coll.enabled, paddingPx: Math.max(0, coll.paddingPx ?? 0), strategy: (coll.strategy ?? 'retry'), maxAttempts: Math.max(1, coll.maxAttemptsPerAsset ?? 10) } : undefined,
+              mapper,
+              asset: assetSize,
+              anchor: (spawnMap.rules?.anchor ?? 'center'),
+              occupiedBoxes: occupied,
+              rng,
+            });
+            const offX = Math.round(result.x);
+            const offY = Math.round(result.y);
+            occupied.push({ x: result.x, y: result.y, w: result.w, h: result.h });
+            return { offX, offY };
+          });
+        }
+
         const buf = await compositeLayers(
-          picks.map((p: any) => ({
+          picks.map((p: any, k: number) => ({
             path: p.option.filePath,
             blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
             opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-            offsetX: p.option.offsetX ?? p.option.effects?.offsetX ?? 0,
-            offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
+            offsetX: (placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0)),
+            offsetY: (placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0)),
             effects: p.option.effects,
           })),
           {
             width,
             height,
             background,
+            format: outFormat,
             superSample: Number(effective?.experimental?.compositor?.superSample || 1) || 1,
             forceCpu: !!(effective?.experimental?.compositor?.forceCpu),
           },
         );
         out.push(buf.toString('base64'));
       }
-      return { ok: true, images: out };
+      return { ok: true, format: outFormat, images: out };
     } catch (e: any) {
       return { ok: false, error: String(e?.message ?? e) };
+    }
+  });
+
+  // Save arbitrary JSON file relative to project root
+  electron.ipcMain.handle('foundry:saveJson', async (_evt, relativePath: string, json: any) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      if (typeof relativePath !== 'string' || !relativePath) return { ok: false, error: 'Invalid path' };
+      const p = path.isAbsolute(relativePath) ? relativePath : path.join(projectDir, relativePath);
+      await fs.mkdir(path.dirname(p), { recursive: true });
+      await fs.writeFile(p, JSON.stringify(json, null, 2), 'utf8');
+      return { ok: true, path: p };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) };
     }
   });
 }

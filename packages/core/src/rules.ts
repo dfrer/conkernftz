@@ -1,4 +1,4 @@
-import type { RuleEngine, TraitKV } from './types.js';
+import type { RuleEngine, TraitKV, TraitCondition } from './types.js';
 
 export interface ProjectRules {
   mutuallyExclusive?: string[][]; // [["Eyes:Laser","Headwear:Visor"]]
@@ -41,6 +41,15 @@ export function createRuleEngine(rules: ProjectRules): RuleEngine {
       return { ok: true as const };
     },
   };
+}
+
+export function evaluateTraitCondition(cond: TraitCondition | undefined, traitSet: Set<string>): boolean {
+  if (!cond) return true;
+  const any = Array.isArray(cond.anyOf) && cond.anyOf.length > 0 ? cond.anyOf.some((t) => traitSet.has(t)) : true;
+  const all = Array.isArray(cond.allOf) && cond.allOf.length > 0 ? cond.allOf.every((t) => traitSet.has(t)) : true;
+  const none = Array.isArray(cond.noneOf) && cond.noneOf.length > 0 ? cond.noneOf.every((t) => !traitSet.has(t)) : true;
+  const notOk = cond.not ? !evaluateTraitCondition(cond.not, traitSet) : true;
+  return any && all && none && notOk;
 }
 
 

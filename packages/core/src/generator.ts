@@ -1,7 +1,8 @@
 import type { LayerCatalogEntry, LayerAssetOption } from './catalog.js';
-import type { TraitKV } from './types.js';
+import type { TraitKV, LayerOptionRule } from './types.js';
+import path from 'node:path';
 import { createSeededRng } from './rng.js';
-import { createRuleEngine, type ProjectRules } from './rules.js';
+import { createRuleEngine, evaluateTraitCondition, type ProjectRules } from './rules.js';
 import { makeDna, type DnaConfig } from './dna.js';
 
 export interface GenerateOptions {
@@ -24,8 +25,19 @@ export function generateEditions(
     const traits: TraitKV = {};
     const picks: Array<{ layer: string; option: LayerAssetOption }> = [];
     for (const entry of catalog) {
+      // Conditional spawn: simple anyOf
+      const traitSet = new Set(Object.entries(traits).map(([layer, value]) => `${layer}:${value}`));
+      if (Array.isArray(entry.spec.spawnWhenAnyOf) && entry.spec.spawnWhenAnyOf.length > 0) {
+        const allowed = entry.spec.spawnWhenAnyOf.some((t) => traitSet.has(t));
+        if (!allowed) continue;
+      }
+      // Advanced when/unless
+      if (entry.spec.spawnWhen && !evaluateTraitCondition(entry.spec.spawnWhen, traitSet)) continue;
+      if (entry.spec.spawnUnless && evaluateTraitCondition(entry.spec.spawnUnless, traitSet)) continue;
       if (entry.options.length === 0) continue;
-      const pick = weightedPick(entry.options, rng.next());
+      const opts = applyOptionRules(entry.options, entry.spec.optionRules, traits);
+      if (opts.length === 0) continue;
+      const pick = weightedPick(opts, rng.next());
       traits[entry.spec.name] = pick.value;
       picks.push({ layer: entry.spec.name, option: pick });
     }
@@ -76,7 +88,18 @@ export function generateEditionsConstrained(
       const picks: Array<{ layer: string; option: LayerAssetOption }> = [];
       
       for (const entry of validEntries) {
-        const pick = weightedPick(entry.options, rng.next());
+        const traitSet = new Set(Object.entries(traits).map(([layer, value]) => `${layer}:${value}`));
+        // Conditional spawn: simple anyOf
+        if (Array.isArray(entry.spec.spawnWhenAnyOf) && entry.spec.spawnWhenAnyOf.length > 0) {
+          const allowed = entry.spec.spawnWhenAnyOf.some((t) => traitSet.has(t));
+          if (!allowed) continue;
+        }
+        // Advanced when/unless
+        if (entry.spec.spawnWhen && !evaluateTraitCondition(entry.spec.spawnWhen, traitSet)) continue;
+        if (entry.spec.spawnUnless && evaluateTraitCondition(entry.spec.spawnUnless, traitSet)) continue;
+        const opts = applyOptionRules(entry.options, entry.spec.optionRules, traits);
+        if (opts.length === 0) continue;
+        const pick = weightedPick(opts, rng.next());
         traits[entry.spec.name] = pick.value;
         picks.push({ layer: entry.spec.name, option: pick });
       }
@@ -142,4 +165,34 @@ function weightedPick<T extends { weight: number }>(items: T[], roll: number): T
   return items[items.length - 1] as T;
 }
 
+
+function applyOptionRules(
+  options: LayerAssetOption[],
+  rules: LayerOptionRule[] | undefined,
+  currentTraits: TraitKV,
+): LayerAssetOption[] {
+  if (!Array.isArray(rules) || rules.length === 0) return options;
+  const traitSet = new Set(Object.entries(currentTraits).map(([layer, value]) => `${layer}:${value}`));
+  const out: LayerAssetOption[] = [];
+  for (const opt of options) {
+    let weight = opt.weight;
+    let excluded = false;
+    for (const rule of rules) {
+      if (!rule || !rule.match) continue;
+      const targetVal = rule.match.target === 'filename' ? path.basename(opt.filePath) : opt.value;
+      const isMatch = targetVal === rule.match.pattern;
+      if (!isMatch) continue;
+      if (rule.when && !evaluateTraitCondition(rule.when, traitSet)) continue;
+      if (rule.unless && evaluateTraitCondition(rule.unless, traitSet)) continue;
+      if (rule.exclude) { excluded = true; break; }
+      if (typeof rule.weightMultiply === 'number' && isFinite(rule.weightMultiply)) {
+        weight = Math.max(0, weight * rule.weightMultiply);
+      }
+    }
+    if (!excluded && weight > 0) {
+      out.push({ ...opt, weight });
+    }
+  }
+  return out;
+}
 

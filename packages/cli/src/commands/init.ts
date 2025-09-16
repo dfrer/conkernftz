@@ -4,7 +4,22 @@ import path from 'node:path';
 
 export function initCmd(): Command {
   const cmd = new Command('init');
-  cmd.description('Scaffold a foundry project').action(async () => {
+  cmd
+    .description('Scaffold a foundry project')
+    .addHelpText(
+      'afterAll',
+      `
+Creates:
+  - foundry.config.json (starter config)
+  - layers/ with example layer folders
+
+Tip: run 'foundry validate' after adding assets, then 'foundry preview'.
+
+Example:
+  foundry init
+`
+    )
+    .action(async () => {
     const cwd = process.cwd();
     const cfgPath = path.join(cwd, 'foundry.config.json');
     const has = await exists(cfgPath);

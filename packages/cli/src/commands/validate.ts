@@ -5,7 +5,21 @@ import path from 'node:path';
 
 export function validateCmd(): Command {
   const cmd = new Command('validate');
-  cmd.description('Validate project configuration').action(async () => {
+  cmd
+    .description('Validate project configuration and assets presence')
+    .addHelpText(
+      'afterAll',
+      `
+Checks:
+  - JSON schema of foundry.config.json
+  - Presence of layer asset directories
+  - Basic sanity of required layers
+
+Examples:
+  foundry validate
+`
+    )
+    .action(async () => {
     const cfgPath = path.join(process.cwd(), 'foundry.config.json');
     const raw = await fs.readFile(cfgPath, 'utf8');
     const json = JSON.parse(raw);

@@ -29,6 +29,24 @@ program
   .description('conkernftz CLI')
   .version(readVersion());
 
+program.addHelpText(
+  'beforeAll',
+  `
+Usage: foundry <command> [options]
+
+A modern NFT art foundry. Common flow:
+  foundry init           # scaffold project
+  foundry validate       # check config and assets
+  foundry preview        # generate random previews
+  foundry build          # produce images + local JSON
+  foundry upload         # upload assets and rewrite JSON URIs
+  foundry mint           # mint on Solana (devnet by default)
+
+Quick help:
+  foundry <command> --help
+`
+);
+
 program.addCommand(initCmd());
 program.addCommand(validateCmd());
 program.addCommand(previewCmd());

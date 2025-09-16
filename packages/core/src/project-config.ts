@@ -117,11 +117,30 @@ const AssetOverrideSchema = z.object({
   effects: EffectsSchema,
 });
 
+const TraitConditionSchema: any = z.lazy(() => z.object({
+  anyOf: z.array(z.string()).optional(),
+  allOf: z.array(z.string()).optional(),
+  noneOf: z.array(z.string()).optional(),
+  not: z.any().optional(), // self-referential; validate shallowly in UI
+}).partial());
+
+const LayerOptionRuleSchema = z.object({
+  match: z.object({ target: z.enum(['value','filename']), pattern: z.string() }),
+  when: TraitConditionSchema.optional(),
+  unless: TraitConditionSchema.optional(),
+  exclude: z.boolean().optional(),
+  weightMultiply: z.number().positive().optional(),
+});
+
 export const LayerSchema = z.object({
   name: z.string(),
   path: z.string(),
   rarity: z.enum(['filename', 'uniform']).optional(),
   required: z.boolean().optional(),
+  spawnWhenAnyOf: z.array(z.string()).optional(),
+  spawnWhen: TraitConditionSchema.optional(),
+  spawnUnless: TraitConditionSchema.optional(),
+  optionRules: z.array(LayerOptionRuleSchema).optional(),
   blend: BlendModeSchema.optional(),
   opacity: z.number().min(0).max(1).optional(),
   effects: EffectsSchema.optional(),
@@ -194,6 +213,16 @@ export const ProjectConfigSchema = z.object({
   rules: RulesSchema.optional(),
   rarity: RaritySchema,
   uniqueness: UniquenessSchema,
+  // Optional spawn map configuration is stored as an external JSON file typically.
+  // For convenience, allow embedding a minimal config pointer here.
+  spawn: z
+    .object({
+      // Relative path to spawn map JSON from project root. If provided, it will be loaded at generation time.
+      mapPath: z.string().optional(),
+      // Default fit mode for mapping normalized coords to output pixels when using the spawn map.
+      fitMode: z.enum(['contain', 'cover', 'stretch']).optional(),
+    })
+    .optional(),
   export: z.object({
     outDir: z.string(),
     previewOutDir: z.string().optional(),

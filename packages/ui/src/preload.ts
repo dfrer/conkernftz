@@ -36,4 +36,5 @@ contextBridge.exposeInMainWorld('foundry', {
   saveBase64: (b64: string, relPath: string) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),
   listFiles: (relDir: string) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath: string) => ipcRenderer.invoke('foundry:fsDelete', relPath),
+  saveJson: (relPath: string, json: unknown) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
 });
