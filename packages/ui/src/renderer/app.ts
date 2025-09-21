@@ -1399,6 +1399,23 @@ function startProgress(message, estimateMs) {
   setProgress(0, message || 'Working…');
   // Store progress state for manual updates
   window.currentProgress = { current: 0, total: 100, message: message || 'Working…' };
+  // For tasks without explicit progress events, animate toward ~95% over the estimate
+  try {
+    const est = Math.max(0, Number(estimateMs) || 0);
+    if (est > 0) {
+      const start = Date.now();
+      progressIntervalId = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const ratio = Math.max(0, Math.min(1, elapsed / est));
+        const pct = Math.min(95, Math.floor(5 + ratio * 90));
+        setProgress(pct, window.currentProgress.message);
+        if (ratio >= 1) {
+          clearInterval(progressIntervalId);
+          progressIntervalId = null;
+        }
+      }, 100);
+    }
+  } catch {}
 }
 function endProgress(message, ok = true) {
   if (progressIntervalId) { clearInterval(progressIntervalId); progressIntervalId = null; }
@@ -2765,6 +2782,58 @@ async function runTaskWithProgress(label, estimateMs, fn) {
 document.getElementById('btn-init').onclick = async () => {
   const res = await runTaskWithProgress('Initializing project.', 4000, () => window.foundry.run(['init']));
   if (res && res.ok) await loadConfigUI();
+};
+
+// Reports: Audit buttons
+const btnAuditAssets = document.getElementById('btn-audit-assets') as HTMLButtonElement | null;
+const btnAuditOutputs = document.getElementById('btn-audit-outputs') as HTMLButtonElement | null;
+const auditOut = document.getElementById('audit-out') as HTMLElement | null;
+if (btnAuditAssets && auditOut) btnAuditAssets.onclick = async () => {
+  auditOut.textContent = 'Auditing assets...';
+  try {
+    const res = await runTaskWithProgress('Auditing assets.', 12000, () => (window as any).foundry.auditAssets({ json: true }));
+    if (res && res.ok && res.json) {
+      const payload: any = res.json;
+      const dupCount = Array.isArray(payload.duplicates) ? payload.duplicates.length : 0;
+      const emptyCount = Array.isArray(payload.empties) ? payload.empties.length : 0;
+      const dims = Array.isArray(payload.dimensions) ? payload.dimensions : [];
+      const topSizes = dims.slice().sort((a:any,b:any)=> (b.count||0)-(a.count||0)).slice(0,3).map((d:any)=>`${d.size}×${d.count}`).join(', ');
+      const summary = dupCount===0 && emptyCount===0
+        ? 'Assets audit OK: no duplicate files or near-empty images.'
+        : `Assets audit: duplicate groups=${dupCount}, near-empty images=${emptyCount}${topSizes?` (top sizes: ${topSizes})`:''}`;
+      auditOut.textContent = summary + '\n\n' + JSON.stringify(payload, null, 2);
+    } else {
+      auditOut.textContent = String(res?.error || 'Audit failed');
+    }
+  } catch (e) {
+    auditOut.textContent = String((e as any)?.message || e || 'Audit failed');
+  }
+};
+if (btnAuditOutputs && auditOut) btnAuditOutputs.onclick = async () => {
+  auditOut.textContent = 'Auditing outputs...';
+  try {
+    let est = 8000;
+    try {
+      const cnt = await (window as any).foundry.listImages('build/images');
+      if (cnt && cnt.ok && typeof cnt.count === 'number') {
+        est = Math.min(120000, 15 * cnt.count + 3000);
+      }
+    } catch {}
+    const res = await runTaskWithProgress('Auditing outputs.', est, () => (window as any).foundry.auditOutputs({ images: true, json: true }));
+    if (res && res.ok && res.json) {
+      const payload: any = res.json;
+      const dna = Array.isArray(payload.dnaDupes) ? payload.dnaDupes.length : 0;
+      const imgs = Array.isArray(payload.imageDupes) ? payload.imageDupes.length : 0;
+      const summary = dna===0 && imgs===0
+        ? 'Outputs audit OK: no duplicate DNA or pixel-identical images.'
+        : `Outputs audit: DNA dupe groups=${dna}, image dupe groups=${imgs}`;
+      auditOut.textContent = summary + '\n\n' + JSON.stringify(payload, null, 2);
+    } else {
+      auditOut.textContent = String(res?.error || 'Audit failed');
+    }
+  } catch (e) {
+    auditOut.textContent = String((e as any)?.message || e || 'Audit failed');
+  }
 };
 document.getElementById('btn-validate').onclick = async () => {
   await runTaskWithProgress('Validating rules.', 3000, () => window.foundry.run(['validate']));

@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('foundry', {
   run: (args: string[]) => ipcRenderer.invoke('foundry:run', args),
+  auditAssets: (opts: { json?: boolean }) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
+  auditOutputs: (opts: { images?: boolean; json?: boolean }) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
   buildWithProgress: (count: number) => ipcRenderer.invoke('foundry:buildWithProgress', count),
   pauseBuild: () => ipcRenderer.invoke('foundry:pauseBuild'),
   resumeBuild: () => ipcRenderer.invoke('foundry:resumeBuild'),

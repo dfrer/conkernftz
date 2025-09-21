@@ -36,4 +36,6 @@ contextBridge.exposeInMainWorld('foundry', {
   saveBase64: (b64, relPath) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),
   listFiles: (relDir) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath) => ipcRenderer.invoke('foundry:fsDelete', relPath),
+  auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
+  auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
 });

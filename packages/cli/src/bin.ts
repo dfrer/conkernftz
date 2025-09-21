@@ -10,6 +10,8 @@ import { buildCmd } from './commands/build.js';
 import { uploadCmd } from './commands/upload.js';
 import { mintCmd } from './commands/mint.js';
 import { e2eCmd } from './commands/e2e.js';
+import { dupesCmd } from './commands/dupes.js';
+import { auditCmd } from './commands/audit.js';
 
 function readVersion(): string {
   try {
@@ -39,6 +41,8 @@ A modern NFT art foundry. Common flow:
   foundry validate       # check config and assets
   foundry preview        # generate random previews
   foundry build          # produce images + local JSON
+  foundry dupes          # scan build for duplicate DNA/images
+  foundry audit          # audit layer assets for duplicates/emptiness
   foundry upload         # upload assets and rewrite JSON URIs
   foundry mint           # mint on Solana (devnet by default)
 
@@ -51,6 +55,8 @@ program.addCommand(initCmd());
 program.addCommand(validateCmd());
 program.addCommand(previewCmd());
 program.addCommand(buildCmd());
+program.addCommand(dupesCmd());
+program.addCommand(auditCmd());
 program.addCommand(uploadCmd());
 program.addCommand(mintCmd());
 program.addCommand(e2eCmd());

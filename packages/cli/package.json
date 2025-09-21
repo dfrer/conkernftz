@@ -21,6 +21,7 @@
     "@foundry/core": "workspace:*",
     "@foundry/storage": "workspace:*",
     "@foundry/chain-solana": "workspace:*",
+    "sharp": "^0.33.4",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "execa": "^9.4.0",

@@ -4,9 +4,10 @@ import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
 import fs from 'node:fs/promises';
 import fssync from 'node:fs';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { FileManager } from '@foundry/storage/file-manager';
+import * as cliRunner from './cli-runner.js';
 
 let projectDir: string | null = null;
 let fileManager: FileManager | null = null;
@@ -170,6 +171,48 @@ export function initProjectIpc(): void {
       return { ok: true, items };
     } catch (e: any) {
       return { ok: false, error: String(e?.message ?? e) };
+    }
+  });
+
+  // Run CLI-based audits
+  electron.ipcMain.handle('foundry:auditAssets', async (_evt, opts: any) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const uiDistDir = path.resolve(baseDir, '..');
+      const pkgsDir = path.resolve(uiDistDir, '../..');
+      // Ensure CLI is built and dependencies present
+      await cliRunner.ensureCliAndDepsBuilt().catch(() => {});
+      const cliBin = path.join(pkgsDir, 'cli', 'dist', 'bin.js');
+      if (!fssync.existsSync(cliBin)) {
+        throw new Error('CLI not built. Run build at repo root.');
+      }
+      const args = ['audit', '--dir', projectDir, '--layers', 'Layers', '--empty-threshold', '99', '--json'];
+      const out = await cliRunner.runNodeModule(cliBin, args, projectDir);
+      if ((out.code ?? 0) !== 0 && !out.stdout) throw new Error(out.stderr || 'Audit failed');
+      const payload = out.stdout && out.stdout.trim().startsWith('{') ? JSON.parse(out.stdout) : { ok: false, error: out.stderr || 'Audit failed' };
+      return { ok: true, json: payload };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) };
+    }
+  });
+
+  electron.ipcMain.handle('foundry:auditOutputs', async (_evt, opts: any) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const uiDistDir = path.resolve(baseDir, '..');
+      const pkgsDir = path.resolve(uiDistDir, '../..');
+      await cliRunner.ensureCliAndDepsBuilt().catch(() => {});
+      const cliBin = path.join(pkgsDir, 'cli', 'dist', 'bin.js');
+      if (!fssync.existsSync(cliBin)) {
+        throw new Error('CLI not built. Run build at repo root.');
+      }
+      const args = ['dupes', '--dir', projectDir + path.sep + 'build', '--images', '--json'];
+      const out = await cliRunner.runNodeModule(cliBin, args, projectDir);
+      if ((out.code ?? 0) !== 0 && !out.stdout) throw new Error(out.stderr || 'Dupes failed');
+      const payload = out.stdout && out.stdout.trim().startsWith('{') ? JSON.parse(out.stdout) : { ok: false, error: out.stderr || 'Dupes failed' };
+      return { ok: true, json: payload };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) };
     }
   });
 

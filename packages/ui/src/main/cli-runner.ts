@@ -25,7 +25,7 @@ async function runPnpm(args: string[], cwd: string): Promise<{ stdout: string; s
   }
 }
 
-async function ensureCliAndDepsBuilt(): Promise<void> {
+export async function ensureCliAndDepsBuilt(): Promise<void> {
   const uiDistDir = path.resolve(baseDir, '..');
   const repoRoot = path.resolve(uiDistDir, '../../..');
   const pkgsDir = path.resolve(uiDistDir, '../..');
@@ -56,9 +56,11 @@ async function ensureCliAndDepsBuilt(): Promise<void> {
   }
 }
 
-function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; code: number | null }> {
+export function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [binPath, ...args], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    // In Electron main, process.execPath is the Electron binary. Ensure it runs as Node.
+    const env = { ...process.env, ELECTRON_RUN_AS_NODE: '1' } as NodeJS.ProcessEnv;
+    const child = spawn(process.execPath, [binPath, ...args], { cwd, stdio: ['ignore', 'pipe', 'pipe'], env });
     let stdout = '';
     let stderr = '';
     child.stdout?.on('data', (d) => { stdout += String(d); });

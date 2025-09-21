@@ -9,7 +9,10 @@
     "node": ">=18.18.0"
   },
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter=!@foundry/ui-tauri",
+    "build:tauri": "turbo run build --filter=@foundry/ui-tauri",
+    "build:cli": "pnpm -C packages/cli run build",
+    "build:core": "pnpm -C packages/core run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",

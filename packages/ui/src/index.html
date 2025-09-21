@@ -144,6 +144,13 @@
           <div id="previews" class="gallery-grid" data-help="preview-grid"></div>
                     <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" to generate sample images.</div>
         </div>
+        <!-- Lightbox overlay for preview inspection -->
+        <div id="lightbox" class="lightbox" aria-hidden="true" style="display:block; visibility:hidden;">
+          <button id="lb-close" class="lb-btn lb-close" aria-label="Close">×</button>
+          <button id="lb-prev" class="lb-btn lb-prev" aria-label="Previous">‹</button>
+          <img id="lb-image" alt="Preview" />
+          <button id="lb-next" class="lb-btn lb-next" aria-label="Next">›</button>
+        </div>
                   <div class="form-grid auto-fit-180" style="margin-top:16px; gap:12px;">
                     <div class="gallery-card" style="padding: 10px 12px;">
                       <div class="mini muted">Collection</div>
@@ -519,7 +526,7 @@
           </div>
                 </div>
                 <div id="main-rules" class="subpane hidden" role="tabpanel" aria-labelledby="subtab-btn-rules" aria-hidden="true">
-            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;" data-help="rules-advanced">
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Rules (advanced)</legend>
               <div class="form-grid cols-1">
                 <textarea id="rules-json" rows="6" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
@@ -563,6 +570,14 @@
                 <span style="opacity:.8;">Generated after Build</span>
               </div>
               <pre id="rarity-out" style="margin-top:8px; max-height:260px;"></pre>
+            </fieldset>
+            <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px; margin-top:12px;">
+              <legend>Audit</legend>
+              <div class="row wrap gap-8">
+                <button id="btn-audit-assets" class="btn-secondary btn-sm">Audit Assets</button>
+                <button id="btn-audit-outputs" class="btn-secondary btn-sm">Audit Outputs</button>
+              </div>
+              <pre id="audit-out" style="margin-top:8px; max-height:280px; overflow:auto;"></pre>
             </fieldset>
           </div>
         </div>
@@ -798,132 +813,39 @@
                       <button id="fal-add-field" class="btn-ghost" title="Add custom field">Add Field</button>
                       <button id="fal-save-model" class="btn-ghost" title="Save model to catalog">Save Model</button>
                       <button id="fal-dryrun" class="btn-secondary" title="Build payload only">Dry Run</button>
-                      <button id="fal-run" class="btn-primary">Run</button>
                     </div>
                   </div>
-                  <div id="fal-param-editor" class="form-grid" style="grid-template-columns: repeat(2, minmax(280px, 1fr)); gap:10px;"></div>
+                  <div class="param-grid" id="fal-params" style="margin-top:12px;"></div>
+                  <div id="fal-json" class="mini" style="display:none; margin-top:8px;">
+                    <div>Payload JSON</div>
+                    <pre id="fal-json-out"></pre>
+                  </div>
                 </div>
 
-                <div class="gallery-card">
+                <div class="gallery-card" id="fal-out-card">
                   <div class="gallery-header">
-                    <h3 class="m-0" data-help="fal-results">Results</h3>
-                    <div class="row">
-                      <label class="mini">Size</label>
-                      <input id="fal-thumb-size" type="range" min="80" max="280" value="160" />
-                      <button id="fal-save-all" class="btn-ghost">Save All</button>
+                    <h3 class="m-0">Output</h3>
+                    <div class="row gap-10 wrap">
+                      <button id="fal-save-all" class="btn-primary btn-sm">Save All</button>
+                      <button id="fal-open-folder" class="btn-secondary btn-sm">Open Folder</button>
+                      <button id="fal-clear-all" class="btn-ghost btn-sm">Clear</button>
                     </div>
                   </div>
-                  <div id="fal-results" class="gallery-grid"></div>
-                </div>
-                <div class="gallery-card mt-16">
-                  <div class="gallery-header">
-                    <h3 class="m-0" data-help="fal-saved">Saved Images</h3>
-                  </div>
-                  <div id="fal-saved" class="gallery-grid"></div>
+                  <div id="fal-outputs"></div>
                 </div>
               </div>
             </div>
           </section>
-          <section id="tab-help" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-help" aria-hidden="true">
-            <div class="help-page">
-              <aside class="help-toc">
-                <div class="toc-card">
-                  <div style="font-weight:700; margin-bottom:6px;">On this page</div>
-                  <nav id="help-toc"></nav>
-                </div>
-              </aside>
-              <div class="help-content">
-                <div class="card">
-                  <div class="gallery-header">
-                    <h3 class="m-0">Help & Documentation</h3>
-                    <div style="opacity:.75; font-size:12px;">Comprehensive guide to using CONKERNFTZ. Click any <span class="badge-link">?</span> icon in the app to see context help.</div>
-                  </div>
-                  <div id="help-content" class="p-12"></div>
-                </div>
-              </div>
+        </div>
             </div>
           </section>
+        </div>
       </div>
     </main>
-    </div>
-    <div id="lightbox" class="lightbox" aria-hidden="true">
-      <button id="lb-close" class="lb-close" aria-label="Close">&times;</button>
-      <button id="lb-prev" class="lb-nav lb-prev" aria-label="Previous">&lsaquo;</button>
-      <img id="lb-image" alt="Preview" />
-      <button id="lb-next" class="lb-nav lb-next" aria-label="Next">&rsaquo;</button>
-    </div>
-    <div id="renamer" class="renamer" aria-hidden="true">
-      <div class="renamer-card">
-        <div class="gallery-header">
-          <h3 class="m-0">Step-through Renamer</h3>
-          <div class="row">
-            <button id="rn-choose-folder" class="btn-ghost btn-sm">Choose Folder&hellip;</button>
-            <button id="rn-close" class="btn-ghost">Close</button>
-          </div>
-        </div>
-        <div style="display:grid; grid-template-columns: 280px 1fr; gap:12px; align-items:start;">
-          <div>
-            <div class="rn-thumb">
-              <img id="rn-image" alt="Preview" />
-              <div class="badge" id="rn-meta"></div>
-            </div>
-          </div>
-          <div>
-            <div class="form-grid cols-3">
-              <div>
-                <label>Base Name</label>
-                <input id="rn-name" placeholder="Name" />
-              </div>
-              <div>
-                <label>Rarity Weight</label>
-                <input id="rn-weight" type="number" min="1" value="1" />
-              </div>
-              <div>
-                <label>Delimiter</label>
-                <input id="rn-delim" placeholder="#" />
-              </div>
-            </div>
-            <div class="row mt-8">
-              <button id="rn-random-name" class="btn-secondary">Random Name</button>
-              <button id="rn-random-weight" class="btn-secondary">Random Weight</button>
-              <label class="row gap-6"><input id="rn-include-layer" type="checkbox"/> Include layer prefix</label>
-            </div>
-            <div class="row mt-10">
-              <button id="rn-prev" class="btn-ghost">&larr; Prev</button>
-              <button id="rn-apply-next" class="btn-primary">Apply &amp; Next &rarr;</button>
-              <button id="rn-skip" class="btn-secondary">Skip</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Live Preview floating overlay -->
-    <div id="live-preview" class="live-preview hidden" aria-hidden="true">
-      <div class="lp-header" id="lp-header" data-help="live-preview-controls">
-        <div class="lp-title">Live Preview</div>
-        <div class="lp-controls">
-          
-          
-          <label class="mini" data-help="lp-fit">Fit</label>
-          <select id="lp-fit"><option value="contain">Contain</option><option value="cover">Cover</option><option value="actual">Actual</option></select>
-          <label class="mini" data-help="lp-bg">BG</label>
-          <select id="lp-bg"><option value="check">Check</option><option value="dark">Dark</option><option value="light">Light</option></select>
-          <button id="lp-reroll" class="btn-ghost" title="Generate a new preview">Reroll</button>
-          
-          
-          <button id="lp-close" class="btn-ghost" aria-label="Close">✕</button>
-        </div>
-      </div>
-      <div class="lp-body">
-        <div id="lp-grid" class="lp-grid"></div>
-      </div>
-      <div id="lp-resize" class="lp-resize"></div>
-    </div>
+
     <script type="module" src="renderer/app.js"></script>
-    <script type="module" src="renderer/live-preview.js"></script>
-    <script type="module" src="renderer/spawn-editor.js"></script>
   </body>
-  </html>
+</html>
 
 
 

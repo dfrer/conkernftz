@@ -86,6 +86,9 @@ importers:
       ora:
         specifier: ^8.0.1
         version: 8.2.0
+      sharp:
+        specifier: ^0.33.4
+        version: 0.33.5
       zod:
         specifier: ^3.23.8
         version: 3.25.76
