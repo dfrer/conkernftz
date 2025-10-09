@@ -132,6 +132,58 @@ const LayerOptionRuleSchema = z.object({
   weightMultiply: z.number().positive().optional(),
 });
 
+const TransformTargetSchema = z
+  .object({
+    layer: z.string().optional(),
+    layers: z.array(z.string()).optional(),
+    values: z.array(z.string()).optional(),
+    filenames: z.array(z.string()).optional(),
+  })
+  .refine(
+    (val) =>
+      (typeof val.layer === 'string' && val.layer.trim().length > 0) ||
+      (Array.isArray(val.layers) && val.layers.length > 0),
+    { message: 'Transform target must specify at least one layer', path: ['layer'] },
+  );
+
+const TransformTranslateSchema = z
+  .object({
+    x: z.number().optional(),
+    y: z.number().optional(),
+    mode: z.enum(['add', 'set']).optional(),
+  })
+  .refine((val) => val.x !== undefined || val.y !== undefined, {
+    message: 'Translate must set x or y',
+    path: ['x'],
+  });
+
+const TransformRotateSchema = z.object({
+  degrees: z.number(),
+  mode: z.enum(['add', 'set']).optional(),
+});
+
+const TransformScaleSchema = z.object({
+  factor: z.number().positive(),
+  mode: z.enum(['multiply', 'set']).optional(),
+});
+
+const TransformRuleSchema = z
+  .object({
+    id: z.string().optional(),
+    description: z.string().optional(),
+    priority: z.number().optional(),
+    when: TraitConditionSchema.optional(),
+    target: TransformTargetSchema,
+    translate: TransformTranslateSchema.optional(),
+    rotate: TransformRotateSchema.optional(),
+    scale: TransformScaleSchema.optional(),
+  })
+  .refine((val) => val.translate || val.rotate || val.scale, {
+    message: 'Transform rule must include at least one action',
+    path: ['translate'],
+  });
+
+
 export const LayerSchema = z.object({
   name: z.string(),
   path: z.string(),
@@ -155,6 +207,7 @@ export const RulesSchema = z.object({
   maxOccurrences: z
     .array(z.object({ trait: z.string(), max: z.number().int().positive() }))
     .optional(),
+  transforms: z.array(TransformRuleSchema).optional(),
 });
 
 export const RaritySchema = z.object({

@@ -145,7 +145,7 @@
                     <div id="previews-empty" class="empty-state" style="display:none;">No previews yet. Click "Preview" to generate sample images.</div>
         </div>
         <!-- Lightbox overlay for preview inspection -->
-        <div id="lightbox" class="lightbox" aria-hidden="true" style="display:block; visibility:hidden;">
+          <div id="lightbox" class="lightbox" aria-hidden="true">
           <button id="lb-close" class="lb-btn lb-close" aria-label="Close">×</button>
           <button id="lb-prev" class="lb-btn lb-prev" aria-label="Previous">‹</button>
           <img id="lb-image" alt="Preview" />
@@ -529,7 +529,7 @@
             <fieldset class="panel-soft" style="padding:8px; border:1px solid var(--border); border-radius:6px;">
               <legend>Rules (advanced)</legend>
               <div class="form-grid cols-1">
-                <textarea id="rules-json" rows="6" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[]}'></textarea>
+                <textarea id="rules-json" rows="6" placeholder='{"mutuallyExclusive":[],"requires":[],"maxOccurrences":[],"transforms":[]}'></textarea>
                 <div class="row">
                   <button id="btn-validate-rules" type="button" class="btn-secondary">Validate Rules</button>
                   <button id="btn-save-rules" type="button" class="btn-primary">Save Rules</button>

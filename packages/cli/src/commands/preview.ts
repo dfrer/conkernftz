@@ -35,8 +35,7 @@ Examples:
 
       const { loadLayerCatalog } = await import(coreBase + 'catalog.js');
       const { generateEditionsConstrained } = await import(coreBase + 'generator.js');
-      const { compositeLayers } = await import(coreBase + 'compositor.js');
-      const { makeContactSheet } = await import(coreBase + 'preview.js');
+      const { makeContactSheet, renderPreviewEdition } = await import(coreBase + 'preview.js');
       const catalog = await loadLayerCatalog(process.cwd(), parsed.layers, {
         mode: 'filenameDelimiter',
         delimiter: parsed.rarity.delimiter,
@@ -101,18 +100,8 @@ Examples:
       let idx = 1;
       const previewPaths: string[] = [];
       const outFormat = (parsed.export?.imageFormat === 'webp' ? 'webp' : 'png') as 'png' | 'webp';
-      for (const ed of editions) {
-        const buffer = await compositeLayers(
-          ed.picks.map((p: any) => ({
-            path: p.option.filePath,
-            blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
-            opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-            offsetX: p.option.offsetX ?? p.option.effects?.offsetX ?? 0,
-            offsetY: p.option.offsetY ?? p.option.effects?.offsetY ?? 0,
-            effects: p.option.effects,
-          })),
-          { width: parsed.image.width, height: parsed.image.height, background: parsed.image.background, format: outFormat },
-        );
+      const bufs = await renderPreviewEdition(process.cwd(), parsed as any, usedSeed, editions.length);
+      for (const buffer of bufs) {
         const p = path.join(outDir, `preview_${idx++}.${outFormat}`);
         await fs.writeFile(p, buffer);
         previewPaths.push(p);

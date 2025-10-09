@@ -1,9 +1,10 @@
-import type { RuleEngine, TraitKV, TraitCondition } from './types.js';
+import type { RuleEngine, TraitKV, TraitCondition, TransformRule } from './types.js';
 
 export interface ProjectRules {
   mutuallyExclusive?: string[][]; // [["Eyes:Laser","Headwear:Visor"]]
   requires?: Array<{ if: string; thenAnyOf: string[] }>;
   maxOccurrences?: Array<{ trait: string; max: number }>;
+  transforms?: TransformRule[];
 }
 
 export function createRuleEngine(rules: ProjectRules): RuleEngine {

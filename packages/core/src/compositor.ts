@@ -95,10 +95,15 @@ export async function compositeLayers(
       if (op !== undefined && op >= 0 && op <= 1 && op !== 1) {
         groupBuf = await sharp(groupBuf).ensureAlpha().linear([1, 1, 1, clamp01(op)], [0, 0, 0, 0]).toBuffer();
       }
+      // If rotate/scale is used, translation has already been applied inside renderLayerGroup
+      // to avoid edge clipping. In that case, place the group at (0,0).
+      const usesInternalTransform = (layer.effects?.rotate !== undefined) || (layer.effects?.scale !== undefined);
+      const offX = layer.offsetX ?? layer.effects?.offsetX ?? 0;
+      const offY = layer.offsetY ?? layer.effects?.offsetY ?? 0;
       composites.push({
         input: groupBuf,
-        top: Math.round(layer.offsetY ?? layer.effects?.offsetY ?? 0),
-        left: Math.round(layer.offsetX ?? layer.effects?.offsetX ?? 0),
+        top: usesInternalTransform ? 0 : Math.round(offY * scale),
+        left: usesInternalTransform ? 0 : Math.round(offX * scale),
         blend: (sharpBlend as sharp.OverlayOptions['blend']) ?? 'over',
       });
     }
@@ -113,7 +118,19 @@ export async function compositeLayers(
   }
 
   // CPU fallback path: supports advanced Photoshop-like modes
-  const cpuOut = await compositeLayersCpu(layers, { ...options, width: workWidth, height: workHeight, format: 'png' });
+  // Pre-scale offsets for CPU path when supersampling; avoid double-translation by composing at (0,0)
+  // for layers using internal transform, but keep their original offsets so renderLayerGroup can apply them.
+  const cpuLayers: CompositeLayerInput[] = layers.map((layer) => {
+    const usesInternalTransform = (layer.effects?.rotate !== undefined) || (layer.effects?.scale !== undefined);
+    if (usesInternalTransform) {
+      // Keep offsets as-is; renderLayerGroup will apply them, compositor will place at (0,0)
+      return { ...layer };
+    }
+    const offX = layer.offsetX ?? layer.effects?.offsetX ?? 0;
+    const offY = layer.offsetY ?? layer.effects?.offsetY ?? 0;
+    return { ...layer, offsetX: Math.round(offX * scale), offsetY: Math.round(offY * scale) };
+  });
+  const cpuOut = await compositeLayersCpu(cpuLayers, { ...options, width: workWidth, height: workHeight, format: 'png' });
   const finalBuf = await sharp(cpuOut)
     .resize(targetWidth, targetHeight, { fit: 'fill' })
     [outFormat === 'webp' ? 'webp' : 'png'](outFormat === 'webp' ? { quality: 100 } : {})
@@ -245,8 +262,11 @@ async function compositeLayersCpu(
 
     const mode = layer.blend ?? layer.effects?.blend ?? 'normal';
     const opacity = 1; // already applied above
-    const offX = Math.round(layer.offsetX ?? layer.effects?.offsetX ?? 0);
-    const offY = Math.round(layer.offsetY ?? layer.effects?.offsetY ?? 0);
+    // If rotate/scale is used, translation has already been applied inside renderLayerGroup
+    // to avoid edge clipping. In that case, compose at (0,0).
+    const usesInternalTransform = (layer.effects?.rotate !== undefined) || (layer.effects?.scale !== undefined);
+    const offX = usesInternalTransform ? 0 : Math.round(layer.offsetX ?? layer.effects?.offsetX ?? 0);
+    const offY = usesInternalTransform ? 0 : Math.round(layer.offsetY ?? layer.effects?.offsetY ?? 0);
     outPixels = blendPixelArrays(outPixels, overlayPixels, width, height, mode, opacity, offX, offY);
   }
 
@@ -266,6 +286,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
   const height = options.height;
   let base = sharp(layer.path).resize(width, height, { fit: 'fill' }).ensureAlpha();
   const effects = layer.effects;
+  const ss = Math.max(1, Math.min(4, Math.floor(options.superSample ?? 1)));
   // Base adjustments before any behind/around effects
   if (effects?.modulate) {
     base = base.modulate({
@@ -281,7 +302,10 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
 
   // Apply pre-transform (scale, rotate) on the flattened base content
   if (effects?.scale !== undefined || effects?.rotate !== undefined) {
-    baseBuf = await applyScaleAndRotate(baseBuf, width, height, effects?.scale, effects?.rotate);
+    const translateX = (typeof layer.offsetX === 'number' ? layer.offsetX : layer.effects?.offsetX ?? 0) * ss;
+    const translateY = (typeof layer.offsetY === 'number' ? layer.offsetY : layer.effects?.offsetY ?? 0) * ss;
+    const transformed = await applyScaleAndRotate(baseBuf, width, height, effects?.scale, effects?.rotate, translateX, translateY);
+    baseBuf = transformed.buffer;
   }
 
   const overlays: sharp.OverlayOptions[] = [];
@@ -405,38 +429,66 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
   return out;
 }
 
-// Apply scale (around center) and rotation (around center) to a canvas-sized buffer
+// Apply scale (around center), then rotation (around center), then translation by cropping/padding once.
 async function applyScaleAndRotate(
   input: Buffer,
   width: number,
   height: number,
   scale?: number,
   rotate?: number,
-): Promise<Buffer> {
+  translateX?: number,
+  translateY?: number,
+): Promise<{ buffer: Buffer; offsetXAdjust: number; offsetYAdjust: number }> {
   let buf = input;
-  const transparent = () =>
-    sharp({
-      create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-    });
-  // Scale
+  let offsetXAdjust = 0;
+  let offsetYAdjust = 0;
+
+  const desiredX = Number.isFinite(translateX) ? Math.round(translateX!) : 0;
+  const desiredY = Number.isFinite(translateY) ? Math.round(translateY!) : 0;
+
+  // Step 1: scale
+  let curW = width;
+  let curH = height;
   if (typeof scale === 'number' && Number.isFinite(scale) && scale > 0 && scale !== 1) {
-    const scaledW = Math.max(1, Math.round(width * scale));
-    const scaledH = Math.max(1, Math.round(height * scale));
-    const resized = await sharp(buf).resize(scaledW, scaledH, { fit: 'fill' }).ensureAlpha().png().toBuffer();
-    const left = Math.round((width - scaledW) / 2);
-    const top = Math.round((height - scaledH) / 2);
-    buf = await transparent().composite([{ input: resized, left, top }]).png().toBuffer();
+    curW = Math.max(1, Math.round(width * scale));
+    curH = Math.max(1, Math.round(height * scale));
+    buf = await sharp(buf).resize(curW, curH, { fit: 'fill' }).ensureAlpha().png().toBuffer();
   }
-  // Rotate
+
+  // Step 2: rotate (around center)
   if (typeof rotate === 'number' && Number.isFinite(rotate) && rotate % 360 !== 0) {
-    // Rotate with transparent background and fit within original canvas
-    buf = await sharp(buf)
+    const rotated = await sharp(buf)
       .rotate(rotate, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .resize(width, height, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
       .toBuffer();
+    buf = rotated;
+    const meta = await sharp(buf).metadata();
+    curW = meta.width ?? curW;
+    curH = meta.height ?? curH;
   }
-  return buf;
+
+  // Step 3: place transformed buffer at absolute top-left (desiredX, desiredY) relative to the canvas,
+  // supporting negative offsets by cropping the source to the visible intersection.
+  const srcLeft = Math.max(0, -desiredX);
+  const srcTop = Math.max(0, -desiredY);
+  const dstLeft = Math.max(0, desiredX);
+  const dstTop = Math.max(0, desiredY);
+  const maxW = Math.min(curW - srcLeft, width - dstLeft);
+  const maxH = Math.min(curH - srcTop, height - dstTop);
+  let outCanvas = sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } });
+  if (maxW > 0 && maxH > 0) {
+    const visible = await sharp(buf)
+      .extract({ left: srcLeft, top: srcTop, width: maxW, height: maxH })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+    buf = await outCanvas.composite([{ input: visible, left: dstLeft, top: dstTop, blend: 'over' }]).png().toBuffer();
+  } else {
+    // Fully off-canvas: return transparent canvas
+    buf = await outCanvas.png().toBuffer();
+  }
+
+  return { buffer: buf, offsetXAdjust, offsetYAdjust };
 }
 
 // Create a solid-color silhouette of the input image using its alpha channel.

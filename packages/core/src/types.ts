@@ -91,6 +91,44 @@ export interface LayerOptionRule {
   weightMultiply?: number; // e.g., 0.0 to remove, 0.5 to reduce, 2 to boost
 }
 
+export type TransformTranslateMode = 'set' | 'add';
+export type TransformRotateMode = 'set' | 'add';
+export type TransformScaleMode = 'set' | 'multiply';
+
+export interface TransformRuleTarget {
+  layer?: string;
+  layers?: string[];
+  values?: string[];
+  filenames?: string[];
+}
+
+export interface TransformTranslate {
+  x?: number;
+  y?: number;
+  mode?: TransformTranslateMode;
+}
+
+export interface TransformRotate {
+  degrees: number;
+  mode?: TransformRotateMode;
+}
+
+export interface TransformScale {
+  factor: number;
+  mode?: TransformScaleMode;
+}
+
+export interface TransformRule {
+  id?: string;
+  description?: string;
+  priority?: number;
+  when?: TraitCondition;
+  target: TransformRuleTarget;
+  translate?: TransformTranslate;
+  rotate?: TransformRotate;
+  scale?: TransformScale;
+}
+
 // A feature-rich set of Photoshop-like blend modes supported by our compositor.
 // Some are mapped directly to Sharp's native modes; others are computed via CPU fallback.
 export type BlendMode =

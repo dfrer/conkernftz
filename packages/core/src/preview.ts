@@ -3,6 +3,8 @@ import path from 'node:path';
 import { loadLayerCatalog } from './catalog.js';
 import { generateEditionsConstrained } from './generator.js';
 import { compositeLayers } from './compositor.js';
+import { applyTransformRules, type TransformableLayerState } from './transforms.js';
+import type { ResolvedEffects } from './effects.js';
 import type { ProjectConfig } from './project-config.js';
 import { loadSpawnMapFile } from './spawn.js';
 import { createSeededRng } from './rng.js';
@@ -116,15 +118,54 @@ export async function renderPreviewEdition(
       });
     }
 
+    const layerStates: TransformableLayerState[] = picks.map((p: any, k: number) => {
+      const baseOffsetX = placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0);
+      const baseOffsetY = placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0);
+      const baseRotate = p.option.effects?.rotate;
+      const baseScale = p.option.effects?.scale;
+      return {
+        index: k,
+        layer: String(p.layer),
+        value: String(p.option.value),
+        filename: path.basename(p.option.filePath),
+        baseOffsetX,
+        baseOffsetY,
+        baseRotate,
+        baseScale,
+      };
+    });
+
+    const appliedTransforms = applyTransformRules(config.rules?.transforms, layerStates, ed.traits);
+
     const buffer = await compositeLayers(
-      picks.map((p: any, k: number) => ({
-        path: p.option.filePath,
-        blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
-        opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-        offsetX: (placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0)),
-        offsetY: (placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0)),
-        effects: p.option.effects,
-      })),
+      picks.map((p: any, k: number) => {
+        const state = layerStates[k]!;
+        const applied = appliedTransforms.get(k);
+        const finalOffsetX = applied?.offsetX ?? state.baseOffsetX;
+        const finalOffsetY = applied?.offsetY ?? state.baseOffsetY;
+        const finalRotate = applied?.rotate ?? state.baseRotate;
+        const finalScale = applied?.scale ?? state.baseScale;
+        let effects: ResolvedEffects | undefined = cloneResolvedEffects(p.option.effects);
+        if (!effects && (finalRotate !== undefined || finalScale !== undefined)) {
+          effects = {};
+        }
+        if (effects) {
+          if (finalRotate !== undefined) effects.rotate = finalRotate;
+          else if (state.baseRotate === undefined) delete effects.rotate;
+          if (finalScale !== undefined) effects.scale = finalScale;
+          else if (state.baseScale === undefined) delete effects.scale;
+          if ('offsetX' in effects) delete effects.offsetX;
+          if ('offsetY' in effects) delete effects.offsetY;
+        }
+        return {
+          path: p.option.filePath,
+          blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
+          opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
+          offsetX: finalOffsetX,
+          offsetY: finalOffsetY,
+          effects,
+        };
+      }),
       {
         width: config.image.width,
         height: config.image.height,
@@ -139,4 +180,21 @@ export async function renderPreviewEdition(
   return out;
 }
 
-
+function cloneResolvedEffects(e?: ResolvedEffects): ResolvedEffects | undefined {
+  if (!e) return undefined;
+  return {
+    blend: e.blend,
+    opacity: e.opacity,
+    offsetX: e.offsetX,
+    offsetY: e.offsetY,
+    rotate: e.rotate,
+    scale: e.scale,
+    glow: e.glow ? { ...e.glow } : undefined,
+    stroke: e.stroke ? { ...e.stroke } : undefined,
+    shadow: e.shadow ? { ...e.shadow } : undefined,
+    extrude: e.extrude ? { ...e.extrude } : undefined,
+    blur: e.blur,
+    modulate: e.modulate ? { ...e.modulate } : undefined,
+    colorOverlay: e.colorOverlay ? { ...e.colorOverlay } : undefined,
+  };
+}
