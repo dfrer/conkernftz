@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { loadLayerCatalog } from './catalog.js';
 import { generateEditionsConstrained } from './generator.js';
 import { compositeLayers } from './compositor.js';
@@ -197,4 +198,77 @@ function cloneResolvedEffects(e?: ResolvedEffects): ResolvedEffects | undefined 
     modulate: e.modulate ? { ...e.modulate } : undefined,
     colorOverlay: e.colorOverlay ? { ...e.colorOverlay } : undefined,
   };
+}
+
+/**
+ * Get the preview directory path based on config
+ */
+export function getPreviewDirectory(cwd: string, config: ProjectConfig): string {
+  function normalizeOutDir(p: string): string {
+    const trimmed = p.replace(/[\\/]+$/, '');
+    if (/([\\/])(preview|previews)$/i.test(trimmed)) return trimmed;
+    return path.join(trimmed, 'preview');
+  }
+  const previewBaseRaw = config.export.previewOutDir
+    ? normalizeOutDir(config.export.previewOutDir)
+    : normalizeOutDir(config.export.outDir);
+  const outBase = path.isAbsolute(previewBaseRaw)
+    ? previewBaseRaw
+    : path.join(cwd, previewBaseRaw);
+  return path.resolve(outBase);
+}
+
+/**
+ * Load preview metadata from preview directory if it exists
+ * Returns null if metadata file doesn't exist
+ */
+export async function loadPreviewMetadata(cwd: string, config: ProjectConfig): Promise<import('./generator.js').GeneratedEdition[] | null> {
+  try {
+    const previewDir = getPreviewDirectory(cwd, config);
+    const metadataPath = path.join(previewDir, 'preview_metadata.json');
+    const raw = await fs.readFile(metadataPath, 'utf8');
+    const data = JSON.parse(raw);
+    
+    if (!data.editions || !Array.isArray(data.editions)) {
+      return null;
+    }
+    
+    // Convert saved metadata back to GeneratedEdition format
+    // We need to reload the catalog to get full option objects with filePath
+    const catalog = await loadLayerCatalog(cwd, config.layers, {
+      mode: 'filenameDelimiter',
+      delimiter: config.rarity.delimiter,
+      defaultWeight: config.rarity.defaultWeight,
+    });
+    
+    // Build a lookup map for options by layer and value
+    const optionMap = new Map<string, Map<string, any>>();
+    for (const entry of catalog) {
+      const layerMap = new Map<string, any>();
+      for (const opt of entry.options) {
+        layerMap.set(opt.value, opt);
+      }
+      optionMap.set(entry.spec.name, layerMap);
+    }
+    
+    // Reconstruct editions with full option objects
+    const editions: import('./generator.js').GeneratedEdition[] = [];
+    for (const saved of data.editions) {
+      const picks: Array<{ layer: string; option: any }> = [];
+      for (const pick of saved.picks) {
+        const layerMap = optionMap.get(pick.layer);
+        if (layerMap) {
+          const option = layerMap.get(pick.option.value);
+          if (option) {
+            picks.push({ layer: pick.layer, option });
+          }
+        }
+      }
+      editions.push({ traits: saved.traits, picks });
+    }
+    
+    return editions;
+  } catch {
+    return null;
+  }
 }

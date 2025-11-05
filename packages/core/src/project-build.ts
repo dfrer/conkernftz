@@ -29,6 +29,7 @@ export interface BuildCollectionInput {
   seed: string;
   maxAttemptsPerEdition?: number;
   buildJson?: (input: BuildJsonParams) => Record<string, unknown>;
+  preGeneratedEditions?: GeneratedEdition[]; // Optional: use pre-generated editions (e.g., from previews)
 }
 
 export interface BuildCollectionOutput {
@@ -68,12 +69,113 @@ export async function buildCollection(
     defaultWeight: cfg.rarity.defaultWeight,
   });
 
-  const editions = generateEditionsConstrained(
-    catalog,
-    input.count,
-    { seed: input.seed },
-    { rules: cfg.rules ?? {}, uniqueness: cfg.uniqueness, maxAttemptsPerEdition: input.maxAttemptsPerEdition ?? 500 },
-  );
+  // Use pre-generated editions if provided, otherwise generate new ones
+  let editions: GeneratedEdition[];
+  if (input.preGeneratedEditions && input.preGeneratedEditions.length > 0) {
+    // Use pre-generated editions first
+    const previewEditions = input.preGeneratedEditions.slice(0, input.count);
+    const previewCount = previewEditions.length;
+    
+    // If we need more editions, generate the rest randomly
+    // Ensure additional editions don't conflict with preview editions
+    if (previewCount < input.count) {
+      const remainingCount = input.count - previewCount;
+      
+      // Track DNA from preview editions to avoid conflicts
+      const previewDna = new Set<string>();
+      const previewOccCounts = new Map<string, number>();
+      
+      if (cfg.uniqueness) {
+        for (const ed of previewEditions) {
+          const dna = makeDna(ed.traits, cfg.uniqueness);
+          previewDna.add(dna);
+        }
+      }
+      
+      // Track maxOccurrences from preview editions
+      const maxOccRules = cfg.rules?.maxOccurrences ?? [];
+      for (const rule of maxOccRules) {
+        const [layer, value] = rule.trait.split(':');
+        if (layer && value) {
+          for (const ed of previewEditions) {
+            if (ed.traits[layer] === value) {
+              previewOccCounts.set(rule.trait, (previewOccCounts.get(rule.trait) ?? 0) + 1);
+            }
+          }
+        }
+      }
+      
+      // Generate additional editions and filter out conflicts
+      const additionalSeed = `${input.seed}:additional:${Date.now()}`;
+      let attempts = 0;
+      const maxAttempts = 10; // Try up to 10 batches
+      let additionalEditions: GeneratedEdition[] = [];
+      
+      while (additionalEditions.length < remainingCount && attempts++ < maxAttempts) {
+        const batch = generateEditionsConstrained(
+          catalog,
+          remainingCount - additionalEditions.length,
+          { seed: `${additionalSeed}:${attempts}` },
+          { rules: cfg.rules ?? {}, uniqueness: cfg.uniqueness, maxAttemptsPerEdition: input.maxAttemptsPerEdition ?? 500 },
+        );
+        
+        for (const ed of batch) {
+          // Check uniqueness against previews
+          if (cfg.uniqueness) {
+            const dna = makeDna(ed.traits, cfg.uniqueness);
+            if (previewDna.has(dna)) {
+              continue; // Skip conflicting DNA
+            }
+            previewDna.add(dna); // Add to set for future checks
+          }
+          
+          // Check maxOccurrences against previews
+          let violatesMaxOcc = false;
+          for (const rule of maxOccRules) {
+            const [layer, value] = rule.trait.split(':');
+            if (layer && value && ed.traits[layer] === value) {
+              const used = (previewOccCounts.get(rule.trait) ?? 0) + 
+                           additionalEditions.filter(e => e.traits[layer] === value).length;
+              if (used >= rule.max) {
+                violatesMaxOcc = true;
+                break;
+              }
+            }
+          }
+          
+          if (!violatesMaxOcc) {
+            additionalEditions.push(ed);
+            
+            // Update occurrence counts
+            for (const rule of maxOccRules) {
+              const [layer, value] = rule.trait.split(':');
+              if (layer && value && ed.traits[layer] === value) {
+                previewOccCounts.set(rule.trait, (previewOccCounts.get(rule.trait) ?? 0) + 1);
+              }
+            }
+            
+            if (additionalEditions.length >= remainingCount) break;
+          }
+        }
+      }
+      
+      if (additionalEditions.length < remainingCount) {
+        console.warn(`Warning: Only generated ${additionalEditions.length} additional editions out of ${remainingCount} requested. Some preview editions may conflict with constraints.`);
+      }
+      
+      editions = [...previewEditions, ...additionalEditions];
+    } else {
+      editions = previewEditions;
+    }
+  } else {
+    // Generate all editions from scratch
+    editions = generateEditionsConstrained(
+      catalog,
+      input.count,
+      { seed: input.seed },
+      { rules: cfg.rules ?? {}, uniqueness: cfg.uniqueness, maxAttemptsPerEdition: input.maxAttemptsPerEdition ?? 500 },
+    );
+  }
 
   const allMetadata: any[] = [];
   const outFormat: 'png' | 'webp' = (cfg.export?.imageFormat === 'webp' ? 'webp' : 'png');

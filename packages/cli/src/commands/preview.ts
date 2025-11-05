@@ -35,6 +35,7 @@ Examples:
 
       const { loadLayerCatalog } = await import(coreBase + 'catalog.js');
       const { generateEditionsConstrained } = await import(coreBase + 'generator.js');
+      type GeneratedEdition = Awaited<ReturnType<typeof generateEditionsConstrained>>[number];
       const { makeContactSheet, renderPreviewEdition } = await import(coreBase + 'preview.js');
       const catalog = await loadLayerCatalog(process.cwd(), parsed.layers, {
         mode: 'filenameDelimiter',
@@ -96,6 +97,24 @@ Examples:
             .map((d) => fs.unlink(path.join(outDir, d.name)).catch(() => {})),
         );
       } catch {}
+
+      // Save preview metadata so builds can reuse these editions
+      const metadataPath = path.join(outDir, 'preview_metadata.json');
+      await fs.writeFile(metadataPath, JSON.stringify({
+        seed: usedSeed,
+        count: editions.length,
+        editions: editions.map((e: GeneratedEdition) => ({
+          traits: e.traits,
+          picks: e.picks.map((p: { layer: string; option: { value: string; filePath: string; weight: number } }) => ({
+            layer: p.layer,
+            option: {
+              value: p.option.value,
+              filePath: p.option.filePath,
+              weight: p.option.weight,
+            },
+          })),
+        })),
+      }, null, 2));
 
       let idx = 1;
       const previewPaths: string[] = [];

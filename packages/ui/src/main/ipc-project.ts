@@ -392,6 +392,7 @@ export function initProjectIpc(): void {
       }
       const { ProjectConfigSchema } = await importCore(coreBase, 'project-config.js');
       const { buildCollection } = await importCore(coreBase, 'project-build.js');
+      const { loadPreviewMetadata } = await importCore(coreBase, 'preview.js');
 
       // Load config
       const cfgPath = path.join(projectDir, 'foundry.config.json');
@@ -402,6 +403,9 @@ export function initProjectIpc(): void {
       } catch (e: any) {
         throw new Error('Invalid foundry.config.json: ' + String(e?.message || e));
       }
+
+      // Try to load preview metadata to reuse preview editions
+      let preGeneratedEditions = await loadPreviewMetadata(projectDir, cfg);
 
       const runSeed = `build:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`;
       // Optionally use chain adapter for JSON building when target is solana
@@ -416,7 +420,7 @@ export function initProjectIpc(): void {
       } catch {}
 
       const res = await buildCollection(
-        { cwd: projectDir, config: cfg, count, seed: runSeed, maxAttemptsPerEdition: 500, buildJson },
+        { cwd: projectDir, config: cfg, count, seed: runSeed, maxAttemptsPerEdition: 500, buildJson, preGeneratedEditions: preGeneratedEditions ?? undefined },
         {
           onProgress: (p: { current: number; total: number; message?: string }) => {
             // Pause control between batches
@@ -666,6 +670,26 @@ export function initProjectIpc(): void {
         }
       }
 
+      // Save preview metadata so builds can reuse these editions
+      try {
+        const metadataPath = path.join(outDir, 'preview_metadata.json');
+        await fs.writeFile(metadataPath, JSON.stringify({
+          seed: runSeed,
+          count: editions.length,
+          editions: editions.map((e: any) => ({
+            traits: e.traits,
+            picks: e.picks.map((p: any) => ({
+              layer: p.layer,
+              option: {
+                value: p.option.value,
+                filePath: p.option.filePath,
+                weight: p.option.weight,
+              },
+            })),
+          })),
+        }, null, 2));
+      } catch {}
+
       // Optional contact sheet (quick, no progress changes)
       try {
         if (cfg.export?.includePreviewContactSheet) {
@@ -678,6 +702,256 @@ export function initProjectIpc(): void {
       return { ok: true, stdout: `Wrote ${written.length} previews to ${outDir}` };
     } catch (e: any) {
       previewController = null;
+      return { ok: false, error: String(e?.message || e) };
+    }
+  });
+
+  // Load preview metadata for editing
+  electron.ipcMain.handle('foundry:loadPreviewEdition', async (_evt, index: number) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const uiDistDir = path.resolve(baseDir, '..');
+      const pkgsDir = path.resolve(uiDistDir, '../..');
+      const coreBase = path.join(pkgsDir, 'core', 'dist');
+      await ensureCoreBuilt(pkgsDir);
+      const raw = await fs.readFile(path.join(projectDir, 'foundry.config.json'), 'utf8');
+      const cfg = JSON.parse(raw);
+      const { loadPreviewMetadata } = await importCore(coreBase, 'preview.js');
+      const editions = await loadPreviewMetadata(projectDir, cfg);
+      if (!editions || index < 0 || index >= editions.length) {
+        return { ok: false, error: 'Invalid preview index' };
+      }
+      return { ok: true, edition: editions[index] };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) };
+    }
+  });
+
+  // Get available options for a layer
+  electron.ipcMain.handle('foundry:getLayerOptions', async (_evt, layerName: string) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const uiDistDir = path.resolve(baseDir, '..');
+      const pkgsDir = path.resolve(uiDistDir, '../..');
+      const coreBase = path.join(pkgsDir, 'core', 'dist');
+      await ensureCoreBuilt(pkgsDir);
+      const raw = await fs.readFile(path.join(projectDir, 'foundry.config.json'), 'utf8');
+      const cfg = JSON.parse(raw);
+      const { loadLayerCatalog } = await importCore(coreBase, 'catalog.js');
+      const catalog = await loadLayerCatalog(projectDir, cfg.layers, {
+        mode: 'filenameDelimiter',
+        delimiter: cfg.rarity.delimiter,
+        defaultWeight: cfg.rarity.defaultWeight,
+      });
+      const entry = catalog.find((e: any) => e.spec.name === layerName);
+      if (!entry) return { ok: false, error: 'Layer not found' };
+      return { ok: true, options: entry.options.map((opt: any) => ({ value: opt.value, filePath: opt.filePath })) };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) };
+    }
+  });
+
+  // Update preview edition and regenerate image
+  electron.ipcMain.handle('foundry:updatePreviewEdition', async (_evt, index: number, updatedPicks: Array<{ layer: string; value: string }>) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const uiDistDir = path.resolve(baseDir, '..');
+      const pkgsDir = path.resolve(uiDistDir, '../..');
+      const coreBase = path.join(pkgsDir, 'core', 'dist');
+      await ensureCoreBuilt(pkgsDir);
+      
+      const { loadPreviewMetadata, getPreviewDirectory } = await importCore(coreBase, 'preview.js');
+      const { loadLayerCatalog } = await importCore(coreBase, 'catalog.js');
+      const { compositeLayers } = await importCore(coreBase, 'compositor.js');
+      const { applyTransformRules } = await importCore(coreBase, 'transforms.js');
+      const { loadSpawnMapFile } = await importCore(coreBase, 'spawn.js');
+      const { placeAsset, resolveCandidateDots } = await importCore(coreBase, 'placement.js');
+      const { createSeededRng } = await importCore(coreBase, 'rng.js');
+
+      const raw = await fs.readFile(path.join(projectDir, 'foundry.config.json'), 'utf8');
+      const cfg = JSON.parse(raw);
+      
+      // Load current metadata
+      const editions = await loadPreviewMetadata(projectDir, cfg);
+      if (!editions || index < 0 || index >= editions.length) {
+        return { ok: false, error: 'Invalid preview index' };
+      }
+
+      // Load catalog to get full option objects
+      const catalog = await loadLayerCatalog(projectDir, cfg.layers, {
+        mode: 'filenameDelimiter',
+        delimiter: cfg.rarity.delimiter,
+        defaultWeight: cfg.rarity.defaultWeight,
+      });
+
+      // Build option lookup map
+      const optionMap = new Map<string, Map<string, any>>();
+      for (const entry of catalog) {
+        const layerMap = new Map<string, any>();
+        for (const opt of entry.options) {
+          layerMap.set(opt.value, opt);
+        }
+        optionMap.set(entry.spec.name, layerMap);
+      }
+
+      // Update picks based on user selections, preserving layer order from original edition
+      const originalEdition = editions[index];
+      const updateMap = new Map<string, string>();
+      for (const update of updatedPicks) {
+        updateMap.set(update.layer, update.value);
+      }
+      
+      const newPicks: Array<{ layer: string; option: any }> = [];
+      const updatedTraits: Record<string, string> = {};
+      
+      // Preserve original order and update only changed layers
+      for (const originalPick of originalEdition.picks) {
+        const newValue = updateMap.get(originalPick.layer);
+        const valueToUse = newValue !== undefined ? newValue : originalPick.option.value;
+        const layerMap = optionMap.get(originalPick.layer);
+        if (layerMap) {
+          const option = layerMap.get(valueToUse);
+          if (option) {
+            newPicks.push({ layer: originalPick.layer, option });
+            updatedTraits[originalPick.layer] = valueToUse;
+          } else {
+            // Fallback to original if new value not found
+            newPicks.push(originalPick);
+            updatedTraits[originalPick.layer] = originalPick.option.value;
+          }
+        } else {
+          // Fallback to original if layer not found in catalog
+          newPicks.push(originalPick);
+          updatedTraits[originalPick.layer] = originalPick.option.value;
+        }
+      }
+
+      // Regenerate image with updated picks
+      const previewDir = getPreviewDirectory(projectDir, cfg);
+      const spawnMap = await loadSpawnMapFile(projectDir, (cfg as any)?.spawn?.mapPath);
+      const spawnFit = (spawnMap?.rules?.fitMode ?? (cfg as any)?.spawn?.fitMode ?? 'contain') as any;
+      
+      let placedOffsets: Array<{ offX: number; offY: number }> = [];
+      if (spawnMap) {
+        const rng = createSeededRng(`manual-edit:${index}:${Date.now()}`);
+        const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+        const mapper = {
+          authorWidth: spawnMap.authoringSize.width,
+          authorHeight: spawnMap.authoringSize.height,
+          outWidth: cfg.image.width,
+          outHeight: cfg.image.height,
+          fitMode: spawnFit,
+        };
+        placedOffsets = newPicks.map((p: any, k: number) => {
+          const layer = String(p.layer);
+          const assetKey = `${layer}:${p.option.value}`;
+          const candidates = resolveCandidateDots(spawnMap, layer, assetKey);
+          const assetSize = { width: cfg.image.width, height: cfg.image.height };
+          const pol = spawnMap.rules?.selection ?? 'weighted';
+          const jitterDef = spawnMap.rules?.jitter?.defaultRadiusPx ?? 0;
+          const coll = spawnMap.rules?.collision;
+          const result = placeAsset({
+            globalSeed: `manual-edit:${index}:${layer}:${p.option.value}`,
+            layerName: layer,
+            assetKey,
+            candidateDots: candidates,
+            policy: pol,
+            jitterDefaultPx: jitterDef,
+            collision: coll ? {
+              enabled: !!coll.enabled,
+              paddingPx: Math.max(0, coll.paddingPx ?? 0),
+              strategy: (coll.strategy ?? 'retry') as any,
+              maxAttempts: Math.max(1, coll.maxAttemptsPerAsset ?? 10),
+            } : undefined,
+            mapper,
+            asset: assetSize,
+            anchor: (spawnMap.rules?.anchor ?? 'center') as any,
+            occupiedBoxes: occupied,
+            rng,
+          });
+          const mappedCenter = { x: cfg.image.width / 2, y: cfg.image.height / 2 };
+          const offX = Math.round(result.x - mappedCenter.x);
+          const offY = Math.round(result.y - mappedCenter.y);
+          occupied.push({ x: result.x, y: result.y, w: result.w, h: result.h });
+          return { offX, offY };
+        });
+      }
+
+      const layerStates = newPicks.map((p: any, k: number) => {
+        const baseOffsetX = placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0);
+        const baseOffsetY = placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0);
+        const baseRotate = p.option.effects?.rotate;
+        const baseScale = p.option.effects?.scale;
+        return {
+          index: k,
+          layer: String(p.layer),
+          value: String(p.option.value),
+          filename: path.basename(p.option.filePath),
+          baseOffsetX,
+          baseOffsetY,
+          baseRotate,
+          baseScale,
+        };
+      });
+
+      const appliedTransforms = applyTransformRules(cfg.rules?.transforms, layerStates, updatedTraits);
+
+      const buffer = await compositeLayers(
+        newPicks.map((p: any, k: number) => {
+          const state = layerStates[k]!;
+          const applied = appliedTransforms.get(k);
+          const finalOffsetX = applied?.offsetX ?? state.baseOffsetX;
+          const finalOffsetY = applied?.offsetY ?? state.baseOffsetY;
+          const finalRotate = applied?.rotate ?? state.baseRotate;
+          const finalScale = applied?.scale ?? state.baseScale;
+          let effects: any = p.option.effects ? { ...p.option.effects } : {};
+          if (finalRotate !== undefined) effects.rotate = finalRotate;
+          if (finalScale !== undefined) effects.scale = finalScale;
+          if ('offsetX' in effects) delete effects.offsetX;
+          if ('offsetY' in effects) delete effects.offsetY;
+          return {
+            path: p.option.filePath,
+            blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
+            opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
+            offsetX: finalOffsetX,
+            offsetY: finalOffsetY,
+            effects,
+          };
+        }),
+        {
+          width: cfg.image.width,
+          height: cfg.image.height,
+          background: cfg.image.background,
+          format: (cfg.export?.imageFormat === 'webp' ? 'webp' : 'png') as any,
+          superSample: Number((cfg as any)?.experimental?.compositor?.superSample || 1) || 1,
+          forceCpu: !!((cfg as any)?.experimental?.compositor?.forceCpu),
+        },
+      );
+
+      // Save updated image
+      const outFormat = cfg.export?.imageFormat === 'webp' ? 'webp' : 'png';
+      const filePath = path.join(previewDir, `preview_${index + 1}.${outFormat}`);
+      await fs.writeFile(filePath, buffer);
+
+      // Update metadata file
+      const metadataPath = path.join(previewDir, 'preview_metadata.json');
+      const metadataRaw = await fs.readFile(metadataPath, 'utf8');
+      const metadata = JSON.parse(metadataRaw);
+      metadata.editions[index] = {
+        traits: updatedTraits,
+        picks: newPicks.map((p: any) => ({
+          layer: p.layer,
+          option: {
+            value: p.option.value,
+            filePath: p.option.filePath,
+            weight: p.option.weight,
+          },
+        })),
+      };
+      await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+
+      return { ok: true, filePath };
+    } catch (e: any) {
       return { ok: false, error: String(e?.message || e) };
     }
   });

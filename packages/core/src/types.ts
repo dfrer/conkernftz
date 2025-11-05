@@ -5,6 +5,8 @@ export interface LayerSpec {
   path: string;
   rarity?: 'filename' | 'uniform';
   required?: boolean;
+  // Selection mode for assets in this layer
+  selectionMode?: 'random' | 'round-robin';
   // Experimental: Only spawn/render this layer if any of these trait strings
   // (formatted as "Layer:Value", e.g., "Character:Angel") are already present
   // in the current composition during generation. If omitted or empty, the

@@ -38,4 +38,8 @@ contextBridge.exposeInMainWorld('foundry', {
   deleteFile: (relPath) => ipcRenderer.invoke('foundry:fsDelete', relPath),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
+  saveJson: (relPath, json) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
+  loadPreviewEdition: (index) => ipcRenderer.invoke('foundry:loadPreviewEdition', index),
+  getLayerOptions: (layerName) => ipcRenderer.invoke('foundry:getLayerOptions', layerName),
+  updatePreviewEdition: (index, updatedPicks) => ipcRenderer.invoke('foundry:updatePreviewEdition', index, updatedPicks),
 });

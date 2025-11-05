@@ -37,7 +37,14 @@ export function generateEditions(
       if (entry.options.length === 0) continue;
       const opts = applyOptionRules(entry.options, entry.spec.optionRules, traits);
       if (opts.length === 0) continue;
-      const pick = weightedPick(opts, rng.next());
+      
+      let pick: LayerAssetOption;
+      if (entry.spec.selectionMode === 'round-robin') {
+        pick = roundRobinPick(entry, opts);
+      } else {
+        pick = weightedPick(opts, rng.next());
+      }
+      
       traits[entry.spec.name] = pick.value;
       picks.push({ layer: entry.spec.name, option: pick });
     }
@@ -99,7 +106,14 @@ export function generateEditionsConstrained(
         if (entry.spec.spawnUnless && evaluateTraitCondition(entry.spec.spawnUnless, traitSet)) continue;
         const opts = applyOptionRules(entry.options, entry.spec.optionRules, traits);
         if (opts.length === 0) continue;
-        const pick = weightedPick(opts, rng.next());
+        
+        let pick: LayerAssetOption;
+        if (entry.spec.selectionMode === 'round-robin') {
+          pick = roundRobinPick(entry, opts);
+        } else {
+          pick = weightedPick(opts, rng.next());
+        }
+        
         traits[entry.spec.name] = pick.value;
         picks.push({ layer: entry.spec.name, option: pick });
       }
@@ -163,6 +177,27 @@ function weightedPick<T extends { weight: number }>(items: T[], roll: number): T
   }
   // If for some reason roll is exactly 1.0, fall back to last item
   return items[items.length - 1] as T;
+}
+
+function roundRobinPick<T extends { weight: number }>(
+  entry: LayerCatalogEntry, 
+  items: T[]
+): T {
+  if (items.length === 0) {
+    throw new Error('Cannot pick from empty items array');
+  }
+  
+  // Initialize round-robin index if not set
+  if (entry.roundRobinIndex === undefined) {
+    entry.roundRobinIndex = 0;
+  }
+  
+  // Pick the current item and advance the index
+  const index = entry.roundRobinIndex % items.length;
+  const picked = items[index]!; // We know this exists because items.length > 0
+  entry.roundRobinIndex = (entry.roundRobinIndex + 1) % items.length;
+  
+  return picked;
 }
 
 

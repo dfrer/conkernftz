@@ -18,6 +18,8 @@ export interface LayerAssetOption {
 export interface LayerCatalogEntry {
   spec: LayerSpec;
   options: LayerAssetOption[];
+  // Round-robin state tracking
+  roundRobinIndex?: number;
 }
 
 export async function loadLayerCatalog(
@@ -63,7 +65,11 @@ export async function loadLayerCatalog(
       }
       return base;
     });
-    entries.push({ spec: layer, options });
+    entries.push({ 
+      spec: layer, 
+      options,
+      roundRobinIndex: layer.selectionMode === 'round-robin' ? 0 : undefined
+    });
   }
   return entries;
 }

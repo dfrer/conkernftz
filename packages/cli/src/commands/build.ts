@@ -32,12 +32,19 @@ Examples:
       const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
 
       const { buildCollection } = await import(coreBase + 'project-build.js');
+      const { loadPreviewMetadata } = await import(coreBase + 'preview.js');
 
       const count = opts.count ? Number(opts.count) : cfg.editionSize;
       const seedInput = String(opts.seed ?? 'build');
       const usedSeed = seedInput === 'random'
         ? `build:${Date.now().toString(36)}:${Math.floor(Math.random()*1e9).toString(36)}`
         : seedInput;
+
+      // Try to load preview metadata to reuse preview editions
+      let preGeneratedEditions = await loadPreviewMetadata(process.cwd(), cfg);
+      if (preGeneratedEditions) {
+        console.log(`Found ${preGeneratedEditions.length} preview editions, using them for build`);
+      }
 
       // Optionally use chain adapter for JSON building when target is solana
       let buildJson: ((input: any) => Record<string, unknown>) | undefined;
@@ -56,6 +63,7 @@ Examples:
           seed: usedSeed,
           maxAttemptsPerEdition: Number(opts.maxAttempts ?? '500'),
           buildJson,
+          preGeneratedEditions: preGeneratedEditions ?? undefined,
         },
         {
           onProgress: (p: { current: number; total: number; message?: string }) => {

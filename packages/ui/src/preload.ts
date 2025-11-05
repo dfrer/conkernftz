@@ -39,4 +39,7 @@ contextBridge.exposeInMainWorld('foundry', {
   listFiles: (relDir: string) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath: string) => ipcRenderer.invoke('foundry:fsDelete', relPath),
   saveJson: (relPath: string, json: unknown) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
+  loadPreviewEdition: (index: number) => ipcRenderer.invoke('foundry:loadPreviewEdition', index),
+  getLayerOptions: (layerName: string) => ipcRenderer.invoke('foundry:getLayerOptions', layerName),
+  updatePreviewEdition: (index: number, updatedPicks: Array<{ layer: string; value: string }>) => ipcRenderer.invoke('foundry:updatePreviewEdition', index, updatedPicks),
 });

@@ -189,6 +189,7 @@ export const LayerSchema = z.object({
   path: z.string(),
   rarity: z.enum(['filename', 'uniform']).optional(),
   required: z.boolean().optional(),
+  selectionMode: z.enum(['random', 'round-robin']).optional(),
   spawnWhenAnyOf: z.array(z.string()).optional(),
   spawnWhen: TraitConditionSchema.optional(),
   spawnUnless: TraitConditionSchema.optional(),

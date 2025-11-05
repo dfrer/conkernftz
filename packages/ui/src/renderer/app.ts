@@ -3368,6 +3368,12 @@ function layerRowTemplate(idx, layer) {
 
       </td>
 
+      <td style="padding:4px 6px; text-align:center;">
+
+        <input class="layer-round-robin" type="checkbox" ${layer.selectionMode === 'round-robin' ? 'checked' : ''} title="Use round-robin selection instead of random">
+
+      </td>
+
       <td style="padding:4px 6px;">
 
         <button class="btn-remove" style="background:#da3633;">Remove</button>
@@ -4377,6 +4383,8 @@ function readLayersFromTable() {
       rarity: (tr.querySelector('.layer-rarity') as HTMLSelectElement).value,
 
       required: (tr.querySelector('.layer-required') as HTMLInputElement).checked,
+
+      selectionMode: (tr.querySelector('.layer-round-robin') as HTMLInputElement).checked ? 'round-robin' : 'random',
 
       blend: (tr.querySelector('.layer-blend') as HTMLSelectElement).value,
 
@@ -5610,7 +5618,7 @@ btnAddLayer.addEventListener('click', () => {
 
   const tr = document.createElement('tbody');
 
-  const layerObj = { name: '', path: 'layers/', rarity: 'filename', required: false, blend: 'normal', opacity: 1, overrides: [] } as any;
+  const layerObj = { name: '', path: 'layers/', rarity: 'filename', required: false, selectionMode: 'random', blend: 'normal', opacity: 1, overrides: [] } as any;
 
   tr.innerHTML = layerRowTemplate(tbody.querySelectorAll('tr[data-type="layer"]').length, layerObj) + effectsRowTemplate(0, layerObj) + assetOverridesRowTemplate(0, layerObj);
 
@@ -6674,6 +6682,176 @@ lbPrev.addEventListener('click', (e) => { e.stopPropagation(); nav(-1); });
 
 lbNext.addEventListener('click', (e) => { e.stopPropagation(); nav(1); });
 
+// Edition Editor
+const editionEditor = document.getElementById('edition-editor') as HTMLElement;
+const editorClose = document.getElementById('editor-close') as HTMLButtonElement;
+const editorCancel = document.getElementById('editor-cancel') as HTMLButtonElement;
+const editorSave = document.getElementById('editor-save') as HTMLButtonElement;
+const editorIndex = document.getElementById('editor-index') as HTMLElement;
+const editorLayers = document.getElementById('editor-layers') as HTMLElement;
+const lbEdit = document.getElementById('lb-edit') as HTMLButtonElement;
+
+let currentEditingIndex = -1;
+let currentEdition: any = null;
+let layerOptionsCache: Map<string, Array<{ value: string; filePath: string }>> = new Map();
+
+function openEditionEditor(index: number) {
+  currentEditingIndex = index;
+  editorIndex.textContent = String(index + 1);
+  loadEditionForEditing(index);
+}
+
+async function loadEditionForEditing(index: number) {
+  try {
+    startProgress('Loading edition data…', 0);
+    const res = await window.foundry.loadPreviewEdition(index);
+    if (!res.ok) {
+      logError(res.error || 'Failed to load edition');
+      endProgress('Failed to load edition', false);
+      return;
+    }
+    currentEdition = res.edition;
+    await populateEditor();
+    editionEditor.style.display = 'flex';
+    editionEditor.setAttribute('aria-hidden', 'false');
+    endProgress('Edition loaded', true);
+  } catch (e: any) {
+    logError(String(e?.message || e));
+    endProgress('Failed to load edition', false);
+  }
+}
+
+async function populateEditor() {
+  if (!currentEdition) return;
+  editorLayers.innerHTML = '';
+  
+  for (const pick of currentEdition.picks) {
+    const layerDiv = document.createElement('div');
+    layerDiv.style.border = '1px solid var(--border)';
+    layerDiv.style.borderRadius = '8px';
+    layerDiv.style.padding = '12px';
+    layerDiv.style.background = 'var(--panel-soft)';
+    
+    const label = document.createElement('label');
+    label.style.display = 'block';
+    label.style.marginBottom = '8px';
+    label.style.fontWeight = '600';
+    label.textContent = pick.layer;
+    
+    const select = document.createElement('select');
+    select.className = 'editor-layer-select';
+    select.dataset.layer = pick.layer;
+    select.style.width = '100%';
+    select.style.padding = '6px 8px';
+    select.style.border = '1px solid var(--border)';
+    select.style.borderRadius = '4px';
+    select.style.background = 'var(--bg)';
+    select.style.color = 'var(--text)';
+    
+    // Load options for this layer
+    let options = layerOptionsCache.get(pick.layer);
+    if (!options) {
+      const optRes = await window.foundry.getLayerOptions(pick.layer);
+      if (optRes.ok) {
+        options = optRes.options;
+        layerOptionsCache.set(pick.layer, options);
+      } else {
+        logError(`Failed to load options for ${pick.layer}`);
+        continue;
+      }
+    }
+    
+    // Populate select
+    for (const opt of options) {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.value;
+      if (opt.value === pick.option.value) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    }
+    
+    layerDiv.appendChild(label);
+    layerDiv.appendChild(select);
+    editorLayers.appendChild(layerDiv);
+  }
+}
+
+function closeEditionEditor() {
+  editionEditor.style.display = 'none';
+  editionEditor.setAttribute('aria-hidden', 'true');
+  currentEditingIndex = -1;
+  currentEdition = null;
+}
+
+async function saveEditionChanges() {
+  if (currentEditingIndex < 0 || !currentEdition) return;
+  
+  try {
+    startProgress('Saving changes…', 0);
+    const updatedPicks: Array<{ layer: string; value: string }> = [];
+    const selects = editorLayers.querySelectorAll('.editor-layer-select') as NodeListOf<HTMLSelectElement>;
+    
+    for (const select of Array.from(selects)) {
+      updatedPicks.push({
+        layer: select.dataset.layer || '',
+        value: select.value,
+      });
+    }
+    
+    const res = await window.foundry.updatePreviewEdition(currentEditingIndex, updatedPicks);
+    if (!res.ok) {
+      logError(res.error || 'Failed to save changes');
+      endProgress('Failed to save changes', false);
+      return;
+    }
+    
+    log('Edition updated successfully');
+    endProgress('Changes saved', true);
+    // Save index before closing editor (which clears it)
+    const savedIndex = currentEditingIndex;
+    closeEditionEditor();
+    closeLightbox();
+    // Force cache refresh by clearing gallery keys and updating cache-bust token
+    galleryKeys = [];
+    cacheBustToken = Date.now();
+    // Wait a bit longer to ensure file is written, then force refresh
+    setTimeout(() => {
+      refreshPreviews();
+      // Also manually update the specific thumbnail if it exists
+      const thumb = previews.querySelector(`[data-index="${savedIndex}"]`) as HTMLElement;
+      if (thumb) {
+        const img = thumb.querySelector('img') as HTMLImageElement;
+        if (img) {
+          const baseUrl = img.src.replace(/\?.*$/, '');
+          img.src = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'v=' + cacheBustToken;
+        }
+      }
+    }, 500);
+  } catch (e: any) {
+    logError(String(e?.message || e));
+    endProgress('Failed to save changes', false);
+  }
+}
+
+if (lbEdit) lbEdit.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeLightbox();
+  openEditionEditor(currentIndex);
+});
+
+if (editorClose) editorClose.addEventListener('click', () => closeEditionEditor());
+if (editorCancel) editorCancel.addEventListener('click', () => closeEditionEditor());
+if (editorSave) editorSave.addEventListener('click', () => saveEditionChanges());
+
+// Close editor when clicking outside the modal
+editionEditor.addEventListener('click', (e) => {
+  if (e.target === editionEditor) {
+    closeEditionEditor();
+  }
+});
+
 // Guard against event bubbling closing the lightbox
 
 ;[lbImage, lbPrev, lbNext, lbClose].forEach((el) => {
@@ -6688,17 +6866,22 @@ lbNext.addEventListener('click', (e) => { e.stopPropagation(); nav(1); });
 
 document.addEventListener('keydown', (e) => {
 
-  if (!lightbox.classList.contains('open')) return;
+  if (e.key === 'Escape') {
+    if (editionEditor.style.display !== 'none' && editionEditor.getAttribute('aria-hidden') !== 'true') {
+      closeEditionEditor();
+    } else if (lightbox.classList.contains('open')) {
+      closeLightbox();
+    }
+    return;
+  }
 
-  if (e.key === 'Escape') closeLightbox();
+  if (!lightbox.classList.contains('open')) return;
 
   if (e.key === 'ArrowLeft') nav(-1);
 
   if (e.key === 'ArrowRight') nav(1);
 
 });
-
-
 
 // Brand logo click: go to launcher view
 

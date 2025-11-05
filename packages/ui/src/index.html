@@ -150,6 +150,21 @@
           <button id="lb-prev" class="lb-btn lb-prev" aria-label="Previous">‹</button>
           <img id="lb-image" alt="Preview" />
           <button id="lb-next" class="lb-btn lb-next" aria-label="Next">›</button>
+          <button id="lb-edit" class="lb-btn lb-edit" aria-label="Edit" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">Edit NFT</button>
+        </div>
+        <!-- Edition Editor Modal -->
+        <div id="edition-editor" class="lightbox" aria-hidden="true" style="display:none;">
+          <div class="editor-modal" style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:24px; max-width:800px; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <button id="editor-close" class="lb-btn lb-close" aria-label="Close" style="position:absolute; top:12px; right:12px;">×</button>
+            <h2 style="margin:0 0 20px 0; font-size:20px;">Edit NFT #<span id="editor-index">1</span></h2>
+            <div id="editor-layers" style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Layers will be populated here -->
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px; justify-content:flex-end;">
+              <button id="editor-cancel" class="btn-secondary" style="padding:8px 16px;">Cancel</button>
+              <button id="editor-save" class="btn-primary" style="padding:8px 16px;">Save Changes</button>
+            </div>
+          </div>
         </div>
                   <div class="form-grid auto-fit-180" style="margin-top:16px; gap:12px;">
                     <div class="gallery-card" style="padding: 10px 12px;">
@@ -278,6 +293,7 @@
                         <th style="padding:4px 6px;">Blend</th>
                         <th style="padding:4px 6px;">Opacity</th>
                         <th style="padding:4px 6px;">Assets</th>
+                        <th style="padding:4px 6px; text-align:center;" title="Use round-robin selection instead of random">Round-Robin</th>
                         <th style="padding:4px 6px;">Actions</th>
                       </tr>
                     </thead>
