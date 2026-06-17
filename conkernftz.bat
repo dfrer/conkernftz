@@ -41,6 +41,7 @@ if errorlevel 1 (
 
 echo.
 echo Launching conkernftz Studio. Keep this window open while you use the app.
+set "CONKERNFTZ_SKIP_UI_BUILD=1"
 call pnpm -C packages/ui start
 
 exit /b 0
