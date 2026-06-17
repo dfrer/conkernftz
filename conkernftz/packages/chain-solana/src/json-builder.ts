@@ -1,4 +1,4 @@
-import type { ChainAdapter } from '@foundry/core';
+import type { ChainAdapter } from '@conkernftz/core';
 
 export interface BuildJsonInput {
   index: number;
@@ -18,13 +18,11 @@ export const SolanaJsonAdapter: Pick<ChainAdapter, 'buildOffchainJson' | 'valida
     // Detailed validation is handled by zod in core; adapter-specific checks can be added here
     return;
   },
-  buildOffchainJson(input: any) {
+  buildOffchainJson(input) {
     const files = (input.files ?? [{ uri: input.imageUri, type: mimeFromUri(input.imageUri) }]).map(
-      (f: { uri: string; type: string }) => ({ uri: f.uri, type: f.type }),
+      (f) => ({ uri: f.uri, type: f.type }),
     );
-    const category = files.some((f: { uri: string; type: string }) => f.type.startsWith('video/'))
-      ? 'video'
-      : 'image';
+    const category = files.some((f) => f.type.startsWith('video/')) ? 'video' : 'image';
     const json: Record<string, unknown> = {
       name: input.name,
       symbol: input.symbol ?? '',

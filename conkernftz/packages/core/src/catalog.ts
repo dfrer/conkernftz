@@ -9,6 +9,10 @@ export interface LayerAssetOption {
   weight: number;
   blend?: BlendMode;
   opacity?: number;
+  // Pixel dimensions of the asset, populated when `loadDimensions` is requested.
+  // Required for correct pattern-placement anchoring; otherwise left undefined.
+  width?: number;
+  height?: number;
 }
 
 export interface LayerCatalogEntry {
@@ -16,26 +20,42 @@ export interface LayerCatalogEntry {
   options: LayerAssetOption[];
 }
 
+export interface LoadCatalogOptions {
+  // Read each asset's pixel dimensions via Sharp. Needed for pattern placement;
+  // skipped by default to avoid the metadata cost on large non-pattern projects.
+  loadDimensions?: boolean;
+}
+
 export async function loadLayerCatalog(
   projectRoot: string,
   layers: LayerSpec[],
   rarity: RarityConfig,
+  opts?: LoadCatalogOptions,
 ): Promise<LayerCatalogEntry[]> {
   const entries: LayerCatalogEntry[] = [];
+  const sharp = opts?.loadDimensions ? (await import('sharp')).default : null;
   for (const layer of layers) {
     const layerDir = path.resolve(projectRoot, layer.path);
     const files = await listImageFiles(layerDir);
-    const options = files.map((filename) => {
-      const weight = layer.rarity === 'uniform' ? rarity.defaultWeight : parseWeightFromFilename(filename, rarity);
+    const options: LayerAssetOption[] = [];
+    for (const filename of files) {
+      const weight =
+        layer.rarity === 'uniform' ? rarity.defaultWeight : parseWeightFromFilename(filename, rarity);
       const value = extractTraitValueFromFilename(filename, rarity);
-      return {
-        filePath: path.join(layerDir, filename),
-        value,
-        weight,
-        blend: layer.blend,
-        opacity: layer.opacity,
-      } satisfies LayerAssetOption;
-    });
+      const filePath = path.join(layerDir, filename);
+      let width: number | undefined;
+      let height: number | undefined;
+      if (sharp) {
+        try {
+          const meta = await sharp(filePath).metadata();
+          width = meta.width;
+          height = meta.height;
+        } catch {
+          // Unreadable file: leave dimensions undefined; placement falls back gracefully.
+        }
+      }
+      options.push({ filePath, value, weight, blend: layer.blend, opacity: layer.opacity, width, height });
+    }
     entries.push({ spec: layer, options });
   }
   return entries;

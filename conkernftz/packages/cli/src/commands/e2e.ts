@@ -7,7 +7,7 @@ export function e2eCmd(): Command {
     await execa('node', ['dist/bin.js', 'validate'], { stdio: 'inherit' });
     await execa('node', ['dist/bin.js', 'preview', '--count', '9', '--seed', '42'], { stdio: 'inherit' });
     await execa('node', ['dist/bin.js', 'build', '--count', '10'], { stdio: 'inherit' });
-    await execa('node', ['dist/bin.js', 'upload', '--provider', 'arweave', '--concurrency', '6'], { stdio: 'inherit' });
+    await execa('node', ['dist/bin.js', 'upload', '--mode', 'file', '--concurrency', '6'], { stdio: 'inherit' });
   });
   return cmd;
 }

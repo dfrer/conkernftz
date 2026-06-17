@@ -1,118 +1,39 @@
-## conkernftz — NFT Art Foundry (monorepo)
+# conkernftz — NFT Art Foundry (monorepo)
 
-conkernftz is a modern, type‑safe NFT art foundry. It replaces legacy generators with a modular toolchain for composing layered artwork, enforcing trait rules, generating editions, previewing results, uploading to storage, and minting on Solana (Umi/Token Metadata).
+conkernftz is a modern, type-safe generative **NFT art foundry** (a HashLips replacement). It
+composes layered artwork, enforces trait rules, places assets with pattern overlays, generates
+deterministic editions, previews results, uploads to decentralized/permanent storage, and mints on
+**Solana** (Metaplex Umi) or **EVM** chains (ERC-721 via viem).
 
-This repository is a pnpm + Turbo monorepo. The workspace root is `conkernftz/`.
+The pnpm + Turborepo workspace lives in [`./conkernftz`](./conkernftz). See
+[`conkernftz/README.md`](./conkernftz/README.md) for the full feature list, CLI reference,
+configuration schema, and migration notes.
 
-### What's new in v4.0.0
-
-- Documentation refresh across README, CHANGELOG, and contributing guide
-- Added v4 release notes and clarified configuration and command usage
-- General polish to examples and wording; stability and DX improvements
-
-### Features
-
-- Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
-- Rules engine: `mutuallyExclusive`, `requires`, `maxOccurrences`
-- Rarity via filename delimiter (e.g., `Trait#10.png`) with configurable defaults
-- Compositor supports per‑layer blend mode and opacity; preview contact sheet and rarity report
-- Storage: Arweave Bundlr and IPFS (NFT.Storage/Pinata)
-- Solana mint via Umi/Token Metadata with optional pNFT and ruleset PDA
-- TypeScript everywhere, Zod schemas, Vitest, ESLint/Prettier
-
-### Requirements
-
-- Node.js >= 18.18
-- pnpm 9.x
-
-### Workspace layout
-
-- `conkernftz/packages/core`: Core engine (catalog, compositor, DNA, rarity, rules, generator)
-- `conkernftz/packages/cli`: CLI `foundry` (init, validate, preview, build, upload, mint, e2e)
-- `conkernftz/packages/storage`: Storage providers (Arweave Bundlr, IPFS)
-- `conkernftz/packages/chain-solana`: Solana chain adapter (metadata JSON, Umi mint, optional pNFT)
-- `conkernftz/packages/ui`: Electron GUI (optional)
-- `conkernftz/packages/ui-tauri`: Tauri GUI (optional)
-
-### Quick start
-
-```bash
-cd conkernftz/conkernftz
-pnpm install
-pnpm build
-
-# Run the CLI (from the workspace root)
-pnpm cli -- --help
-
-# Run the Electron GUI
-
-pnpm -C packages/ui build
-pnpm -C packages/ui start
-```
-
-
-
-pnpm -C packages/ui build
-pnpm -C packages/ui start
-
-### CLI commands
-
-```bash
-# Scaffold a new project in the current directory
-foundry init
-
-# Validate your config and assets
-foundry validate
-
-# Generate previews
-foundry preview --count 10 --seed preview
-
-# Build editions (images + local JSON)
-foundry build --count 100
-
-# Upload assets and rewrite local JSON URIs
-foundry upload --provider arweave --concurrency 6
-# or
-foundry upload --provider ipfs --concurrency 6
-
-# Mint on Solana (devnet by default; respects chain.solana.rpcUrl)
-foundry mint --count 1 --from 1
-
-# End‑to‑end helper
-foundry e2e
-```
-
-Key options per command:
-
-- `preview`: `--count <n>`, `--seed <s>`
-- `build`: `--count <n>` (defaults to `editionSize`)
-- `upload`: `--provider <arweave|ipfs>`, `--concurrency <n>`
-- `mint`: `--count <n>`, `--from <n>`
-
-### Configuration
-
-The CLI expects a `foundry.config.json` in your project directory. Run `foundry init` to scaffold one. Important fields:
-
-- `layers`: ordered list of layer specs with optional rarity hints
-- `rules`: mutual exclusivity, requirements, and max occurrences
-- `rarity`: mode and defaults (e.g., filename delimiter)
-- `image`: output size and background
-- `export`: output directories and options (supports `previewOutDir`)
-- `storage`: Arweave/IPFS credentials
-- `chain.solana`: cluster, wallet, fees, creators, and pNFT options
-
-### Development
+## Quick start
 
 ```bash
 cd conkernftz
-pnpm dev        # run dev tasks in parallel (where supported)
-pnpm test       # run package tests
-pnpm lint       # lint all packages
-pnpm typecheck  # typecheck all packages
-pnpm clean      # clean build outputs
+pnpm install
+pnpm build
+
+pnpm cli -- --help          # CLI (binary: conkernftz)
+pnpm -C packages/ui start   # Electron GUI
 ```
 
-### License
+## Highlights
 
-MIT — see `LICENSE`.
+- Deterministic generation (seeded RNG + SHA-256 DNA), rules engine, filename-based rarity.
+- 60+ blend modes; pattern placement with jitter, rotation, collision, and anchors.
+- Storage via **Irys** (Arweave), **Pinata** (IPFS), or **local** (offline testing).
+- Minting on **Solana** (Umi/Token Metadata, optional pNFT) and **EVM** (OpenZeppelin ERC-721 +
+  ERC-2981, deployed and minted with viem).
+- TypeScript throughout, Zod-validated config, Vitest, ESLint (flat) + Prettier.
 
+## Requirements
+
+- Node.js >= 20.9
+- pnpm 9.x
+
+## License
+
+MIT — see [`LICENSE`](./LICENSE).

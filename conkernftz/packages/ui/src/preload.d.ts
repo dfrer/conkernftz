@@ -1,7 +1,7 @@
 export {}; // module
 declare global {
   interface Window {
-    foundry: {
+    conkernftz: {
       run(args: string[]): Promise<{ ok: boolean; stdout?: string; error?: string }>;
       chooseProjectDir(): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
       getProjectDir(): Promise<{ ok: boolean; projectDir?: string }>;

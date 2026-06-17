@@ -9,7 +9,7 @@ export function validateCmd(): Command {
     const cfgPath = path.join(process.cwd(), 'foundry.config.json');
     const raw = await fs.readFile(cfgPath, 'utf8');
     const json = JSON.parse(raw);
-    const { ProjectConfigSchema } = await import('@foundry/core/dist/project-config.js');
+    const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
     const parsed = ProjectConfigSchema.safeParse(json);
     if (!parsed.success) {
       console.error('Invalid config:\n', parsed.error.issues);
@@ -19,7 +19,7 @@ export function validateCmd(): Command {
 
     // Additional checks: layer assets present, required layers non-empty
     const cfg = parsed.data;
-    const coreBase = '@foundry/core/dist/';
+    const coreBase = '@conkernftz/core/dist/';
     const { loadLayerCatalog } = await import(coreBase + 'catalog.js');
     try {
       const catalog = await loadLayerCatalog(process.cwd(), cfg.layers, {
@@ -28,6 +28,29 @@ export function validateCmd(): Command {
         defaultWeight: cfg.rarity.defaultWeight,
       });
       const issues: string[] = [];
+
+      // Validate patterns
+      const patternIds = new Set<string>();
+      for (const p of cfg.patterns || []) {
+        if (patternIds.has(p.id)) issues.push(`ERROR: Duplicate pattern id: ${p.id}`);
+        patternIds.add(p.id);
+        if (!Array.isArray(p.dots) || p.dots.length === 0) issues.push(`ERROR: Pattern ${p.id} has no dots`);
+        for (const d of p.dots) {
+          if (d.x < 0 || d.x > 1 || d.y < 0 || d.y > 1) issues.push(`ERROR: Pattern ${p.id} dot ${d.id} has out-of-range coords`);
+          if (d.weight < 0) issues.push(`ERROR: Pattern ${p.id} dot ${d.id} has negative weight`);
+        }
+      }
+
+      // Validate bindings
+      for (const b of cfg.patternBindings || []) {
+        if (!Array.isArray(b.choices) || b.choices.length === 0) {
+          issues.push(`ERROR: PatternBinding ${b.id} has no choices`);
+        } else {
+          for (const c of b.choices) {
+            if (!patternIds.has(c.patternId)) issues.push(`ERROR: PatternBinding ${b.id} references unknown patternId ${c.patternId}`);
+          }
+        }
+      }
       for (const entry of catalog) {
         if (entry.options.length === 0) {
           const required = Boolean(entry.spec.required);

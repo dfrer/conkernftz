@@ -1,4 +1,4 @@
-import type { ChainAdapter } from '@foundry/core';
+import type { ChainAdapter } from '@conkernftz/core';
 import { generateSigner, keypairIdentity, percentAmount, publicKey, createSignerFromKeypair } from '@metaplex-foundation/umi';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import {
@@ -50,8 +50,10 @@ export const SolanaMintAdapter: Pick<ChainAdapter, 'mint'> = {
       }).sendAndConfirm(umi);
     }
 
+    // findMetadataPda returns a Umi Pda: a [PublicKey, bump] tuple. The PublicKey is a
+    // branded base58 string, so .toString() yields the canonical address.
     const metadataPda = findMetadataPda(umi, { mint: mint.publicKey });
-    return { mint: mint.publicKey.toString(), metadataPda: metadataPda[0].toString?.() ?? String(metadataPda) };
+    return { mint: mint.publicKey.toString(), metadataPda: metadataPda[0].toString() };
   },
 };
 

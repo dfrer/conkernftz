@@ -1,3 +1,3 @@
-declare module '@foundry/core/dist/*';
+declare module '@conkernftz/core/dist/*';
 
 

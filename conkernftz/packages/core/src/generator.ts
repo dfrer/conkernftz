@@ -3,6 +3,8 @@ import type { TraitKV } from './types.js';
 import { createSeededRng } from './rng.js';
 import { createRuleEngine, type ProjectRules } from './rules.js';
 import { makeDna, type DnaConfig } from './dna.js';
+import type { Pattern, PatternBinding } from './types/pattern.js';
+import { placeFromPattern } from './pattern-placement.js';
 
 export interface GenerateOptions {
   seed: string | number;
@@ -11,6 +13,19 @@ export interface GenerateOptions {
 export interface GeneratedEdition {
   traits: TraitKV;
   picks: Array<{ layer: string; option: LayerAssetOption }>;
+  placements?: Array<{
+    layer: string;
+    target: 'layer' | 'asset';
+    patternId: string;
+    dotId: string;
+    left: number;
+    top: number;
+    centerX: number;
+    centerY: number;
+    rotationDeg: number;
+    assetValue?: string;
+    anchorNormalized?: { x: number; y: number };
+  }>;
 }
 
 export function generateEditions(
@@ -38,6 +53,10 @@ export interface ConstraintOptions {
   rules?: ProjectRules;
   uniqueness?: DnaConfig;
   maxAttemptsPerEdition?: number;
+  // Optional pattern placement context
+  patterns?: Pattern[];
+  patternBindings?: PatternBinding[];
+  imageSize?: { width: number; height: number };
 }
 
 export function generateEditionsConstrained(
@@ -61,11 +80,57 @@ export function generateEditionsConstrained(
       // draft one edition
       const traits: TraitKV = {};
       const picks: Array<{ layer: string; option: LayerAssetOption }> = [];
+      const placements: GeneratedEdition['placements'] = [];
       for (const entry of catalog) {
         if (entry.options.length === 0) continue;
         const pick = weightedPick(entry.options, rng.next());
         traits[entry.spec.name] = pick.value;
         picks.push({ layer: entry.spec.name, option: pick });
+
+        // Pattern placement integration
+        if (constraints.patterns && constraints.patterns.length && constraints.patternBindings && constraints.patternBindings.length) {
+          const matching = findMatchingBindings(constraints.patternBindings, entry.spec.name, pick);
+          if (matching.length > 0) {
+            const chosenBinding = weightedPick(
+              matching.map((b) => ({ ...b, weight: Math.max(0, b.weight ?? 1) })),
+              rng.next(),
+            ) as PatternBinding & { weight: number };
+            const choices = chosenBinding.choices && chosenBinding.choices.length ? chosenBinding.choices : [];
+            if (choices.length > 0) {
+              const chosenPatternId = weightedPick(choices, rng.next()).patternId;
+              const pattern = constraints.patterns.find((p) => p.id === chosenPatternId);
+              if (pattern && pattern.dots.length) {
+                const seed = `${options.seed}:${i}:${entry.spec.name}:${pick.value}`;
+                const centers = placements.map((p) => ({ x: p.centerX, y: p.centerY }));
+                const imageSize = constraints.imageSize ?? { width: 1024, height: 1024 };
+                const res = placeFromPattern({
+                  seed,
+                  canvas: { width: imageSize.width, height: imageSize.height },
+                  // Real asset dimensions (loaded into the catalog) so anchor offsets are
+                  // correct; falls back to a 1x1 point if dimensions are unavailable.
+                  asset: { width: pick.width ?? 1, height: pick.height ?? 1 },
+                  pattern,
+                  binding: chosenBinding,
+                  existingCenters: centers,
+                });
+                const anchorNorm = toAnchorNormalized(chosenBinding);
+                placements.push({
+                  layer: entry.spec.name,
+                  target: chosenBinding.target.type,
+                  patternId: res.patternId,
+                  dotId: res.dotId,
+                  left: res.left,
+                  top: res.top,
+                  centerX: res.centerX,
+                  centerY: res.centerY,
+                  rotationDeg: res.rotationDeg,
+                  assetValue: pick.value,
+                  anchorNormalized: anchorNorm,
+                });
+              }
+            }
+          }
+        }
       }
 
       // rules check
@@ -102,7 +167,7 @@ export function generateEditionsConstrained(
         seenDna.add(dna);
       }
 
-      accepted = { traits, picks };
+      accepted = { traits, picks, placements: placements?.length ? placements : undefined };
       break;
     }
     if (!accepted) {
@@ -133,6 +198,46 @@ function weightedPick<T extends { weight: number }>(items: T[], roll: number): T
   }
   // If for some reason roll is exactly 1.0, fall back to last item
   return items[items.length - 1] as T;
+}
+
+function findMatchingBindings(
+  bindings: PatternBinding[],
+  layerName: string,
+  pick: LayerAssetOption,
+): PatternBinding[] {
+  return bindings.filter((b) => {
+    if (b.target.type === 'layer') {
+      return b.target.layer === layerName;
+    }
+    if (b.target.type === 'asset') {
+      if (b.target.layer !== layerName) return false;
+      if (b.target.value && b.target.value !== pick.value) return false;
+      if (b.target.filename && !pick.filePath.endsWith(b.target.filename)) return false;
+      return true;
+    }
+    return false;
+  });
+}
+
+function toAnchorNormalized(binding: PatternBinding): { x: number; y: number } | undefined {
+  const a = binding.anchor;
+  if (!a) return undefined;
+  if (a.mode === 'custom') return { x: clamp01(a.x), y: clamp01(a.y) };
+  switch (a.mode) {
+    case 'topLeft': return { x: 0, y: 0 };
+    case 'topRight': return { x: 1, y: 0 };
+    case 'bottomLeft': return { x: 0, y: 1 };
+    case 'bottomRight': return { x: 1, y: 1 };
+    case 'center':
+    default: return { x: 0.5, y: 0.5 };
+  }
+}
+
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
 }
 
 

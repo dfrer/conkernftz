@@ -1550,12 +1550,26 @@
                   <div class="group-title" data-help="sidebar-generate">Generate</div>
           <label>Preview Count</label>
           <input id="preview-count" type="number" value="9"/>
+          <div class="mini muted" style="margin-top:6px;">Seed (optional)</div>
+          <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; align-items:center;">
+            <input id="preview-seed" placeholder="Leave blank for random each run" />
+            <label class="mini" style="display:flex; align-items:center; gap:6px; white-space:nowrap;">
+              <input id="preview-lock-seed" type="checkbox" /> Lock
+            </label>
+          </div>
                   <button id="btn-preview" class="btn-primary" data-help="preview">Generate Previews</button>
         </div>
                 <div class="sidebar-group">
                   <div class="group-title" data-help="sidebar-build">Build</div>
           <label>Build Count</label>
           <input id="build-count" type="number" value="10"/>
+          <div class="mini muted" style="margin-top:6px;">Seed (optional)</div>
+          <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; align-items:center;">
+            <input id="build-seed" placeholder="Leave blank for random each run" />
+            <label class="mini" style="display:flex; align-items:center; gap:6px; white-space:nowrap;">
+              <input id="build-lock-seed" type="checkbox" /> Lock
+            </label>
+          </div>
                   <button id="btn-build" class="btn-primary" data-help="build">Build Collection</button>
         </div>
       </div>
@@ -1563,6 +1577,7 @@
                 <div class="subtabs">
                   <button class="subtab-btn active" data-subtab="overview">Overview</button>
                   <button class="subtab-btn" data-subtab="configure">Configure</button>
+                  <button class="subtab-btn" data-subtab="patterns">Patterns</button>
                   <button class="subtab-btn" data-subtab="rules">Rules & Export</button>
                   <button class="subtab-btn" data-subtab="reports">Reports</button>
                 </div>
@@ -1650,6 +1665,7 @@
                   <label>Filename Delimiter</label>
                   <input id="rarity-delim" placeholder="#" />
                 </div>
+                
                 <div>
                   <label>Default Weight</label>
                   <input id="rarity-default" type="number" min="1" />
@@ -1780,6 +1796,96 @@
             </fieldset>
                   </div>
                 </div>
+                <div id="main-patterns" class="subpane hidden">
+          <h3>Patterns</h3>
+          <div class="gallery-card" style="margin-bottom:12px;">
+            <div class="gallery-header"><h3 style="margin:0;">Pattern Editor</h3></div>
+            <div id="pattern-editor" style="display:grid; grid-template-columns: 1fr 320px; gap:12px; align-items:start;">
+              <div id="pattern-canvas-wrap" style="background:#0d1117; border:1px solid var(--border); border-radius:8px; position:relative; width:100%; max-width:640px; height:auto; aspect-ratio:1/1;">
+                <svg id="pattern-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" style="width:100%; height:100%; position:absolute; top:0; left:0;">
+                  <rect x="0" y="0" width="1000" height="1000" fill="#000" fill-opacity="0.0" />
+                </svg>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                  <label>Pattern</label>
+                  <select id="pe-pattern"></select>
+                  <button id="pe-add-pattern" class="btn-secondary" style="margin-left:6px;">Add</button>
+                  <button id="pe-del-pattern" class="btn-secondary" style="margin-left:6px;">Delete</button>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
+                  <div>
+                    <label>Dot X (0..1)</label>
+                    <input id="pe-dot-x" type="number" step="0.001" min="0" max="1" />
+                  </div>
+                  <div>
+                    <label>Dot Y (0..1)</label>
+                    <input id="pe-dot-y" type="number" step="0.001" min="0" max="1" />
+                  </div>
+                  <div>
+                    <label>Weight</label>
+                    <input id="pe-dot-weight" type="number" step="0.01" min="0" />
+                  </div>
+                  <div>
+                    <label>Color</label>
+                    <input id="pe-dot-color" type="color" />
+                  </div>
+                  <div>
+                    <label>Jitter X (px)</label>
+                    <input id="pe-jx" type="number" step="1" min="0" />
+                  </div>
+                  <div>
+                    <label>Jitter Y (px)</label>
+                    <input id="pe-jy" type="number" step="1" min="0" />
+                  </div>
+                  <div>
+                    <label>Radial Jitter (px)</label>
+                    <input id="pe-jr" type="number" step="1" min="0" />
+                  </div>
+                  <div>
+                    <label>Rotation Base (deg)</label>
+                    <input id="pe-rot-base" type="number" step="1" />
+                  </div>
+                  <div>
+                    <label>Rotation Var (deg)</label>
+                    <input id="pe-rot-var" type="number" step="1" min="0" />
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <button id="pe-add-dot">Add Dot</button>
+                  <button id="pe-del-dot" class="btn-secondary">Delete Dot</button>
+                  <button id="pe-dup-dot" class="btn-secondary">Duplicate Dot</button>
+                  <button id="pe-save" class="btn-primary" style="margin-left:auto;">Save Patterns</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card">
+            <div class="gallery-header"><h3 style="margin:0;">Bindings</h3></div>
+            <div id="binding-editor" style="display:grid; grid-template-columns: 1fr 320px; gap:12px; align-items:start;">
+              <div>
+                <table style="width:100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="text-align:left; border-bottom:1px solid var(--border);">
+                      <th style="padding:4px 6px;">Target</th>
+                      <th style="padding:4px 6px;">Choices</th>
+                      <th style="padding:4px 6px;">Anchor</th>
+                      <th style="padding:4px 6px;">Collision</th>
+                      <th style="padding:4px 6px;">Rotation</th>
+                      <th style="padding:4px 6px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bindings-tbody"></tbody>
+                </table>
+              </div>
+              <div>
+                <button id="pb-add" class="btn-secondary">Add Binding</button>
+                <button id="pb-save" class="btn-primary" style="margin-left:8px;">Save Bindings</button>
+              </div>
+            </div>
+          </div>
+        </div>
                 <div id="main-rules" class="subpane hidden">
             <fieldset style="padding:8px; border:1px solid #30363d; border-radius:6px;">
               <legend>Rules (advanced)</legend>
@@ -1863,10 +1969,10 @@
             <div style="display:grid; grid-template-columns: minmax(260px, 360px) 1fr; gap:16px;">
               <div class="sidebar" data-help="sidebar-mint">
                 <div>
-                  <label data-help="upload-provider">Upload Provider</label>
-                  <select id="upload-provider">
-                    <option value="arweave">Arweave</option>
-                    <option value="ipfs">IPFS</option>
+                  <label data-help="upload-mode">Upload Mode</label>
+                  <select id="upload-mode">
+                    <option value="file">Per-file URIs (Solana)</option>
+                    <option value="dir">Directory / baseURI (EVM)</option>
                   </select>
                   <label data-help="upload-concurrency">Concurrency</label>
                   <input id="upload-concurrency" type="number" value="6"/>
@@ -1878,6 +1984,7 @@
                   <label data-help="mint-count">Count</label>
                   <input id="mint-count" type="number" value="1"/>
                   <button id="btn-mint" data-help="mint">Mint</button>
+                  <button id="btn-deploy" data-help="deploy-evm" style="margin-top:8px;">Deploy (EVM)</button>
                 </div>
               </div>
               <div class="content">
@@ -2029,7 +2136,7 @@
     </div>
     <script>
       // Ensure bridge exists even if preload failed to load
-      window.foundry = window.foundry || {
+      window.conkernftz = window.conkernftz || {
         run: async () => ({ ok: false, error: 'preload not loaded' }),
         chooseProjectDir: async () => ({ ok: false, error: 'preload not loaded' }),
         getProjectDir: async () => ({ ok: true, projectDir: null }),
@@ -2087,21 +2194,21 @@
       if (btnNasa) {
         btnNasa.addEventListener('click', (e) => {
           e.preventDefault();
-          window.foundry.openExternal('https://northamericansurveillanceassociation.com');
+          window.conkernftz.openExternal('https://northamericansurveillanceassociation.com');
         });
       }
       const aboutTwitter = document.getElementById('about-twitter');
       if (aboutTwitter) {
         aboutTwitter.addEventListener('click', (e) => {
           e.preventDefault();
-          window.foundry.openExternal('https://twitter.com/conkernasa');
+          window.conkernftz.openExternal('https://twitter.com/conkernasa');
         });
       }
       const aboutSite = document.getElementById('about-site');
       if (aboutSite) {
         aboutSite.addEventListener('click', (e) => {
           e.preventDefault();
-          window.foundry.openExternal('https://northamericansurveillanceassociation.com');
+          window.conkernftz.openExternal('https://northamericansurveillanceassociation.com');
         });
       }
 
@@ -2109,10 +2216,11 @@
       const subtabButtons = Array.from(document.querySelectorAll('.subtab-btn'));
       const subOverview = document.getElementById('main-overview');
       const subConfigure = document.getElementById('main-configure');
+      const subPatterns = document.getElementById('main-patterns');
       const subRules = document.getElementById('main-rules');
       const subReports = document.getElementById('main-reports');
       function switchSubtab(name) {
-        const map = { overview: subOverview, configure: subConfigure, rules: subRules, reports: subReports };
+        const map = { overview: subOverview, configure: subConfigure, patterns: subPatterns, rules: subRules, reports: subReports };
         Object.entries(map).forEach(([key, pane]) => {
           if (!pane) return;
           if (key === name) pane.classList.remove('hidden'); else pane.classList.add('hidden');
@@ -2124,10 +2232,10 @@
 
       // Recent projects (localStorage)
       function readRecents() {
-        try { return JSON.parse(localStorage.getItem('foundry:recents') || '[]'); } catch { return []; }
+        try { return JSON.parse(localStorage.getItem('conkernftz:recents') || '[]'); } catch { return []; }
       }
       function writeRecents(list) {
-        try { localStorage.setItem('foundry:recents', JSON.stringify(list)); } catch {}
+        try { localStorage.setItem('conkernftz:recents', JSON.stringify(list)); } catch {}
       }
       function addRecent(dir) {
         if (!dir) return;
@@ -2170,7 +2278,7 @@
               const isAbs = (p) => /^(?:[a-zA-Z]:[\\/]|\\\\|\/)/.test(String(p||''));
               const absFileUrl = (absPath) => encodeURI('file:///' + norm(absPath));
               // Read project config to detect custom preview output dir
-              const cfg = await window.foundry.readConfigAt(r.dir);
+              const cfg = await window.conkernftz.readConfigAt(r.dir);
               const configured = (cfg && cfg.ok && cfg.json && cfg.json.export && cfg.json.export.previewOutDir) ? String(cfg.json.export.previewOutDir) : null;
               const projectDir = norm(r.dir);
               const candidatePaths = [];
@@ -2193,7 +2301,7 @@
               const imageRegex = /\.(png|webp|gif)$/i;
               let pickedAbs = '';
               for (const target of candidatePaths) {
-                const listing = await window.foundry.listDir(target);
+                const listing = await window.conkernftz.listDir(target);
                 if (!listing.ok || !Array.isArray(listing.items)) continue;
                 const files = listing.items.filter((n) => !n.endsWith('/') && imageRegex.test(n));
                 if (!files.length) continue;
@@ -2223,7 +2331,7 @@
       }
 
       async function openProject(dir) {
-        const set = await window.foundry.setProjectDir(dir);
+        const set = await window.conkernftz.setProjectDir(dir);
         if (set && set.ok) {
           addRecent(dir);
           showView('app');
@@ -2243,11 +2351,11 @@
       }
 
       document.getElementById('proj-create').addEventListener('click', async () => {
-        const res = await window.foundry.chooseProjectDir();
+        const res = await window.conkernftz.chooseProjectDir();
         if (res && res.ok && res.projectDir) {
-          await window.foundry.setProjectDir(res.projectDir);
+          await window.conkernftz.setProjectDir(res.projectDir);
           addRecent(res.projectDir);
-          const init = await window.foundry.run(['init']);
+          const init = await window.conkernftz.run(['init']);
           log(init.ok ? init.stdout : init.error);
           showView('app');
           await loadConfigUI();
@@ -2255,7 +2363,7 @@
         }
       });
       document.getElementById('btn-launcher-browse').addEventListener('click', async () => {
-        const res = await window.foundry.chooseProjectDir();
+        const res = await window.conkernftz.chooseProjectDir();
         if (res && res.ok && res.projectDir) {
           await openProject(res.projectDir);
         }
@@ -2369,10 +2477,10 @@
           previews.innerHTML = '';
           previewsEmpty.style.display = 'none';
           cacheBustToken = Date.now();
-          const cfg = await window.foundry.readConfig();
+          const cfg = await window.conkernftz.readConfig();
           if (!cfg.ok) return;
           const outDir = (cfg.json.export?.previewOutDir) || (cfg.json.export?.outDir) || 'build';
-          const base = await window.foundry.getProjectDir();
+          const base = await window.conkernftz.getProjectDir();
           function isPreviewDir(p) { return /(\\|\/)preview$/i.test(String(p || '').replace(/[\\/]+$/,'')); }
           const cleanedOutDir = outDir.replace(/\\+$/,'').replace(/\/+$/,'');
           const primary = (cfg.json.export?.previewOutDir)
@@ -2380,11 +2488,11 @@
             : (isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview'));
           const altPreview = isPreviewDir(cleanedOutDir) ? cleanedOutDir : (cleanedOutDir + '/preview');
           const fallbacks = Array.from(new Set([altPreview, outDir, 'preview'])).filter(p => p !== primary);
-          btnOpenPreviews.onclick = () => window.foundry.openInExplorer(primary);
+          btnOpenPreviews.onclick = () => window.conkernftz.openInExplorer(primary);
           log('Scanning previews in: ' + primary);
           const projectBase = (base && base.projectDir) ? base.projectDir : '';
           async function listAndRender(dir) {
-            const list = await window.foundry.listDir(dir);
+            const list = await window.conkernftz.listDir(dir);
             if (list.ok && Array.isArray(list.items) && list.items.length) {
               const imageFiles = list.items
                 .filter((n) => !n.endsWith('/'))
@@ -2418,7 +2526,7 @@
           }
           // As a last resort, try to infer sequential preview_#.png names from count
           if (!rendered) {
-            const countRes = await window.foundry.listImages(primary);
+            const countRes = await window.conkernftz.listImages(primary);
             if (countRes && countRes.ok && Number(countRes.count) > 0) {
               const tryNames = [];
               const max = Number(countRes.count);
@@ -2537,13 +2645,15 @@
       function readLayersFromTable() {
         const rows = Array.from(tbody.querySelectorAll('tr'));
         return rows.map((tr) => {
+          const opInput = tr.querySelector('.layer-opacity');
+          const opVal = Number(opInput && opInput.value);
           return {
             name: tr.querySelector('.layer-name').value.trim(),
             path: tr.querySelector('.layer-path').value.trim(),
             rarity: tr.querySelector('.layer-rarity').value,
             required: tr.querySelector('.layer-required').checked,
             blend: tr.querySelector('.layer-blend').value,
-            opacity: Math.max(0, Math.min(1, Number(tr.querySelector('.layer-opacity').value) || 1)),
+            opacity: Number.isFinite(opVal) ? Math.max(0, Math.min(1, opVal)) : 1,
           };
         });
       }
@@ -2555,7 +2665,7 @@
           const rel = pathInput.value.trim();
           if (!rel) { assetsSpan.textContent = '—'; continue; }
           try {
-            const res = await window.foundry.listImages(rel);
+            const res = await window.conkernftz.listImages(rel);
             if (res.ok) {
               assetsSpan.textContent = String(res.count) + ' file(s)';
             } else {
@@ -2581,7 +2691,7 @@
             const next = tr.nextElementSibling;
             if (next) tbody.insertBefore(next, tr);
           } else if (target.classList.contains('btn-browse')) {
-            window.foundry.chooseDirInsideProject().then((res) => {
+            window.conkernftz.chooseDirInsideProject().then((res) => {
               if (res.ok && res.path) {
                 const input = tr.querySelector('.layer-path');
                 input.value = res.path;
@@ -2590,7 +2700,7 @@
             });
           } else if (target.classList.contains('btn-open-folder')) {
             const rel = tr.querySelector('.layer-path').value.trim();
-            if (rel) window.foundry.openInExplorer(rel);
+            if (rel) window.conkernftz.openInExplorer(rel);
           }
         });
         tbody.addEventListener('change', (e) => {
@@ -2623,11 +2733,519 @@
         if (irDelim) irDelim.value = cfg.rarity?.delimiter || '#';
         if (irLayerList) renderIrLayerList();
       }
+
+      // =====================
+      // Patterns UI
+      // =====================
+      const pePattern = document.getElementById('pe-pattern');
+      const peAddPattern = document.getElementById('pe-add-pattern');
+      const peDelPattern = document.getElementById('pe-del-pattern');
+      const peAddDot = document.getElementById('pe-add-dot');
+      const peDelDot = document.getElementById('pe-del-dot');
+      const peDupDot = document.getElementById('pe-dup-dot');
+      const peSave = document.getElementById('pe-save');
+      const peSvg = document.getElementById('pattern-svg');
+      const peX = document.getElementById('pe-dot-x');
+      const peY = document.getElementById('pe-dot-y');
+      const peW = document.getElementById('pe-dot-weight');
+      const peC = document.getElementById('pe-dot-color');
+      const peJx = document.getElementById('pe-jx');
+      const peJy = document.getElementById('pe-jy');
+      const peJr = document.getElementById('pe-jr');
+      const peRb = document.getElementById('pe-rot-base');
+      const peRv = document.getElementById('pe-rot-var');
+
+      let selectedDotId = '';
+
+      function populatePatternsUI(cfg) {
+        if (!pePattern) return;
+        pePattern.innerHTML = '';
+        const list = Array.isArray(cfg.patterns) ? cfg.patterns : [];
+        list.forEach((p, i) => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name || p.id || ('Pattern ' + (i + 1));
+          pePattern.appendChild(opt);
+        });
+        if (list.length && !pePattern.value) pePattern.value = list[0].id;
+        renderPatternSvg();
+      }
+
+      function getCurrentPatternIdx() {
+        if (!currentConfig || !Array.isArray(currentConfig.patterns)) return -1;
+        const id = pePattern && pePattern.value;
+        return currentConfig.patterns.findIndex((p) => p.id === id);
+      }
+
+      function renderPatternSvg() {
+        if (!peSvg || !currentConfig) return;
+        const idx = getCurrentPatternIdx();
+        const p = currentConfig.patterns && currentConfig.patterns[idx];
+        peSvg.innerHTML = '<rect x="0" y="0" width="1000" height="1000" fill="#000" fill-opacity="0.0" />';
+        if (!p || !Array.isArray(p.dots)) return;
+        p.dots.forEach((d) => {
+          const cx = Math.round((d.x || 0) * 1000);
+          const cy = Math.round((d.y || 0) * 1000);
+          const col = d.color || '#ff6adf';
+          const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circ.setAttribute('cx', String(cx));
+          circ.setAttribute('cy', String(cy));
+          circ.setAttribute('r', '8');
+          circ.setAttribute('fill', col);
+          circ.setAttribute('fill-opacity', '0.75');
+          circ.setAttribute('stroke', '#ffffff');
+          circ.setAttribute('stroke-opacity', '0.5');
+          circ.setAttribute('data-id', d.id);
+          peSvg.appendChild(circ);
+        });
+      }
+
+      pePattern && pePattern.addEventListener('change', () => { selectedDotId = ''; renderPatternSvg(); });
+
+      // Keep canvas square across resizes as an extra guard in addition to CSS aspect-ratio
+      const peWrap = document.getElementById('pattern-canvas-wrap');
+      function enforceSquare() {
+        if (!peWrap) return;
+        const widthPx = peWrap.getBoundingClientRect().width;
+        peWrap.style.height = Math.round(widthPx) + 'px';
+      }
+      if (peWrap) {
+        try {
+          if ('ResizeObserver' in window) {
+            const ro = new ResizeObserver(() => enforceSquare());
+            ro.observe(peWrap);
+          }
+        } catch {}
+        window.addEventListener('resize', enforceSquare);
+        enforceSquare();
+      }
+
+      peSvg && peSvg.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target && target.tagName === 'circle') {
+          selectedDotId = target.getAttribute('data-id') || '';
+          const idx = getCurrentPatternIdx();
+          const arr = (currentConfig.patterns && currentConfig.patterns[idx] && currentConfig.patterns[idx].dots) || [];
+          const d = arr.find((x) => x.id === selectedDotId);
+          if (!d) return;
+          if (peX) peX.value = String(d.x || 0);
+          if (peY) peY.value = String(d.y || 0);
+          if (peW) peW.value = String(d.weight || 0);
+          if (peC) peC.value = d.color || '#ff6adf';
+          if (peJx) peJx.value = String((d.jitterPx && d.jitterPx.x) || 0);
+          if (peJy) peJy.value = String((d.jitterPx && d.jitterPx.y) || 0);
+          if (peJr) peJr.value = String((d.jitterPx && d.jitterPx.radial) || 0);
+          if (peRb) peRb.value = String((d.rotation && d.rotation.baseDeg) || 0);
+          if (peRv) peRv.value = String((d.rotation && d.rotation.varianceDeg) || 0);
+        } else {
+          // Click on empty canvas: create a new dot at position
+          const rect = peSvg.getBoundingClientRect();
+          const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+          const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+          const idx = getCurrentPatternIdx();
+          if (idx >= 0) {
+            const id = 'dot_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+            const dot = { id, x: nx, y: ny, weight: 1, color: '#ff6adf' };
+            currentConfig.patterns[idx].dots = (currentConfig.patterns[idx].dots || []).concat([dot]);
+            selectedDotId = id;
+            renderPatternSvg();
+          }
+        }
+      });
+
+      peAddPattern && peAddPattern.addEventListener('click', () => {
+        if (!currentConfig) return;
+        const id = 'pattern_' + Date.now().toString(36).slice(2, 8);
+        const name = 'Pattern ' + (Array.isArray(currentConfig.patterns) ? currentConfig.patterns.length + 1 : 1);
+        currentConfig.patterns = (currentConfig.patterns || []).concat([{ id, name, dots: [] }]);
+        populatePatternsUI(currentConfig);
+        if (pePattern) pePattern.value = id;
+      });
+
+      peDelPattern && peDelPattern.addEventListener('click', () => {
+        if (!currentConfig) return;
+        const idx = getCurrentPatternIdx();
+        if (idx >= 0) {
+          currentConfig.patterns.splice(idx, 1);
+          populatePatternsUI(currentConfig);
+          selectedDotId = '';
+        }
+      });
+
+      peAddDot && peAddDot.addEventListener('click', () => {
+        const idx = getCurrentPatternIdx();
+        if (idx < 0) return;
+        const id = 'dot_' + Date.now().toString(36).slice(2, 8);
+        const dot = { id, x: 0.5, y: 0.5, weight: 1, color: '#6a8dff' };
+        currentConfig.patterns[idx].dots = (currentConfig.patterns[idx].dots || []).concat([dot]);
+        selectedDotId = id;
+        renderPatternSvg();
+      });
+
+      peDelDot && peDelDot.addEventListener('click', () => {
+        const idx = getCurrentPatternIdx();
+        if (idx < 0 || !selectedDotId) return;
+        const arr = currentConfig.patterns[idx].dots || [];
+        currentConfig.patterns[idx].dots = arr.filter((d) => d.id !== selectedDotId);
+        selectedDotId = '';
+        renderPatternSvg();
+      });
+
+      peDupDot && peDupDot.addEventListener('click', () => {
+        const idx = getCurrentPatternIdx();
+        if (idx < 0 || !selectedDotId) return;
+        const arr = currentConfig.patterns[idx].dots || [];
+        const d = arr.find((x) => x.id === selectedDotId);
+        if (!d) return;
+        const id = 'dot_' + Date.now().toString(36).slice(2, 8);
+        const copy = JSON.parse(JSON.stringify(d));
+        copy.id = id;
+        currentConfig.patterns[idx].dots = arr.concat([copy]);
+        selectedDotId = id;
+        renderPatternSvg();
+      });
+
+      ;[peX, peY, peW, peC, peJx, peJy, peJr, peRb, peRv].forEach((el) => {
+        el && el.addEventListener('input', () => {
+          const idx = getCurrentPatternIdx();
+          if (idx < 0 || !selectedDotId) return;
+          const arr = currentConfig.patterns[idx].dots || [];
+          const d = arr.find((x) => x.id === selectedDotId);
+          if (!d) return;
+          if (el === peX) d.x = Math.max(0, Math.min(1, Number(peX.value) || 0));
+          if (el === peY) d.y = Math.max(0, Math.min(1, Number(peY.value) || 0));
+          if (el === peW) d.weight = Math.max(0, Number(peW.value) || 0);
+          if (el === peC) d.color = String(peC.value || '#6a8dff');
+          d.jitterPx = d.jitterPx || {};
+          if (el === peJx) d.jitterPx.x = Math.max(0, Number(peJx.value) || 0);
+          if (el === peJy) d.jitterPx.y = Math.max(0, Number(peJy.value) || 0);
+          if (el === peJr) d.jitterPx.radial = Math.max(0, Number(peJr.value) || 0);
+          d.rotation = d.rotation || {};
+          if (el === peRb) d.rotation.baseDeg = Number(peRb.value) || 0;
+          if (el === peRv) d.rotation.varianceDeg = Math.max(0, Number(peRv.value) || 0);
+          renderPatternSvg();
+        });
+      });
+
+      peSave && peSave.addEventListener('click', async () => {
+        if (!currentConfig) return;
+        const updated = { ...currentConfig, patterns: currentConfig.patterns || [] };
+        const res = await window.conkernftz.writeConfig(updated);
+        log(res.ok ? 'Patterns saved.' : (res.error || 'Failed to save patterns.'));
+      });
+
+      // =====================
+      // Bindings UI (minimal)
+      // =====================
+      const bindingsTbody = document.getElementById('bindings-tbody');
+      const pbAdd = document.getElementById('pb-add');
+      const pbSave = document.getElementById('pb-save');
+
+      function populateBindingsUI(cfg) {
+        if (!bindingsTbody) return;
+        bindingsTbody.innerHTML = '';
+        const list = Array.isArray(cfg.patternBindings) ? cfg.patternBindings : [];
+
+        // Build target options (layers and assets) from current layers and filesystem counts
+        const layers = (cfg.layers || []).map((l) => ({ name: l.name || '', path: l.path || '' }));
+        const rarityDelim = (cfg.rarity && cfg.rarity.delimiter) ? String(cfg.rarity.delimiter) : '#';
+
+        function targetOptionsHtml(b) {
+          const options = [];
+          // Layer entries
+          for (const l of layers) {
+            const val = `layer:${l.name}`;
+            const label = `Layer: ${l.name}`;
+            const sel = (b?.target?.type === 'layer' && b?.target?.layer === l.name) ? 'selected' : '';
+            options.push(`<option value="${val}" ${sel}>${label}</option>`);
+          }
+          // Asset entries by value (trait)
+          // We cannot synchronously enumerate files here reliably, but we can provide a freeform option and examples.
+          // Include a sentinel for editing custom asset targets
+          const currentLayer = b?.target?.layer || (layers[0]?.name || '');
+          const currentValue = b?.target?.value || '';
+          const currentFilename = b?.target?.filename || '';
+          const assetVal = `asset:${currentLayer}:${currentValue}`;
+          const assetFile = `asset:${currentLayer}:${currentFilename}`;
+          // Pre-select asset value if present
+          if (b?.target?.type === 'asset' && currentValue) {
+            options.push(`<option value="${assetVal}" selected>Asset (value): ${currentLayer}:${currentValue}</option>`);
+          } else {
+            options.push(`<option value="asset:${currentLayer}:">Asset (value): ${currentLayer}:&lt;value&gt;</option>`);
+          }
+          // Also allow an explicit filename targeting hint
+          if (b?.target?.type === 'asset' && currentFilename && !currentValue) {
+            options.push(`<option value="${assetFile}" selected>Asset (filename): ${currentLayer}:${currentFilename}</option>`);
+          } else {
+            options.push(`<option value="asset:${currentLayer}:&lt;filename.png&gt;">Asset (filename): ${currentLayer}:&lt;filename.png&gt;</option>`);
+          }
+          return options.join('');
+        }
+
+        list.forEach((b, idx) => {
+          const anchorXInit = (b && b.anchor && b.anchor.mode === 'custom' && (b.anchor.x !== undefined)) ? b.anchor.x : '';
+          const anchorYInit = (b && b.anchor && b.anchor.mode === 'custom' && (b.anchor.y !== undefined)) ? b.anchor.y : '';
+          const rotMinInit = (b && b.rotation && b.rotation.mode === 'uniform' && (b.rotation.minDeg !== undefined)) ? b.rotation.minDeg : '';
+          const rotMaxInit = (b && b.rotation && b.rotation.mode === 'uniform' && (b.rotation.maxDeg !== undefined)) ? b.rotation.maxDeg : '';
+          const tr = document.createElement('tr');
+          try { if (b && b.id) tr.setAttribute('data-id', String(b.id)); } catch {}
+          tr.innerHTML = `
+            <td style="padding:4px 6px;">
+              <div style="display:flex; gap:6px; align-items:center;">
+                <select class="pb-target" style="flex:1;">
+                  ${targetOptionsHtml(b)}
+                </select>
+                <button class="pb-edit-target btn-secondary" title="Edit target">Edit…</button>
+              </div>
+            </td>
+            <td style="padding:4px 6px;">
+              <input class="pb-choices" placeholder="patternId#weight, ..." value="${(b.choices||[]).map(c=>`${c.patternId}#${c.weight}`).join(', ')}" />
+            </td>
+            <td style="padding:4px 6px;">
+              <div style="display:grid; grid-template-columns: 1fr; gap:6px;">
+                <select class="pb-anchor">
+                  <option value="center" ${(b.anchor?.mode==='center')?'selected':''}>center</option>
+                  <option value="topLeft" ${(b.anchor?.mode==='topLeft')?'selected':''}>topLeft</option>
+                  <option value="topRight" ${(b.anchor?.mode==='topRight')?'selected':''}>topRight</option>
+                  <option value="bottomLeft" ${(b.anchor?.mode==='bottomLeft')?'selected':''}>bottomLeft</option>
+                  <option value="bottomRight" ${(b.anchor?.mode==='bottomRight')?'selected':''}>bottomRight</option>
+                  <option value="custom" ${(b.anchor?.mode==='custom')?'selected':''}>custom</option>
+                </select>
+                <div class="pb-anchor-custom" style="display:${b.anchor?.mode==='custom'?'grid':'none'}; grid-template-columns: repeat(2, 1fr); gap:6px;">
+                  <input class="pb-anchor-x" type="number" step="0.01" min="0" max="1" placeholder="x (0..1)" value="${anchorXInit}">
+                  <input class="pb-anchor-y" type="number" step="0.01" min="0" max="1" placeholder="y (0..1)" value="${anchorYInit}">
+                </div>
+              </div>
+            </td>
+            <td style="padding:4px 6px;">
+              <div style="display:grid; grid-template-columns: 1fr; gap:6px;">
+                <label style="display:flex; align-items:center; gap:6px;">
+                  <input class="pb-collide" type="checkbox" ${b.collision?.enabled?'checked':''}/> Avoid overlap
+                </label>
+                <div class="pb-collide-opts" style="display:${b.collision?.enabled?'grid':'none'}; grid-template-columns: repeat(2, 1fr); gap:6px;">
+                  <input class="pb-collide-min" type="number" min="0" step="1" placeholder="min distance px" value="${b.collision?.minDistancePx ?? ''}">
+                  <input class="pb-collide-attempts" type="number" min="1" step="1" placeholder="max attempts" value="${b.collision?.maxAttempts ?? ''}">
+                </div>
+              </div>
+            </td>
+            <td style="padding:4px 6px;">
+              <div style="display:grid; grid-template-columns: 1fr; gap:6px;">
+                <select class="pb-rotation">
+                  <option value="none" ${(b.rotation?.mode==='none')?'selected':''}>none</option>
+                  <option value="uniform" ${(b.rotation?.mode==='uniform')?'selected':''}>uniform</option>
+                  <option value="inheritDot" ${(b.rotation?.mode==='inheritDot')?'selected':''}>inheritDot</option>
+                </select>
+                <div class="pb-rot-range" style="display:${b.rotation?.mode==='uniform'?'grid':'none'}; grid-template-columns: repeat(2, 1fr); gap:6px;">
+                  <input class="pb-rot-min" type="number" step="1" placeholder="min deg" value="${rotMinInit}">
+                  <input class="pb-rot-max" type="number" step="1" placeholder="max deg" value="${rotMaxInit}">
+                </div>
+              </div>
+            </td>
+            <td style="padding:4px 6px;">
+              <button class="pb-remove" style="background:#da3633;">Remove</button>
+            </td>`;
+          bindingsTbody.appendChild(tr);
+          // asynchronously enumerate assets to enhance target dropdown
+          try { populateAssetOptionsForRow(tr, cfg); } catch {}
+        });
+      }
+
+      async function populateAssetOptionsForRow(tr, cfg) {
+        try {
+          const sel = tr.querySelector('.pb-target');
+          if (!sel) return;
+          const current = sel.value || '';
+          const layers = Array.isArray(cfg.layers) ? cfg.layers : [];
+          const delim = (cfg.rarity && cfg.rarity.delimiter) ? String(cfg.rarity.delimiter) : '#';
+          function isImageName(n) { return /\.(png|webp|gif)$/i.test(String(n||'')); }
+          function withoutExt(n) { return String(n||'').replace(/\.[^.]+$/, ''); }
+          function traitFrom(n) {
+            const base = withoutExt(n);
+            const idx = base.lastIndexOf(delim);
+            return idx !== -1 ? base.slice(0, idx) : base;
+          }
+          for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            const layerName = layer && layer.name ? String(layer.name) : '';
+            const layerPath = layer && layer.path ? String(layer.path) : '';
+            if (!layerName || !layerPath) continue;
+            const res = await window.conkernftz.listDir(layerPath);
+            if (!res || !res.ok || !Array.isArray(res.items)) continue;
+            const files = res.items.filter((n) => !String(n).endsWith('/')).filter(isImageName);
+            if (!files.length) continue;
+            const seenValues = {};
+            const frag = document.createDocumentFragment();
+            // insert a disabled separator for readability
+            const sep = document.createElement('option');
+            sep.textContent = `— ${layerName} —`;
+            sep.disabled = true;
+            sep.value = '';
+            frag.appendChild(sep);
+            for (let j = 0; j < files.length; j++) {
+              const file = files[j];
+              const value = traitFrom(file);
+              if (!seenValues[value]) {
+                seenValues[value] = true;
+                const optVal = `asset:${layerName}:${value}`;
+                const opt = document.createElement('option');
+                opt.value = optVal;
+                opt.textContent = `Asset (value): ${layerName}:${value}`;
+                frag.appendChild(opt);
+              }
+              const fileOpt = document.createElement('option');
+              fileOpt.value = `asset:${layerName}:${file}`;
+              fileOpt.textContent = `Asset (filename): ${layerName}:${file}`;
+              frag.appendChild(fileOpt);
+            }
+            sel.appendChild(frag);
+          }
+          // restore previous selection
+          sel.value = current;
+        } catch {}
+      }
+
+      pbAdd && pbAdd.addEventListener('click', () => {
+        if (!currentConfig) return;
+        currentConfig.patternBindings = (currentConfig.patternBindings || []).concat([
+          { id: 'binding_' + Date.now().toString(36).slice(2,8), target: { type: 'layer', layer: (currentConfig.layers?.[0]?.name||'') }, choices: [] },
+        ]);
+        populateBindingsUI(currentConfig);
+      });
+
+      bindingsTbody && bindingsTbody.addEventListener('click', (e) => {
+        const rm = e.target.closest('.pb-remove');
+        if (rm) {
+          const tr = rm.closest('tr');
+          const idx = Array.from(bindingsTbody.children).indexOf(tr);
+          if (idx >= 0) {
+            currentConfig.patternBindings.splice(idx, 1);
+            populateBindingsUI(currentConfig);
+          }
+          return;
+        }
+        const edit = e.target.closest('.pb-edit-target');
+        if (edit) {
+          const tr = edit.closest('tr');
+          const sel = tr.querySelector('.pb-target');
+          const current = String((sel && sel.value) || '');
+          const parts = current.split(':');
+          const mode = parts[0] || 'layer';
+          const layer = parts[1] || '';
+          const value = parts.slice(2).join(':');
+          const newLayer = window.prompt('Layer name for target:', layer) || layer;
+          if (mode === 'layer') {
+            sel.value = `layer:${newLayer}`;
+          } else {
+            const isFilename = window.confirm('Target by explicit FILENAME? Click OK for filename, Cancel for trait value.');
+            const newVal = window.prompt(isFilename ? 'Filename (e.g. crown#10.png)' : 'Asset value (trait):', value) || value;
+            sel.value = `asset:${newLayer}:${newVal}`;
+          }
+        }
+      });
+
+      pbSave && pbSave.addEventListener('click', async () => {
+        if (!currentConfig) return;
+        // Read from table
+        const rows = Array.from((bindingsTbody || document.createElement('tbody')).children);
+        const updatedBindings = rows.map((tr) => {
+          const existingId = (tr && tr.getAttribute) ? (tr.getAttribute('data-id') || '') : '';
+          const tSel = tr.querySelector('.pb-target');
+          const choicesStr = String(((tr.querySelector('.pb-choices')||{}).value) || '');
+          const choices = choicesStr
+            .split(',')
+            .map((s)=>s.trim())
+            .filter(Boolean)
+            .map((pair)=>{
+              const m = pair.match(/^(.*?)(?:[#:](\d+(?:\.\d+)?))?$/);
+              const id = m && m[1] ? m[1] : pair;
+              const w = m && m[2] ? Number(m[2]) : 1;
+              return { patternId: id, weight: Math.max(0, w) };
+            });
+          const anchorEl = tr.querySelector('.pb-anchor');
+          const anchorMode = anchorEl ? (anchorEl.value || 'center') : 'center';
+          let anchor = { mode: anchorMode };
+          if (anchorMode === 'custom') {
+            const axEl = tr.querySelector('.pb-anchor-x');
+            const ayEl = tr.querySelector('.pb-anchor-y');
+            const ax = axEl ? Number(axEl.value) : 0.5;
+            const ay = ayEl ? Number(ayEl.value) : 0.5;
+            anchor = { mode: 'custom', x: Math.max(0, Math.min(1, isFinite(ax) ? ax : 0.5)), y: Math.max(0, Math.min(1, isFinite(ay) ? ay : 0.5)) };
+          }
+          const collideEl = tr.querySelector('.pb-collide');
+          const collide = !!(collideEl && collideEl.checked);
+          const minDistEl = tr.querySelector('.pb-collide-min');
+          const attemptsEl = tr.querySelector('.pb-collide-attempts');
+          const minDistancePx = minDistEl ? Number(minDistEl.value) : undefined;
+          const maxAttempts = attemptsEl ? Number(attemptsEl.value) : undefined;
+          const rotationEl = tr.querySelector('.pb-rotation');
+          const rotation = rotationEl ? (rotationEl.value || 'none') : 'none';
+          const rotMinEl = tr.querySelector('.pb-rot-min');
+          const rotMaxEl = tr.querySelector('.pb-rot-max');
+          const rotMin = rotMinEl ? Number(rotMinEl.value) : NaN;
+          const rotMax = rotMaxEl ? Number(rotMaxEl.value) : NaN;
+          const tVal = String((tSel && tSel.value) ? tSel.value : '');
+          let target = { type: 'layer', layer: '' };
+          if (tVal.startsWith('asset:')) {
+            const parts = tVal.split(':');
+            const layer = parts[1] || '';
+            const value = parts[2] || '';
+            // Heuristics: if contains a dot extension, treat as filename; otherwise a trait value
+            if (/\.[a-zA-Z0-9]+$/.test(value)) {
+              target = { type: 'asset', layer, filename: value };
+            } else {
+              target = { type: 'asset', layer, value };
+            }
+          } else {
+            const parts = tVal.split(':');
+            const layer = parts[1] || '';
+            target = { type: 'layer', layer };
+          }
+          const rot = rotation === 'uniform'
+            ? { mode: 'uniform', minDeg: isFinite(rotMin) ? rotMin : undefined, maxDeg: isFinite(rotMax) ? rotMax : undefined }
+            : (rotation === 'inheritDot' ? { mode: 'inheritDot' } : { mode: 'none' });
+          const collision = collide ? { enabled: true, minDistancePx: (isFinite(Number(minDistancePx)) ? Number(minDistancePx) : undefined), maxAttempts: (isFinite(Number(maxAttempts)) ? Number(maxAttempts) : undefined) } : { enabled: false };
+          return { id: existingId || ('binding_'+Math.random().toString(36).slice(2,8)), target, choices, anchor, collision, rotation: rot };
+        });
+        const updated = { ...currentConfig, patternBindings: updatedBindings };
+        const res = await window.conkernftz.writeConfig(updated);
+        if (res.ok) { currentConfig = updated; log('Bindings saved.'); }
+        else { log(res.error || 'Failed to save bindings.'); }
+      });
       async function loadConfigUI() {
-        const cfg = await window.foundry.readConfig();
+        const cfg = await window.conkernftz.readConfig();
         if (cfg.ok && cfg.json) {
           populateFormFromConfig(cfg.json);
           updateStatsFromConfig(cfg.json);
+          // Populate patterns panel
+          try { populatePatternsUI(cfg.json); } catch {}
+          try { populateBindingsUI(cfg.json); } catch {}
+          // Attach dynamic UI reactions for bindings table (anchor custom fields, rotation range, collision options)
+          if (bindingsTbody) {
+            bindingsTbody.addEventListener('change', (e) => {
+              const tgt = e.target;
+              if (!tgt || !tgt.closest) return;
+              const tr = tgt.closest('tr');
+              if (!tr) return;
+              const anchorSel = tr.querySelector('.pb-anchor');
+              const custom = tr.querySelector('.pb-anchor-custom');
+              if (anchorSel && custom) {
+                const val = anchorSel.value;
+                custom.style.display = val === 'custom' ? 'grid' : 'none';
+              }
+              const rotSel = tr.querySelector('.pb-rotation');
+              const rotWrap = tr.querySelector('.pb-rot-range');
+              if (rotSel && rotWrap) {
+                const r = rotSel.value;
+                rotWrap.style.display = r === 'uniform' ? 'grid' : 'none';
+              }
+              const collide = tr.querySelector('.pb-collide');
+              const collideWrap = tr.querySelector('.pb-collide-opts');
+              if (collide && collideWrap) {
+                const c = collide.checked;
+                collideWrap.style.display = c ? 'grid' : 'none';
+              }
+            });
+          }
         }
       }
       btnAddLayer.addEventListener('click', () => {
@@ -2640,7 +3258,7 @@
       if (btnCreateFolders) btnCreateFolders.addEventListener('click', async () => {
         const layers = readLayersFromTable();
         const paths = layers.map(l => l.path).filter(Boolean);
-        const res = await window.foundry.ensureDirs(paths);
+        const res = await window.conkernftz.ensureDirs(paths);
         log(res.ok ? 'Folders ensured.' : (res.error || 'Failed to create folders.'));
         updateAssetCounts();
       });
@@ -2668,7 +3286,7 @@
 
       irRefresh && irRefresh.addEventListener('click', renderIrLayerList);
       irAddFolder && irAddFolder.addEventListener('click', async () => {
-        const res = await window.foundry.chooseDirInsideProject();
+        const res = await window.conkernftz.chooseDirInsideProject();
         if (!res.ok || !res.path) return;
         const div = document.createElement('div');
         div.style.border = '1px solid var(--border)';
@@ -2705,7 +3323,7 @@
         const pairs = [];
 
         for (const rel of paths) {
-          const list = await window.foundry.listDir(rel);
+          const list = await window.conkernftz.listDir(rel);
           if (!list.ok || !Array.isArray(list.items)) continue;
           let seq = start;
           const layerPrefix = includeLayer ? (String(rel).replace(/[\\/]+$/,'').split(/\\|\//).pop() || '') + '_' : '';
@@ -2746,7 +3364,7 @@
           if (!selected.length) { log('Select at least one folder.'); return; }
           const plan = await buildRenamePlan(selected);
           if (!plan.length) { log('No images found to rename.'); return; }
-          const res = await window.foundry.renameFiles(plan);
+          const res = await window.conkernftz.renameFiles(plan);
           log(res.ok ? `Renamed ${res.renamed||0} file(s).` : (res.error || 'Rename failed'));
           await updateAssetCounts();
           cacheBustToken = Date.now();
@@ -2796,18 +3414,18 @@
 
       async function ensureProjectBase() {
         try {
-          const base = await window.foundry.getProjectDir();
+          const base = await window.conkernftz.getProjectDir();
           rnProjectBase = (base && base.projectDir) ? base.projectDir : '';
         } catch { rnProjectBase = ''; }
       }
 
       async function pickFolderForRenamer() {
-        const res = await window.foundry.chooseDirInsideProject();
+        const res = await window.conkernftz.chooseDirInsideProject();
         if (!res.ok || !res.path) return;
         // Normalize rnFolder to POSIX-style for consistent fileUrl joining
         rnFolder = String(res.path).replace(/\\/g, '/').replace(/^\//,'').replace(/\/+/g,'/');
         await ensureProjectBase();
-        const list = await window.foundry.listDir(rnFolder);
+        const list = await window.conkernftz.listDir(rnFolder);
         if (!list.ok) { log(list.error || 'Failed to list folder'); return; }
         rnFiles = (list.items || []).filter((n) => /\.(png|webp|gif)$/i.test(n));
         rnIdx = 0;
@@ -2820,7 +3438,7 @@
       rnPrev && rnPrev.addEventListener('click', () => { rnIdx = Math.max(0, rnIdx - 1); showCurrent(); });
       rnSkip && rnSkip.addEventListener('click', async () => {
         // Re-list to keep in sync in case files were changed externally
-        try { const list = await window.foundry.listDir(rnFolder); if (list.ok && Array.isArray(list.items)) { rnFiles = (list.items||[]).filter((n)=>/\.(png|webp|gif)$/i.test(n)); } } catch {}
+        try { const list = await window.conkernftz.listDir(rnFolder); if (list.ok && Array.isArray(list.items)) { rnFiles = (list.items||[]).filter((n)=>/\.(png|webp|gif)$/i.test(n)); } } catch {}
         rnIdx = Math.min(rnFiles.length - 1, rnIdx + 1); showCurrent();
       });
       rnApplyNext && rnApplyNext.addEventListener('click', async () => {
@@ -2834,11 +3452,11 @@
         const newFileName = prefix + nameVal + delimVal + weightVal + ext;
         const srcPath = rnFolder.replace(/[\\/]+$/,'') + '/' + file;
         const dstPath = rnFolder.replace(/[\\/]+$/,'') + '/' + newFileName;
-        const res = await window.foundry.renameFiles([{ from: srcPath, to: dstPath }]);
+        const res = await window.conkernftz.renameFiles([{ from: srcPath, to: dstPath }]);
         if (!res.ok) { log(res.error || 'Rename failed'); return; }
         try {
           // Refresh listing to reflect any collision suffixes applied by backend
-          const list = await window.foundry.listDir(rnFolder);
+          const list = await window.conkernftz.listDir(rnFolder);
           if (list.ok && Array.isArray(list.items)) {
             rnFiles = (list.items || []).filter((n) => /\.(png|webp|gif)$/i.test(n));
           }
@@ -2862,10 +3480,11 @@
         updated.name = document.getElementById('cfg-name').value.trim() || currentConfig.name;
         updated.symbol = document.getElementById('cfg-symbol').value.trim();
         updated.editionSize = Number(document.getElementById('cfg-editions').value) || currentConfig.editionSize;
+        const prevImg = (currentConfig && currentConfig.image) ? currentConfig.image : {};
         updated.image = {
-          width: Number(document.getElementById('cfg-image-w').value) || currentConfig.image.width,
-          height: Number(document.getElementById('cfg-image-h').value) || currentConfig.image.height,
-          background: document.getElementById('cfg-image-bg').value || currentConfig.image.background || 'transparent',
+          width: Number(document.getElementById('cfg-image-w').value) || prevImg.width || 1024,
+          height: Number(document.getElementById('cfg-image-h').value) || prevImg.height || 1024,
+          background: document.getElementById('cfg-image-bg').value || prevImg.background || 'transparent',
         };
         updated.rarity = {
           mode: 'filenameDelimiter',
@@ -2884,8 +3503,18 @@
           includePreviewContactSheet: document.getElementById('export-contact').checked,
         };
         updated.layers = readLayersFromTable();
-        const res = await window.foundry.writeConfig(updated);
-        log(res.ok ? 'Config saved.' : (res.error || 'Failed to save config.'));
+        // Keep existing patterns/bindings as-is here; managed by dedicated save buttons
+        const res = await window.conkernftz.writeConfig(updated);
+        if (res.ok) {
+          currentConfig = updated;
+          updateStatsFromConfig(updated);
+          try { if (irLayerList) renderIrLayerList(); } catch {}
+          try { await updateAssetCounts(); } catch {}
+          try { cacheBustToken = Date.now(); await refreshPreviews(); } catch {}
+          log('Config saved.');
+        } else {
+          log(res.error || 'Failed to save config.');
+        }
       });
       document.getElementById('btn-validate-rules').addEventListener('click', async () => {
         try {
@@ -2903,7 +3532,7 @@
           const txt = document.getElementById('rules-json').value;
           const parsed = JSON.parse(txt);
           const updated = { ...currentConfig, rules: parsed };
-          const res = await window.foundry.writeConfig(updated);
+          const res = await window.conkernftz.writeConfig(updated);
           if (res.ok) {
             currentConfig = updated;
             log('Rules saved.');
@@ -2916,10 +3545,10 @@
       });
       document.getElementById('btn-open-rarity').addEventListener('click', async () => {
         try {
-          const cfg = await window.foundry.readConfig();
+          const cfg = await window.conkernftz.readConfig();
           if (!cfg.ok) return log('Open a project first.');
           const outDir = (cfg.json.export?.outDir) || 'build';
-          const res = await window.foundry.readFile(outDir + '/rarity.json');
+          const res = await window.conkernftz.readFile(outDir + '/rarity.json');
           if (res.ok) {
             document.getElementById('rarity-out').textContent = res.content;
           } else {
@@ -2950,7 +3579,7 @@
         if (projectMini) projectMini.textContent = dir || 'No project selected';
       }
       async function refreshProjectLabels() {
-        const base = await window.foundry.getProjectDir();
+        const base = await window.conkernftz.getProjectDir();
         setProjectLabels(base && base.projectDir ? base.projectDir : '');
       }
       // Gallery interactions
@@ -3048,30 +3677,43 @@
 
       bindLayerTableEvents();
       document.getElementById('btn-choose').onclick = async () => {
-        const res = await window.foundry.chooseProjectDir();
+        const res = await window.conkernftz.chooseProjectDir();
         log(res.ok ? ('Project: ' + res.projectDir) : res.error);
-        if (res.ok) { addRecent(res.projectDir); await window.foundry.setProjectDir(res.projectDir); await loadConfigUI(); await refreshPreviews(); await refreshProjectLabels(); }
+        if (res.ok) { addRecent(res.projectDir); await window.conkernftz.setProjectDir(res.projectDir); await loadConfigUI(); await refreshPreviews(); await refreshProjectLabels(); }
       }
       document.getElementById('btn-init').onclick = async () => {
         startProgress('Initializing project…', 4000);
-        const res = await window.foundry.run(['init']);
+        const res = await window.conkernftz.run(['init']);
         log(res.ok ? res.stdout : res.error);
         endProgress(res.ok ? 'Project initialized' : 'Init failed', res.ok);
         await loadConfigUI();
       }
       document.getElementById('btn-validate').onclick = async () => {
         startProgress('Validating rules…', 3000);
-        const res = await window.foundry.run(['validate']);
+        const res = await window.conkernftz.run(['validate']);
         log(res.ok ? res.stdout : res.error);
         endProgress(res.ok ? 'Validation complete' : 'Validation failed', res.ok);
       }
       document.getElementById('btn-preview').onclick = async () => {
         const cRaw = document.getElementById('preview-count').value;
         const cNum = Math.max(1, Number(cRaw) || 9);
-        // Randomize seed so previews differ every run
-        const seed = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        // Manual/locked seed support
+        const lockEl = document.getElementById('preview-lock-seed');
+        const seedEl = document.getElementById('preview-seed');
+        const locked = !!(lockEl && lockEl.checked);
+        const manual = seedEl ? String(seedEl.value || '').trim() : '';
+        const seed = (locked && manual) ? manual : ('run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
         startProgress('Generating previews…', Math.min(60000, 500 * cNum + 2000));
-        const res = await window.foundry.run(['preview', '--count', String(cNum), '--seed', seed]);
+        let res = await window.conkernftz.run(['preview', '--count', String(cNum), '--seed', seed, '--overlay']);
+        if (!res.ok && /unknown option/i.test(String(res.error || ''))) {
+          // Fallback if this CLI does not support --overlay or --seed
+          const tryNoOverlay = await window.conkernftz.run(['preview', '--count', String(cNum), '--seed', seed]);
+          if (!tryNoOverlay.ok && /unknown option/i.test(String(tryNoOverlay.error || ''))) {
+            res = await window.conkernftz.run(['preview', '--count', String(cNum)]);
+          } else {
+            res = tryNoOverlay;
+          }
+        }
         log((res.ok ? res.stdout : res.error) + (res.ok ? ('\nSeed: ' + seed) : ''));
         endProgress(res.ok ? 'Previews generated' : 'Preview failed', res.ok);
         // Give the FS a moment to flush writes on Windows
@@ -3081,33 +3723,48 @@
         const cRaw = document.getElementById('build-count').value;
         const cNum = Math.max(1, Number(cRaw) || 10);
         startProgress('Building collection…', Math.min(120000, 700 * cNum + 3000));
-        const res = await window.foundry.run(['build', '--count', String(cNum)]);
-        log(res.ok ? res.stdout : res.error);
+        const lockEl = document.getElementById('build-lock-seed');
+        const seedEl = document.getElementById('build-seed');
+        const locked = !!(lockEl && lockEl.checked);
+        const manual = seedEl ? String(seedEl.value || '').trim() : '';
+        const seed = (locked && manual) ? manual : ('build-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+        let res = await window.conkernftz.run(['build', '--count', String(cNum), '--seed', seed]);
+        if (!res.ok && /unknown option/i.test(String(res.error || ''))) {
+          // Fallback for older CLI without --seed support
+          res = await window.conkernftz.run(['build', '--count', String(cNum)]);
+        }
+        log((res.ok ? res.stdout : res.error) + (res.ok ? ('\nSeed: ' + seed) : ''));
         endProgress(res.ok ? 'Build complete' : 'Build failed', res.ok);
         refreshPreviews();
       }
       document.getElementById('btn-upload').onclick = async () => {
-        const provider = document.getElementById('upload-provider').value;
+        const mode = document.getElementById('upload-mode').value;
         const conc = document.getElementById('upload-concurrency').value;
         startProgress('Uploading assets…', 20000);
-        const res = await window.foundry.run(['upload', '--provider', String(provider), '--concurrency', String(conc)]);
+        const res = await window.conkernftz.run(['upload', '--mode', String(mode), '--concurrency', String(conc)]);
         log(res.ok ? res.stdout : res.error);
         endProgress(res.ok ? 'Upload complete' : 'Upload failed', res.ok);
+      }
+      document.getElementById('btn-deploy').onclick = async () => {
+        startProgress('Deploying contract…', 60000);
+        const res = await window.conkernftz.run(['deploy']);
+        log(res.ok ? res.stdout : res.error);
+        endProgress(res.ok ? 'Deploy complete' : 'Deploy failed', res.ok);
       }
       document.getElementById('btn-mint').onclick = async () => {
         const from = document.getElementById('mint-from').value;
         const countRaw = document.getElementById('mint-count').value;
         const countNum = Math.max(1, Number(countRaw) || 1);
         startProgress('Minting…', Math.min(180000, 5000 * countNum));
-        const res = await window.foundry.run(['mint', '--from', String(from), '--count', String(countNum)]);
+        const res = await window.conkernftz.run(['mint', '--from', String(from), '--count', String(countNum)]);
         log(res.ok ? res.stdout : res.error);
         endProgress(res.ok ? 'Mint complete' : 'Mint failed', res.ok);
       }
       // Open project folder
       const btnOpenProject = document.getElementById('btn-open-project');
       if (btnOpenProject) btnOpenProject.addEventListener('click', async () => {
-        const base = await window.foundry.getProjectDir();
-        if (base && base.projectDir) await window.foundry.openInExplorer(base.projectDir);
+        const base = await window.conkernftz.getProjectDir();
+        if (base && base.projectDir) await window.conkernftz.openInExplorer(base.projectDir);
       });
       // Enhanced UI Options wiring
       function applyUiFromStorage() {
@@ -3149,7 +3806,7 @@
           if (!el.classList.contains('floating')) el.classList.add('floating');
         });
         
-        // Apply to gallery cards, but exclude large ones
+        // Apply to gallery cards, but exclude large ones and About/Patterns sections
         document.querySelectorAll('.gallery-card').forEach(el => {
           // Skip large gallery cards (main preview gallery, console, minting, and settings)
           const isMainPreviewGallery = el.querySelector('.gallery-grid') !== null;
@@ -3158,9 +3815,12 @@
                                      el.querySelector('.gallery-header h3').textContent === 'Customization';
           const isMintingCard = el.querySelector('.gallery-header h3') && 
                                el.querySelector('.gallery-header h3').textContent === 'Minting';
+          // Also skip About tab and Patterns subpane
+          const isAboutSectionCard = el.closest('#tab-about') !== null;
+          const isPatternsSectionCard = el.closest('#main-patterns') !== null;
           
           // Only apply floating to small gallery cards (like stats cards)
-          if (!isMainPreviewGallery && !isConsoleCard && !isLargeSettingsCard && !isMintingCard) {
+          if (!isMainPreviewGallery && !isConsoleCard && !isLargeSettingsCard && !isMintingCard && !isAboutSectionCard && !isPatternsSectionCard) {
             if (!el.classList.contains('floating')) el.classList.add('floating');
           }
         });
@@ -3193,7 +3853,7 @@
       (async function startup() {
         applyUiFromStorage();
         renderRecents();
-        const base = await window.foundry.getProjectDir();
+        const base = await window.conkernftz.getProjectDir();
         if (base && base.projectDir) {
           showView('app');
           await loadConfigUI();
@@ -3439,13 +4099,25 @@
           `,
           related: ['rarity-report']
         },
-        'upload-provider': {
-          title: 'Upload Provider',
-          short: 'Choose where to host your images and metadata.',
+        'upload-mode': {
+          title: 'Upload Mode',
+          short: 'Per-file URIs (Solana) or a single directory baseURI (EVM).',
           body: `
-            <p>Select <b>Arweave</b> or <b>IPFS</b> to upload build outputs. Provider settings may require environment credentials or a funded wallet (for Arweave Bundlr).</p>
+            <p>The storage <b>provider</b> (Irys, Pinata, or local) is set in <code>foundry.config.json</code> under <code>storage</code>. This control only chooses the layout:</p>
+            <ul>
+              <li><b>Per-file URIs</b> — each image/metadata file gets its own URI. Use for Solana minting.</li>
+              <li><b>Directory / baseURI</b> — uploads the folders and records a single base CID, used as an ERC-721 <code>baseURI</code> for EVM.</li>
+            </ul>
           `,
-          related: ['upload','mint']
+          related: ['upload','mint','storage-config']
+        },
+        'deploy-evm': {
+          title: 'Deploy (EVM)',
+          short: 'Deploy the ERC-721 collection contract on the configured EVM chain.',
+          body: `
+            <p>Only for projects with <code>chain.target: "evm"</code>. Deploys the ConkernftzCollection contract and writes <code>deployed.json</code>. Run <b>Upload</b> in <b>Directory / baseURI</b> mode first so the contract's baseURI points at your metadata.</p>
+          `,
+          related: ['upload-mode','mint','chain-config']
         },
         'upload-concurrency': {
           title: 'Upload Concurrency',
@@ -3639,22 +4311,23 @@
         },
         'storage-config': {
           title: 'Storage configuration',
-          short: 'Configure Arweave or IPFS credentials in the config file.',
+          short: 'Configure Irys (Arweave), Pinata (IPFS), or local in the config file.',
           body: `
-            <p>Set storage provider and credentials in <code>foundry.config.json</code> under <code>storage</code>:</p>
+            <p>Set the storage provider in <code>foundry.config.json</code> under <code>storage</code>:</p>
             <pre><code>"storage": {
-  "provider": "arweave", // or "ipfs"
-  "arweave": { "bundlrNode": "https://node.bundlr.network", "currency": "SOL", "keyPath": "C:/path/key.json" },
-  "ipfs": { "pinataKey": "...", "pinataSecret": "...", "nftStorageKey": "..." }
+  "provider": "irys", // "irys" | "pinata" | "local"
+  "irys":   { "token": "solana", "keyPath": "./keys/solana.json" },
+  "pinata": { "jwt": "", "gateway": "" },
+  "local":  { "baseUri": "" }
 }</code></pre>
-            <p>These are used by the Upload flow. Keep secrets outside of version control.</p>
+            <p><b>Irys</b> stores permanently on Arweave (paid via the chosen token). <b>Pinata</b> pins to IPFS (set the JWT or the <code>PINATA_JWT</code> env var). <b>local</b> fabricates URIs for offline testing. Keep secrets out of version control.</p>
           `
         },
         'chain-config': {
-          title: 'Solana chain configuration',
-          short: 'Set cluster, wallet, fees, and creators.',
+          title: 'Chain configuration (Solana or EVM)',
+          short: 'Set the target chain and its mint/deploy details.',
           body: `
-            <p>Configure chain details under <code>chain.solana</code>:</p>
+            <p>Set <code>chain.target</code> to <code>"solana"</code> or <code>"evm"</code> and fill in the matching block.</p>
             <pre><code>"chain": {
   "target": "solana",
   "solana": {
@@ -3666,9 +4339,17 @@
     "collection": { "mint": null },
     "isMutable": true,
     "usePnft": true
+  },
+  "evm": {
+    "chainId": 11155111,
+    "rpcUrl": "https://rpc.sepolia.org",
+    "privateKeyPath": "./keys/evm.key",
+    "maxSupply": 0,
+    "royaltyReceiver": "0x...",
+    "royaltyBps": 500
   }
 }</code></pre>
-            <p>These values influence minting and on-chain metadata.</p>
+            <p>For EVM, run <b>Deploy</b> first (sets the contract baseURI from a directory upload), then <b>Mint</b> (owner-mint). Solana mints per-edition with per-file metadata URIs.</p>
           `
         },
         'metadata-json': {
@@ -3723,7 +4404,7 @@
         { id: 'config', title: 'Configuration', topics: ['config','config-rarity','config-dna','config-layers','layers-actions','config-renamer'] },
         { id: 'building', title: 'Build & Outputs', topics: ['preview','generate','build','rules','rules-examples','rarity-report','outputs'] },
         { id: 'renamer', title: 'Renamer', topics: ['renamer','renamer-step'] },
-        { id: 'minting', title: 'Upload, Storage & Chain', topics: ['upload-provider','upload-concurrency','upload','mint-from','mint-count','mint','storage-config','chain-config','metadata-json'] },
+        { id: 'minting', title: 'Upload, Storage & Chain', topics: ['upload-mode','upload-concurrency','upload','mint-from','mint-count','mint','storage-config','chain-config','metadata-json'] },
         { id: 'ui', title: 'UI Options', topics: ['ui-theme','ui-accent','ui-radius','ui-blur','ui-noise','ui-glow'] },
         { id: 'productivity', title: 'Productivity', topics: ['shortcuts'] },
         { id: 'support', title: 'Troubleshooting & Glossary', topics: ['troubleshooting','glossary'] },
@@ -3960,7 +4641,7 @@
   </body>
   <script>
     // preload.d.ts shim for TS, ignored here
-    window.foundry = window.foundry || { run: async () => ({ ok: false, error: 'preload not loaded' }), listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }) };
+    window.conkernftz = window.conkernftz || { run: async () => ({ ok: false, error: 'preload not loaded' }), listDir: async () => ({ ok: false, items: [], error: 'preload not loaded' }) };
   </script>
   </html>
 

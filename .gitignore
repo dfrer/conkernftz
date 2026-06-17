@@ -6,6 +6,9 @@ dist/
 build/
 .turbo/
 
+# Local smoke-test scratch project
+.smoke/
+
 # OS / Editor
 .DS_Store
 Thumbs.db

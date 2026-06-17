@@ -82,12 +82,25 @@ export const ImageSchema = z.object({
 });
 
 export const StorageSchema = z.object({
-  provider: z.enum(['arweave', 'ipfs']),
-  arweave: z
-    .object({ bundlrNode: z.string(), currency: z.string(), keyPath: z.string() })
+  provider: z.enum(['irys', 'pinata', 'local']),
+  // Permanent Arweave storage via Irys (formerly Bundlr).
+  irys: z
+    .object({
+      token: z.enum(['solana', 'ethereum']).optional(),
+      keyPath: z.string(),
+      rpcUrl: z.string().optional(),
+    })
     .optional(),
-  ipfs: z
-    .object({ pinataKey: z.string().optional(), pinataSecret: z.string().optional(), nftStorageKey: z.string().optional() })
+  // IPFS via the modern Pinata SDK (JWT auth).
+  pinata: z
+    .object({
+      jwt: z.string().optional(),
+      gateway: z.string().optional(),
+    })
+    .optional(),
+  // Offline/no-upload provider for local testing.
+  local: z
+    .object({ baseUri: z.string().optional() })
     .optional(),
 });
 
@@ -105,9 +118,22 @@ export const ChainSolanaSchema = z.object({
   rulesetPda: z.string().nullable().optional(),
 });
 
+export const ChainEvmSchema = z.object({
+  chainId: z.number().int().positive(),
+  rpcUrl: z.string(),
+  privateKeyPath: z.string(),
+  // Populated after `deploy`; reused by `mint`.
+  contractAddress: z.string().optional(),
+  baseUri: z.string().optional(),
+  maxSupply: z.number().int().min(0).optional(),
+  royaltyReceiver: z.string().optional(),
+  royaltyBps: z.number().int().min(0).max(10000).optional(),
+});
+
 export const ChainSchema = z.object({
-  target: z.enum(['solana']),
+  target: z.enum(['solana', 'evm']),
   solana: ChainSolanaSchema.optional(),
+  evm: ChainEvmSchema.optional(),
 });
 
 export const ProjectConfigSchema = z.object({
@@ -120,6 +146,57 @@ export const ProjectConfigSchema = z.object({
   rules: RulesSchema.optional(),
   rarity: RaritySchema,
   uniqueness: UniquenessSchema,
+  // Pattern placement system
+  patterns: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        dots: z.array(
+          z.object({
+            id: z.string(),
+            x: z.number().min(0).max(1),
+            y: z.number().min(0).max(1),
+            weight: z.number().min(0),
+            color: z.string().optional(),
+            jitterPx: z
+              .object({ x: z.number().min(0).optional(), y: z.number().min(0).optional(), radial: z.number().min(0).optional() })
+              .optional(),
+            rotation: z.object({ baseDeg: z.number().optional(), varianceDeg: z.number().min(0).optional() }).optional(),
+          }),
+        ),
+      }),
+    )
+    .default([]),
+  patternBindings: z
+    .array(
+      z.object({
+        id: z.string(),
+        target: z.union([
+          z.object({ type: z.literal('layer'), layer: z.string() }),
+          z.object({ type: z.literal('asset'), layer: z.string(), value: z.string().optional(), filename: z.string().optional() }),
+        ]),
+        weight: z.number().min(0).optional(),
+        choices: z.array(z.object({ patternId: z.string(), weight: z.number().min(0) })),
+        anchor: z
+          .union([
+            z.object({ mode: z.enum(['center', 'topLeft', 'topRight', 'bottomLeft', 'bottomRight']) }),
+            z.object({ mode: z.literal('custom'), x: z.number().min(0).max(1), y: z.number().min(0).max(1) }),
+          ])
+          .optional(),
+        collision: z
+          .object({ enabled: z.boolean().optional(), minDistancePx: z.number().min(0).optional(), maxAttempts: z.number().int().min(1).optional() })
+          .optional(),
+        rotation: z
+          .union([
+            z.object({ mode: z.literal('none') }),
+            z.object({ mode: z.literal('uniform'), minDeg: z.number().optional(), maxDeg: z.number().optional() }),
+            z.object({ mode: z.literal('inheritDot') }),
+          ])
+          .optional(),
+      }),
+    )
+    .default([]),
   export: z.object({
     outDir: z.string(),
     previewOutDir: z.string().optional(),

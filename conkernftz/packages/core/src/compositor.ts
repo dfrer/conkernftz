@@ -30,10 +30,20 @@ export type SharpBlendMode =
   | 'difference'
   | 'exclusion';
 
+// Tracks blend modes we've already warned about degrading, to avoid log spam across
+// many editions in a single process.
+const warnedDegradedBlends = new Set<string>();
+
 export interface CompositeLayerInput {
   path: string; // absolute path to image asset
   blend?: BlendMode;
   opacity?: number; // 0..1
+  // Pattern placement support. If provided, the layer will be overlaid at the specified
+  // position without resizing to the canvas. Rotation is applied before compositing.
+  positionCenter?: { x: number; y: number };
+  anchor?: { x: number; y: number }; // normalized 0..1 within the overlay after rotation
+  rotateDeg?: number;
+  resizeMode?: 'canvas' | 'none'; // default 'canvas'
 }
 
 export interface CompositeOptions {
@@ -46,9 +56,12 @@ export async function compositeLayers(
   layers: CompositeLayerInput[],
   options: CompositeOptions,
 ): Promise<Buffer> {
+  const hasPositioned = layers.some((l) => l.positionCenter || l.rotateDeg !== undefined || l.resizeMode === 'none');
   const anyUnsupported = layers.some((l) => mapBlendModeToSharp(l.blend ?? 'normal') === null);
 
-  if (!anyUnsupported) {
+  // If any layer has positioning/rotation, we must use Sharp's composite path to respect offsets.
+  // For unsupported blends in this path, we degrade to 'over'.
+  if (hasPositioned || !anyUnsupported) {
     // Fast path: all blends supported natively by Sharp
     const base = sharp({
       create: {
@@ -64,19 +77,46 @@ export async function compositeLayers(
 
     const composites: sharp.OverlayOptions[] = [];
     for (const layer of layers) {
-      let pipeline = sharp(layer.path)
-        .resize(options.width, options.height, { fit: 'fill' })
-        .ensureAlpha();
+      const useCanvasResize = (layer.resizeMode ?? 'canvas') === 'canvas' && !layer.positionCenter;
+      let pipeline = sharp(layer.path).ensureAlpha();
+      if (useCanvasResize) {
+        pipeline = pipeline.resize(options.width, options.height, { fit: 'fill' });
+      }
+      if (typeof layer.rotateDeg === 'number' && isFinite(layer.rotateDeg) && layer.rotateDeg !== 0) {
+        pipeline = pipeline.rotate(layer.rotateDeg);
+      }
       if (layer.opacity !== undefined && layer.opacity >= 0 && layer.opacity <= 1 && layer.opacity !== 1) {
         // Scale alpha channel by desired opacity
         pipeline = pipeline.linear([1, 1, 1, clamp01(layer.opacity)], [0, 0, 0, 0]);
       }
-      const overlay = await pipeline.toBuffer();
+      const { data: overlay, info } = await pipeline.png().toBuffer({ resolveWithObject: true });
       const sharpBlend = mapBlendModeToSharp(layer.blend ?? 'normal');
+      if (sharpBlend === null) {
+        // A positioned layer forced the Sharp path, but this blend mode is only
+        // available on the CPU path, so it degrades to 'over'. Warn once per mode.
+        const b = layer.blend ?? 'normal';
+        if (!warnedDegradedBlends.has(b)) {
+          warnedDegradedBlends.add(b);
+          console.warn(
+            `[compositor] Blend mode "${b}" is only supported on the CPU path, but a positioned ` +
+              `layer forced the Sharp path; it degraded to "over". Avoid combining positioned ` +
+              `overlays with CPU-only blend modes to preserve fidelity.`,
+          );
+        }
+      }
+      let top = 0;
+      let left = 0;
+      if (layer.positionCenter) {
+        const anchor = layer.anchor || { x: 0.5, y: 0.5 };
+        const offX = (anchor.x || 0) * (info.width || 0);
+        const offY = (anchor.y || 0) * (info.height || 0);
+        left = Math.round(layer.positionCenter.x - offX);
+        top = Math.round(layer.positionCenter.y - offY);
+      }
       composites.push({
         input: overlay,
-        top: 0,
-        left: 0,
+        top,
+        left,
         blend: (sharpBlend as sharp.OverlayOptions['blend']) ?? 'over',
       });
     }
@@ -300,7 +340,11 @@ function clamp255(x: number): number {
   return x;
 }
 
-type RGB = { r: number; g: number; b: number };
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
 type BlendFunc = (backdrop: RGB, source: RGB) => RGB;
 
 function getBlendFunc(mode: BlendMode): BlendFunc | null {
@@ -450,7 +494,11 @@ function setHslComponent(backdrop: RGB, source: RGB, which: 'h' | 's' | 'l' | 'h
   return hslToRgb(out);
 }
 
-type HSL = { h: number; s: number; l: number };
+interface HSL {
+  h: number;
+  s: number;
+  l: number;
+}
 
 function rgbToHsl(rgb: RGB): HSL {
   const r = rgb.r;

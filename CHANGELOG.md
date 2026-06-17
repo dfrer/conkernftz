@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+#### v5.0.0 — 2026-06-16
+
+Major modernization, correctness, and feature release.
+
+- Branding
+  - Packages renamed `@foundry/*` → `@conkernftz/*`; CLI binary `foundry` → `conkernftz`
+- Storage (breaking)
+  - Replaced deprecated libraries with **Irys** (Arweave), the modern **Pinata** SDK (IPFS, JWT),
+    and a new **local** provider for offline testing
+  - `upload` drops `--provider` (now from config) and adds `--mode file|dir` and `--retries`,
+    with per-file retry and aggregated error reporting; directory mode emits an ERC-721 `baseURI`
+- Chains
+  - Added an **EVM** adapter (`@conkernftz/chain-evm`): OpenSea metadata, an OpenZeppelin
+    ERC-721 + ERC-2981 contract, and `deploy` / owner-`mint` via viem
+  - `mint` is now chain-aware (`chain.target: "solana" | "evm"`); new `deploy` command
+  - Solana mint path is now built and type-checked (previously excluded from the build)
+- Core fixes
+  - RNG now returns `[0, 1)` (was inclusive of 1.0, which could produce out-of-bounds indices)
+  - Pattern placement uses real asset dimensions for anchoring (was hard-coded 1×1)
+  - `preview` now renders pattern placements identically to `build` (WYSIWYG)
+  - Compositor warns when a positioned layer forces a CPU-only blend to degrade
+- Tooling & tests
+  - ESLint flat config + `@typescript-eslint` 8; test scripts no longer mask failures
+  - Expanded test coverage (RNG, generator, pattern placement, render, storage, chain builders)
+  - Removed the abandoned Tauri package and an unused `canvas` dependency
+- Requirements
+  - Node.js baseline raised to **20.9+**
+
 #### v4.0.0 — 2025-08-24
 
 - Documentation

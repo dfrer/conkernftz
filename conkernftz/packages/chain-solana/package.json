@@ -1,6 +1,6 @@
 {
-  "name": "@foundry/chain-solana",
-  "version": "3.0.0",
+  "name": "@conkernftz/chain-solana",
+  "version": "5.0.0",
   "description": "Solana adapter: metadata JSON builder, Umi mint, optional pNFT",
   "license": "MIT",
   "type": "module",
@@ -21,7 +21,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@foundry/core": "workspace:*",
+    "@conkernftz/core": "workspace:*",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
     "@metaplex-foundation/umi": "^1.2.0",
     "@metaplex-foundation/umi-bundle-defaults": "^1.2.0",

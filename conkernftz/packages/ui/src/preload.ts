@@ -1,21 +1,21 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('foundry', {
-  run: (args: string[]) => ipcRenderer.invoke('foundry:run', args),
-  chooseProjectDir: () => ipcRenderer.invoke('foundry:chooseProjectDir'),
-  getProjectDir: () => ipcRenderer.invoke('foundry:getProjectDir'),
-  setProjectDir: (dir: string) => ipcRenderer.invoke('foundry:setProjectDir', dir),
-  readConfig: () => ipcRenderer.invoke('foundry:readConfig'),
-  readConfigAt: (dir: string) => ipcRenderer.invoke('foundry:readConfigAt', dir),
-  writeConfig: (json: unknown) => ipcRenderer.invoke('foundry:writeConfig', json),
-  chooseDirInsideProject: () => ipcRenderer.invoke('foundry:chooseDirInsideProject'),
-  readFile: (relativePath: string) => ipcRenderer.invoke('foundry:readFile', relativePath),
-  ensureDirs: (relativePaths: string[]) => ipcRenderer.invoke('foundry:ensureDirs', relativePaths),
-  listImages: (relativePath: string) => ipcRenderer.invoke('foundry:listImages', relativePath),
-  openInExplorer: (relativePath: string) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
-  listDir: (relativePath: string) => ipcRenderer.invoke('foundry:listDir', relativePath),
-  renameFiles: (pairs: { from: string; to: string }[]) => ipcRenderer.invoke('foundry:renameFiles', pairs),
-  openExternal: (url: string) => ipcRenderer.invoke('foundry:openExternal', url),
+contextBridge.exposeInMainWorld('conkernftz', {
+  run: (args: string[]) => ipcRenderer.invoke('conkernftz:run', args),
+  chooseProjectDir: () => ipcRenderer.invoke('conkernftz:chooseProjectDir'),
+  getProjectDir: () => ipcRenderer.invoke('conkernftz:getProjectDir'),
+  setProjectDir: (dir: string) => ipcRenderer.invoke('conkernftz:setProjectDir', dir),
+  readConfig: () => ipcRenderer.invoke('conkernftz:readConfig'),
+  readConfigAt: (dir: string) => ipcRenderer.invoke('conkernftz:readConfigAt', dir),
+  writeConfig: (json: unknown) => ipcRenderer.invoke('conkernftz:writeConfig', json),
+  chooseDirInsideProject: () => ipcRenderer.invoke('conkernftz:chooseDirInsideProject'),
+  readFile: (relativePath: string) => ipcRenderer.invoke('conkernftz:readFile', relativePath),
+  ensureDirs: (relativePaths: string[]) => ipcRenderer.invoke('conkernftz:ensureDirs', relativePaths),
+  listImages: (relativePath: string) => ipcRenderer.invoke('conkernftz:listImages', relativePath),
+  openInExplorer: (relativePath: string) => ipcRenderer.invoke('conkernftz:openInExplorer', relativePath),
+  listDir: (relativePath: string) => ipcRenderer.invoke('conkernftz:listDir', relativePath),
+  renameFiles: (pairs: { from: string; to: string }[]) => ipcRenderer.invoke('conkernftz:renameFiles', pairs),
+  openExternal: (url: string) => ipcRenderer.invoke('conkernftz:openExternal', url),
 });
 
 

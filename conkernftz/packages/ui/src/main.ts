@@ -38,16 +38,16 @@ app.on('window-all-closed', () => {
 
 let projectDir: string | null = null;
 
-ipcMain.handle('foundry:chooseProjectDir', async () => {
+ipcMain.handle('conkernftz:chooseProjectDir', async () => {
   const res = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
   if (res.canceled || res.filePaths.length === 0) return { ok: false, error: 'Canceled' };
   projectDir = res.filePaths[0] as string;
   return { ok: true, projectDir };
 });
 
-ipcMain.handle('foundry:getProjectDir', async () => ({ ok: true, projectDir }));
+ipcMain.handle('conkernftz:getProjectDir', async () => ({ ok: true, projectDir }));
 
-ipcMain.handle('foundry:setProjectDir', async (_evt, dir: string) => {
+ipcMain.handle('conkernftz:setProjectDir', async (_evt, dir: string) => {
   try {
     if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
     const exists = fssync.existsSync(dir);
@@ -59,7 +59,7 @@ ipcMain.handle('foundry:setProjectDir', async (_evt, dir: string) => {
   }
 });
 
-ipcMain.handle('foundry:readConfig', async () => {
+ipcMain.handle('conkernftz:readConfig', async () => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     const p = path.join(projectDir, 'foundry.config.json');
@@ -70,7 +70,7 @@ ipcMain.handle('foundry:readConfig', async () => {
   }
 });
 
-ipcMain.handle('foundry:readConfigAt', async (_evt, dir: string) => {
+ipcMain.handle('conkernftz:readConfigAt', async (_evt, dir: string) => {
   try {
     if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
     const p = path.join(dir, 'foundry.config.json');
@@ -81,7 +81,7 @@ ipcMain.handle('foundry:readConfigAt', async (_evt, dir: string) => {
   }
 });
 
-ipcMain.handle('foundry:writeConfig', async (_evt, json: unknown) => {
+ipcMain.handle('conkernftz:writeConfig', async (_evt, json: unknown) => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     const p = path.join(projectDir, 'foundry.config.json');
@@ -126,6 +126,24 @@ async function ensureCliAndDepsBuilt(): Promise<void> {
   }
 }
 
+async function rebuildCliAll(): Promise<void> {
+  const uiDistDir = __dirname; // .../packages/ui/dist
+  const repoRoot = path.resolve(uiDistDir, '../../..');
+  const pkgsDir = path.resolve(uiDistDir, '../..'); // .../packages
+  try {
+    await runPnpm(['-C', path.join(pkgsDir, 'core'), 'build'], repoRoot);
+  } catch {}
+  try {
+    await runPnpm(['-C', path.join(pkgsDir, 'storage'), 'build'], repoRoot);
+  } catch {}
+  try {
+    await runPnpm(['-C', path.join(pkgsDir, 'chain-solana'), 'build'], repoRoot);
+  } catch {}
+  try {
+    await runPnpm(['-C', path.join(pkgsDir, 'cli'), 'build'], repoRoot);
+  } catch {}
+}
+
 function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; code: number | null }>{
   return new Promise((resolve, reject) => {
     const child = fork(binPath, args, { cwd, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
@@ -138,22 +156,30 @@ function runNodeModule(binPath: string, args: string[], cwd: string): Promise<{ 
   });
 }
 
-ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
+ipcMain.handle('conkernftz:run', async (_evt, args: string[]) => {
   try {
     if (!projectDir) {
       const pick = await dialog.showOpenDialog({ properties: ['openDirectory'] });
       if (pick.canceled || pick.filePaths.length === 0) return { ok: false, error: 'Select a project directory first.' };
       projectDir = pick.filePaths[0] as string;
     }
-    // Build prerequisites on-demand if needed
-    await ensureCliAndDepsBuilt();
+    // Ensure CLI is freshly built to reflect recent code changes
+    try { await rebuildCliAll(); } catch { await ensureCliAndDepsBuilt(); }
 
     const root = path.join(__dirname, '../../cli');
     const bin = path.join(root, 'dist', 'bin.js');
-    const { stdout, stderr, code } = await runNodeModule(bin, args, projectDir as string);
+    let { stdout, stderr, code } = await runNodeModule(bin, args, projectDir as string);
     if (code !== 0) {
-      throw new Error(stderr || `CLI exited with code ${code}`);
+      const errMsg = String(stderr || '');
+      const hasUnknown = /unknown option/i.test(errMsg);
+      const hasNewFlags = args.includes('--seed') || args.includes('--overlay');
+      if (hasUnknown && hasNewFlags) {
+        // Rebuild CLI to pick up new flags, then retry once
+        await rebuildCliAll();
+        ({ stdout, stderr, code } = await runNodeModule(bin, args, projectDir as string));
+      }
     }
+    if (code !== 0) throw new Error(stderr || `CLI exited with code ${code}`);
     return { ok: true, stdout: String(stdout ?? '') };
   } catch (e: any) {
     return { ok: false, error: String(e?.message ?? e) };
@@ -161,7 +187,7 @@ ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
 });
 
 // Pick a dir within the currently selected project
-ipcMain.handle('foundry:chooseDirInsideProject', async () => {
+ipcMain.handle('conkernftz:chooseDirInsideProject', async () => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     const res = await dialog.showOpenDialog({ title: 'Choose directory', defaultPath: projectDir, properties: ['openDirectory', 'createDirectory'] });
@@ -175,7 +201,7 @@ ipcMain.handle('foundry:chooseDirInsideProject', async () => {
 });
 
 // Read arbitrary text file within project (e.g., show rarity report)
-ipcMain.handle('foundry:readFile', async (_evt, relativePath: string) => {
+ipcMain.handle('conkernftz:readFile', async (_evt, relativePath: string) => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     const p = path.join(projectDir, relativePath);
@@ -187,7 +213,7 @@ ipcMain.handle('foundry:readFile', async (_evt, relativePath: string) => {
 });
 
 // Ensure directories exist inside the project
-ipcMain.handle('foundry:ensureDirs', async (_evt, relativePaths: string[]) => {
+ipcMain.handle('conkernftz:ensureDirs', async (_evt, relativePaths: string[]) => {
   try {
     if (!projectDir) return { ok: false, error: 'No project selected' };
     for (const rel of relativePaths) {
@@ -202,7 +228,7 @@ ipcMain.handle('foundry:ensureDirs', async (_evt, relativePaths: string[]) => {
 });
 
 // List images (png/webp/gif) count inside a directory relative to project
-ipcMain.handle('foundry:listImages', async (_evt, relativePath: string) => {
+ipcMain.handle('conkernftz:listImages', async (_evt, relativePath: string) => {
   try {
     if (!relativePath) return { ok: true, count: 0 };
     const dir = path.isAbsolute(relativePath) ? relativePath : (projectDir ? path.join(projectDir, relativePath) : relativePath);
@@ -221,7 +247,7 @@ ipcMain.handle('foundry:listImages', async (_evt, relativePath: string) => {
 });
 
 // Open a directory in the OS file explorer
-ipcMain.handle('foundry:openInExplorer', async (_evt, relativePath: string) => {
+ipcMain.handle('conkernftz:openInExplorer', async (_evt, relativePath: string) => {
   try {
     const dir = path.isAbsolute(relativePath || '') ? (relativePath || '') : (projectDir ? path.join(projectDir, relativePath || '') : (relativePath || ''));
     if (!fssync.existsSync(dir)) return { ok: false, error: 'Path does not exist' };
@@ -232,7 +258,7 @@ ipcMain.handle('foundry:openInExplorer', async (_evt, relativePath: string) => {
   }
 });
 
-ipcMain.handle('foundry:openExternal', async (_evt, url: string) => {
+ipcMain.handle('conkernftz:openExternal', async (_evt, url: string) => {
   try {
     if (!url || typeof url !== 'string') return { ok: false, error: 'Invalid URL' };
     await shell.openExternal(url);
@@ -243,7 +269,7 @@ ipcMain.handle('foundry:openExternal', async (_evt, url: string) => {
 });
 
 // List directory (simple helper for debugging paths)
-ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
+ipcMain.handle('conkernftz:listDir', async (_evt, relativePath: string) => {
   try {
     const dir = path.isAbsolute(relativePath || '') ? (relativePath || '') : (projectDir ? path.join(projectDir, relativePath || '') : (relativePath || ''));
     const dirents = await fs.readdir(dir, { withFileTypes: true });
@@ -255,7 +281,7 @@ ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
 });
 
 // Bulk rename files inside the project. Accepts absolute or project-relative 'from' and 'to' paths
-ipcMain.handle('foundry:renameFiles', async (_evt, pairs: { from: string; to: string }[]) => {
+ipcMain.handle('conkernftz:renameFiles', async (_evt, pairs: { from: string; to: string }[]) => {
   try {
     if (!Array.isArray(pairs) || pairs.length === 0) return { ok: true, renamed: 0 };
     const toAbs = (p: string) => (path.isAbsolute(p) ? p : (projectDir ? path.join(projectDir, p) : p));

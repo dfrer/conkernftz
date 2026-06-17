@@ -10,14 +10,15 @@ export function createSeededRng(seed: number | string): SeededRng {
     state ^= state << 13;
     state ^= state >>> 17;
     state ^= state << 5;
-    // uint32 to [0,1)
-    return ((state >>> 0) / 0xffffffff);
+    // uint32 to [0,1): divide by 2^32 (0x100000000), not 2^32-1, so 1.0 is never returned.
+    return (state >>> 0) / 0x100000000;
   };
   return {
     next,
     int(maxExclusive: number): number {
       if (maxExclusive <= 0) throw new Error('maxExclusive must be > 0');
-      return Math.floor(next() * maxExclusive);
+      // next() is strictly < 1, but clamp defensively to guarantee a valid index.
+      return Math.min(maxExclusive - 1, Math.floor(next() * maxExclusive));
     },
   };
 }

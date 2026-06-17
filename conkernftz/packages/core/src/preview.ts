@@ -50,4 +50,36 @@ export function generateRarityReport(
   return { traitCounts: counts, editionCount: editions.length };
 }
 
+export async function makePlacementsOverlay(
+  placements: Array<{ centerX: number; centerY: number; color?: string; radius?: number }>,
+  size: { width: number; height: number },
+  style?: { defaultColor?: string; radius?: number; opacity?: number },
+): Promise<Buffer> {
+  const width = size.width;
+  const height = size.height;
+  const color = style?.defaultColor || '#ff6adf';
+  const radius = Math.max(1, Math.floor(style?.radius ?? 8));
+  const opacity = Math.max(0, Math.min(1, style?.opacity ?? 0.4));
+  // Build a single SVG with circles
+  const circles = placements
+    .map((p) => {
+      const cx = Math.round(p.centerX);
+      const cy = Math.round(p.centerY);
+      const r = Math.max(1, Math.floor(p.radius ?? radius));
+      const col = p.color || color;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="${opacity}" stroke="${col}" stroke-opacity="${opacity}" stroke-width="1" />`;
+    })
+    .join('');
+  const svg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="transparent"/>${circles}</svg>`,
+    'utf8',
+  );
+  const sharp = (await import('sharp')).default;
+  const overlay = await sharp(svg).png().toBuffer();
+  const base = sharp({
+    create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  });
+  return base.composite([{ input: overlay, left: 0, top: 0 }]).png().toBuffer();
+}
+
 

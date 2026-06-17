@@ -1,26 +1,27 @@
 {
-  "name": "@foundry/cli",
-  "version": "3.0.0",
-  "description": "CLI for conkernftz: init/validate/preview/build/upload/mint",
+  "name": "@conkernftz/cli",
+  "version": "5.0.0",
+  "description": "CLI for conkernftz: init/validate/preview/build/upload/mint/deploy",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "foundry": "dist/bin.js"
+    "conkernftz": "dist/bin.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run || exit 0",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts",
     "clean": "rimraf dist",
     "start": "node dist/bin.js"
   },
   "dependencies": {
-    "@foundry/core": "workspace:*",
-    "@foundry/storage": "workspace:*",
-    "@foundry/chain-solana": "workspace:*",
+    "@conkernftz/core": "workspace:*",
+    "@conkernftz/storage": "workspace:*",
+    "@conkernftz/chain-solana": "workspace:*",
+    "@conkernftz/chain-evm": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "execa": "^9.4.0",

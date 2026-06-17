@@ -67,6 +67,7 @@ export interface ChainAdapter {
   buildOffchainJson(input: {
     index: number;
     name: string;
+    symbol?: string;
     description: string;
     imageUri: string;
     animationUri?: string;

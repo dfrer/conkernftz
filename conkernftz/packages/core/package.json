@@ -1,6 +1,6 @@
 {
-  "name": "@foundry/core",
-  "version": "3.0.0",
+  "name": "@conkernftz/core",
+  "version": "5.0.0",
   "description": "Core compositing engine, rarity, DNA, rule engine, preview",
   "license": "MIT",
   "type": "module",
@@ -24,7 +24,6 @@
   "sideEffects": false,
   "dependencies": {
     "@noble/hashes": "^1.4.0",
-    "canvas": "^2.11.2",
     "sharp": "^0.33.4",
     "zod": "^3.23.8"
   }

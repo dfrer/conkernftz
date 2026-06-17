@@ -57,9 +57,10 @@ function getTemplate(): Record<string, unknown> {
     uniqueness: { hash: 'sha256', ignore: ['Background'] },
     export: { outDir: 'build', imageFormat: 'png', includePreviewContactSheet: true },
     storage: {
-      provider: 'arweave',
-      arweave: { bundlrNode: 'https://node1.bundlr.network', currency: 'sol', keyPath: './keys/bundlr.json' },
-      ipfs: { pinataKey: '', pinataSecret: '', nftStorageKey: '' },
+      provider: 'irys',
+      irys: { token: 'solana', keyPath: './keys/solana.json' },
+      pinata: { jwt: '', gateway: '' },
+      local: { baseUri: '' },
     },
     chain: {
       target: 'solana',
@@ -73,6 +74,16 @@ function getTemplate(): Record<string, unknown> {
         isMutable: true,
         usePnft: false,
         rulesetPda: null,
+      },
+      // To target an EVM chain instead, set target to 'evm' and fill in this block.
+      evm: {
+        chainId: 11155111,
+        rpcUrl: 'https://rpc.sepolia.org',
+        privateKeyPath: './keys/evm.key',
+        baseUri: '',
+        maxSupply: 0,
+        royaltyReceiver: '',
+        royaltyBps: 500,
       },
     },
   };

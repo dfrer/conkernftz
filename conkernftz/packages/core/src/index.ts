@@ -8,5 +8,8 @@ export * from './preview.js';
 export * from './project-config.js';
 export * from './catalog.js';
 export * from './generator.js';
+export * from './render.js';
+export * from './types/pattern.js';
+export * from './pattern-placement.js';
 
 
