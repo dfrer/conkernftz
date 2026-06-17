@@ -74,6 +74,22 @@ describe('CLI e2e build (tiny project)', () => {
       expect(j.properties.files[0].type).toBe('image/png');
     }
   }, 30000);
+
+  it('uploads via the local provider in dir mode and writes a contract baseURI', async () => {
+    const bin = path.resolve(__dirname, '../../dist/bin.js');
+    const { exitCode } = await execa('node', [bin, 'upload', '--provider', 'local', '--mode', 'dir'], { cwd: projDir });
+    expect(exitCode).toBe(0);
+
+    const manifest = JSON.parse(await fs.readFile(path.join(projDir, outDirRel, '.upload-manifest.json'), 'utf8'));
+    expect(manifest.provider).toBe('local');
+    expect(manifest.mode).toBe('dir');
+    expect(typeof manifest.baseUri).toBe('string');
+    expect(manifest.baseUri).toMatch(/\/json\/$/);
+
+    // Token JSON image URIs are rewritten to the uploaded images directory.
+    const j = JSON.parse(await fs.readFile(path.join(projDir, outDirRel, 'json', '1.json'), 'utf8'));
+    expect(String(j.image).startsWith('file://')).toBe(true);
+  }, 30000);
 });
 
 

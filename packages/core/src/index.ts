@@ -12,4 +12,7 @@ export * from './effects.js';
 export * from './project-build.js';
 export * from './placement.js';
 export * from './transforms.js';
+export * from './render-edition.js';
+export * from './rarity-score.js';
+export * from './animation/frames.js';
 

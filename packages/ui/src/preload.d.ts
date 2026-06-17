@@ -21,6 +21,10 @@ declare global {
       writeConfig(json: unknown): Promise<{ ok: boolean; error?: string }>;
       chooseDirInsideProject(): Promise<{ ok: boolean; path?: string; error?: string }>;
       readFile(relativePath: string): Promise<{ ok: boolean; content?: string; error?: string }>;
+      readFileBase64(relativePath: string): Promise<{ ok: boolean; base64?: string; mime?: string; error?: string }>;
+      previewLive(config: unknown, count: number, seed?: string): Promise<{ ok: boolean; format?: string; images?: string[]; error?: string }>;
+      previewEffects(config: unknown): Promise<{ ok: boolean; image?: string; error?: string }>;
+      saveJson(relPath: string, json: unknown): Promise<{ ok: boolean; error?: string }>;
       ensureDirs(relativePaths: string[]): Promise<{ ok: boolean; error?: string }>;
       listImages(relativePath: string): Promise<{ ok: boolean; count?: number; error?: string }>;
       openInExplorer(relativePath: string): Promise<{ ok: boolean; error?: string }>;

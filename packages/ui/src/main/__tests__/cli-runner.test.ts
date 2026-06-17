@@ -11,7 +11,9 @@ const { handlers, ipcMain, dialog } = vi.hoisted(() => {
 vi.mock('electron', () => ({ ipcMain, dialog }));
 vi.mock('node:fs', () => ({ default: { existsSync: vi.fn().mockReturnValue(true) } }));
 vi.mock('node:child_process', () => ({
-  fork: vi.fn((_p: string, _args: string[], _opts: any) => {
+  // cli-runner.ts uses spawn() in runNodeModule; return an EventEmitter-backed
+  // child that emits stdout then exits cleanly.
+  spawn: vi.fn((_cmd: string, _args: string[], _opts: any) => {
     const child = new EventEmitter() as any;
     child.stdout = new EventEmitter();
     child.stderr = new EventEmitter();

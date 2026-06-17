@@ -47,7 +47,7 @@ Examples:
       let files: string[] = [];
       try {
         files = await getAllImageFiles(layersDir);
-      } catch (e) {
+      } catch {
         console.error(`ERROR: Unable to read layers directory at ${layersDir}`);
         process.exitCode = 1;
         return;

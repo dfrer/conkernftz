@@ -2,14 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { loadLayerCatalog } from './catalog.js';
 import { generateEditionsConstrained, type GeneratedEdition } from './generator.js';
-import { compositeLayers } from './compositor.js';
 import { loadSpawnMapFile } from './spawn.js';
-import { createSeededRng } from './rng.js';
-import { placeAsset, resolveCandidateDots, mapNormalizedToPixels } from './placement.js';
 import { makeDna } from './dna.js';
 import { generateRarityReport } from './preview.js';
-import { applyTransformRules, type TransformableLayerState } from './transforms.js';
-import type { ResolvedEffects } from './effects.js';
+import { renderEdition } from './render-edition.js';
+import { renderEditionFrames } from './animation/frames.js';
+import { rankEditions } from './rarity-score.js';
 import type { ProjectConfig } from './project-config.js';
 
 export interface BuildProgress {
@@ -75,7 +73,12 @@ export async function buildCollection(
     { rules: cfg.rules ?? {}, uniqueness: cfg.uniqueness, maxAttemptsPerEdition: input.maxAttemptsPerEdition ?? 500 },
   );
 
-  const allMetadata: any[] = [];
+  // Score + rank the whole collection up front so each token's metadata can
+  // carry its rarity rank (rank 1 = rarest).
+  const ranked = rankEditions(editions);
+  const rankByEdition = new Map(ranked.tokens.map((t) => [t.edition, t]));
+
+  const allMetadata: Array<Record<string, unknown>> = [];
   const outFormat: 'png' | 'webp' = (cfg.export?.imageFormat === 'webp' ? 'webp' : 'png');
 
   // Optional: load spawn map if configured
@@ -94,126 +97,74 @@ export async function buildCollection(
       const i = startIdx + batchOffset;
       const idx = i + 1;
       const picks = Array.from(ed.picks);
-      try {
-        if ((cfg as any)?.experimental?.generation?.shuffleLayers) {
-          for (let k = picks.length - 1; k > 0; k--) {
-            const j = Math.floor(Math.random() * (k + 1));
-            const tmp = picks[k]!; picks[k] = picks[j]!; picks[j] = tmp;
-          }
+      if (cfg.experimental?.generation?.shuffleLayers) {
+        for (let k = picks.length - 1; k > 0; k--) {
+          const j = Math.floor(Math.random() * (k + 1));
+          const tmp = picks[k]!; picks[k] = picks[j]!; picks[j] = tmp;
         }
-      } catch {}
-      // If spawn map present, compute per-layer offsets via placement
-      let placedOffsets: Array<{ offX: number; offY: number }> = [];
-      if (spawnMap && Array.isArray(picks)) {
-        const rng = createSeededRng(`${input.seed}:ed:${idx}`);
-        const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-        const mapper = {
-          authorWidth: spawnMap.authoringSize.width,
-          authorHeight: spawnMap.authoringSize.height,
-          outWidth: cfg.image.width,
-          outHeight: cfg.image.height,
-          fitMode: (spawnMap.rules?.fitMode ?? spawnFit) as any,
-        };
-        placedOffsets = picks.map((p: any, k: number) => {
-          const layer = String(p.layer || p.option?.value || `L${k}`);
-          const assetKey = `${layer}:${p.option.value}`;
-          const candidates = resolveCandidateDots(spawnMap, layer, assetKey);
-          // TODO: detect asset size; currently we draw full-canvas; use canvas size as bbox
-          const assetSize = { width: cfg.image.width, height: cfg.image.height };
-          const pol = spawnMap.rules?.selection ?? 'weighted';
-          const jitterDef = spawnMap.rules?.jitter?.defaultRadiusPx ?? 0;
-          const coll = spawnMap.rules?.collision;
-          const result = placeAsset({
-            globalSeed: `${input.seed}:${idx}:${layer}:${p.option.value}`,
-            layerName: layer,
-            assetKey,
-            candidateDots: candidates,
-            policy: pol as any,
-            jitterDefaultPx: jitterDef,
-            collision: coll ? {
-              enabled: !!coll.enabled,
-              paddingPx: Math.max(0, coll.paddingPx ?? 0),
-              strategy: (coll.strategy ?? 'retry') as any,
-              maxAttempts: Math.max(1, coll.maxAttemptsPerAsset ?? 10),
-            } : undefined,
-            mapper,
-            asset: assetSize,
-            anchor: (spawnMap.rules?.anchor ?? 'center') as any,
-            occupiedBoxes: occupied,
-            rng,
-          });
-          // Translate finalX/finalY into layer offsets
-          const mappedCenter = mapNormalizedToPixels(mapper, 0.5, 0.5);
-          // Our compositor draws full-canvas images placed at (offsetX, offsetY).
-          // For now we approximate by using the anchor point as offsets.
-          const offX = Math.round(result.x);
-          const offY = Math.round(result.y);
-          occupied.push({ x: result.x, y: result.y, w: result.w, h: result.h });
-          return { offX, offY };
-        });
       }
 
-      const layerStates: TransformableLayerState[] = picks.map((p: any, k: number) => {
-        const baseOffsetX = placedOffsets[k]?.offX ?? (p.option.offsetX ?? p.option.effects?.offsetX ?? 0);
-        const baseOffsetY = placedOffsets[k]?.offY ?? (p.option.offsetY ?? p.option.effects?.offsetY ?? 0);
-        const baseRotate = p.option.effects?.rotate;
-        const baseScale = p.option.effects?.scale;
-        return {
-          index: k,
-          layer: String(p.layer),
-          value: String(p.option.value),
-          filename: path.basename(p.option.filePath),
-          baseOffsetX,
-          baseOffsetY,
-          baseRotate,
-          baseScale,
-        };
+      const buffer = await renderEdition({
+        config: cfg,
+        picks,
+        traits: ed.traits,
+        spawnMap,
+        spawnFit,
+        placementRngSeed: `${input.seed}:ed:${idx}`,
+        assetSeedBase: `${input.seed}:${idx}`,
+        format: outFormat,
       });
 
-      const appliedTransforms = applyTransformRules(cfg.rules?.transforms, layerStates, ed.traits);
-
-      const buffer = await compositeLayers(
-        picks.map((p: any, k: number) => {
-          const state = layerStates[k]!;
-          const applied = appliedTransforms.get(k);
-          const finalOffsetX = applied?.offsetX ?? state.baseOffsetX;
-          const finalOffsetY = applied?.offsetY ?? state.baseOffsetY;
-          const finalRotate = applied?.rotate ?? state.baseRotate;
-          const finalScale = applied?.scale ?? state.baseScale;
-          let effects: ResolvedEffects | undefined = cloneResolvedEffects(p.option.effects);
-          if (!effects && (finalRotate !== undefined || finalScale !== undefined)) {
-            effects = {};
-          }
-          if (effects) {
-            if (finalRotate !== undefined) effects.rotate = finalRotate;
-            else if (state.baseRotate === undefined) delete effects.rotate;
-            if (finalScale !== undefined) effects.scale = finalScale;
-            else if (state.baseScale === undefined) delete effects.scale;
-            if ('offsetX' in effects) delete effects.offsetX;
-            if ('offsetY' in effects) delete effects.offsetY;
-          }
-          return {
-            path: p.option.filePath,
-            blend: p.option.blend ?? p.option.effects?.blend ?? 'normal',
-            opacity: p.option.opacity ?? p.option.effects?.opacity ?? 1,
-            offsetX: finalOffsetX,
-            offsetY: finalOffsetY,
-            effects,
-          };
-        }),
-        {
-          width: cfg.image.width,
-          height: cfg.image.height,
-          background: cfg.image.background,
-          format: outFormat,
-          superSample: Number((cfg as any)?.experimental?.compositor?.superSample || 1) || 1,
-          forceCpu: !!((cfg as any)?.experimental?.compositor?.forceCpu),
-        },
-      );
-
       const imageFilename = `${idx}.${outFormat}`;
+      const writes: Array<Promise<void>> = [fs.writeFile(path.join(outImages, imageFilename), buffer)];
+      const files: Array<{ uri: string; type: string }> = [
+        { uri: `./images/${imageFilename}`, type: outFormat === 'webp' ? 'image/webp' : 'image/png' },
+      ];
+
+      // Optional animated output: render frames once and encode each requested format.
+      let animationUri: string | undefined;
+      const anim = cfg.export.animation;
+      if (anim?.enabled) {
+        const fps = anim.fps ?? 12;
+        const loop = anim.loop !== false;
+        const frames = await renderEditionFrames({
+          config: cfg,
+          layers: cfg.layers,
+          picks,
+          traits: ed.traits,
+          spawnMap,
+          spawnFit,
+          placementRngSeed: `${input.seed}:ed:${idx}`,
+          assetSeedBase: `${input.seed}:${idx}`,
+          fps,
+          durationMs: anim.durationMs ?? 1000,
+        });
+        const formats = anim.format && anim.format.length > 0 ? anim.format : ['gif'];
+        for (const fmt of formats) {
+          let data: Buffer;
+          let mime: string;
+          if (fmt === 'mp4') {
+            const { encodeMp4 } = await import('./animation/ffmpeg.js');
+            data = await encodeMp4(frames, { fps });
+            mime = 'video/mp4';
+          } else if (fmt === 'webp') {
+            const { encodeAnimatedWebp } = await import('./animation/ffmpeg.js');
+            data = await encodeAnimatedWebp(frames, { fps, loop });
+            mime = 'image/webp';
+          } else {
+            const { encodeGif } = await import('./animation/gif.js');
+            data = await encodeGif(frames, { fps, loop });
+            mime = 'image/gif';
+          }
+          const animFilename = `${idx}.${fmt}`;
+          writes.push(fs.writeFile(path.join(outImages, animFilename), data));
+          files.push({ uri: `./images/${animFilename}`, type: mime });
+          if (!animationUri) animationUri = `./images/${animFilename}`;
+        }
+      }
+
+      const category = animationUri && animationUri.endsWith('.mp4') ? 'video' : 'image';
       const attributes = Object.entries(ed.traits).map(([trait_type, value]) => ({ trait_type, value }));
-      const files = [{ uri: `./images/${imageFilename}`, type: outFormat === 'webp' ? 'image/webp' : 'image/png' }];
       const baseJson = input.buildJson
         ? input.buildJson({
             index: idx,
@@ -221,6 +172,7 @@ export async function buildCollection(
             symbol: cfg.symbol ?? '',
             description: cfg.description ?? '',
             imageUri: `./images/${imageFilename}`,
+            animationUri,
             attributes,
             files,
           })
@@ -229,25 +181,28 @@ export async function buildCollection(
             symbol: cfg.symbol ?? '',
             description: cfg.description ?? '',
             image: `./images/${imageFilename}`,
+            ...(animationUri ? { animation_url: animationUri } : {}),
             attributes,
-            properties: { files, category: 'image' },
+            properties: { files, category },
           };
+      const tokenRarity = rankByEdition.get(idx);
       const json = {
         ...baseJson,
         dna: makeDna(ed.traits, cfg.uniqueness),
         edition: idx,
+        ...(tokenRarity
+          ? { rarity: { score: Number(tokenRarity.score.toFixed(4)), rank: tokenRarity.rank } }
+          : {}),
       } as Record<string, unknown>;
 
-      await Promise.all([
-        fs.writeFile(path.join(outImages, imageFilename), buffer),
-        fs.writeFile(path.join(outJson, `${idx}.json`), JSON.stringify(json, null, 2)),
-      ]);
+      writes.push(fs.writeFile(path.join(outJson, `${idx}.json`), JSON.stringify(json, null, 2)));
+      await Promise.all(writes);
       return json;
     });
 
     const batchResults = await Promise.allSettled(batchPromises);
     const successfulResults = batchResults
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+      .filter((r): r is PromiseFulfilledResult<Record<string, unknown>> => r.status === 'fulfilled')
       .map((r) => r.value);
     allMetadata.push(...successfulResults);
 
@@ -260,26 +215,11 @@ export async function buildCollection(
   const rarity = editions.map((e: { traits: Record<string, string> }) => ({ traits: e.traits }));
   const stats = generateRarityReport(rarity);
   await fs.writeFile(path.join(outDir, 'rarity.json'), JSON.stringify(stats, null, 2));
+  // Per-token rarity scores + ranks and per-trait statistics (for tooling / UI).
+  await fs.writeFile(
+    path.join(outDir, 'rarity-ranks.json'),
+    JSON.stringify({ editionCount: ranked.stats.editionCount, traits: ranked.stats.traits, tokens: ranked.tokens }, null, 2),
+  );
 
   return { outDir, imagesDir: outImages, jsonDir: outJson, editions };
-}
-
-
-function cloneResolvedEffects(e?: ResolvedEffects): ResolvedEffects | undefined {
-  if (!e) return undefined;
-  return {
-    blend: e.blend,
-    opacity: e.opacity,
-    offsetX: e.offsetX,
-    offsetY: e.offsetY,
-    rotate: e.rotate,
-    scale: e.scale,
-    glow: e.glow ? { ...e.glow } : undefined,
-    stroke: e.stroke ? { ...e.stroke } : undefined,
-    shadow: e.shadow ? { ...e.shadow } : undefined,
-    extrude: e.extrude ? { ...e.extrude } : undefined,
-    blur: e.blur,
-    modulate: e.modulate ? { ...e.modulate } : undefined,
-    colorOverlay: e.colorOverlay ? { ...e.colorOverlay } : undefined,
-  };
 }

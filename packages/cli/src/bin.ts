@@ -13,6 +13,7 @@ import { deployCmd } from './commands/deploy.js';
 import { e2eCmd } from './commands/e2e.js';
 import { dupesCmd } from './commands/dupes.js';
 import { auditCmd } from './commands/audit.js';
+import { candyCmd } from './commands/candy.js';
 
 function readVersion(): string {
   try {
@@ -61,6 +62,7 @@ program.addCommand(auditCmd());
 program.addCommand(uploadCmd());
 program.addCommand(mintCmd());
 program.addCommand(deployCmd());
+program.addCommand(candyCmd());
 program.addCommand(e2eCmd());
 
 program.parseAsync(process.argv);

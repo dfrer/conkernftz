@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { SpawnMap, SpawnDot } from './types.js';
+import type { SpawnMap, SpawnDot, SpawnMappings, SpawnRules } from './types.js';
 
 export async function loadSpawnMapFile(projectRoot: string, mapPath?: string): Promise<SpawnMap | undefined> {
   try {
@@ -14,27 +14,29 @@ export async function loadSpawnMapFile(projectRoot: string, mapPath?: string): P
   }
 }
 
-export function validateSpawnMap(json: any): SpawnMap | undefined {
+export function validateSpawnMap(json: unknown): SpawnMap | undefined {
   if (!json || typeof json !== 'object') return undefined;
-  if (json.version !== 1) return undefined;
-  const a = json.authoringSize;
+  const j = json as Record<string, unknown>;
+  if (j.version !== 1) return undefined;
+  const a = j.authoringSize as { width?: unknown; height?: unknown } | undefined;
   if (!a || typeof a.width !== 'number' || typeof a.height !== 'number' || a.width <= 0 || a.height <= 0) return undefined;
-  const dots = Array.isArray(json.dots) ? json.dots.filter(validDot) : [];
+  const dots = Array.isArray(j.dots) ? (j.dots as unknown[]).filter(validDot) : [];
   const out: SpawnMap = {
     version: 1,
     authoringSize: { width: Math.round(a.width), height: Math.round(a.height) },
     dots,
-    mappings: json.mappings && typeof json.mappings === 'object' ? { ...json.mappings } : undefined,
-    rules: json.rules && typeof json.rules === 'object' ? { ...json.rules } : undefined,
+    mappings: j.mappings && typeof j.mappings === 'object' ? { ...(j.mappings as SpawnMappings) } : undefined,
+    rules: j.rules && typeof j.rules === 'object' ? { ...(j.rules as SpawnRules) } : undefined,
   };
   return out;
 }
 
-function validDot(d: any): d is SpawnDot {
+function validDot(d: unknown): d is SpawnDot {
   if (!d || typeof d !== 'object') return false;
-  if (typeof d.id !== 'string' || d.id.length === 0) return false;
-  if (typeof d.x !== 'number' || typeof d.y !== 'number') return false;
-  if (d.x < 0 || d.x > 1 || d.y < 0 || d.y > 1) return false;
+  const o = d as Record<string, unknown>;
+  if (typeof o.id !== 'string' || o.id.length === 0) return false;
+  if (typeof o.x !== 'number' || typeof o.y !== 'number') return false;
+  if (o.x < 0 || o.x > 1 || o.y < 0 || o.y > 1) return false;
   return true;
 }
 

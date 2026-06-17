@@ -35,6 +35,12 @@ jobs:
       - name: Build
         run: pnpm -w build
 
+      - name: Typecheck
+        run: pnpm -w typecheck
+
+      - name: Lint
+        run: pnpm -w lint
+
       - name: Test
         env:
           CI: true

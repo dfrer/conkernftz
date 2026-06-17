@@ -29,13 +29,12 @@ Examples:
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const coreBase = '@conkernftz/core/dist/';
-      const { ProjectConfigSchema } = await import(coreBase + 'project-config.js');
+      const { ProjectConfigSchema } = await import('@conkernftz/core/project-config');
       const parsed = ProjectConfigSchema.parse(JSON.parse(raw));
 
-      const { loadLayerCatalog } = await import(coreBase + 'catalog.js');
-      const { generateEditionsConstrained } = await import(coreBase + 'generator.js');
-      const { makeContactSheet, renderPreviewEdition } = await import(coreBase + 'preview.js');
+      const { loadLayerCatalog } = await import('@conkernftz/core/catalog');
+      const { generateEditionsConstrained } = await import('@conkernftz/core/generator');
+      const { makeContactSheet, renderPreviewEdition } = await import('@conkernftz/core/preview');
       const catalog = await loadLayerCatalog(process.cwd(), parsed.layers, {
         mode: 'filenameDelimiter',
         delimiter: parsed.rarity.delimiter,
@@ -100,7 +99,7 @@ Examples:
       let idx = 1;
       const previewPaths: string[] = [];
       const outFormat = (parsed.export?.imageFormat === 'webp' ? 'webp' : 'png') as 'png' | 'webp';
-      const bufs = await renderPreviewEdition(process.cwd(), parsed as any, usedSeed, editions.length);
+      const bufs = await renderPreviewEdition(process.cwd(), parsed, usedSeed, editions.length);
       for (const buffer of bufs) {
         const p = path.join(outDir, `preview_${idx++}.${outFormat}`);
         await fs.writeFile(p, buffer);

@@ -10,6 +10,9 @@ export function buildCmd(): Command {
     .option('--count <n>', 'number of editions to build', undefined)
     .option('--seed <s>', "seed for RNG ('random' for a new seed per run)", 'build')
     .option('--max-attempts <n>', 'max attempts per edition (uniqueness)', '500')
+    .option('--animate', 'render animated output (overrides export.animation.enabled)')
+    .option('--fps <n>', 'animation frames per second')
+    .option('--anim-format <list>', 'comma-separated animation formats: gif,mp4,webp')
     .addHelpText(
       'afterAll',
       `
@@ -22,16 +25,32 @@ Examples:
 
   # Increase search attempts when rules are strict
   foundry build --count 250 --max-attempts 5000
+
+  # Render animated output (requires layers with an "animation" block)
+  foundry build --count 10 --animate --fps 15 --anim-format gif,mp4
 `
     )
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const coreBase = '@conkernftz/core/dist/';
-      const { ProjectConfigSchema } = await import(coreBase + 'project-config.js');
+      const { ProjectConfigSchema } = await import('@conkernftz/core/project-config');
       const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
 
-      const { buildCollection } = await import(coreBase + 'project-build.js');
+      // CLI flags can enable/override the animation config block.
+      if (opts.animate) {
+        const animation = { ...(cfg.export.animation ?? {}), enabled: true };
+        if (opts.fps) animation.fps = Number(opts.fps);
+        if (opts.animFormat) {
+          const fmts = String(opts.animFormat)
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s === 'gif' || s === 'mp4' || s === 'webp') as Array<'gif' | 'mp4' | 'webp'>;
+          if (fmts.length > 0) animation.format = fmts;
+        }
+        cfg.export.animation = animation;
+      }
+
+      const { buildCollection } = await import('@conkernftz/core/project-build');
 
       const count = opts.count ? Number(opts.count) : cfg.editionSize;
       const seedInput = String(opts.seed ?? 'build');

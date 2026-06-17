@@ -109,6 +109,30 @@ export function initProjectIpc(): void {
     }
   });
 
+  // Read a binary file under the project as base64 (for inline image/animation previews).
+  electron.ipcMain.handle('foundry:readFileBase64', async (_evt, relativePath: string) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const root = path.resolve(projectDir);
+      const p = path.resolve(root, relativePath);
+      // Path containment: refuse anything resolving outside the project root.
+      if (p !== root && !p.startsWith(root + path.sep)) return { ok: false, error: 'Path escapes project' };
+      const buf = await fs.readFile(p);
+      const ext = path.extname(p).toLowerCase();
+      const mime =
+        ext === '.png' ? 'image/png'
+        : ext === '.webp' ? 'image/webp'
+        : ext === '.gif' ? 'image/gif'
+        : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+        : ext === '.mp4' ? 'video/mp4'
+        : ext === '.webm' ? 'video/webm'
+        : 'application/octet-stream';
+      return { ok: true, base64: buf.toString('base64'), mime };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message ?? e) };
+    }
+  });
+
   electron.ipcMain.handle('foundry:ensureDirs', async (_evt, relativePaths: string[]) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };

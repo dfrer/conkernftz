@@ -33,7 +33,7 @@ Examples:
       } else {
         const cfgPath = path.join(cwd, 'foundry.config.json');
         const raw = await fs.readFile(cfgPath, 'utf8');
-        const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
+        const { ProjectConfigSchema } = await import('@conkernftz/core/project-config');
         const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
         const base = path.isAbsolute(cfg.export.outDir) ? cfg.export.outDir : path.join(cwd, cfg.export.outDir);
         outDir = path.resolve(base);
@@ -45,7 +45,7 @@ Examples:
       try {
         const dirents = await fs.readdir(jsonDir, { withFileTypes: true });
         jsonFiles = dirents.filter(d => d.isFile() && /\.json$/i.test(d.name)).map(d => path.join(jsonDir, d.name));
-      } catch (e) {
+      } catch {
         const msg = `ERROR: Could not read JSON dir at ${jsonDir}. Did you run build?`;
         if (opts.json) { console.log(JSON.stringify({ ok: false, error: msg })); return; }
         console.error(msg);

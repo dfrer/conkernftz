@@ -11,9 +11,31 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./project-config": {
+      "types": "./dist/project-config.d.ts",
+      "default": "./dist/project-config.js"
+    },
+    "./project-build": {
+      "types": "./dist/project-build.d.ts",
+      "default": "./dist/project-build.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "default": "./dist/catalog.js"
+    },
+    "./generator": {
+      "types": "./dist/generator.d.ts",
+      "default": "./dist/generator.js"
+    },
+    "./preview": {
+      "types": "./dist/preview.d.ts",
+      "default": "./dist/preview.js"
+    },
     "./dist/*": "./dist/*"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -24,9 +46,12 @@
   "sideEffects": false,
   "dependencies": {
     "@noble/hashes": "^1.4.0",
+    "ffmpeg-static": "^5.3.0",
+    "gifenc": "^1.0.3",
     "sharp": "^0.33.4",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "pixelmatch": "^7.2.0"
   }
 }
-
-

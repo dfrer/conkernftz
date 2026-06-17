@@ -16,7 +16,7 @@ export function deployCmd(): Command {
     .action(async (opts: DeployOpts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
+      const { ProjectConfigSchema } = await import('@conkernftz/core/project-config');
       const cfg = ProjectConfigSchema.parse(JSON.parse(raw)) as ProjectConfig;
       if (cfg.chain.target !== 'evm') {
         throw new Error('deploy is only for EVM projects (set chain.target to "evm")');

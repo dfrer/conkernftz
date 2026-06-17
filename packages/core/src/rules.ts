@@ -10,7 +10,7 @@ export interface ProjectRules {
 export function createRuleEngine(rules: ProjectRules): RuleEngine {
   const mutuallyExclusive = rules.mutuallyExclusive ?? [];
   const requires = rules.requires ?? [];
-  const maxOccurrences = rules.maxOccurrences ?? [];
+  // Note: maxOccurrences is enforced across editions by the generator, not here.
 
   return {
     validate(traits: TraitKV) {

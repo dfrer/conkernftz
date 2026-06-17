@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { TraitCondition } from './types.js';
 
 const BlendModeSchema = z.enum([
   'normal',
@@ -117,12 +118,16 @@ const AssetOverrideSchema = z.object({
   effects: EffectsSchema,
 });
 
-const TraitConditionSchema: any = z.lazy(() => z.object({
-  anyOf: z.array(z.string()).optional(),
-  allOf: z.array(z.string()).optional(),
-  noneOf: z.array(z.string()).optional(),
-  not: z.any().optional(), // self-referential; validate shallowly in UI
-}).partial());
+const TraitConditionSchema: z.ZodType<TraitCondition> = z.lazy(() =>
+  z
+    .object({
+      anyOf: z.array(z.string()).optional(),
+      allOf: z.array(z.string()).optional(),
+      noneOf: z.array(z.string()).optional(),
+      not: TraitConditionSchema.optional(), // self-referential
+    })
+    .partial(),
+);
 
 const LayerOptionRuleSchema = z.object({
   match: z.object({ target: z.enum(['value','filename']), pattern: z.string() }),
@@ -184,11 +189,24 @@ const TransformRuleSchema = z
   });
 
 
+const AnimationKeyframeSchema = z.object({ from: z.number(), to: z.number() });
+
+const LayerAnimationSchema = z.object({
+  rotate: AnimationKeyframeSchema.optional(),
+  scale: AnimationKeyframeSchema.optional(),
+  translateX: AnimationKeyframeSchema.optional(),
+  translateY: AnimationKeyframeSchema.optional(),
+  opacity: AnimationKeyframeSchema.optional(),
+  easing: z.enum(['linear', 'easeInOut', 'sine']).optional(),
+  loopMode: z.enum(['loop', 'pingpong']).optional(),
+});
+
 export const LayerSchema = z.object({
   name: z.string(),
   path: z.string(),
   rarity: z.enum(['filename', 'uniform']).optional(),
   required: z.boolean().optional(),
+  animation: LayerAnimationSchema.optional(),
   spawnWhenAnyOf: z.array(z.string()).optional(),
   spawnWhen: TraitConditionSchema.optional(),
   spawnUnless: TraitConditionSchema.optional(),
@@ -228,7 +246,25 @@ export const ImageSchema = z.object({
 });
 
 export const StorageSchema = z.object({
-  provider: z.enum(['arweave', 'ipfs']),
+  // Modern providers: irys (Arweave), pinata (IPFS via JWT), local (filesystem).
+  // 'arweave' (Bundlr) and 'ipfs' (nft.storage/legacy Pinata) are deprecated and now
+  // throw a migration error at upload time, but still parse so old configs load.
+  provider: z.enum(['irys', 'pinata', 'local', 'arweave', 'ipfs']),
+  irys: z
+    .object({
+      token: z.string().optional(),
+      keyPath: z.string().optional(),
+      node: z.string().optional(),
+      rpcUrl: z.string().optional(),
+    })
+    .optional(),
+  pinata: z
+    .object({ jwt: z.string().optional(), gateway: z.string().optional() })
+    .optional(),
+  local: z
+    .object({ outDir: z.string().optional(), gatewayBase: z.string().optional() })
+    .optional(),
+  // Deprecated legacy blocks (kept for back-compat parsing only).
   arweave: z
     .object({ bundlrNode: z.string(), currency: z.string(), keyPath: z.string() })
     .optional(),
@@ -249,6 +285,23 @@ export const ChainSolanaSchema = z.object({
   isMutable: z.boolean().optional(),
   usePnft: z.boolean().optional(),
   rulesetPda: z.string().nullable().optional(),
+  // Optional Core Candy Machine public-mint configuration (alongside direct Umi mint).
+  candyMachine: z
+    .object({
+      collectionName: z.string().optional(),
+      collectionUri: z.string().optional(),
+      nameLength: z.number().int().positive().optional(),
+      uriLength: z.number().int().positive().optional(),
+      guards: z
+        .object({
+          solPayment: z.object({ sol: z.number().nonnegative(), destination: z.string() }).optional(),
+          startDate: z.object({ date: z.union([z.string(), z.number()]) }).optional(),
+          mintLimit: z.object({ id: z.number().int().min(0), limit: z.number().int().positive() }).optional(),
+          allowList: z.object({ path: z.string() }).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const ChainEvmSchema = z.object({
@@ -294,6 +347,15 @@ export const ProjectConfigSchema = z.object({
     previewOutDir: z.string().optional(),
     imageFormat: z.enum(['png', 'webp', 'gif']).default('png'),
     includePreviewContactSheet: z.boolean().optional(),
+    animation: z
+      .object({
+        enabled: z.boolean().optional(),
+        fps: z.number().int().min(1).max(60).optional(),
+        durationMs: z.number().int().min(1).optional(),
+        format: z.array(z.enum(['gif', 'mp4', 'webp'])).optional(),
+        loop: z.boolean().optional(),
+      })
+      .optional(),
   }),
   storage: StorageSchema,
   chain: ChainSchema,

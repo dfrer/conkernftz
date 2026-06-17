@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('foundry', {
   previewLive: (config: unknown, count: number, seed?: string) => ipcRenderer.invoke('foundry:previewLive', config, count, seed),
   chooseDirInsideProject: () => ipcRenderer.invoke('foundry:chooseDirInsideProject'),
   readFile: (relativePath: string) => ipcRenderer.invoke('foundry:readFile', relativePath),
+  readFileBase64: (relativePath: string) => ipcRenderer.invoke('foundry:readFileBase64', relativePath),
   ensureDirs: (relativePaths: string[]) => ipcRenderer.invoke('foundry:ensureDirs', relativePaths),
   listImages: (relativePath: string) => ipcRenderer.invoke('foundry:listImages', relativePath),
   openInExplorer: (relativePath: string) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),

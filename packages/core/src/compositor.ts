@@ -293,7 +293,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
       hue: typeof effects.modulate.hue === 'number' ? effects.modulate.hue : undefined,
       saturation: typeof effects.modulate.saturation === 'number' ? effects.modulate.saturation : undefined,
       brightness: typeof effects.modulate.brightness === 'number' ? effects.modulate.brightness : undefined,
-    } as any);
+    });
   }
   if (typeof effects?.blur === 'number' && effects.blur > 0) {
     base = base.blur(Math.max(0, effects.blur));
@@ -440,8 +440,8 @@ async function applyScaleAndRotate(
   translateY?: number,
 ): Promise<{ buffer: Buffer; offsetXAdjust: number; offsetYAdjust: number }> {
   let buf = input;
-  let offsetXAdjust = 0;
-  let offsetYAdjust = 0;
+  const offsetXAdjust = 0;
+  const offsetYAdjust = 0;
 
   const desiredX = Number.isFinite(translateX) ? Math.round(translateX!) : 0;
   const desiredY = Number.isFinite(translateY) ? Math.round(translateY!) : 0;
@@ -475,7 +475,7 @@ async function applyScaleAndRotate(
   const dstTop = Math.max(0, desiredY);
   const maxW = Math.min(curW - srcLeft, width - dstLeft);
   const maxH = Math.min(curH - srcTop, height - dstTop);
-  let outCanvas = sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } });
+  const outCanvas = sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } });
   if (maxW > 0 && maxH > 0) {
     const visible = await sharp(buf)
       .extract({ left: srcLeft, top: srcTop, width: maxW, height: maxH })
@@ -562,7 +562,6 @@ function blendPixelArrays(
   offsetX: number,
   offsetY: number,
 ): Uint8ClampedArray {
-  const total = width * height * 4;
   const out = new Uint8ClampedArray(base.length);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
