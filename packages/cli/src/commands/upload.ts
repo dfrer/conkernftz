@@ -24,7 +24,7 @@ Examples:
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const { ProjectConfigSchema } = await import('@foundry/core/dist/project-config.js');
+      const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
       const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
       const outDir = path.join(process.cwd(), cfg.export.outDir);
       const imagesDir = path.join(outDir, 'images');
@@ -40,11 +40,11 @@ Examples:
       async function uploadOne(filePath: string): Promise<{ uri: string; type: string }> {
         if (opts.provider === 'arweave') {
           if (!cfg.storage.arweave) throw new Error('Arweave config missing');
-          const { uploadFileViaBundlr } = await import('@foundry/storage');
+          const { uploadFileViaBundlr } = await import('@conkernftz/storage');
           return uploadFileViaBundlr(filePath, cfg.storage.arweave);
         }
         if (opts.provider === 'ipfs') {
-          const { uploadViaNftStorage, uploadViaPinata } = await import('@foundry/storage');
+          const { uploadViaNftStorage, uploadViaPinata } = await import('@conkernftz/storage');
           const ipfs = cfg.storage.ipfs;
           if (!ipfs) throw new Error('IPFS config missing');
           if (ipfs.nftStorageKey) return uploadViaNftStorage(filePath, ipfs.nftStorageKey);

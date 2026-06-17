@@ -1,5 +1,5 @@
 import * as electron from 'electron';
-import { FileManager } from '@foundry/storage/file-manager';
+import { FileManager } from '@conkernftz/storage/file-manager';
 import { getProjectDir, getFileManager, setFileManager } from './ipc-project.js';
 
 export function initStorageIpc(): void {

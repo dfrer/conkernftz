@@ -1,4 +1,4 @@
-import type { ChainAdapter } from '@foundry/core';
+import type { ChainAdapter } from '@conkernftz/core';
 import { generateSigner, keypairIdentity, percentAmount, publicKey, createSignerFromKeypair } from '@metaplex-foundation/umi';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import {

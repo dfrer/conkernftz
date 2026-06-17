@@ -1,4 +1,4 @@
-## @foundry/ui (Electron)
+## @conkernftz/ui (Electron)
 
 Electron-based GUI for the conkernftz foundry.
 

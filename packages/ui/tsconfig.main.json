@@ -7,7 +7,7 @@
     "moduleResolution": "Node",
     "baseUrl": ".",
     "paths": {
-      "@foundry/storage/file-manager": ["node_modules/@foundry/storage/dist/file-manager.d.ts"]
+      "@conkernftz/storage/file-manager": ["node_modules/@conkernftz/storage/dist/file-manager.d.ts"]
     },
     "lib": ["ES2022"],
     "declaration": true,

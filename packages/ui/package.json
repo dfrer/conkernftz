@@ -1,5 +1,5 @@
 {
-    "name":  "@foundry/ui",
+    "name":  "@conkernftz/ui",
     "version":  "4.0.0",
     "private":  true,
     "description":  "Electron GUI for conkernftz CLI",
@@ -16,7 +16,7 @@
                 },
     "dependencies":  {
                          "execa":  "^9.4.0",
-                         "@foundry/storage":  "workspace:*"
+                         "@conkernftz/storage":  "workspace:*"
                      },
     "devDependencies":  {
                             "electron":  "^31.3.0"

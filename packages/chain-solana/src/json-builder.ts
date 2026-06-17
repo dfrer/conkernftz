@@ -1,4 +1,4 @@
-import type { ChainAdapter } from '@foundry/core';
+import type { ChainAdapter } from '@conkernftz/core';
 
 export interface BuildJsonInput {
   index: number;

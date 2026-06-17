@@ -1,4 +1,4 @@
-## @foundry/storage
+## @conkernftz/storage
 
 Storage providers for the conkernftz foundry.
 

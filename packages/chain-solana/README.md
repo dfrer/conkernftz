@@ -1,4 +1,4 @@
-## @foundry/chain-solana
+## @conkernftz/chain-solana
 
 Solana chain adapter for the conkernftz foundry.
 

@@ -1,4 +1,4 @@
-## @foundry/cli (foundry)
+## @conkernftz/cli (foundry)
 
 Command-line interface for the conkernftz NFT art foundry.
 

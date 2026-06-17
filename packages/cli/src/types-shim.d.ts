@@ -1,6 +1,6 @@
-declare module '@foundry/core/dist/*';
-declare module '@foundry/chain-solana';
-declare module '@foundry/storage';
+declare module '@conkernftz/core/dist/*';
+declare module '@conkernftz/chain-solana';
+declare module '@conkernftz/storage';
 declare module '@noble/hashes/*';
 
 

@@ -19,7 +19,7 @@ vi.mock('node:fs/promises', () => ({
     rename: vi.fn(),
   },
 }));
-vi.mock('@foundry/storage', () => ({ FileManager: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@conkernftz/storage', () => ({ FileManager: vi.fn().mockImplementation(() => ({})) }));
 
 import { initProjectIpc, getProjectDir } from '../ipc-project.js';
 

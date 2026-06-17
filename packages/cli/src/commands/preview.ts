@@ -29,7 +29,7 @@ Examples:
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const coreBase = '@foundry/core/dist/';
+      const coreBase = '@conkernftz/core/dist/';
       const { ProjectConfigSchema } = await import(coreBase + 'project-config.js');
       const parsed = ProjectConfigSchema.parse(JSON.parse(raw));
 

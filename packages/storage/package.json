@@ -1,5 +1,5 @@
 {
-    "name":  "@foundry/storage",
+    "name":  "@conkernftz/storage",
     "version":  "4.0.0",
     "description":  "Pluggable uploaders (Arweave Bundlr, IPFS)",
     "license":  "MIT",
