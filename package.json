@@ -18,6 +18,7 @@
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "cli": "pnpm -C packages/cli start",
+    "app": "pnpm -C packages/ui start",
     "scrape:fal": "node scripts/scrape-fal-models.cjs"
   },
   "devDependencies": {

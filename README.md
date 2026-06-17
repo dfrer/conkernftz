@@ -4,6 +4,19 @@ Modern, type‑safe, open‑source NFT art foundry. Compose layered artwork, enf
 
 ---
 
+## Quick start (Windows): open the app
+
+Double‑click **`conkernftz.bat`** in this folder. On the first run it installs
+dependencies and builds (a few minutes); after that it launches the desktop app
+in a few seconds. Keep the small console window open while you use the app.
+
+Want a desktop icon? Double‑click **`make-desktop-shortcut.bat`** once to create a
+`conkernftz` shortcut on your Desktop, then launch from there.
+
+From a terminal you can also run `pnpm app` (equivalent to `pnpm -C packages/ui start`).
+
+---
+
 ## 1) Features at a Glance
 
 - Deterministic generation with seedable RNG and SHA‑256 DNA for uniqueness
