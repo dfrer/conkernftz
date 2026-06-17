@@ -23,7 +23,7 @@ Examples:
     const cfgPath = path.join(process.cwd(), 'foundry.config.json');
     const raw = await fs.readFile(cfgPath, 'utf8');
     const json = JSON.parse(raw);
-    const { ProjectConfigSchema } = await import('@foundry/core/dist/project-config.js');
+    const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
     const parsed = ProjectConfigSchema.safeParse(json);
     if (!parsed.success) {
       console.error('Invalid config:\n', parsed.error.issues);
@@ -33,7 +33,7 @@ Examples:
 
     // Additional checks: layer assets present, required layers non-empty
     const cfg = parsed.data;
-    const coreBase = '@foundry/core/dist/';
+    const coreBase = '@conkernftz/core/dist/';
     const { loadLayerCatalog } = await import(coreBase + 'catalog.js');
     try {
       const catalog = await loadLayerCatalog(process.cwd(), cfg.layers, {

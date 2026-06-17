@@ -9,6 +9,7 @@ import { previewCmd } from './commands/preview.js';
 import { buildCmd } from './commands/build.js';
 import { uploadCmd } from './commands/upload.js';
 import { mintCmd } from './commands/mint.js';
+import { deployCmd } from './commands/deploy.js';
 import { e2eCmd } from './commands/e2e.js';
 import { dupesCmd } from './commands/dupes.js';
 import { auditCmd } from './commands/audit.js';
@@ -27,7 +28,7 @@ function readVersion(): string {
 
 const program = new Command();
 program
-  .name('foundry')
+  .name('conkernftz')
   .description('conkernftz CLI')
   .version(readVersion());
 
@@ -59,6 +60,7 @@ program.addCommand(dupesCmd());
 program.addCommand(auditCmd());
 program.addCommand(uploadCmd());
 program.addCommand(mintCmd());
+program.addCommand(deployCmd());
 program.addCommand(e2eCmd());
 
 program.parseAsync(process.argv);

@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import fssync from 'node:fs';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
-import { FileManager } from '@foundry/storage/file-manager';
+import { FileManager } from '@conkernftz/storage/file-manager';
 import * as cliRunner from './cli-runner.js';
 
 let projectDir: string | null = null;

@@ -1,0 +1,32 @@
+{
+  "name": "@conkernftz/chain-evm",
+  "version": "5.0.0",
+  "description": "EVM adapter: ERC-721 metadata builder, contract deploy and mint via viem",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "contracts"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist",
+    "compile-contract": "node scripts/compile-contract.mjs"
+  },
+  "dependencies": {
+    "@conkernftz/core": "workspace:*",
+    "viem": "^2.52.2"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "solc": "^0.8.31"
+  }
+}

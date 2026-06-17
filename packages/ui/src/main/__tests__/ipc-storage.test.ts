@@ -12,7 +12,7 @@ const { handlers, ipcMain, FileManager, listFiles } = vi.hoisted(() => {
 });
 
 vi.mock('electron', () => ({ ipcMain }));
-vi.mock('@foundry/storage', () => ({ FileManager }));
+vi.mock('@conkernftz/storage', () => ({ FileManager }));
 
 import { initStorageIpc } from '../ipc-storage.js';
 import { setProjectDir } from '../ipc-project.js';

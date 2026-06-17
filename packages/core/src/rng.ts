@@ -13,7 +13,7 @@ export function createSeededRng(seed: number | string): SeededRng {
     state ^= state >>> 17;
     state ^= state << 5;
     // uint32 to [0,1)
-    return ((state >>> 0) / 0xffffffff);
+    return ((state >>> 0) / 0x100000000);
   };
   return {
     next,

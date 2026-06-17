@@ -251,9 +251,22 @@ export const ChainSolanaSchema = z.object({
   rulesetPda: z.string().nullable().optional(),
 });
 
+export const ChainEvmSchema = z.object({
+  chainId: z.number().int().positive(),
+  rpcUrl: z.string(),
+  privateKeyPath: z.string(),
+  // Populated after `deploy`; reused by `mint`.
+  contractAddress: z.string().optional(),
+  baseUri: z.string().optional(),
+  maxSupply: z.number().int().min(0).optional(),
+  royaltyReceiver: z.string().optional(),
+  royaltyBps: z.number().int().min(0).max(10000).optional(),
+});
+
 export const ChainSchema = z.object({
-  target: z.enum(['solana']),
+  target: z.enum(['solana', 'evm']),
   solana: ChainSolanaSchema.optional(),
+  evm: ChainEvmSchema.optional(),
 });
 
 export const ProjectConfigSchema = z.object({

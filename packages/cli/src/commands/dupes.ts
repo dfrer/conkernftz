@@ -33,7 +33,7 @@ Examples:
       } else {
         const cfgPath = path.join(cwd, 'foundry.config.json');
         const raw = await fs.readFile(cfgPath, 'utf8');
-        const { ProjectConfigSchema } = await import('@foundry/core/dist/project-config.js');
+        const { ProjectConfigSchema } = await import('@conkernftz/core/dist/project-config.js');
         const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
         const base = path.isAbsolute(cfg.export.outDir) ? cfg.export.outDir : path.join(cwd, cfg.export.outDir);
         outDir = path.resolve(base);

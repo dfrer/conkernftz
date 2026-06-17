@@ -27,7 +27,7 @@ Examples:
     .action(async (opts) => {
       const cfgPath = path.join(process.cwd(), 'foundry.config.json');
       const raw = await fs.readFile(cfgPath, 'utf8');
-      const coreBase = '@foundry/core/dist/';
+      const coreBase = '@conkernftz/core/dist/';
       const { ProjectConfigSchema } = await import(coreBase + 'project-config.js');
       const cfg = ProjectConfigSchema.parse(JSON.parse(raw));
 
@@ -43,7 +43,7 @@ Examples:
       let buildJson: ((input: any) => Record<string, unknown>) | undefined;
       try {
         if (cfg.chain?.target === 'solana') {
-          const { SolanaJsonAdapter } = await import('@foundry/chain-solana');
+          const { SolanaJsonAdapter } = await import('@conkernftz/chain-solana');
           buildJson = (input: any) => SolanaJsonAdapter.buildOffchainJson(input);
         }
       } catch {}

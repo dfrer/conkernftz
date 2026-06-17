@@ -1,4 +1,4 @@
-## @foundry/core
+## @conkernftz/core
 
 Core engine for the conkernftz NFT art foundry.
 
