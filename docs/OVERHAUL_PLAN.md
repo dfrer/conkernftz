@@ -340,6 +340,19 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
   manual smoke.
 
 ### Phase O2 — Project lifecycle + Design surface  *(largest UI phase; split O2a/O2b)*
+
+> **Status: 🟡 O2a LANDED (2026-06-17).** Real project-state plumbing
+> (`state/project.tsx` ProjectProvider — parsed config + recents + load/save with
+> **lossless round-trip** via the expanded `lib/bridge.ts`), the **Design** screen
+> (project basics + a layers table: name/path/rarity/required/opacity + live asset
+> counts, add/remove/reorder, dirty-tracked Save), and the **Preview** screen (live
+> render gallery via the engine's `previewLive`, with loading/idle/offline states).
+> Wired into the shell nav; Projects launcher now drives the shared context. Tests:
+> UI 30→34 (Design load/edit/save + lossless round-trip; Preview renders returned
+> images — mocked bridge). Gate green. **Remaining (O2b):** effects editor, rules +
+> transforms, conditional spawn / option rules, the spawn/placement editor, and the
+> image renamer (with JSON escape hatches to preserve expressiveness).
+
 - **Goal:** migrate the authoring experience (the most-used surface) at parity+.
 - **O2a:** Projects (launcher/onboarding, recents, create/add, Solana+EVM templates);
   Design→Layers (drag-reorder, paths, rarity, blend/opacity, asset counts); config Basics;

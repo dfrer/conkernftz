@@ -14,6 +14,13 @@ export interface FoundryBridge {
   chooseProjectDir(): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
   readConfig(): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   readConfigAt(dir: string): Promise<{ ok: boolean; json?: unknown; error?: string }>;
+  writeConfig(json: unknown): Promise<OkResult>;
+  listImages(relativePath: string): Promise<{ ok: boolean; count?: number; error?: string }>;
+  previewLive(
+    config: unknown,
+    count: number,
+    seed?: string,
+  ): Promise<{ ok: boolean; format?: string; images?: string[]; error?: string }>;
   openExternal(url: string): Promise<OkResult>;
 }
 

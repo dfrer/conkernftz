@@ -1,29 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ToastProvider } from './components';
+import { ProjectProvider, useProject } from './state/project';
 import { AppShell } from './shell/AppShell';
-import { ProjectsScreen, type Project } from './screens/ProjectsScreen';
+import { ProjectsScreen } from './screens/ProjectsScreen';
+import { DesignScreen } from './screens/DesignScreen';
+import { PreviewScreen } from './screens/PreviewScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PlaygroundScreen } from './screens/PlaygroundScreen';
-import { bridge, isBridged } from './lib/bridge';
+import { isBridged } from './lib/bridge';
 
 const VERSION = '4.0.0';
 
 const PLACEHOLDERS: Record<string, { kicker: string; title: string; blurb: string }> = {
-  design: {
-    kicker: 'STAGE 01 // COMPOSITION',
-    title: 'Design',
-    blurb: 'Layers, traits & rarity, rules, effects, spawn placement, and the asset renamer migrate here in O2.',
-  },
-  preview: {
-    kicker: 'STAGE 02 // INSPECTION',
-    title: 'Preview',
-    blurb: 'Live preview, the regenerating gallery, lightbox, and animation preview land in O3.',
-  },
   build: {
     kicker: 'STAGE 03 // PRODUCTION',
     title: 'Build',
-    blurb: 'Generate editions with progress / pause / resume / stop, plus rarity and audit reports — O3.',
+    blurb: 'Generate editions with progress / pause / resume / stop, plus rarity and audit reports — next up.',
   },
   publish: {
     kicker: 'STAGE 04 // DISPATCH',
@@ -47,70 +40,34 @@ const PLACEHOLDERS: Record<string, { kicker: string; title: string; blurb: strin
   },
 };
 
-function nameFromConfig(json: unknown, fallback: string): string {
-  if (json && typeof json === 'object' && 'name' in json) {
-    const n = (json as { name?: unknown }).name;
-    if (typeof n === 'string' && n.trim()) return n;
-  }
-  return fallback;
-}
-
-export function App() {
+function Shell() {
   const [active, setActive] = useState('projects');
-  const [project, setProject] = useState<Project | null>(null);
-
-  // Restore the active project from the bridge on boot (no-op in the browser / tests).
-  useEffect(() => {
-    const fb = bridge();
-    if (!fb) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const r = await fb.getProjectDir();
-        if (cancelled || !r.ok || !r.projectDir) return;
-        const dir = r.projectDir;
-        let name = dir;
-        try {
-          const c = await fb.readConfig();
-          if (c.ok) name = nameFromConfig(c.json, dir);
-        } catch {
-          /* ignore */
-        }
-        if (!cancelled) setProject({ dir, name });
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const onOpen = (p: Project) => {
-    setProject(p);
-    setActive('design');
-  };
+  const { project } = useProject();
 
   let screen;
-  if (active === 'projects') screen = <ProjectsScreen onOpen={onOpen} />;
+  if (active === 'projects') screen = <ProjectsScreen onOpened={() => setActive('design')} />;
+  else if (active === 'design') screen = <DesignScreen />;
+  else if (active === 'preview') screen = <PreviewScreen />;
   else if (active === 'playground') screen = <PlaygroundScreen />;
   else {
-    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.design!;
+    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.build!;
     screen = <PlaceholderScreen stage={active} kicker={p.kicker} title={p.title} blurb={p.blurb} />;
   }
 
   return (
+    <AppShell active={active} onNavigate={setActive} project={project?.name ?? null} bridged={isBridged()} version={VERSION}>
+      {screen}
+    </AppShell>
+  );
+}
+
+export function App() {
+  return (
     <ThemeProvider>
       <ToastProvider>
-        <AppShell
-          active={active}
-          onNavigate={setActive}
-          project={project?.name ?? null}
-          bridged={isBridged()}
-          version={VERSION}
-        >
-          {screen}
-        </AppShell>
+        <ProjectProvider>
+          <Shell />
+        </ProjectProvider>
       </ToastProvider>
     </ThemeProvider>
   );

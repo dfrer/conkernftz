@@ -659,3 +659,44 @@ button {
   flex-direction: column;
   gap: var(--sp-4);
 }
+
+/* ===================== Layers table ===================== */
+.layer-row {
+  display: grid;
+  grid-template-columns: 28px minmax(110px, 1.1fr) minmax(140px, 1.5fr) 96px 40px 78px 52px auto;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.layer-row--head {
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--hair) solid var(--line);
+}
+.layer-row .input,
+.layer-row .select {
+  padding: 6px 8px;
+}
+
+/* ===================== Thumbnail gallery ===================== */
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+.thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  background: var(--surface-inset);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.banner-error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: var(--hair) solid color-mix(in oklab, var(--danger) 40%, transparent);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
