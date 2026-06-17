@@ -36,20 +36,20 @@ program
 program.addHelpText(
   'beforeAll',
   `
-Usage: foundry <command> [options]
+Usage: conkernftz <command> [options]
 
 A modern NFT art foundry. Common flow:
-  foundry init           # scaffold project
-  foundry validate       # check config and assets
-  foundry preview        # generate random previews
-  foundry build          # produce images + local JSON
-  foundry dupes          # scan build for duplicate DNA/images
-  foundry audit          # audit layer assets for duplicates/emptiness
-  foundry upload         # upload assets and rewrite JSON URIs
-  foundry mint           # mint on Solana (devnet by default)
+  conkernftz init           # scaffold project
+  conkernftz validate       # check config and assets
+  conkernftz preview        # generate random previews
+  conkernftz build          # produce images + local JSON
+  conkernftz dupes          # scan build for duplicate DNA/images
+  conkernftz audit          # audit layer assets for duplicates/emptiness
+  conkernftz upload         # upload assets and rewrite JSON URIs
+  conkernftz mint           # mint on Solana (devnet by default)
 
 Quick help:
-  foundry <command> --help
+  conkernftz <command> --help
 `
 );
 

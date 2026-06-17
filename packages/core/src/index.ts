@@ -11,6 +11,7 @@ export * from './generator.js';
 export * from './effects.js';
 export * from './project-build.js';
 export * from './placement.js';
+export * from './spawn.js';
 export * from './transforms.js';
 export * from './render-edition.js';
 export * from './rarity-score.js';

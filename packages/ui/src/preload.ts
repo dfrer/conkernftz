@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { FoundryApi } from './shared/ipc.js';
 
-contextBridge.exposeInMainWorld('foundry', {
+// Typed against the shared contract so the TS compiler fails the build if a method
+// is missing or mis-shaped. The runtime bridge is preload.cjs (loaded by Electron);
+// preload-contract.test.ts asserts the two stay in sync.
+const foundryApi: FoundryApi = {
   run: (args: string[]) => ipcRenderer.invoke('foundry:run', args),
   auditAssets: (opts: { json?: boolean }) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts: { images?: boolean; json?: boolean }) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
@@ -40,4 +44,6 @@ contextBridge.exposeInMainWorld('foundry', {
   listFiles: (relDir: string) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath: string) => ipcRenderer.invoke('foundry:fsDelete', relPath),
   saveJson: (relPath: string, json: unknown) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
-});
+};
+
+contextBridge.exposeInMainWorld('foundry', foundryApi);

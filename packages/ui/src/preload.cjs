@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('foundry', {
   previewLive: (config, count, seed) => ipcRenderer.invoke('foundry:previewLive', config, count, seed),
   chooseDirInsideProject: () => ipcRenderer.invoke('foundry:chooseDirInsideProject'),
   readFile: (relativePath) => ipcRenderer.invoke('foundry:readFile', relativePath),
+  readFileBase64: (relativePath) => ipcRenderer.invoke('foundry:readFileBase64', relativePath),
   ensureDirs: (relativePaths) => ipcRenderer.invoke('foundry:ensureDirs', relativePaths),
   listImages: (relativePath) => ipcRenderer.invoke('foundry:listImages', relativePath),
   openInExplorer: (relativePath) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
@@ -36,6 +37,7 @@ contextBridge.exposeInMainWorld('foundry', {
   saveBase64: (b64, relPath) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),
   listFiles: (relDir) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath) => ipcRenderer.invoke('foundry:fsDelete', relPath),
+  saveJson: (relPath, json) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
 });

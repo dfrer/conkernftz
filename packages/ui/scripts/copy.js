@@ -20,6 +20,19 @@ try {
   console.warn('Failed to copy preload.cjs:', e && e.message ? e.message : e);
 }
 
+// Ship the hand-written dynamic-import helper (not compiled by tsc) into dist/main.
+const dynImportSrc = path.join(__dirname, '..', 'src', 'main', 'dynamic-import.js');
+const dynImportDst = path.join(dstDir, 'main', 'dynamic-import.js');
+try {
+  if (fs.existsSync(dynImportSrc)) {
+    fs.mkdirSync(path.dirname(dynImportDst), { recursive: true });
+    fs.copyFileSync(dynImportSrc, dynImportDst);
+    console.log('Copied main/dynamic-import.js to dist');
+  }
+} catch (e) {
+  console.warn('Failed to copy dynamic-import.js:', e && e.message ? e.message : e);
+}
+
 // No CJS entry bootstrap needed when main is compiled to CommonJS
 
 // Copy assets directory if present so images are available at runtime

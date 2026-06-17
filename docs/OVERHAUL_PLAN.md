@@ -251,6 +251,26 @@ Effort key: S ≈ days, M ≈ 1–2 wks, L ≈ 2–4 wks, XL ≈ 4–8 wks (solo
 runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit-gated.**
 
 ### Phase O0 — Program foundations & the parity contract  *(enabling; do first)*
+
+> **Status: ✅ DONE (2026-06-17).** Delivered: the feature-parity matrix
+> (`docs/UI_PARITY_MATRIX.md`); the engine-boundary refactor — `packages/ui` now depends
+> on `@conkernftz/core` + `@conkernftz/chain-solana`, a new electron-free
+> `main/engine-service.ts` calls core's one render path (`renderEdition`/`buildCollection`/
+> `renderPreviewEdition`) loaded by package specifier via `main/dynamic-import.js`; the
+> three runtime core-loaders (`dynamicImportCore`/`requireCore`/`importCore`) and **all
+> runtime `pnpm build` self-heal removed** (the packaging blocker); the typed IPC contract
+> (`src/shared/ipc.ts` → `FoundryApi`/`FOUNDRY_METHODS`) typed through preload, with the
+> latent **`readFileBase64`/`saveJson` preload.cjs drift fixed** + a drift-guard test;
+> path-containment on write/delete IPC handlers (absolute *reads* still allowed for
+> absolute layer dirs); CLI `--help` "foundry"→"conkernftz"; chain-evm version aligned to
+> 4.0.0; `spawn.js` added to the core barrel. Tests: UI 17→25 (added headless engine-service
+> functional coverage + preload contract). Green gate verified on Windows; runtime
+> package-specifier resolution of core/chain-solana verified by Node.
+> **Deferred to O1:** the Vite+React+RTL renderer toolchain, Playwright-for-Electron E2E,
+> and the component playground — they belong with the React shell and the E2E tier cannot
+> be validated headlessly here (see `docs/TESTING.md` §2). The manual GUI smoke checklist
+> (`docs/TESTING.md` §3) covers the renderer gap until then.
+
 - **Goal:** lay the rewrite's safety rails and fix the root-cause architecture defects *on
   the existing app first*, so the new app is built on a clean boundary and the old app stays
   shippable.
