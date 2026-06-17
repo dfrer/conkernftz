@@ -141,6 +141,12 @@ importers:
 
   packages/ui:
     dependencies:
+      '@conkernftz/chain-solana':
+        specifier: workspace:*
+        version: link:../chain-solana
+      '@conkernftz/core':
+        specifier: workspace:*
+        version: link:../core
       '@conkernftz/storage':
         specifier: workspace:*
         version: link:../storage

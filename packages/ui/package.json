@@ -1,24 +1,26 @@
 {
-    "name":  "@conkernftz/ui",
-    "version":  "4.0.0",
-    "private":  true,
-    "description":  "Electron GUI for conkernftz CLI",
-    "type":  "commonjs",
-    "main":  "dist/main.js",
-    "scripts":  {
-                    "build":  "pnpm run build:ts \u0026\u0026 pnpm run build:assets",
-                    "build:ts":  "tsc -p tsconfig.main.json \u0026\u0026 tsc -p tsconfig.renderer.json",
-                    "build:assets":  "node scripts/copy.js",
-                    "typecheck":  "tsc -p tsconfig.json --noEmit",
-                    "start":  "node scripts/start.cjs",
-                    "clean":  "rimraf dist",
-                    "test":  "vitest run --passWithNoTests"
-                },
-    "dependencies":  {
-                         "execa":  "^9.4.0",
-                         "@conkernftz/storage":  "workspace:*"
-                     },
-    "devDependencies":  {
-                            "electron":  "^31.3.0"
-                        }
+  "name": "@conkernftz/ui",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Electron GUI for conkernftz",
+  "type": "commonjs",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "pnpm run build:ts && pnpm run build:assets",
+    "build:ts": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
+    "build:assets": "node scripts/copy.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node scripts/start.cjs",
+    "clean": "rimraf dist",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@conkernftz/core": "workspace:*",
+    "@conkernftz/chain-solana": "workspace:*",
+    "@conkernftz/storage": "workspace:*",
+    "execa": "^9.4.0"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0"
+  }
 }

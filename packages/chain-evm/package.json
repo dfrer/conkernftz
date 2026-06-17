@@ -1,6 +1,6 @@
 {
   "name": "@conkernftz/chain-evm",
-  "version": "5.0.0",
+  "version": "4.0.0",
   "description": "EVM adapter: ERC-721 metadata builder, contract deploy and mint via viem",
   "license": "MIT",
   "type": "module",
