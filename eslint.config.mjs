@@ -23,11 +23,11 @@ export default tseslint.config(
       'no-undef': 'off',
       // Best-effort cleanup legitimately uses empty catch blocks.
       'no-empty': ['error', { allowEmptyCatch: true }],
-      // Opinionated style rules are warnings (not errors) so they surface issues
-      // without blocking the build on pre-existing code; tighten over time.
-      'prefer-const': 'warn',
+      // These are now clean across the codebase, so they are errors to prevent regressions.
+      'prefer-const': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // Still warnings while remaining packages (cli/chain-solana) are tightened over time.
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-definitions': 'off',
       '@typescript-eslint/explicit-function-return-type': ['warn', { allowExpressions: true }],
     },

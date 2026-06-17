@@ -1,38 +1,33 @@
 {
-    "name":  "@conkernftz/storage",
-    "version":  "4.0.0",
-    "description":  "Pluggable uploaders (Arweave Bundlr, IPFS)",
-    "license":  "MIT",
-    "type":  "module",
-    "main":  "dist/index.js",
-    "types":  "dist/index.d.ts",
-    "exports":  {
-                    ".":  {
-                              "types":  "./dist/index.d.ts",
-                              "import":  "./dist/index.js",
-                              "require":  "./dist-cjs/index.js"
-                          },
-                    "./file-manager":  {
-                                           "types":  "./dist/file-manager.d.ts",
-                                           "import":  "./dist/file-manager.js",
-                                           "require":  "./dist-cjs/file-manager.js"
-                                       }
-                },
-    "files":  [
-                  "dist",
-                  "dist-cjs"
-              ],
-    "scripts":  {
-                    "build":  "tsc -p tsconfig.json \u0026\u0026 tsc -p tsconfig.cjs.json \u0026\u0026 node scripts/postbuild.cjs",
-                    "typecheck":  "tsc -p tsconfig.json --noEmit",
-                    "test":  "vitest run || exit 0",
-                    "lint":  "eslint src --ext .ts",
-                    "clean":  "rimraf dist dist-cjs"
-                },
-    "dependencies":  {
-                         "@bundlr-network/client":  "^0.11.17",
-                         "mime":  "^4.0.4",
-                         "nft.storage":  "^7.1.1",
-                         "@pinata/sdk":  "^2.1.0"
-                     }
+  "name": "@conkernftz/storage",
+  "version": "4.0.0",
+  "description": "Pluggable storage providers (Irys/Arweave, Pinata IPFS via JWT, local) + file manager",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist-cjs/index.js"
+    },
+    "./file-manager": {
+      "types": "./dist/file-manager.d.ts",
+      "import": "./dist/file-manager.js",
+      "require": "./dist-cjs/file-manager.js"
+    }
+  },
+  "files": [
+    "dist",
+    "dist-cjs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node scripts/postbuild.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist dist-cjs"
+  },
+  "dependencies": {}
 }

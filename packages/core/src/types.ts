@@ -1,10 +1,37 @@
 export type TraitKV = Record<string, string>;
 
+// ---------------- Animation (per-layer keyframes) ----------------
+
+export interface AnimationKeyframe {
+  from: number;
+  to: number;
+}
+
+export type AnimationEasing = 'linear' | 'easeInOut' | 'sine';
+export type AnimationLoopMode = 'loop' | 'pingpong';
+
+/**
+ * Time-varying transform for a layer across an animation's duration. Each channel
+ * interpolates `from`->`to` over normalized time; `loopMode: 'pingpong'` (default)
+ * returns to the start for a seamless loop.
+ */
+export interface LayerAnimation {
+  rotate?: AnimationKeyframe; // degrees
+  scale?: AnimationKeyframe; // multiplier
+  translateX?: AnimationKeyframe; // pixels
+  translateY?: AnimationKeyframe; // pixels
+  opacity?: AnimationKeyframe; // 0..1
+  easing?: AnimationEasing; // default 'sine'
+  loopMode?: AnimationLoopMode; // default 'pingpong'
+}
+
 export interface LayerSpec {
   name: string;
   path: string;
   rarity?: 'filename' | 'uniform';
   required?: boolean;
+  // Optional per-layer animation keyframes (applied to every option of the layer).
+  animation?: LayerAnimation;
   // Experimental: Only spawn/render this layer if any of these trait strings
   // (formatted as "Layer:Value", e.g., "Character:Angel") are already present
   // in the current composition during generation. If omitted or empty, the

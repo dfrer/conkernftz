@@ -1,4 +1,4 @@
-import type { AssetEffects } from './types.js';
+import type { AssetEffects, BlendMode } from './types.js';
 
 export type ResolvedEffects = AssetEffects;
 
@@ -30,7 +30,7 @@ type ExtrudePreset = {
 type OverlayPreset = {
   color: string;
   opacity: number;
-  blend?: string;
+  blend?: BlendMode;
 };
 
 export const GlowPresets: Record<string, GlowPreset> = {
@@ -157,9 +157,9 @@ export function resolveEffects(e?: AssetEffects): ResolvedEffects | undefined {
     out.colorOverlay = {
       color: e.colorOverlay.color ?? preset?.color ?? '#ffffff',
       opacity: clamp01(e.colorOverlay.opacity, preset?.opacity ?? 0.25),
-      blend: (e.colorOverlay.blend ?? (preset?.blend as any)) as any,
+      blend: e.colorOverlay.blend ?? preset?.blend,
       preset: e.colorOverlay.preset,
-    } as any;
+    };
   }
 
   return out;

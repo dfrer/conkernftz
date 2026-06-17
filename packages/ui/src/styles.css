@@ -1574,3 +1574,28 @@ button .icon { margin-right: 6px; }
 .tf-errors.visible { display: block; }
 .tf-empty { font-size: 0.9rem; color: var(--text-muted); padding: 16px; border: 1px dashed var(--border); border-radius: 8px; text-align: center; }
 .tf-modal-footer button.tf-save { background: #238636; border-color: #2ea043; color: #fff; }
+
+/* ---- Studio panels (Phase 4) ---- */
+.studio-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.studio-card { background: var(--panel-soft); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+.studio-card > h3 { margin: 0 0 4px; font-size: 1rem; }
+.studio-muted { color: var(--text-muted); font-size: 0.82rem; }
+.studio-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.studio-btn { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 4px 10px; cursor: pointer; }
+.studio-btn:hover { border-color: var(--accent); }
+.studio-select, .studio-text, .studio-num { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 4px 8px; }
+.studio-num { width: 70px; }
+.studio-layer-list { list-style: none; margin: 0; padding: 0; }
+.studio-layer-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--panel); cursor: grab; }
+.studio-grip { opacity: 0.5; }
+.studio-layer-name { font-weight: 600; flex: 1; }
+.studio-weight-row { display: grid; grid-template-columns: 1fr 2fr auto auto; gap: 10px; align-items: center; padding: 3px 0; }
+.studio-slider { width: 100%; }
+.studio-wnum { width: 32px; text-align: right; }
+.studio-bar-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; padding: 2px 0; }
+.studio-bar { height: 14px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 4px; min-width: 2px; }
+.studio-histo-title { margin: 12px 0 4px; font-size: 0.9rem; }
+.studio-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
+.studio-thumb { width: 100%; border-radius: 8px; border: 1px solid var(--border); background: #0003; }
+.studio-asset-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.studio-fn { font-family: monospace; font-size: 0.82rem; }

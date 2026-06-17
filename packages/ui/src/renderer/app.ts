@@ -500,9 +500,11 @@ const tabHelp = document.getElementById('tab-help');
 
 const tabAbout = document.getElementById('tab-about');
 
+const tabStudio = document.getElementById('tab-studio');
+
 function switchTab(name) {
 
-  const map = { main: tabMain, mint: tabMint, options: tabOptions, fal: tabFal, help: tabHelp, about: tabAbout };
+  const map = { main: tabMain, mint: tabMint, options: tabOptions, fal: tabFal, help: tabHelp, about: tabAbout, studio: tabStudio };
 
   Object.entries(map).forEach(([key, pane]) => {
 

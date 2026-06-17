@@ -12,7 +12,9 @@ const { handlers, ipcMain, FileManager, listFiles } = vi.hoisted(() => {
 });
 
 vi.mock('electron', () => ({ ipcMain }));
-vi.mock('@conkernftz/storage', () => ({ FileManager }));
+// ipc-storage.ts and ipc-project.ts both import FileManager from the subpath
+// '@conkernftz/storage/file-manager', so the mock must target that specifier.
+vi.mock('@conkernftz/storage/file-manager', () => ({ FileManager }));
 
 import { initStorageIpc } from '../ipc-storage.js';
 import { setProjectDir } from '../ipc-project.js';

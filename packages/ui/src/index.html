@@ -24,6 +24,7 @@
         <div class="header-actions">
           <div class="tabs" role="tablist" aria-label="Primary Tabs">
             <button class="tab-btn active" id="tab-btn-main" role="tab" aria-selected="true" aria-controls="tab-main" tabindex="0" data-tab="main">Main</button>
+            <button class="tab-btn" id="tab-btn-studio" role="tab" aria-selected="false" aria-controls="tab-studio" tabindex="-1" data-tab="studio">Studio</button>
             <button class="tab-btn" id="tab-btn-mint" role="tab" aria-selected="false" aria-controls="tab-mint" tabindex="-1" data-tab="mint">Mint</button>
             <button class="tab-btn" id="tab-btn-options" role="tab" aria-selected="false" aria-controls="tab-options" tabindex="-1" data-tab="options">Options</button>
             <button class="tab-btn" id="tab-btn-fal" role="tab" aria-selected="false" aria-controls="tab-fal" tabindex="-1" data-tab="fal">Fal AI</button>
@@ -583,6 +584,11 @@
         </div>
             </div>
           </section>
+          <section id="tab-studio" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-studio" aria-hidden="true">
+            <div class="content" style="padding: 16px;">
+              <div id="studio-embed"></div>
+            </div>
+          </section>
           <section id="tab-about" class="tabpane hidden" role="tabpanel" aria-labelledby="tab-btn-about" aria-hidden="true">
             <div class="content" style="padding: 16px;">
               <div class="gallery-card">
@@ -844,6 +850,7 @@
     </main>
 
     <script type="module" src="renderer/app.js"></script>
+    <script type="module" src="renderer/studio.js"></script>
   </body>
 </html>
 
