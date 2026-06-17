@@ -303,6 +303,27 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
   signed off.
 
 ### Phase O1 — New identity, design system & React app shell
+
+> **Status: 🟡 FOUNDATION LANDED (2026-06-17).** Stood up the deferred toolchain
+> (React 18 + Vite 5 + React Testing Library + happy-dom + @fontsource fonts) as a
+> **parallel `packages/ui/src/renderer-next`** (own `tsconfig.renderer-next.json`,
+> `vite.config.ts`, `vitest.config.ts`; legacy renderer untouched until O6). Delivered a
+> committed **new visual identity** — "Field Instrument / Classified Dossier" (instrument
+> amber on ink / ink on manila paper, IBM Plex Mono + Archivo, hairline grids, registration
+> crop-marks, status lamps; CONKERNFTZ kept, NASA easter egg reimagined as a redaction
+> stamp) as CSS-variable tokens (`styles/tokens.css` + `ui.css`, dark+light). Built the
+> accessible primitive library (Button, Panel, Field/Input/Select, Lamp, Badge, Dialog,
+> Toast, Skeleton, EmptyState, RedactionStamp), a `ThemeProvider`, the instrument-console
+> **app shell** (header + pipeline IA nav + status bar) with state-based navigation, the
+> **Projects launcher** (recents + bridge-aware open) wired to the optional `window.foundry`
+> bridge, stage placeholders, and an in-app **component playground**. Tests: UI 30→**+6**
+> (component + smoke, happy-dom). Verified: Vite dev server runs and the app mounts with
+> zero console errors; full gate (build/typecheck/lint/test) green. _Visuals not yet
+> screenshot-verified here (the capturer timed out); run `pnpm -C packages/ui
+> dev:renderer-next`._
+> **Remaining O1 / next:** real screen content per stage is O2+; Playwright-for-Electron
+> E2E + visual-regression still pending; wire Electron to load the new bundle at cutover (O6).
+
 - **Goal:** the new visual language + the React skeleton everything mounts on.
 - **Scope:** new identity (palette, typography, spacing/elevation/motion/iconography; brand
   keeps CONKERNFTZ + reimagined NASA easter egg) delivered as enforced tokens; React app

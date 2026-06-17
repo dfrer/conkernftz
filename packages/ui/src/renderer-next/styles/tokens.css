@@ -1,0 +1,145 @@
+/*
+ * CONKERNFTZ design tokens — "Field Instrument / Classified Dossier".
+ * A precision surveillance-console aesthetic: instrument amber on ink (dark) and
+ * ink on manila dossier-paper (light), monospace readouts, hairline grids.
+ * Everything is a CSS variable so the whole identity can be retuned in one place.
+ */
+
+:root {
+  /* Type families (loaded via @fontsource in main.tsx) */
+  --font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Type scale (1.2 minor third) */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 19px;
+  --text-xl: 24px;
+  --text-2xl: 31px;
+  --text-3xl: 40px;
+  --tracking-label: 0.14em;
+  --tracking-wide: 0.04em;
+
+  /* Spacing (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Radii — sharp / instrument-like */
+  --r-xs: 2px;
+  --r-sm: 3px;
+  --r-md: 5px;
+  --r-lg: 8px;
+
+  /* Hairlines + motion */
+  --hair: 1px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --dur-1: 90ms;
+  --dur-2: 160ms;
+  --dur-3: 280ms;
+
+  /* Layout */
+  --header-h: 56px;
+  --statusbar-h: 30px;
+  --nav-w: 256px;
+}
+
+/* ---- DARK (default): instrument amber on warm ink ---- */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a0c0b;
+  --bg-grain-opacity: 0.05;
+  --bg-glow: radial-gradient(1200px 620px at 12% -10%, rgba(255, 176, 0, 0.06), transparent 60%),
+    radial-gradient(900px 520px at 108% 6%, rgba(95, 208, 214, 0.045), transparent 55%);
+
+  --surface: #101312;
+  --surface-2: #151917;
+  --surface-3: #1b201d;
+  --surface-inset: #0c0f0e;
+
+  --text: #e9e7dc;
+  --text-muted: #9aa09a;
+  --text-dim: #626a63;
+  --text-invert: #0a0c0b;
+
+  --line: rgba(233, 231, 220, 0.1);
+  --line-strong: rgba(233, 231, 220, 0.2);
+  --line-amber: rgba(255, 176, 0, 0.35);
+
+  --accent: #ffb000; /* instrument amber */
+  --accent-2: #ffc94d;
+  --accent-ink: #1a1200;
+  --accent-soft: rgba(255, 176, 0, 0.12);
+  --accent-glow: 0 0 0 1px rgba(255, 176, 0, 0.4), 0 0 22px rgba(255, 176, 0, 0.18);
+
+  --danger: #ff5340;
+  --danger-soft: rgba(255, 83, 64, 0.14);
+  --ok: #57d977;
+  --ok-soft: rgba(87, 217, 119, 0.14);
+  --info: #5fd0d6;
+  --info-soft: rgba(95, 208, 214, 0.14);
+  --warn: #ffb000;
+
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --redaction: #06080700;
+}
+
+/* ---- LIGHT: ink on manila dossier paper ---- */
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #e8e0cf;
+  --bg-grain-opacity: 0.045;
+  --bg-glow: radial-gradient(1200px 620px at 12% -10%, rgba(184, 116, 0, 0.08), transparent 60%),
+    radial-gradient(900px 520px at 108% 6%, rgba(31, 122, 128, 0.05), transparent 55%);
+
+  --surface: #f3ecdc;
+  --surface-2: #efe7d4;
+  --surface-3: #e7ddc7;
+  --surface-inset: #f7f1e4;
+
+  --text: #1c1812;
+  --text-muted: #5f574a;
+  --text-dim: #8a8170;
+  --text-invert: #f7f1e4;
+
+  --line: rgba(28, 24, 18, 0.16);
+  --line-strong: rgba(28, 24, 18, 0.3);
+  --line-amber: rgba(184, 116, 0, 0.5);
+
+  --accent: #b87400;
+  --accent-2: #946000;
+  --accent-ink: #fff6e2;
+  --accent-soft: rgba(184, 116, 0, 0.14);
+  --accent-glow: 0 0 0 1px rgba(184, 116, 0, 0.45), 0 0 18px rgba(184, 116, 0, 0.14);
+
+  --danger: #c0392b;
+  --danger-soft: rgba(192, 57, 43, 0.12);
+  --ok: #2f8f4e;
+  --ok-soft: rgba(47, 143, 78, 0.12);
+  --info: #1f7a80;
+  --info-soft: rgba(31, 122, 128, 0.12);
+  --warn: #b87400;
+
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 8px rgba(60, 50, 30, 0.12);
+  --shadow-2: 0 12px 30px rgba(60, 50, 30, 0.18);
+  --redaction: #1c1812;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

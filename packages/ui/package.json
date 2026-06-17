@@ -6,10 +6,12 @@
   "type": "commonjs",
   "main": "dist/main.js",
   "scripts": {
-    "build": "pnpm run build:ts && pnpm run build:assets",
+    "build": "pnpm run build:ts && pnpm run build:renderer-next && pnpm run build:assets",
     "build:ts": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
+    "build:renderer-next": "vite build",
     "build:assets": "node scripts/copy.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev:renderer-next": "vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer-next.json --noEmit",
     "start": "node scripts/start.cjs",
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests"
@@ -18,9 +20,22 @@
     "@conkernftz/core": "workspace:*",
     "@conkernftz/chain-solana": "workspace:*",
     "@conkernftz/storage": "workspace:*",
-    "execa": "^9.4.0"
+    "@fontsource-variable/archivo": "^5.1.1",
+    "@fontsource/ibm-plex-mono": "^5.1.1",
+    "@fontsource/ibm-plex-sans": "^5.1.1",
+    "execa": "^9.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "electron": "^31.3.0"
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^31.3.0",
+    "happy-dom": "^15.11.6",
+    "vite": "^5.4.11"
   }
 }
