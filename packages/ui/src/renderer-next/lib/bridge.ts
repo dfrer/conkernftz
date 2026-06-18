@@ -8,6 +8,14 @@ export interface OkResult {
   error?: string;
 }
 
+export interface BuildProgressEvent {
+  current: number;
+  total: number;
+  progress: number;
+  message?: string;
+  isPaused?: boolean;
+}
+
 export interface FoundryBridge {
   getProjectDir(): Promise<{ ok: boolean; projectDir?: string }>;
   setProjectDir(dir: string): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
@@ -15,12 +23,20 @@ export interface FoundryBridge {
   readConfig(): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   readConfigAt(dir: string): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   writeConfig(json: unknown): Promise<OkResult>;
+  readFile(relativePath: string): Promise<{ ok: boolean; content?: string; error?: string }>;
   listImages(relativePath: string): Promise<{ ok: boolean; count?: number; error?: string }>;
   previewLive(
     config: unknown,
     count: number,
     seed?: string,
   ): Promise<{ ok: boolean; format?: string; images?: string[]; error?: string }>;
+  buildWithProgress(count: number): Promise<{ ok: boolean; stdout?: string; error?: string }>;
+  pauseBuild(): Promise<OkResult>;
+  resumeBuild(): Promise<OkResult>;
+  stopBuild(): Promise<OkResult>;
+  onBuildProgress(handler: (data: BuildProgressEvent) => void): void;
+  auditAssets(opts?: { json?: boolean }): Promise<{ ok: boolean; json?: unknown; error?: string }>;
+  auditOutputs(opts?: { images?: boolean; json?: boolean }): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   openExternal(url: string): Promise<OkResult>;
 }
 
