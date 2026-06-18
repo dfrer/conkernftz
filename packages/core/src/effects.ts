@@ -65,6 +65,16 @@ export const ColorOverlayPresets: Record<string, OverlayPreset> = {
   highlight: { color: '#ffffff', opacity: 0.25, blend: 'screen' },
 };
 
+type RecolorPreset = { low: string; high: string };
+export const RecolorPresets: Record<string, RecolorPreset> = {
+  noir: { low: '#000000', high: '#ffffff' },
+  sepia: { low: '#2b1d0e', high: '#fff3d6' },
+  blueprint: { low: '#0a1a3f', high: '#cfe3ff' },
+  gold: { low: '#3a2a00', high: '#ffd76a' },
+  toxic: { low: '#04210a', high: '#8cff5a' },
+  ember: { low: '#1a0400', high: '#ff8a3d' },
+};
+
 function clamp01(n: number | undefined, fallback: number): number {
   if (typeof n !== 'number' || !Number.isFinite(n)) return fallback;
   if (n < 0) return 0;
@@ -159,6 +169,15 @@ export function resolveEffects(e?: AssetEffects): ResolvedEffects | undefined {
       opacity: clamp01(e.colorOverlay.opacity, preset?.opacity ?? 0.25),
       blend: e.colorOverlay.blend ?? preset?.blend,
       preset: e.colorOverlay.preset,
+    };
+  }
+
+  if (e.recolor) {
+    const preset = e.recolor.preset ? RecolorPresets[e.recolor.preset] : undefined;
+    out.recolor = {
+      low: e.recolor.low ?? preset?.low ?? '#000000',
+      high: e.recolor.high ?? preset?.high ?? '#ffffff',
+      preset: e.recolor.preset,
     };
   }
 

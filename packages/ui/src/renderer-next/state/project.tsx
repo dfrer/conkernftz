@@ -17,6 +17,7 @@ export interface LayerEffects {
   blur?: number;
   modulate?: { hue?: number; saturation?: number; brightness?: number };
   colorOverlay?: { color?: string; opacity?: number; blend?: string; preset?: string };
+  recolor?: { low?: string; high?: string; preset?: string };
   [k: string]: unknown;
 }
 export interface AssetOverrideCfg {

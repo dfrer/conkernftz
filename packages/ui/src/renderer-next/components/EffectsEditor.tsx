@@ -5,7 +5,7 @@ import type { LayerEffects } from '../state/project';
 
 // Mutate the effects object in place; the caller persists the change.
 type EffectsMutate = (mut: (e: LayerEffects) => void) => void;
-type EffectGroupName = 'glow' | 'stroke' | 'shadow' | 'extrude' | 'modulate' | 'colorOverlay';
+type EffectGroupName = 'glow' | 'stroke' | 'shadow' | 'extrude' | 'modulate' | 'colorOverlay' | 'recolor';
 
 function num(v: string): number | undefined {
   return v === '' ? undefined : Number(v);
@@ -133,6 +133,26 @@ export function EffectsEditor({ effects, onChange }: { effects: LayerEffects; on
               </option>
             ))}
           </Select>
+        </Field>
+      </Group>
+
+      <Group label="Recolor (duotone)" on={groupOn('recolor')} onToggle={(v) => toggleGroup('recolor', v)}>
+        <Field label="Preset">
+          <Select value={String(grp('recolor').preset ?? '')} onChange={(e) => setField('recolor', 'preset', e.target.value)}>
+            <option value="">custom</option>
+            <option value="noir">noir</option>
+            <option value="sepia">sepia</option>
+            <option value="blueprint">blueprint</option>
+            <option value="gold">gold</option>
+            <option value="toxic">toxic</option>
+            <option value="ember">ember</option>
+          </Select>
+        </Field>
+        <Field label="Low (shadows)">
+          <Input value={String(grp('recolor').low ?? '')} onChange={(e) => setField('recolor', 'low', e.target.value)} placeholder="#000000" />
+        </Field>
+        <Field label="High (lights)">
+          <Input value={String(grp('recolor').high ?? '')} onChange={(e) => setField('recolor', 'high', e.target.value)} placeholder="#ffffff" />
         </Field>
       </Group>
 
