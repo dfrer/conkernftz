@@ -10,19 +10,14 @@ import { BuildScreen } from './screens/BuildScreen';
 import { PublishScreen } from './screens/PublishScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { HelpScreen } from './screens/HelpScreen';
+import { FalScreen } from './screens/FalScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PlaygroundScreen } from './screens/PlaygroundScreen';
 import { isBridged } from './lib/bridge';
 
 const VERSION = '4.0.0';
 
-const PLACEHOLDERS: Record<string, { kicker: string; title: string; blurb: string }> = {
-  ai: {
-    kicker: 'SYSTEM // GENERATION',
-    title: 'Fal AI',
-    blurb: 'The Fal AI image-generation surface (model catalog + dynamic parameters) is ported in a later phase.',
-  },
-};
+const FALLBACK = { kicker: 'SYSTEM', title: 'Coming soon', blurb: 'This area is not built yet.' };
 
 function Shell() {
   const [active, setActive] = useState('projects');
@@ -36,11 +31,9 @@ function Shell() {
   else if (active === 'publish') screen = <PublishScreen />;
   else if (active === 'settings') screen = <SettingsScreen />;
   else if (active === 'help') screen = <HelpScreen />;
+  else if (active === 'ai') screen = <FalScreen />;
   else if (active === 'playground') screen = <PlaygroundScreen />;
-  else {
-    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.ai!;
-    screen = <PlaceholderScreen stage={active} kicker={p.kicker} title={p.title} blurb={p.blurb} />;
-  }
+  else screen = <PlaceholderScreen stage={active} kicker={FALLBACK.kicker} title={FALLBACK.title} blurb={FALLBACK.blurb} />;
 
   return (
     <AppShell active={active} onNavigate={setActive} project={project?.name ?? null} bridged={isBridged()} version={VERSION}>
