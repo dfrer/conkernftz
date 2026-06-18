@@ -28,6 +28,27 @@ An artist goes A → Z without leaving ConkerNFTZ:
 | D5 | Chains | Base + Ethereum L1 (EVM contracts) **+** Solana (existing Candy Machine) |
 | D6 | App shell | The builder lives in the existing **Electron + React** app; generated sites are a separate static build |
 | D7 | Contracts | Immutable, audited; standard launch contract first, on-chain packs as a separate heavier module |
+| D8 | Builder layout | **Free-form GeoCities canvas** (drag-anywhere absolute placement, z-index, tiled/animated backgrounds, widget zoo) **+ a dedicated mobile editor** with per-element mobile overrides |
+| D9 | Builder freedom | Curated widget set **+ a raw-HTML/CSS escape-hatch block** |
+| D10 | Packs | Realistic Pokémon/MTG-style booster packs **generated via fal.ai** (preset packs + blank foil base templates); custom packs = **local sharp composite by default + optional fal img2img "enhance"** |
+| D11 | Card backs | NFTs gain a **flip side**; **completely configurable** — single shared back, or per-rarity/tier, or arbitrary rules |
+
+### Re-scope (2026-06-18) — "make it really GeoCities, make the packs real"
+P1 and P2 are deliberately deepened beyond their foundations:
+- **P2 → a true GeoCities builder.** Not stacked sections — a **free-form absolute canvas** (the
+  current block model evolves: blocks gain per-breakpoint `layout {x,y,w,h,z}` with a `mobile`
+  override; pages gain a canvas size + tiled/animated background). A **widget zoo** (marquee,
+  blink, hit counter, guestbook, web ring, "Under Construction"/clipart GIFs, award badges,
+  MIDI autoplay, custom comet/star cursors, WordArt-style headings) + a **raw-HTML/CSS block**.
+  A **desktop/mobile viewport toggle** in the editor so the artist tunes both. Presets become
+  starting points, not the ceiling. Nostalgia-first.
+- **P1 → real packs + card backs.** Replace the SVG card mockups with **fal-generated booster
+  packs** (foil/holo texture, logo, character art, tear strip): a set of **preset packs** we
+  design, plus **blank base packs** (foil + layout + empty art region) the user drops their own
+  art onto (local composite default; optional fal enhance). Introduce a **card back** to the
+  collection (the flip side), fully configurable (shared / per-rarity / rules). I drive the fal
+  generation; owner supervises (needs the owner's fal key, so pack-art generation is a
+  collaborative session, while the pack/card-back *infrastructure* is built/tested headlessly).
 
 ## 3. Architecture & principles
 

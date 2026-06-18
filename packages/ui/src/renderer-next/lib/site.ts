@@ -1,13 +1,39 @@
-// Site builder model (P2). A serializable description of a mint page: a theme + an ordered
-// list of blocks. DOM-free and pure so it's unit-tested directly; the React renderer
-// (components/site/SiteRenderer) is a thin view over it, and the SAME config + renderer will
-// be emitted as the static mint site by P3 (no drift between builder preview and shipped site).
+// Site builder model (P2 / GeoCities). A serializable mint page: theme + page settings +
+// an ordered list of blocks. Two layout modes — 'flow' (stacked sections) and 'canvas'
+// (free-form, absolute-positioned, GeoCities-style). Each block carries a per-breakpoint
+// layout (desktop + optional mobile override) so the page can be tuned for both. DOM-free
+// and pure so it's unit-tested directly; the React renderer is a thin view, and the SAME
+// config + renderer is emitted as the static mint site by P3 (no drift).
 
-export type BlockKind = 'hero' | 'richText' | 'gallery' | 'mint' | 'faq' | 'divider' | 'marquee';
+export type BlockKind =
+  | 'hero'
+  | 'richText'
+  | 'gallery'
+  | 'mint'
+  | 'faq'
+  | 'divider'
+  | 'marquee'
+  | 'blink'
+  | 'image'
+  | 'hitCounter'
+  | 'html';
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+export interface BlockLayout extends Rect {
+  z: number;
+  mobile?: Rect;
+}
 
 export interface BaseBlock {
   id: string;
   kind: BlockKind;
+  /** Free-form (canvas) placement. Ignored in 'flow' mode. */
+  layout?: BlockLayout;
 }
 export interface HeroBlock extends BaseBlock {
   kind: 'hero';
@@ -43,23 +69,77 @@ export interface MarqueeBlock extends BaseBlock {
   kind: 'marquee';
   text: string;
 }
+export interface BlinkBlock extends BaseBlock {
+  kind: 'blink';
+  text: string;
+  color: string;
+}
+export interface ImageBlock extends BaseBlock {
+  kind: 'image';
+  src: string;
+  alt: string;
+}
+export interface HitCounterBlock extends BaseBlock {
+  kind: 'hitCounter';
+  label: string;
+  start: number;
+}
+export interface HtmlBlock extends BaseBlock {
+  kind: 'html';
+  html: string;
+}
 
-export type Block = HeroBlock | RichTextBlock | GalleryBlock | MintBlock | FaqBlock | DividerBlock | MarqueeBlock;
+export type Block =
+  | HeroBlock
+  | RichTextBlock
+  | GalleryBlock
+  | MintBlock
+  | FaqBlock
+  | DividerBlock
+  | MarqueeBlock
+  | BlinkBlock
+  | ImageBlock
+  | HitCounterBlock
+  | HtmlBlock;
 
+export type SiteLayoutMode = 'flow' | 'canvas';
 export type SiteBackground = 'ink' | 'manila' | 'void' | 'paper';
 export type SiteFont = 'mono' | 'sans' | 'display';
+export type SiteBgKind = 'theme' | 'color' | 'tile';
 
 export interface SiteTheme {
   accent: string;
   background: SiteBackground;
   font: SiteFont;
 }
+/** Page-level background fill (the GeoCities tiled-wallpaper slot). */
+export interface PageBg {
+  kind: SiteBgKind;
+  color: string;
+  /** Tiled wallpaper: a data URL / asset path. */
+  tile: string;
+}
 export interface SiteConfig {
   theme: SiteTheme;
+  layout?: SiteLayoutMode;
+  canvas?: { width: number; height: number };
+  pageBg?: PageBg;
   blocks: Block[];
 }
 
-export const BLOCK_KINDS: BlockKind[] = ['hero', 'richText', 'gallery', 'mint', 'faq', 'divider', 'marquee'];
+export const BLOCK_KINDS: BlockKind[] = [
+  'hero',
+  'richText',
+  'gallery',
+  'mint',
+  'faq',
+  'divider',
+  'marquee',
+  'blink',
+  'image',
+  'hitCounter',
+  'html',
+];
 export const BLOCK_LABELS: Record<BlockKind, string> = {
   hero: 'Hero',
   richText: 'Text',
@@ -68,18 +148,22 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   faq: 'FAQ',
   divider: 'Divider',
   marquee: 'Marquee',
+  blink: 'Blink text',
+  image: 'Image / GIF',
+  hitCounter: 'Hit counter',
+  html: 'Raw HTML',
 };
 
 const DEFAULT_THEME: SiteTheme = { accent: '#ffb000', background: 'ink', font: 'sans' };
+const DEFAULT_CANVAS = { width: 960, height: 1400 };
+const DEFAULT_PAGE_BG: PageBg = { kind: 'theme', color: '#101312', tile: '' };
 
 let _seq = 0;
-/** Unique-enough block id (monotonic + random; ids are opaque). */
 export function blockId(kind: BlockKind): string {
   _seq += 1;
   return `${kind}-${Date.now().toString(36)}-${_seq.toString(36)}`;
 }
 
-/** Factory for a new block of the given kind, with sensible defaults. */
 export function newBlock(kind: BlockKind, id: string = blockId(kind)): Block {
   switch (kind) {
     case 'hero':
@@ -96,13 +180,30 @@ export function newBlock(kind: BlockKind, id: string = blockId(kind)): Block {
       return { id, kind };
     case 'marquee':
       return { id, kind, text: '★ MINTING NOW ★ DON’T MISS OUT ★' };
+    case 'blink':
+      return { id, kind, text: 'NEW!!!', color: '#ff2d2d' };
+    case 'image':
+      return { id, kind, src: '', alt: 'image' };
+    case 'hitCounter':
+      return { id, kind, label: 'You are visitor #', start: 1337 };
+    case 'html':
+      return { id, kind, html: '<!-- your HTML here -->\n<b>Hello, web.</b>' };
   }
 }
 
-/** A sensible starter page for a fresh project. */
+/** A reasonable default canvas rect for the Nth block when none is stored. */
+export function defaultLayout(index: number): BlockLayout {
+  const col = index % 2;
+  const row = Math.floor(index / 2);
+  return { x: 40 + col * 440, y: 40 + row * 200, w: 400, h: 160, z: index + 1 };
+}
+
 export function defaultSite(): SiteConfig {
   return {
     theme: { ...DEFAULT_THEME },
+    layout: 'flow',
+    canvas: { ...DEFAULT_CANVAS },
+    pageBg: { ...DEFAULT_PAGE_BG },
     blocks: [newBlock('hero'), newBlock('gallery'), newBlock('mint'), newBlock('faq')],
   };
 }
@@ -111,7 +212,6 @@ function isBlock(b: unknown): b is Block {
   return !!b && typeof b === 'object' && BLOCK_KINDS.includes((b as Block).kind) && typeof (b as Block).id === 'string';
 }
 
-/** Fill an untrusted/partial site with defaults (keeps only well-formed blocks). */
 export function resolveSite(partial?: Partial<SiteConfig> | null): SiteConfig {
   const p = partial ?? {};
   const t = (p.theme ?? {}) as Partial<SiteTheme>;
@@ -122,14 +222,33 @@ export function resolveSite(partial?: Partial<SiteConfig> | null): SiteConfig {
       : DEFAULT_THEME.background,
     font: (['mono', 'sans', 'display'] as const).includes(t.font as SiteFont) ? (t.font as SiteFont) : DEFAULT_THEME.font,
   };
+  const layout: SiteLayoutMode = p.layout === 'canvas' ? 'canvas' : 'flow';
+  const canvas = {
+    width: clampNum(p.canvas?.width, 320, 4096, DEFAULT_CANVAS.width),
+    height: clampNum(p.canvas?.height, 320, 12000, DEFAULT_CANVAS.height),
+  };
+  const bg = (p.pageBg ?? {}) as Partial<PageBg>;
+  const pageBg: PageBg = {
+    kind: (['theme', 'color', 'tile'] as const).includes(bg.kind as SiteBgKind) ? (bg.kind as SiteBgKind) : 'theme',
+    color: typeof bg.color === 'string' && bg.color ? bg.color : DEFAULT_PAGE_BG.color,
+    tile: typeof bg.tile === 'string' ? bg.tile : '',
+  };
   const blocks = Array.isArray(p.blocks) ? (p.blocks.filter(isBlock) as Block[]) : [];
-  return { theme, blocks };
+  return { theme, layout, canvas, pageBg, blocks };
 }
 
-// --- Pure list operations (return a new SiteConfig; never mutate) ---
+function clampNum(v: unknown, min: number, max: number, fallback: number): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+// --- Pure operations (immutable) ---
 
 export function addBlock(site: SiteConfig, kind: BlockKind): SiteConfig {
-  return { ...site, blocks: [...site.blocks, newBlock(kind)] };
+  const block = newBlock(kind);
+  if (site.layout === 'canvas') block.layout = defaultLayout(site.blocks.length);
+  return { ...site, blocks: [...site.blocks, block] };
 }
 export function removeBlock(site: SiteConfig, id: string): SiteConfig {
   return { ...site, blocks: site.blocks.filter((b) => b.id !== id) };
@@ -145,13 +264,50 @@ export function moveBlock(site: SiteConfig, id: string, dir: -1 | 1): SiteConfig
   return { ...site, blocks };
 }
 export function updateBlock(site: SiteConfig, id: string, patch: Record<string, unknown>): SiteConfig {
-  // Blocks are a discriminated union, so the patch is loosely typed; id/kind are pinned so a
-  // field edit can never change a block's identity or kind.
   return {
     ...site,
     blocks: site.blocks.map((b) => (b.id === id ? ({ ...b, ...patch, id: b.id, kind: b.kind } as Block) : b)),
   };
 }
+/** Set/merge a block's desktop canvas rect (z preserved unless patched). */
+export function setBlockLayout(site: SiteConfig, id: string, patch: Partial<BlockLayout>): SiteConfig {
+  return {
+    ...site,
+    blocks: site.blocks.map((b) => {
+      if (b.id !== id) return b;
+      const base = b.layout ?? defaultLayout(site.blocks.indexOf(b));
+      return { ...b, layout: { ...base, ...patch } };
+    }),
+  };
+}
+/** Set/merge a block's mobile-override rect. */
+export function setBlockMobile(site: SiteConfig, id: string, patch: Partial<Rect>): SiteConfig {
+  return {
+    ...site,
+    blocks: site.blocks.map((b) => {
+      if (b.id !== id) return b;
+      const base = b.layout ?? defaultLayout(site.blocks.indexOf(b));
+      const mobile = { ...(base.mobile ?? { x: base.x, y: base.y, w: base.w, h: base.h }), ...patch };
+      return { ...b, layout: { ...base, mobile } };
+    }),
+  };
+}
 export function setTheme(site: SiteConfig, patch: Partial<SiteTheme>): SiteConfig {
   return { ...site, theme: { ...site.theme, ...patch } };
+}
+export function setLayoutMode(site: SiteConfig, mode: SiteLayoutMode): SiteConfig {
+  // Seed canvas rects for any block missing one when entering canvas mode.
+  if (mode === 'canvas') {
+    const blocks = site.blocks.map((b, i) => (b.layout ? b : { ...b, layout: defaultLayout(i) }));
+    return { ...site, layout: mode, blocks };
+  }
+  return { ...site, layout: mode };
+}
+export function setCanvas(site: SiteConfig, patch: Partial<{ width: number; height: number }>): SiteConfig {
+  const cur = site.canvas ?? DEFAULT_CANVAS;
+  return { ...site, canvas: { ...cur, ...patch } };
+}
+export function setPageBg(site: SiteConfig, patch: Partial<PageBg>): SiteConfig {
+  const cur = site.pageBg ?? DEFAULT_PAGE_BG;
+  return { ...site, pageBg: { ...cur, ...patch } };
 }

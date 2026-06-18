@@ -2,35 +2,86 @@ import { type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import type { Block, SiteConfig } from '../../lib/site';
+import type { Block, BlockLayout, Rect, SiteConfig } from '../../lib/site';
 
-// Renders a SiteConfig to React. This is the shared view used by both the in-app builder
-// preview and (later, P3) the generated static mint site, so the page an artist builds is
-// byte-for-byte the page that ships.
+const MOBILE_W = 390;
+
+// Renders a SiteConfig to React, in 'flow' (stacked) or 'canvas' (free-form, absolute)
+// mode, at a desktop or mobile viewport. Shared by the in-app builder preview and (P3) the
+// generated static site, so what an artist builds is what ships.
 export function SiteRenderer({
   site,
   images = [],
   experience,
+  viewport = 'desktop',
 }: {
   site: SiteConfig;
   images?: string[];
   experience?: ExperienceConfig;
+  viewport?: 'desktop' | 'mobile';
 }) {
-  const style = { '--site-accent': site.theme.accent } as CSSProperties;
+  const mode = site.layout ?? 'flow';
+  const theme = site.theme;
+  const pageBg = site.pageBg ?? { kind: 'theme' as const, color: '#101312', tile: '' };
+
+  const style: CSSProperties = { '--site-accent': theme.accent } as CSSProperties;
+  if (pageBg.kind === 'color') style.background = pageBg.color;
+  else if (pageBg.kind === 'tile' && pageBg.tile) {
+    style.backgroundImage = `url("${pageBg.tile}")`;
+    style.backgroundRepeat = 'repeat';
+  }
+  const bgClass = pageBg.kind === 'theme' ? `site--bg-${theme.background}` : '';
+
+  if (mode === 'canvas') {
+    const canvas = site.canvas ?? { width: 960, height: 1400 };
+    const w = viewport === 'mobile' ? MOBILE_W : canvas.width;
+    return (
+      <div
+        className={cx('site', 'site--canvas', bgClass, `site--font-${theme.font}`)}
+        style={style}
+        data-testid="site-render"
+        data-mode="canvas"
+      >
+        <div className="site-canvas" style={{ width: w, height: canvas.height }}>
+          {site.blocks.map((b, i) => {
+            const r = rectFor(b.layout, i, viewport);
+            const z = b.layout?.z ?? i + 1;
+            return (
+              <div key={b.id} className="site-node" style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z }}>
+                <BlockBody block={b} images={images} experience={experience} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cx('site', `site--bg-${site.theme.background}`, `site--font-${site.theme.font}`)}
+      className={cx('site', bgClass, `site--font-${theme.font}`)}
       style={style}
       data-testid="site-render"
+      data-mode="flow"
     >
       {site.blocks.map((b) => (
-        <BlockView key={b.id} block={b} images={images} experience={experience} />
+        <BlockBody key={b.id} block={b} images={images} experience={experience} />
       ))}
     </div>
   );
 }
 
-function BlockView({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
+function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desktop' | 'mobile'): Rect {
+  const base: Rect = layout ?? { x: 40, y: 40 + index * 200, w: 400, h: 160 };
+  if (viewport === 'mobile') {
+    if (layout?.mobile) return layout.mobile;
+    // No explicit mobile override → single-column stack scaled to the phone width.
+    return { x: 12, y: 12 + index * 180, w: MOBILE_W - 24, h: base.h };
+  }
+  return { x: base.x, y: base.y, w: base.w, h: base.h };
+}
+
+export function BlockBody({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
   switch (block.kind) {
     case 'hero':
       return (
@@ -96,5 +147,31 @@ function BlockView({ block, images, experience }: { block: Block; images: string
           <span className="site-marquee-text">{block.text}</span>
         </div>
       );
+    case 'blink':
+      return (
+        <span className="site-blink" style={{ color: block.color }}>
+          {block.text}
+        </span>
+      );
+    case 'image':
+      return block.src ? (
+        <img className="site-img" src={block.src} alt={block.alt} loading="lazy" />
+      ) : (
+        <div className="site-img site-img--ph" aria-hidden>
+          IMG
+        </div>
+      );
+    case 'hitCounter':
+      return (
+        <div className="site-hitcounter">
+          <span className="site-hitcounter-label">{block.label}</span>
+          <span className="site-hitcounter-num">{String(Math.max(0, block.start)).padStart(6, '0')}</span>
+        </div>
+      );
+    case 'html':
+      // Raw-HTML escape hatch (GeoCities-style). Rendered in a sandboxed iframe (scripts
+      // allowed, but no same-origin) so the artist's markup runs fully isolated from the app
+      // and the IPC bridge — and the same isolation carries into the generated static site.
+      return <iframe className="site-html" title="Custom HTML" sandbox="allow-scripts allow-popups allow-forms" srcDoc={block.html} />;
   }
 }
