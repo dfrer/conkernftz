@@ -110,7 +110,7 @@ describe('DesignScreen', () => {
     const { findByLabelText, getByRole } = mount();
     const ta = (await findByLabelText('Rules JSON')) as HTMLTextAreaElement;
     fireEvent.change(ta, { target: { value: '{"maxOccurrences":[{"trait":"Body:Red","max":3}]}' } });
-    fireEvent.click(getByRole('button', { name: 'Apply rules' }));
+    fireEvent.click(getByRole('button', { name: 'Apply JSON' }));
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

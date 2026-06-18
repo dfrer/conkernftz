@@ -6,6 +6,7 @@ import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
 import { EffectsEditor } from '../components/EffectsEditor';
 import { RenamerPanel } from '../components/RenamerPanel';
+import { RulesEditor, type RulesObj } from '../components/RulesEditor';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
@@ -29,8 +30,6 @@ export function DesignScreen() {
   const toast = useToast();
   const [counts, setCounts] = useState<Record<number, number | null>>({});
   const [selected, setSelected] = useState<number | null>(null);
-  const [rulesText, setRulesText] = useState('{}');
-  const [rulesErr, setRulesErr] = useState<string | null>(null);
 
   const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
   useEffect(() => {
@@ -61,12 +60,9 @@ export function DesignScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layersKey]);
 
-  // Seed the rules editor from the config when a project loads.
+  // Reset the selected layer when a project loads.
   useEffect(() => {
-    setRulesText(JSON.stringify(config?.rules ?? {}, null, 2));
-    setRulesErr(null);
     setSelected(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.dir]);
 
   if (!project) {
@@ -136,19 +132,6 @@ export function DesignScreen() {
   const onSave = async () => {
     const ok = await save();
     toast.push(ok ? 'Config saved' : 'Save failed', ok ? 'ok' : 'danger');
-  };
-
-  const applyRules = () => {
-    try {
-      const parsed = JSON.parse(rulesText);
-      updateConfig((d) => {
-        d.rules = parsed;
-      });
-      setRulesErr(null);
-      toast.push('Rules applied — remember to Save', 'ok');
-    } catch (e) {
-      setRulesErr(String((e as Error)?.message ?? e));
-    }
   };
 
   return (
@@ -264,29 +247,7 @@ export function DesignScreen() {
         </Panel>
       ) : null}
 
-      <Panel
-        title="Rules (advanced)"
-        actions={
-          <Button size="sm" onClick={applyRules}>
-            Apply rules
-          </Button>
-        }
-      >
-        <div className="stack">
-          <span className="label">
-            mutuallyExclusive · requires · maxOccurrences · transforms — edited as JSON (structured editors coming next)
-          </span>
-          <textarea
-            className="textarea"
-            rows={10}
-            spellCheck={false}
-            value={rulesText}
-            onChange={(e) => setRulesText(e.target.value)}
-            aria-label="Rules JSON"
-          />
-          {rulesErr ? <div className="banner-error">Invalid JSON: {rulesErr}</div> : null}
-        </div>
-      </Panel>
+      <RulesEditor value={(config.rules ?? {}) as RulesObj} setRules={(next) => updateConfig((d) => { d.rules = next; })} />
     </div>
   );
 }
