@@ -78,7 +78,7 @@ async function listImageFiles(dir: string): Promise<string[]> {
 
 function isImageFile(name: string): boolean {
   const ext = path.extname(name).toLowerCase();
-  return ext === '.png' || ext === '.webp' || ext === '.gif';
+  return ext === '.png' || ext === '.webp' || ext === '.gif' || ext === '.svg';
 }
 
 export function extractTraitValueFromFilename(filename: string, rarity: RarityConfig): string {

@@ -145,6 +145,25 @@ function clamp01(n: number): number {
   return n;
 }
 
+/**
+ * Load an SVG at a rasterization density high enough to stay crisp at the target size.
+ * sharp rasterizes SVG at the intrinsic size for density 72; we scale density by how much
+ * the SVG must grow to fill the canvas (capped so pathological inputs can't blow up memory).
+ */
+async function svgInput(svgPath: string, width: number, height: number): Promise<sharp.Sharp> {
+  let density = 72;
+  try {
+    const meta = await sharp(svgPath).metadata();
+    const iw = meta.width || width;
+    const ih = meta.height || height;
+    const scale = Math.max(width / iw, height / ih);
+    density = Math.max(72, Math.min(2400, Math.round(72 * scale)));
+  } catch {
+    /* unreadable metadata — fall back to default density */
+  }
+  return sharp(svgPath, { density });
+}
+
 /** Parse a #rgb / #rrggbb hex color to 0-255 channels (black on anything unparseable). */
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   let h = (hex || '').trim().replace(/^#/, '');
@@ -296,7 +315,9 @@ async function compositeLayersCpu(
 async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOptions): Promise<Buffer> {
   const width = options.width;
   const height = options.height;
-  let base = sharp(layer.path).resize(width, height, { fit: 'fill' }).ensureAlpha();
+  let base = /\.svg$/i.test(layer.path)
+    ? (await svgInput(layer.path, width, height)).resize(width, height, { fit: 'fill' }).ensureAlpha()
+    : sharp(layer.path).resize(width, height, { fit: 'fill' }).ensureAlpha();
   const effects = layer.effects;
   const ss = Math.max(1, Math.min(4, Math.floor(options.superSample ?? 1)));
   // Base adjustments before any behind/around effects

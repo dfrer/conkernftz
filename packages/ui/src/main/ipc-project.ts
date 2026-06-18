@@ -184,7 +184,7 @@ export function initProjectIpc(): void {
       const count = dirents
         .filter((d) => d.isFile())
         .map((d) => d.name.toLowerCase())
-        .filter((n) => n.endsWith('.png') || n.endsWith('.webp') || n.endsWith('.gif')).length;
+        .filter((n) => n.endsWith('.png') || n.endsWith('.webp') || n.endsWith('.gif') || n.endsWith('.svg')).length;
       return { ok: true, count };
     } catch (e) {
       return { ok: false, error: String((e as Error)?.message ?? e) };
