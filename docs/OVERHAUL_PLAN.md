@@ -404,6 +404,19 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 - **Depends on:** O0. **Verification:** golden/determinism tests; perf benchmarks; unit tests.
 
 ### Phase O4 — Publish surface + CLI/DX hardening
+
+> **Status: 🟡 PUBLISH SCREEN LANDED (2026-06-17).** The **Publish** stage on
+> renderer-next replaces the stub Mint tab: an **Upload** panel with the *real* providers
+> (**irys / pinata / local** — fixing the stale Arweave/IPFS dropdown), mode
+> (auto/dir/files) + force, and **upload-manifest** display (provider/mode/baseUri/file
+> count); a **chain-aware Mint** panel (Solana direct mint + Candy create/upload/mint; EVM
+> deploy + owner-mint) driven via the CLI bridge (`run`), with a live command console and a
+> testnet/devnet-default caution. Bridge gained `run`. Routed into the shell. Tests: UI
+> 38→40 (upload invokes the right provider args + renders the manifest; mint invokes the
+> CLI). Gate green. **Remaining (CLI/DX):** structured logging/verbosity, `doctor`,
+> config versioning/migration, npm publish, plugin architecture; mainnet confirmation UX
+> arrives with the deferred EVM launch phase.
+
 - **Goal:** fix the stub Mint tab + the storage-provider mismatch; first-class
   upload→mint; harden CLI.
 - **Scope:** Publish tab — provider selection matching **real** providers (irys/pinata/

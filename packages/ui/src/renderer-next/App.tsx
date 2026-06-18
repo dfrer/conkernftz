@@ -7,6 +7,7 @@ import { ProjectsScreen } from './screens/ProjectsScreen';
 import { DesignScreen } from './screens/DesignScreen';
 import { PreviewScreen } from './screens/PreviewScreen';
 import { BuildScreen } from './screens/BuildScreen';
+import { PublishScreen } from './screens/PublishScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PlaygroundScreen } from './screens/PlaygroundScreen';
 import { isBridged } from './lib/bridge';
@@ -14,11 +15,6 @@ import { isBridged } from './lib/bridge';
 const VERSION = '4.0.0';
 
 const PLACEHOLDERS: Record<string, { kicker: string; title: string; blurb: string }> = {
-  publish: {
-    kicker: 'STAGE 04 // DISPATCH',
-    title: 'Publish',
-    blurb: 'Provider-matched uploads, directory-CID, Solana Candy Machine / Umi, and EVM mint — O4.',
-  },
   ai: {
     kicker: 'SYSTEM // GENERATION',
     title: 'Fal AI',
@@ -45,9 +41,10 @@ function Shell() {
   else if (active === 'design') screen = <DesignScreen />;
   else if (active === 'preview') screen = <PreviewScreen />;
   else if (active === 'build') screen = <BuildScreen />;
+  else if (active === 'publish') screen = <PublishScreen />;
   else if (active === 'playground') screen = <PlaygroundScreen />;
   else {
-    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.publish!;
+    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.settings!;
     screen = <PlaceholderScreen stage={active} kicker={p.kicker} title={p.title} blurb={p.blurb} />;
   }
 
