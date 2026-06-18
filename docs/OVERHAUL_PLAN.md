@@ -349,9 +349,16 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > render gallery via the engine's `previewLive`, with loading/idle/offline states).
 > Wired into the shell nav; Projects launcher now drives the shared context. Tests:
 > UI 30→34 (Design load/edit/save + lossless round-trip; Preview renders returned
-> images — mocked bridge). Gate green. **Remaining (O2b):** effects editor, rules +
-> transforms, conditional spawn / option rules, the spawn/placement editor, and the
-> image renamer (with JSON escape hatches to preserve expressiveness).
+> images — mocked bridge). Gate green.
+>
+> **O2b LANDED (2026-06-17):** per-layer **effects editor** (blend-mode select + offset/
+> rotate/scale + glow/stroke/shadow/blur/modulate/colorOverlay/extrude) reached via an "fx"
+> button per layer, and a **rules editor** with a JSON escape hatch (full
+> mutuallyExclusive/requires/maxOccurrences/transforms capability now; structured editors to
+> follow). Effect types not yet rendered are still preserved on save (config is cloned, not
+> rebuilt). Tests: UI 34→36 (effects-glow round-trip + rules-JSON apply, both lossless).
+> **Remaining:** structured rule editors, conditional-spawn / per-option-rule UI, the
+> spawn/placement editor, the image renamer, and per-asset overrides.
 
 - **Goal:** migrate the authoring experience (the most-used surface) at parity+.
 - **O2a:** Projects (launcher/onboarding, recents, create/add, Solana+EVM templates);
