@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { SiteRenderer } from '../components/site/SiteRenderer';
-import { addBlock, defaultSite } from '../lib/site';
+import { addBlock, defaultSite, setLayoutMode } from '../lib/site';
 import { resolveExperience } from '../lib/mintExperience';
 
 afterEach(cleanup);
@@ -28,5 +28,20 @@ describe('SiteRenderer', () => {
     const root = container.querySelector('.site');
     expect(root?.classList.contains('site--bg-void')).toBe(true);
     expect(root?.classList.contains('site--font-mono')).toBe(true);
+  });
+
+  it('renders canvas mode with one absolute node per block', () => {
+    const site = setLayoutMode(defaultSite(), 'canvas');
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect(container.querySelector('[data-mode="canvas"]')).toBeTruthy();
+    expect(container.querySelectorAll('.site-node').length).toBe(site.blocks.length);
+  });
+
+  it('renders the GeoCities widgets (blink + hit counter)', () => {
+    let site = addBlock(defaultSite(), 'blink');
+    site = addBlock(site, 'hitCounter');
+    const { container, getByText } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect(getByText('NEW!!!')).toBeTruthy();
+    expect(container.querySelector('.site-hitcounter-num')).toBeTruthy();
   });
 });

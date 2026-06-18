@@ -6,6 +6,11 @@ import {
   newBlock,
   removeBlock,
   resolveSite,
+  setBlockLayout,
+  setBlockMobile,
+  setCanvas,
+  setLayoutMode,
+  setPageBg,
   setTheme,
   updateBlock,
   type SiteConfig,
@@ -62,5 +67,48 @@ describe('site model', () => {
 
   it('setTheme merges into the theme', () => {
     expect(setTheme(defaultSite(), { font: 'mono' }).theme.font).toBe('mono');
+  });
+});
+
+describe('site model — canvas + widgets', () => {
+  it('resolveSite defaults layout/canvas/pageBg (backward compatible)', () => {
+    const r = resolveSite({ theme: defaultSite().theme, blocks: [] });
+    expect(r.layout).toBe('flow');
+    expect(r.canvas!.width).toBeGreaterThan(0);
+    expect(r.pageBg!.kind).toBe('theme');
+  });
+
+  it('switching to canvas mode seeds a layout for every block', () => {
+    const s = setLayoutMode(defaultSite(), 'canvas');
+    expect(s.layout).toBe('canvas');
+    expect(s.blocks.every((b) => !!b.layout)).toBe(true);
+  });
+
+  it('addBlock seeds a layout in canvas mode but not in flow', () => {
+    const flowAdd = addBlock(defaultSite(), 'blink');
+    expect(flowAdd.blocks[flowAdd.blocks.length - 1]!.layout).toBeUndefined();
+    const canvasAdd = addBlock(setLayoutMode(defaultSite(), 'canvas'), 'blink');
+    expect(canvasAdd.blocks[canvasAdd.blocks.length - 1]!.layout).toBeTruthy();
+  });
+
+  it('setBlockLayout / setBlockMobile merge rects', () => {
+    let s = setLayoutMode(defaultSite(), 'canvas');
+    const id = s.blocks[0]!.id;
+    s = setBlockLayout(s, id, { x: 100, y: 50 });
+    expect(s.blocks[0]!.layout!.x).toBe(100);
+    s = setBlockMobile(s, id, { x: 5 });
+    expect(s.blocks[0]!.layout!.mobile!.x).toBe(5);
+  });
+
+  it('setCanvas / setPageBg update page settings', () => {
+    const s = setPageBg(setCanvas(defaultSite(), { width: 800 }), { kind: 'tile', tile: 'data:x' });
+    expect(s.canvas!.width).toBe(800);
+    expect(s.pageBg!.kind).toBe('tile');
+  });
+
+  it('newBlock supports the GeoCities widgets', () => {
+    expect(newBlock('blink').kind).toBe('blink');
+    expect((newBlock('hitCounter') as { start: number }).start).toBeGreaterThan(0);
+    expect((newBlock('html') as { html: string }).html).toContain('<');
   });
 });
