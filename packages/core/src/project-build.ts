@@ -8,6 +8,7 @@ import { generateRarityReport } from './preview.js';
 import { renderEdition } from './render-edition.js';
 import { renderEditionFrames } from './animation/frames.js';
 import { rankEditions } from './rarity-score.js';
+import { hashString, statFingerprint, loadBuildCache, saveBuildCache, type BuildCache } from './build-cache.js';
 import type { ProjectConfig } from './project-config.js';
 
 export interface BuildProgress {
@@ -27,6 +28,8 @@ export interface BuildCollectionInput {
   seed: string;
   maxAttemptsPerEdition?: number;
   buildJson?: (input: BuildJsonParams) => Record<string, unknown>;
+  /** Incremental build cache: skip re-rendering unchanged editions. Default true. */
+  cache?: boolean;
 }
 
 export interface BuildCollectionOutput {
@@ -85,6 +88,38 @@ export async function buildCollection(
   const spawnFit = (cfg.spawn && cfg.spawn.fitMode) || 'contain';
   const spawnMap = await loadSpawnMapFile(input.cwd, cfg.spawn?.mapPath);
 
+  // Incremental build cache: skip re-rendering byte-identical editions. Disabled when
+  // shuffleLayers is on (its Math.random shuffle makes a run's output non-deterministic).
+  const cacheEnabled = input.cache !== false && !cfg.experimental?.generation?.shuffleLayers;
+  const cache: BuildCache = cacheEnabled ? await loadBuildCache(outDir, input.seed) : { version: 1, seed: input.seed, entries: {} };
+  const prevEntries = cache.entries;
+  cache.entries = {}; // rebuilt fresh; only matched/rendered editions carry forward
+  const fpMap = new Map<string, string>();
+  if (cacheEnabled) {
+    const fps = await Promise.all(
+      catalog.flatMap((e) => e.options).map(async (o) => [o.filePath, await statFingerprint(o.filePath)] as const),
+    );
+    for (const [fp, h] of fps) fpMap.set(fp, h);
+  }
+  const globalHash = hashString(
+    JSON.stringify({
+      image: cfg.image,
+      fmt: outFormat,
+      ss: cfg.experimental?.compositor?.superSample ?? 1,
+      cpu: !!cfg.experimental?.compositor?.forceCpu,
+      anim: cfg.export.animation ?? null,
+      transforms: cfg.rules?.transforms ?? null,
+      spawnFit,
+      spawnMap: spawnMap ?? null,
+      name: cfg.name,
+      symbol: cfg.symbol ?? '',
+      description: cfg.description ?? '',
+    }),
+  );
+  const mimeFor = (f: string): string =>
+    f.endsWith('.mp4') ? 'video/mp4' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.gif') ? 'image/gif' : 'image/png';
+  const fileExists = (p: string): Promise<boolean> => fs.stat(p).then(() => true).catch(() => false);
+
   const batchSize = Math.min(20, Math.max(5, Math.floor(editions.length / 8)));
   const totalBatches = Math.max(1, Math.ceil(editions.length / Math.max(1, batchSize)));
 
@@ -104,64 +139,88 @@ export async function buildCollection(
         }
       }
 
-      const buffer = await renderEdition({
-        config: cfg,
-        picks,
-        traits: ed.traits,
-        spawnMap,
-        spawnFit,
-        placementRngSeed: `${input.seed}:ed:${idx}`,
-        assetSeedBase: `${input.seed}:${idx}`,
-        format: outFormat,
-      });
-
       const imageFilename = `${idx}.${outFormat}`;
-      const writes: Array<Promise<void>> = [fs.writeFile(path.join(outImages, imageFilename), buffer)];
+      const anim = cfg.export.animation;
+      const animFormats = anim?.enabled ? (anim.format && anim.format.length > 0 ? anim.format : ['gif']) : [];
+
+      // Per-edition content hash: everything renderEdition consumes plus the asset
+      // fingerprints. If it matches the cache and all expected files exist, skip rendering.
+      const editionHash = cacheEnabled
+        ? hashString(
+            globalHash +
+              '|' + idx + '|' + input.seed + '|' +
+              JSON.stringify(ed.traits) + '|' +
+              JSON.stringify(picks.map((p) => ({ fp: p.option.filePath, b: p.option.blend, o: p.option.opacity, ox: p.option.offsetX, oy: p.option.offsetY, e: p.option.effects }))) + '|' +
+              picks.map((p) => fpMap.get(p.option.filePath) ?? '?').join(','),
+          )
+        : '';
+      const expectedFiles = [imageFilename, ...animFormats.map((f) => `${idx}.${f}`)];
+      const cached =
+        cacheEnabled &&
+        prevEntries[String(idx)] === editionHash &&
+        (await Promise.all(expectedFiles.map((f) => fileExists(path.join(outImages, f))))).every(Boolean);
+
+      const writes: Array<Promise<void>> = [];
       const files: Array<{ uri: string; type: string }> = [
         { uri: `./images/${imageFilename}`, type: outFormat === 'webp' ? 'image/webp' : 'image/png' },
       ];
-
-      // Optional animated output: render frames once and encode each requested format.
       let animationUri: string | undefined;
-      const anim = cfg.export.animation;
-      if (anim?.enabled) {
-        const fps = anim.fps ?? 12;
-        const loop = anim.loop !== false;
-        const frames = await renderEditionFrames({
+
+      if (!cached) {
+        const buffer = await renderEdition({
           config: cfg,
-          layers: cfg.layers,
           picks,
           traits: ed.traits,
           spawnMap,
           spawnFit,
           placementRngSeed: `${input.seed}:ed:${idx}`,
           assetSeedBase: `${input.seed}:${idx}`,
-          fps,
-          durationMs: anim.durationMs ?? 1000,
+          format: outFormat,
         });
-        const formats = anim.format && anim.format.length > 0 ? anim.format : ['gif'];
-        for (const fmt of formats) {
+        writes.push(fs.writeFile(path.join(outImages, imageFilename), buffer));
+      }
+
+      // Optional animated output: render frames once and encode each requested format
+      // (skipped when the edition is cached; the files array still references them).
+      if (anim?.enabled) {
+        const fps = anim.fps ?? 12;
+        const loop = anim.loop !== false;
+        let frames: Buffer[] | null = null;
+        for (const fmt of animFormats) {
+          const animFilename = `${idx}.${fmt}`;
+          files.push({ uri: `./images/${animFilename}`, type: mimeFor(animFilename) });
+          if (!animationUri) animationUri = `./images/${animFilename}`;
+          if (cached) continue;
+          if (!frames) {
+            frames = await renderEditionFrames({
+              config: cfg,
+              layers: cfg.layers,
+              picks,
+              traits: ed.traits,
+              spawnMap,
+              spawnFit,
+              placementRngSeed: `${input.seed}:ed:${idx}`,
+              assetSeedBase: `${input.seed}:${idx}`,
+              fps,
+              durationMs: anim.durationMs ?? 1000,
+            });
+          }
           let data: Buffer;
-          let mime: string;
           if (fmt === 'mp4') {
             const { encodeMp4 } = await import('./animation/ffmpeg.js');
             data = await encodeMp4(frames, { fps });
-            mime = 'video/mp4';
           } else if (fmt === 'webp') {
             const { encodeAnimatedWebp } = await import('./animation/ffmpeg.js');
             data = await encodeAnimatedWebp(frames, { fps, loop });
-            mime = 'image/webp';
           } else {
             const { encodeGif } = await import('./animation/gif.js');
             data = await encodeGif(frames, { fps, loop });
-            mime = 'image/gif';
           }
-          const animFilename = `${idx}.${fmt}`;
           writes.push(fs.writeFile(path.join(outImages, animFilename), data));
-          files.push({ uri: `./images/${animFilename}`, type: mime });
-          if (!animationUri) animationUri = `./images/${animFilename}`;
         }
       }
+
+      if (cacheEnabled) cache.entries[String(idx)] = editionHash;
 
       const category = animationUri && animationUri.endsWith('.mp4') ? 'video' : 'image';
       const attributes = Object.entries(ed.traits).map(([trait_type, value]) => ({ trait_type, value }));
@@ -210,6 +269,8 @@ export async function buildCollection(
       hooks.onProgress({ current: endIdx, total: editions.length, message: `Processing batch ${batchIndex + 1}/${totalBatches}` });
     }
   }
+
+  if (cacheEnabled) await saveBuildCache(outDir, cache);
 
   await fs.writeFile(path.join(outDir, '_metadata.json'), JSON.stringify(allMetadata, null, 2));
   const rarity = editions.map((e: { traits: Record<string, string> }) => ({ traits: e.traits }));
