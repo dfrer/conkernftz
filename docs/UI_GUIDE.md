@@ -1,6 +1,9 @@
 ## UI Guide (Electron)
 
-The optional Electron GUI provides a visual workflow to configure projects, preview generations, and run commands.
+The Electron GUI is a React app (Vite-built) that wraps the full foundry workflow —
+configure a project, preview generations, build the collection, and publish — in a
+single "Field Instrument" console. It calls the same `@conkernftz/core` engine the CLI
+uses, so the GUI and CLI always agree.
 
 ### Start
 
@@ -9,29 +12,45 @@ pnpm -C packages/ui build
 pnpm -C packages/ui start
 ```
 
-If dependencies or the CLI are missing, the app displays an actionable message (run `corepack enable`, then `pnpm install` and `pnpm build` at the repo root).
+`start` rebuilds the UI assets if needed, then launches Electron. If the CLI or
+dependencies are missing, the app shows an actionable message (run `corepack enable`,
+then `pnpm install` and `pnpm build` at the repo root).
 
-### Key Features
+> The engine runs in a separate Electron `utilityProcess`, so generation and rendering
+> never block the window — long previews/builds keep the UI responsive (you'll see
+> progress, not a frozen window).
 
-- Live Preview overlay: drag, reroll, fit modes (contain/cover/actual), background (checker/dark/light).
-- Fal AI page: connect to `fal.ai`, choose models, size, and count; save to your project folder.
-- Project Config editor: edit and save `foundry.config.json` from within the app.
-- Options: light/dark theme, accent color, UI tokens (radius/blur/noise), reduced motion.
+### The pipeline
 
-Accessibility
-- Keyboard-friendly tabs with ARIA roles; Arrow Left/Right and Home/End support.
+The left rail is the workflow, in order:
+
+- **Projects** — open a project folder (or pick a recent). The header shows the active project.
+- **Design** — edit `foundry.config.json` visually:
+  - *Basics*: name, symbol, description, edition size, image size/format.
+  - *Layers*: add/remove/reorder layers, set blend & opacity, see live per-layer asset counts.
+  - *Effects* (the `fx` button on a layer): blend, offset/rotate/scale, glow/stroke/shadow/blur/modulate/color-overlay, plus per-asset overrides.
+  - *Rules*: structured editors for max-occurrences, mutually-exclusive groups, and requires, with a JSON escape hatch for transforms and anything advanced.
+  - *Assets & rarity*: bulk image renamer (set a uniform weight, or sequence-rename) — filename rarity is `value<delimiter>weight`.
+  - *Spawn/placement*: a canvas editor for placement dots (saved to the spawn map).
+  - Edits are dirty-tracked; **Save** writes back losslessly (fields the UI doesn't surface are preserved).
+- **Preview** — render a fresh random set straight from the engine (new seed each time) into a thumbnail gallery.
+- **Build** — build N editions with a live progress bar (Pause / Resume / Stop), a completion summary, a rarity report, and asset/output audits.
+- **Publish** — upload to a storage provider (irys / pinata / local; modes auto/dir/files) and run chain-aware mint actions (Solana direct mint + Candy Machine, or EVM deploy + owner-mint) via the CLI, with a live command console.
+- **AI** — a Fal quick-image generator: API key, model, size, count, prompt → results gallery with save-to-project.
+- **Settings** — appearance (theme + accent), storage provider + credentials, chain target + fields, and open-folder shortcuts. All edits save losslessly.
+- **Help** — a field manual of the stages, plus About and links.
+
+### Appearance
+
+Light/dark theme and an accent color (amber / cyan / magenta / lime) are in **Settings ▸
+Appearance** and persist across sessions. The UI respects `prefers-reduced-motion`.
+
+### Accessibility
+
+- Keyboard-friendly navigation with ARIA roles.
 - Respects `prefers-reduced-motion`.
-
-### Accuracy notes
-
-The UI attempts to render previews via the core compositor over IPC when available. If unavailable, it falls back to a Canvas 2D approximation:
-- Some blend modes may map approximately.
-- When accuracy is reduced, prefer running a CLI preview with IPC/core rendering enabled for final checks.
 
 ### Troubleshooting
 
-- If `packages/cli/dist/bin.js` is missing, build from repo root.
+- If `packages/cli/dist/bin.js` is missing, build from the repo root (`pnpm build`).
 - On Windows, prefer a non-OneDrive path and consider enabling Win32 long paths.
-
-
-

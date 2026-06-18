@@ -41,38 +41,34 @@ Until those land, the manual GUI smoke checklist (§3) covers the renderer gap.
 Run after any change to `packages/ui` main-process / preload / renderer, and before a
 release. Build first: `pnpm -w build`, then `pnpm -C packages/ui start`.
 
-**The new React UI is the default** (as of the O6 cutover). `pnpm -C packages/ui start`
-launches it; with a real project open it exercises the live bridge (config load/save,
-`previewLive`, `buildWithProgress`) and degrades to OFFLINE empty states off-bridge. The
-**legacy renderer** remains available as an escape hatch via `pnpm -C packages/ui start:legacy`
-(or `CONKERNFTZ_LEGACY=1`) until it is deleted. In a browser, `pnpm -C packages/ui
-dev:renderer-next` serves the new UI with the bridge absent.
+**The React UI is the only renderer** (the legacy `app.ts` renderer was removed in the O6
+stage-2 cutover). `pnpm -C packages/ui start` launches it; with a real project open it
+exercises the live bridge (config load/save, `previewLive`, `buildWithProgress`) and
+degrades to OFFLINE empty states off-bridge. The engine runs in a separate Electron
+`utilityProcess`, so heavy generation/rendering never freezes the window. In a browser,
+`pnpm -C packages/ui dev:renderer-next` serves the UI with the bridge absent.
 
-**Boot & project**
-- [ ] App launches; no errors in the console pane or devtools.
-- [ ] Launcher shows recents; "Browse…" opens a project; switching projects updates the header label.
+**Boot & Projects**
+- [ ] App launches; no errors in devtools console; window stays responsive.
+- [ ] Projects screen shows recents; "Browse…" opens a project; switching updates the header label.
 
 **Design**
-- [ ] Configure ▸ Basics loads current config; edits + Save persist to `foundry.config.json`.
-- [ ] Layers table lists layers with correct asset counts; add/reorder/edit blend & opacity; Save.
-- [ ] Spawn Editor opens and edits placement dots.
-- [ ] Image Renamer bulk + step-through rename works; rarity weights apply.
-- [ ] Rules & Export: rules JSON validates + saves; Transforms modal edits + saves.
-- [ ] Conditional spawn + per-option rules (form + advanced JSON) save correctly.
+- [ ] Basics loads current config; edits + Save persist to `foundry.config.json`.
+- [ ] Layers table lists layers with correct asset counts; add/remove/reorder; edit blend & opacity; Save.
+- [ ] `fx` opens the effects editor (blend/offset/glow/stroke/shadow/etc.) + per-asset overrides; Save preserves untouched fields.
+- [ ] Rules editor: max-occurrences / mutually-exclusive / requires + the JSON escape hatch save correctly.
+- [ ] Image Renamer: set-uniform-weight and sequence-rename produce correct `value<delim>weight` filenames.
+- [ ] Spawn editor: click to add dots, drag to move, edit x/y/weight/jitter, per-layer mapping; Save writes the spawn map.
 
-**Preview & build**
-- [ ] Live Preview overlay shows; drag, reroll, fit modes, background modes work; export/save.
-- [ ] Generate Previews writes preview images; gallery + lightbox work.
-- [ ] Build Collection runs with progress; **Pause / Resume / Stop** behave; images + JSON + rarity.json produced.
-- [ ] **Studio tab:** layer reorder, weight sliders + predicted %, rarity histogram, regenerating gallery,
-      **animation preview (verifies the readFileBase64 fix)**, asset manager delete/renumber.
+**Preview & Build**
+- [ ] Preview renders a fresh thumbnail gallery from the engine; window stays responsive while rendering.
+- [ ] Build runs with a live progress bar; **Pause / Resume / Stop** behave; images + JSON + `rarity.json` produced; rarity report + audits render.
 
-**Reports / publish / AI / settings**
-- [ ] Reports: open rarity.json; Audit Assets + Audit Outputs return results.
-- [ ] Mint tab: upload + mint controls invoke the CLI (until the Publish rebuild).
-- [ ] Fal AI: key, quick image generate, catalog explore/import/export, param editor, dry run, output save.
-- [ ] Options: theme/accent/radius/blur/noise/glow apply live; Reset UI.
-- [ ] About links open in the external browser; NASA easter egg present.
+**Publish / AI / Settings / Help**
+- [ ] Publish: upload uses the real providers (irys/pinata/local), modes auto/dir/files; mint actions stream to the command console.
+- [ ] AI (Fal): key, model, size, count, prompt → results gallery; save-to-project works.
+- [ ] Settings: theme + accent switch live; storage/chain fields save losslessly.
+- [ ] Help: About links open in the external browser; NASA easter egg (redaction stamp) present.
 
 **Security spot-checks**
 - [ ] `saveJson` / writes outside the project are refused ("Path escapes project").
