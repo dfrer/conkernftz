@@ -5,12 +5,13 @@ import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
 import { EffectsEditor } from '../components/EffectsEditor';
+import { OverridesEditor } from '../components/OverridesEditor';
 import { RenamerPanel } from '../components/RenamerPanel';
 import { RulesEditor, type RulesObj } from '../components/RulesEditor';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
-import { useProject, type LayerCfg } from '../state/project';
+import { useProject, type LayerCfg, type AssetOverrideCfg } from '../state/project';
 
 function StageHead({ children, actions }: { children?: ReactNode; actions?: ReactNode }) {
   return (
@@ -243,7 +244,29 @@ export function DesignScreen() {
             </Button>
           }
         >
-          <EffectsEditor layer={layers[selected]!} onMutate={(fn) => updateLayer(selected, fn)} />
+          <EffectsEditor
+            effects={layers[selected]!.effects ?? {}}
+            onChange={(mut) =>
+              updateLayer(selected, (l) => {
+                l.effects = l.effects ?? {};
+                mut(l.effects);
+              })
+            }
+          />
+          <div style={{ marginTop: 'var(--sp-4)' }}>
+            <OverridesEditor
+              overrides={(layers[selected]!.overrides ?? []) as AssetOverrideCfg[]}
+              onChange={(mut) =>
+                updateConfig((d) => {
+                  const l = (d.layers ?? [])[selected];
+                  if (l) {
+                    l.overrides = Array.isArray(l.overrides) ? l.overrides : [];
+                    mut(l.overrides as AssetOverrideCfg[]);
+                  }
+                })
+              }
+            />
+          </div>
         </Panel>
       ) : null}
 

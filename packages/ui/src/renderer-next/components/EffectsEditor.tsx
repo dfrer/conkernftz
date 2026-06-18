@@ -1,39 +1,39 @@
 import type { ReactNode } from 'react';
 import { Field, Input, Select } from './Field';
 import { BLEND_MODES } from '../lib/blend';
-import type { LayerCfg, LayerEffects } from '../state/project';
+import type { LayerEffects } from '../state/project';
 
-type Mutate = (fn: (l: LayerCfg) => void) => void;
+// Mutate the effects object in place; the caller persists the change.
+type EffectsMutate = (mut: (e: LayerEffects) => void) => void;
 type EffectGroupName = 'glow' | 'stroke' | 'shadow' | 'extrude' | 'modulate' | 'colorOverlay';
 
 function num(v: string): number | undefined {
   return v === '' ? undefined : Number(v);
 }
 
-// Structured editor for a single layer's compositing + visual effects. Effect *types*
-// not rendered here are still preserved on save (the config is cloned, not rebuilt),
-// so this is feature-preserving even while the editor surface grows incrementally.
-export function EffectsEditor({ layer, onMutate }: { layer: LayerCfg; onMutate: Mutate }) {
-  const eff: LayerEffects = layer.effects ?? {};
+// Generic editor for a single effects object (compositing + visual effects). Used for
+// both a layer's effects and a per-asset override's effects. Effect types not rendered
+// here are still preserved on save (the object is mutated, not rebuilt).
+export function EffectsEditor({ effects, onChange }: { effects: LayerEffects; onChange: EffectsMutate }) {
+  const eff = effects;
   const grp = (name: EffectGroupName): Record<string, unknown> => (eff[name] ?? {}) as Record<string, unknown>;
 
   const setEff = (key: keyof LayerEffects, value: unknown) =>
-    onMutate((l) => {
-      const e = (l.effects ??= {});
+    onChange((e) => {
       if (value === undefined || value === '') delete (e as Record<string, unknown>)[key as string];
       else (e as Record<string, unknown>)[key as string] = value;
     });
   const groupOn = (g: EffectGroupName): boolean => !!eff[g];
   const toggleGroup = (g: EffectGroupName, on: boolean) =>
-    onMutate((l) => {
-      const e = (l.effects ??= {}) as Record<string, unknown>;
-      if (on) e[g] = e[g] ?? {};
-      else delete e[g];
+    onChange((e) => {
+      const r = e as Record<string, unknown>;
+      if (on) r[g] = r[g] ?? {};
+      else delete r[g];
     });
   const setField = (g: EffectGroupName, field: string, value: unknown) =>
-    onMutate((l) => {
-      const e = (l.effects ??= {}) as Record<string, Record<string, unknown>>;
-      const obj = (e[g] ??= {});
+    onChange((e) => {
+      const r = e as Record<string, Record<string, unknown>>;
+      const obj = (r[g] ??= {});
       if (value === undefined || value === '') delete obj[field];
       else obj[field] = value;
     });
@@ -42,7 +42,7 @@ export function EffectsEditor({ layer, onMutate }: { layer: LayerCfg; onMutate: 
     <div className="stack">
       <div className="grid cols-auto">
         <Field label="Blend mode">
-          <Select value={String(layer.blend ?? eff.blend ?? 'normal')} onChange={(e) => onMutate((l) => (l.blend = e.target.value))}>
+          <Select value={String(eff.blend ?? 'normal')} onChange={(ev) => onChange((e) => (e.blend = ev.target.value))}>
             {BLEND_MODES.map((m) => (
               <option key={m} value={m}>
                 {m}

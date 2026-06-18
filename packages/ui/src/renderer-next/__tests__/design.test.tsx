@@ -118,4 +118,23 @@ describe('DesignScreen', () => {
     expect(saved.rules.maxOccurrences[0].max).toBe(3);
     expect(saved.layers).toHaveLength(2); // untouched fields preserved
   });
+
+  it('adds a per-asset override with a glow effect, losslessly', async () => {
+    const { writeConfig } = installBridge();
+    const { findByLabelText, getByRole, getByLabelText, getAllByLabelText } = mount();
+    await findByLabelText('Layer 1 name');
+    fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
+    fireEvent.click(getByRole('button', { name: '+ Add override' }));
+    fireEvent.change(getByLabelText('Override match 1'), { target: { value: 'Gold' } });
+    // Two "Glow" toggles now exist (layer + override); index 1 is the override's.
+    fireEvent.click(getAllByLabelText('Glow')[1]!);
+    fireEvent.change(getByLabelText('Color'), { target: { value: '#ffcc00' } });
+    fireEvent.click(getByRole('button', { name: 'Save config' }));
+    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const saved = writeConfig.mock.calls.at(-1)![0] as any;
+    expect(saved.layers[0].overrides[0]).toMatchObject({ target: 'value', match: 'Gold' });
+    expect(saved.layers[0].overrides[0].effects.glow.color).toBe('#ffcc00');
+    expect(saved.rarity).toEqual(baseConfig.rarity);
+  });
 });
