@@ -19,6 +19,12 @@ export interface LayerEffects {
   colorOverlay?: { color?: string; opacity?: number; blend?: string; preset?: string };
   [k: string]: unknown;
 }
+export interface AssetOverrideCfg {
+  target?: 'filename' | 'value';
+  match?: string;
+  effects?: LayerEffects;
+  [k: string]: unknown;
+}
 export interface LayerCfg {
   name: string;
   path: string;
@@ -27,6 +33,7 @@ export interface LayerCfg {
   blend?: string;
   opacity?: number;
   effects?: LayerEffects;
+  overrides?: AssetOverrideCfg[];
   [k: string]: unknown;
 }
 export interface ProjectConfig {
