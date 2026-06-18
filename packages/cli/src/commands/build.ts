@@ -13,21 +13,29 @@ export function buildCmd(): Command {
     .option('--animate', 'render animated output (overrides export.animation.enabled)')
     .option('--fps <n>', 'animation frames per second')
     .option('--anim-format <list>', 'comma-separated animation formats: gif,mp4,webp')
+    .option('--workers <n>', 'render across N worker threads (static image builds only)', undefined)
+    .option('--no-cache', 'disable the incremental build cache (force a full re-render)')
     .addHelpText(
       'afterAll',
       `
 Examples:
   # Build using editionSize from config
-  foundry build
+  conkernftz build
 
   # Build 100 editions deterministically
-  foundry build --count 100 --seed 42
+  conkernftz build --count 100 --seed 42
 
   # Increase search attempts when rules are strict
-  foundry build --count 250 --max-attempts 5000
+  conkernftz build --count 250 --max-attempts 5000
+
+  # Render a large static collection across 8 worker threads
+  conkernftz build --count 10000 --workers 8
+
+  # Force a full re-render, ignoring the incremental cache
+  conkernftz build --count 100 --no-cache
 
   # Render animated output (requires layers with an "animation" block)
-  foundry build --count 10 --animate --fps 15 --anim-format gif,mp4
+  conkernftz build --count 10 --animate --fps 15 --anim-format gif,mp4
 `
     )
     .action(async (opts) => {
@@ -74,6 +82,8 @@ Examples:
           count,
           seed: usedSeed,
           maxAttemptsPerEdition: Number(opts.maxAttempts ?? '500'),
+          workers: opts.workers ? Number(opts.workers) : undefined,
+          cache: opts.cache !== false,
           buildJson,
         },
         {

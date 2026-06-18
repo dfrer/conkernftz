@@ -9,7 +9,12 @@ import { renderEdition } from './render-edition.js';
 import { renderEditionFrames } from './animation/frames.js';
 import { rankEditions } from './rarity-score.js';
 import { hashString, statFingerprint, loadBuildCache, saveBuildCache, type BuildCache } from './build-cache.js';
+import { resolveWorkerCount, renderInPool } from './render-pool.js';
 import type { ProjectConfig } from './project-config.js';
+
+// Builds with at least this many editions may use worker-thread rendering (when opted in);
+// below it the worker spawn overhead isn't worth it and we stay in-process.
+const WORKER_THRESHOLD = 24;
 
 export interface BuildProgress {
   current: number;
@@ -30,6 +35,8 @@ export interface BuildCollectionInput {
   buildJson?: (input: BuildJsonParams) => Record<string, unknown>;
   /** Incremental build cache: skip re-rendering unchanged editions. Default true. */
   cache?: boolean;
+  /** Render across N worker threads (opt-in; default 1 = in-process). Static builds only. */
+  workers?: number;
 }
 
 export interface BuildCollectionOutput {
@@ -88,9 +95,18 @@ export async function buildCollection(
   const spawnFit = (cfg.spawn && cfg.spawn.fitMode) || 'contain';
   const spawnMap = await loadSpawnMapFile(input.cwd, cfg.spawn?.mapPath);
 
+  // Optional parallel rendering across worker threads (opt-in via input.workers > 1), for
+  // static image builds above a threshold. Generation already happened deterministically on
+  // this thread, so worker results are identical regardless of order. Not for animation or
+  // shuffleLayers builds.
+  const shuffle = !!cfg.experimental?.generation?.shuffleLayers;
+  const animEnabled = !!cfg.export.animation?.enabled;
+  const workerCount = resolveWorkerCount(input.workers, editions.length);
+  const useWorkers = workerCount > 1 && editions.length >= WORKER_THRESHOLD && !animEnabled && !shuffle;
+
   // Incremental build cache: skip re-rendering byte-identical editions. Disabled when
-  // shuffleLayers is on (its Math.random shuffle makes a run's output non-deterministic).
-  const cacheEnabled = input.cache !== false && !cfg.experimental?.generation?.shuffleLayers;
+  // shuffleLayers is on (non-deterministic) or when workers render everything up front.
+  const cacheEnabled = input.cache !== false && !shuffle && !useWorkers;
   const cache: BuildCache = cacheEnabled ? await loadBuildCache(outDir, input.seed) : { version: 1, seed: input.seed, entries: {} };
   const prevEntries = cache.entries;
   cache.entries = {}; // rebuilt fresh; only matched/rendered editions carry forward
@@ -119,6 +135,28 @@ export async function buildCollection(
   const mimeFor = (f: string): string =>
     f.endsWith('.mp4') ? 'video/mp4' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.gif') ? 'image/gif' : 'image/png';
   const fileExists = (p: string): Promise<boolean> => fs.stat(p).then(() => true).catch(() => false);
+
+  // When worker rendering is enabled, render every edition image in parallel up front; the
+  // batch loop below then just writes buffers + metadata.
+  let preRendered: Map<number, Buffer> | null = null;
+  if (useWorkers) {
+    preRendered = await renderInPool(
+      editions.map((ed, i) => ({
+        id: i + 1,
+        params: {
+          config: cfg,
+          picks: Array.from(ed.picks),
+          traits: ed.traits,
+          spawnMap,
+          spawnFit,
+          placementRngSeed: `${input.seed}:ed:${i + 1}`,
+          assetSeedBase: `${input.seed}:${i + 1}`,
+          format: outFormat,
+        },
+      })),
+      workerCount,
+    );
+  }
 
   const batchSize = Math.min(20, Math.max(5, Math.floor(editions.length / 8)));
   const totalBatches = Math.max(1, Math.ceil(editions.length / Math.max(1, batchSize)));
@@ -167,16 +205,18 @@ export async function buildCollection(
       let animationUri: string | undefined;
 
       if (!cached) {
-        const buffer = await renderEdition({
-          config: cfg,
-          picks,
-          traits: ed.traits,
-          spawnMap,
-          spawnFit,
-          placementRngSeed: `${input.seed}:ed:${idx}`,
-          assetSeedBase: `${input.seed}:${idx}`,
-          format: outFormat,
-        });
+        const buffer =
+          preRendered?.get(idx) ??
+          (await renderEdition({
+            config: cfg,
+            picks,
+            traits: ed.traits,
+            spawnMap,
+            spawnFit,
+            placementRngSeed: `${input.seed}:ed:${idx}`,
+            assetSeedBase: `${input.seed}:${idx}`,
+            format: outFormat,
+          }));
         writes.push(fs.writeFile(path.join(outImages, imageFilename), buffer));
       }
 
