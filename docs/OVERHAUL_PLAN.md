@@ -394,6 +394,16 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 - **Verification:** golden tests green; perf benchmark (10k build time); E2E.
 
 ### Engine track (parallel after O0) — Power & performance
+
+> **Status: 🟡 IN PROGRESS — incremental builds landed (2026-06-17).** `buildCollection`
+> now records a per-edition content hash (`core/src/build-cache.ts`: globals + traits +
+> picks + asset mtime/size fingerprints) in `<outDir>/.build-cache.json`; a rebuild skips
+> editions whose hash matches and whose output files still exist (default on; `input.cache:
+> false` to disable; auto-disabled when `shuffleLayers` makes a run non-deterministic).
+> Skipping only on a byte-identical match keeps builds deterministic — golden tests
+> unchanged. Tests: core 30→32. **Next in this track:** worker-pool parallel rendering
+> (`worker_threads` + sharp), then constraint solver / palette recolor / SVG layers.
+
 - **Goal (decision #7):** worker-pool parallel rendering (`worker_threads` + sharp pool);
   incremental/cached builds (hash inputs → skip unchanged); constraint solver for exact
   trait-distribution targeting; palette recoloring of grayscale layers; optional SVG/vector
