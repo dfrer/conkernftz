@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  BLOCK_KINDS,
   addBlock,
   defaultSite,
   moveBlock,
@@ -110,5 +111,13 @@ describe('site model — canvas + widgets', () => {
     expect(newBlock('blink').kind).toBe('blink');
     expect((newBlock('hitCounter') as { start: number }).start).toBeGreaterThan(0);
     expect((newBlock('html') as { html: string }).html).toContain('<');
+  });
+
+  it('newBlock supports the extra nostalgia widgets', () => {
+    expect((newBlock('wordArt') as { style: string }).style).toBe('rainbow');
+    expect(newBlock('button').kind).toBe('button');
+    expect(newBlock('webRing').kind).toBe('webRing');
+    expect(newBlock('underConstruction').kind).toBe('underConstruction');
+    expect(BLOCK_KINDS).toContain('wordArt');
   });
 });

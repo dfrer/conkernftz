@@ -32,6 +32,18 @@ import {
 
 type Viewport = 'desktop' | 'mobile';
 
+// Built-in tiled wallpapers (the GeoCities staple). Small repeating SVG data-URIs that sit
+// over the page background color — look best on a dark bg.
+const WALLPAPERS: Record<string, string> = {
+  none: '',
+  stars:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='10' cy='12' r='1' fill='white'/%3E%3Ccircle cx='42' cy='30' r='1.3' fill='white'/%3E%3Ccircle cx='26' cy='50' r='.8' fill='white'/%3E%3C/svg%3E",
+  dots:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='3' cy='3' r='1.5' fill='white' opacity='.25'/%3E%3C/svg%3E",
+  grid:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M0 0H32V32' fill='none' stroke='white' stroke-opacity='.15'/%3E%3C/svg%3E",
+};
+
 export function SiteScreen() {
   const { project, config, updateConfig, save } = useProject();
   const toast = useToast();
@@ -61,6 +73,8 @@ export function SiteScreen() {
 
   const onMove = (id: string, x: number, y: number): void =>
     setSite(viewport === 'mobile' ? setBlockMobile(site, id, { x, y }) : setBlockLayout(site, id, { x, y }));
+  const onResize = (id: string, w: number, h: number): void =>
+    setSite(viewport === 'mobile' ? setBlockMobile(site, id, { w, h }) : setBlockLayout(site, id, { w, h }));
 
   const loadArt = async (): Promise<void> => {
     const fb = bridge();
@@ -155,9 +169,21 @@ export function SiteScreen() {
                 </Field>
               ) : null}
               {pageBg.kind === 'tile' ? (
-                <Field label="Tile URL">
-                  <Input value={pageBg.tile} onChange={(e) => setSite(setPageBg(site, { tile: e.target.value }))} placeholder="data: or https URL" aria-label="Background tile" />
-                </Field>
+                <>
+                  <Field label="Wallpaper">
+                    <Select aria-label="Wallpaper preset" value="" onChange={(e) => e.target.value && setSite(setPageBg(site, { tile: WALLPAPERS[e.target.value] ?? '' }))}>
+                      <option value="">Preset…</option>
+                      {Object.keys(WALLPAPERS).map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Tile URL">
+                    <Input value={pageBg.tile} onChange={(e) => setSite(setPageBg(site, { tile: e.target.value }))} placeholder="data: or https URL" aria-label="Background tile" />
+                  </Field>
+                </>
               ) : null}
             </div>
           </Panel>
@@ -238,7 +264,7 @@ export function SiteScreen() {
 
           <Panel title={mode === 'canvas' ? `Canvas — ${viewport}` : 'Preview'}>
             {mode === 'canvas' ? (
-              <SiteCanvas site={site} images={images} experience={experience} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} />
+              <SiteCanvas site={site} images={images} experience={experience} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} />
             ) : (
               <SiteRenderer site={site} images={images} experience={experience} />
             )}
@@ -328,6 +354,30 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
       );
     case 'html':
       return <Field label="Raw HTML"><textarea className="textarea" rows={6} spellCheck={false} value={block.html} onChange={(e) => setField({ html: e.target.value })} aria-label="Raw HTML" /></Field>;
+    case 'wordArt':
+      return (
+        <div className="grid cols-auto">
+          <Field label="Text"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="WordArt text" /></Field>
+          <Field label="Style">
+            <Select aria-label="WordArt style" value={block.style} onChange={(e) => setField({ style: e.target.value })}>
+              <option value="rainbow">rainbow</option>
+              <option value="chrome">chrome</option>
+              <option value="fire">fire</option>
+            </Select>
+          </Field>
+        </div>
+      );
+    case 'button':
+      return (
+        <div className="grid cols-auto">
+          <Field label="Label"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Button label" /></Field>
+          <Field label="Link"><Input value={block.href} onChange={(e) => setField({ href: e.target.value })} placeholder="https://" aria-label="Button href" /></Field>
+        </div>
+      );
+    case 'webRing':
+      return <Field label="Ring name"><Input value={block.name} onChange={(e) => setField({ name: e.target.value })} aria-label="Web ring name" /></Field>;
+    case 'underConstruction':
+      return <Field label="Banner text"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Construction text" /></Field>;
     case 'divider':
       return <span className="label muted">A horizontal rule. No options.</span>;
   }

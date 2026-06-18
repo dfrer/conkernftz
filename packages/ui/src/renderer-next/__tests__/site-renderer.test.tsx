@@ -44,4 +44,14 @@ describe('SiteRenderer', () => {
     expect(getByText('NEW!!!')).toBeTruthy();
     expect(container.querySelector('.site-hitcounter-num')).toBeTruthy();
   });
+
+  it('renders the extra nostalgia widgets (wordart / webring / under-construction)', () => {
+    let site = addBlock(defaultSite(), 'wordArt');
+    site = addBlock(site, 'webRing');
+    site = addBlock(site, 'underConstruction');
+    const { container, getByText } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect(getByText('WELCOME')).toBeTruthy();
+    expect(getByText('The NFT Web Ring')).toBeTruthy();
+    expect(container.querySelector('.site-construction')?.textContent).toContain('UNDER CONSTRUCTION');
+  });
 });
