@@ -10,6 +10,7 @@ export const PIPELINE: Stage[] = [
   { id: 'build', label: 'Build' },
   { id: 'publish', label: 'Publish' },
   { id: 'experience', label: 'Mint FX' },
+  { id: 'site', label: 'Site' },
 ];
 
 /** System / utility destinations. */

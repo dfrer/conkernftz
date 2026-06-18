@@ -402,6 +402,15 @@ export const ProjectConfigSchema = z.object({
     })
     .passthrough()
     .optional(),
+  // Mint-site builder config (theme + blocks). The renderer owns the canonical shape
+  // (renderer-next/lib/site); core accepts it leniently and passes it through losslessly.
+  site: z
+    .object({
+      theme: z.record(z.string(), z.unknown()).optional(),
+      blocks: z.array(z.record(z.string(), z.unknown())).optional(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
