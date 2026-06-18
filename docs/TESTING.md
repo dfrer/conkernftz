@@ -41,6 +41,12 @@ Until those land, the manual GUI smoke checklist (§3) covers the renderer gap.
 Run after any change to `packages/ui` main-process / preload / renderer, and before a
 release. Build first: `pnpm -w build`, then `pnpm -C packages/ui start`.
 
+**Previewing the new React UI (Phase O1+):** the rewrite lives behind an opt-in flag so the
+legacy renderer stays the default. Launch it in Electron with `pnpm -C packages/ui start:next`
+(or set `CONKERNFTZ_NEXT=1`). With a real project open it exercises the live bridge
+(config load/save, `previewLive`, `buildWithProgress`); offline it degrades to OFFLINE
+empty states. In a browser via `pnpm -C packages/ui dev:renderer-next` the bridge is absent.
+
 **Boot & project**
 - [ ] App launches; no errors in the console pane or devtools.
 - [ ] Launcher shows recents; "Browse…" opens a project; switching projects updates the header label.

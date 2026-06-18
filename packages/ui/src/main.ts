@@ -27,7 +27,11 @@ function createWindow(): void {
   win.webContents.on('did-fail-load', (_e, code, desc) => {
     console.error('Failed to load UI:', code, desc);
   });
-  win.loadFile(path.join(appDir, 'index.html'));
+  // Opt-in preview of the new React renderer (Phase O1+). Defaults to the legacy
+  // renderer until the O6 cutover. Enable with CONKERNFTZ_NEXT=1 (or `pnpm start:next`).
+  const useNext = process.env.CONKERNFTZ_NEXT === '1';
+  const indexHtml = useNext ? path.join(appDir, 'renderer-next', 'index.html') : path.join(appDir, 'index.html');
+  win.loadFile(indexHtml);
 }
 
 electron.app.whenReady().then(() => {

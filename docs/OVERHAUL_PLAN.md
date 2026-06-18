@@ -426,6 +426,16 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
   Windows VM, launch, run a full **offline** build (no pnpm/node toolchain present).
 
 ### Phase O6 — Cutover & monolith retirement
+
+> **Status: 🟡 OPT-IN PREVIEW WIRED (2026-06-17).** Electron can now launch the new React
+> renderer via `CONKERNFTZ_NEXT=1` / `pnpm -C packages/ui start:next` (`main.ts` chooses
+> `dist/renderer-next/index.html`), with the legacy renderer still the default — so the new
+> UI is now a *runnable* app against the live `window.foundry` bridge, not just a dev-server
+> page. Fixed the Vite `file://` module gotcha by stripping `crossorigin` from the built
+> HTML (verified: 0 occurrences; relative `./assets`). **Full cutover (flip the default +
+> delete `app.ts`/old `index.html`/`styles.css`) stays gated on feature parity** — Publish,
+> Settings, AI, Help screens + the Design tail are not migrated yet.
+
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete
   `app.ts` (12k), old `index.html`/`styles.css`; rewrite README/UI_GUIDE/CONFIG_REFERENCE;
