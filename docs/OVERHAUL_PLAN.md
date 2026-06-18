@@ -447,9 +447,10 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > page. Fixed the Vite `file://` module gotcha by stripping `crossorigin` from the built
 > HTML (verified: 0 occurrences; relative `./assets`). **Full cutover (flip the default +
 > delete `app.ts`/old `index.html`/`styles.css`) stays gated on feature parity.** Migrated:
-> the full pipeline (Projects/Design/Preview/Build/Publish) + Settings + Help (O5). Remaining
-> for parity: the **Fal AI** screen and the **Design tail** (spawn/placement editor, image
-> renamer, structured rule editors, per-asset overrides).
+> **every nav screen** — the full pipeline (Projects/Design/Preview/Build/Publish), Settings,
+> Help, and **Fal AI** (quick-image generation + save; the full model-catalog/dynamic-param
+> explorer is a later enhancement). Remaining before flipping the default: the **Design tail**
+> (spawn/placement editor, image renamer, structured rule editors, per-asset overrides).
 
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete
