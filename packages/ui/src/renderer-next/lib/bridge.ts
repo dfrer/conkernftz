@@ -39,6 +39,7 @@ export interface FoundryBridge {
   auditOutputs(opts?: { images?: boolean; json?: boolean }): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   /** Run the conkernftz CLI in the active project (upload / mint / deploy / candy …). */
   run(args: string[]): Promise<{ ok: boolean; stdout?: string; error?: string }>;
+  openInExplorer(relativePath: string): Promise<OkResult>;
   openExternal(url: string): Promise<OkResult>;
 }
 
