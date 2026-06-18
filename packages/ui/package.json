@@ -13,7 +13,7 @@
     "dev:renderer-next": "vite",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer-next.json --noEmit",
     "start": "node scripts/start.cjs",
-    "start:next": "node scripts/start.cjs --next",
+    "start:legacy": "node scripts/start.cjs --legacy",
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests"
   },
