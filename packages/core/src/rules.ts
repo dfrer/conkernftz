@@ -4,6 +4,11 @@ export interface ProjectRules {
   mutuallyExclusive?: string[][]; // [["Eyes:Laser","Headwear:Visor"]]
   requires?: Array<{ if: string; thenAnyOf: string[] }>;
   maxOccurrences?: Array<{ trait: string; max: number }>;
+  // Exact trait-distribution targets, keyed "Layer:Value" like maxOccurrences. Unlike
+  // maxOccurrences (an upper bound), the generator actively steers selection to make a
+  // targeted value appear in exactly `count` editions (best-effort if over/under-specified).
+  // Enforced by the generator across editions, not by the single-edition RuleEngine.
+  targets?: Array<{ trait: string; count: number }>;
   transforms?: TransformRule[];
 }
 

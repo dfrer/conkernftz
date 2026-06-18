@@ -75,6 +75,26 @@ export function generateEditionsConstrained(
     }
   }
 
+  // Exact distribution targets ("Layer:Value" → remaining count). The generator steers
+  // selection toward targeted values with quota left so each appears in exactly its count
+  // editions (best-effort when over/under-specified or constrained by rules/spawn). Quota
+  // is only decremented on edition *acceptance*, so rejected drafts never waste it.
+  const targetRemaining = new Map<string, number>();
+  const targetedByLayer = new Map<string, Set<string>>();
+  for (const t of constraints.rules?.targets ?? []) {
+    const [layer, value] = t.trait.split(':');
+    if (layer && value && Number.isFinite(t.count)) {
+      targetRemaining.set(t.trait, Math.max(0, Math.floor(t.count)));
+      let set = targetedByLayer.get(layer);
+      if (!set) {
+        set = new Set();
+        targetedByLayer.set(layer, set);
+      }
+      set.add(value);
+    }
+  }
+  const hasTargets = targetRemaining.size > 0;
+
   // Pre-filter catalog entries with options
   const validEntries = catalog.filter(entry => entry.options.length > 0);
 
@@ -99,7 +119,11 @@ export function generateEditionsConstrained(
         if (entry.spec.spawnUnless && evaluateTraitCondition(entry.spec.spawnUnless, traitSet)) continue;
         const opts = applyOptionRules(entry.options, entry.spec.optionRules, traits);
         if (opts.length === 0) continue;
-        const pick = weightedPick(opts, rng.next());
+        const targetedSet = hasTargets ? targetedByLayer.get(entry.spec.name) : undefined;
+        const pick =
+          targetedSet && targetedSet.size > 0
+            ? pickWithTargets(entry.spec.name, opts, targetedSet, targetRemaining, rng.next())
+            : weightedPick(opts, rng.next());
         traits[entry.spec.name] = pick.value;
         picks.push({ layer: entry.spec.name, option: pick });
       }
@@ -149,6 +173,15 @@ export function generateEditionsConstrained(
       }
     }
 
+    // Drain distribution quotas for the accepted edition's targeted traits.
+    if (hasTargets) {
+      for (const [layer, value] of Object.entries(accepted.traits)) {
+        const key = `${layer}:${value}`;
+        const rem = targetRemaining.get(key);
+        if (rem !== undefined && rem > 0) targetRemaining.set(key, rem - 1);
+      }
+    }
+
     out.push(accepted);
   }
   return out;
@@ -163,6 +196,44 @@ function weightedPick<T extends { weight: number }>(items: T[], roll: number): T
   }
   // If for some reason roll is exactly 1.0, fall back to last item
   return items[items.length - 1] as T;
+}
+
+/** Weighted pick using an arbitrary per-item weight function (zero/negative weights skipped). */
+function weightedPickBy<T>(items: T[], weightFn: (item: T) => number, roll: number): T {
+  let total = 0;
+  for (const item of items) total += Math.max(0, weightFn(item));
+  if (total <= 0) return items[items.length - 1] as T;
+  let r = roll * total;
+  for (const item of items) {
+    const w = Math.max(0, weightFn(item));
+    if (r < w) return item;
+    r -= w;
+  }
+  return items[items.length - 1] as T;
+}
+
+/**
+ * Pick an option for a layer that has distribution targets. Targeted values with quota
+ * remaining are prioritized (weighted by their remaining quota, so they drain evenly and
+ * land exactly); otherwise fall back to untargeted options by base weight, or — only when
+ * every candidate is a depleted target — the full weighted pick.
+ */
+function pickWithTargets(
+  layerName: string,
+  opts: LayerAssetOption[],
+  targetedSet: Set<string>,
+  remaining: Map<string, number>,
+  roll: number,
+): LayerAssetOption {
+  const priority = opts.filter(
+    (o) => targetedSet.has(o.value) && (remaining.get(`${layerName}:${o.value}`) ?? 0) > 0,
+  );
+  if (priority.length > 0) {
+    return weightedPickBy(priority, (o) => remaining.get(`${layerName}:${o.value}`) ?? 0, roll);
+  }
+  const untargeted = opts.filter((o) => !targetedSet.has(o.value));
+  if (untargeted.length > 0) return weightedPick(untargeted, roll);
+  return weightedPick(opts, roll);
 }
 
 

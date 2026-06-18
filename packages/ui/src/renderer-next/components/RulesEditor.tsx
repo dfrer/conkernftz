@@ -8,6 +8,7 @@ export interface RulesObj {
   mutuallyExclusive?: string[][];
   requires?: Array<{ if: string; thenAnyOf: string[] }>;
   maxOccurrences?: Array<{ trait: string; max: number }>;
+  targets?: Array<{ trait: string; count: number }>;
   [k: string]: unknown;
 }
 
@@ -26,9 +27,11 @@ export function RulesEditor({ value, setRules }: { value: RulesObj; setRules: (n
   const [jsonErr, setJsonErr] = useState<string | null>(null);
 
   const maxOcc = value.maxOccurrences ?? [];
+  const targets = value.targets ?? [];
   const mutex = value.mutuallyExclusive ?? [];
   const requires = value.requires ?? [];
 
+  const setTargets = (next: Array<{ trait: string; count: number }>) => setRules({ ...value, targets: next });
   const setMaxOcc = (next: Array<{ trait: string; max: number }>) => setRules({ ...value, maxOccurrences: next });
   const setMutex = (next: string[][]) => setRules({ ...value, mutuallyExclusive: next });
   const setRequires = (next: Array<{ if: string; thenAnyOf: string[] }>) => setRules({ ...value, requires: next });
@@ -76,6 +79,45 @@ export function RulesEditor({ value, setRules }: { value: RulesObj; setRules: (n
                   style={{ width: 90 }}
                 />
                 <Button size="sm" variant="danger" icon onClick={() => setMaxOcc(maxOcc.filter((_, j) => j !== i))} aria-label={`Remove max occurrence ${i + 1}`}>
+                  ✕
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        title="Distribution targets"
+        actions={
+          <Button size="sm" onClick={() => setTargets([...targets, { trait: '', count: 0 }])}>
+            + Add target
+          </Button>
+        }
+      >
+        {targets.length === 0 ? (
+          <span className="label muted">
+            Steer generation to an <em>exact</em> count for a trait, e.g. <code>Background:Gold</code> in exactly 100 editions.
+          </span>
+        ) : (
+          <div className="stack">
+            {targets.map((r, i) => (
+              <div key={i} className="row">
+                <Input
+                  value={r.trait}
+                  onChange={(e) => setTargets(targets.map((x, j) => (j === i ? { ...x, trait: e.target.value } : x)))}
+                  placeholder="Layer:Value"
+                  aria-label={`Target trait ${i + 1}`}
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  value={r.count}
+                  onChange={(e) => setTargets(targets.map((x, j) => (j === i ? { ...x, count: Number(e.target.value) || 0 } : x)))}
+                  aria-label={`Target count ${i + 1}`}
+                  style={{ width: 90 }}
+                />
+                <Button size="sm" variant="danger" icon onClick={() => setTargets(targets.filter((_, j) => j !== i))} aria-label={`Remove target ${i + 1}`}>
                   ✕
                 </Button>
               </div>
