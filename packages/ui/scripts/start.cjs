@@ -9,6 +9,11 @@ const electronPath = require('electron');
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
+// Opt-in: launch the new React renderer (renderer-next) instead of the legacy UI.
+if (process.argv.includes('--next') || process.env.CONKERNFTZ_NEXT === '1') {
+  env.CONKERNFTZ_NEXT = '1';
+}
+
 const isWin = process.platform === 'win32';
 const uiDir = path.join(__dirname, '..');
 
