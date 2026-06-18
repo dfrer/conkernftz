@@ -814,3 +814,25 @@ button {
   stroke: var(--text);
   stroke-width: 2;
 }
+
+/* ===================== Site builder block list ===================== */
+.block-row {
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.block-row--sel {
+  border-color: var(--accent);
+  box-shadow: var(--accent-glow);
+}
+.block-row-label {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--sp-1) 0;
+}

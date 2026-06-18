@@ -1,0 +1,97 @@
+/* Generated mint-site styles (P2). Self-contained and theme-driven so the same markup
+ * renders identically in the builder preview and the shipped static site. */
+
+.site {
+  --site-accent: #ffb000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r-md);
+  border: var(--hair) solid var(--line);
+  font-family: var(--font-sans);
+}
+.site--font-mono { font-family: var(--font-mono); }
+.site--font-display { font-family: var(--font-display); }
+.site--bg-ink { background: #0a0c0b; color: #e9e7dc; }
+.site--bg-void { background: #000; color: #f4f4f4; }
+.site--bg-manila { background: #e8e0cf; color: #1c1812; }
+.site--bg-paper { background: #f6f1e6; color: #211c14; }
+
+.site .site-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--sp-3);
+  color: var(--site-accent);
+}
+
+/* Hero */
+.site-hero { padding: var(--sp-6) 0; }
+.site-hero--center { text-align: center; }
+.site-hero-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-3xl);
+  line-height: 1.05;
+}
+.site-hero-sub { font-size: var(--text-md); opacity: 0.8; margin-top: var(--sp-3); }
+
+/* Rich text */
+.site-rich p { line-height: 1.6; margin: 0 0 var(--sp-2); max-width: 64ch; }
+
+/* Gallery */
+.site-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols, 3), 1fr);
+  gap: var(--sp-3);
+}
+.site-tile {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: var(--r-sm);
+  border: var(--hair) solid var(--line);
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.site-tile--ph {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--site-accent) 18%, transparent), transparent);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  opacity: 0.6;
+}
+
+/* Mint */
+.site-mint { text-align: center; }
+.site-mint-price { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--site-accent); }
+
+/* FAQ */
+.site-faq-item { padding: var(--sp-3) 0; border-bottom: var(--hair) solid var(--line); }
+.site-faq-item dt { font-weight: 700; margin-bottom: var(--sp-1); }
+.site-faq-item dd { margin: 0; opacity: 0.82; }
+
+/* Divider */
+.site-divider { border: none; border-top: var(--hair) solid var(--line-strong); width: 100%; }
+
+/* Marquee (Geocities flair) */
+.site-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  border-block: var(--hair) solid var(--site-accent);
+  padding: var(--sp-2) 0;
+}
+.site-marquee-text {
+  display: inline-block;
+  padding-left: 100%;
+  color: var(--site-accent);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-wide);
+  animation: site-marquee 12s linear infinite;
+  will-change: transform;
+}
+@keyframes site-marquee {
+  to { transform: translateX(-100%); }
+}
