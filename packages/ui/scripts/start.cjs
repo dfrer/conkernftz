@@ -9,9 +9,10 @@ const electronPath = require('electron');
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
-// Opt-in: launch the new React renderer (renderer-next) instead of the legacy UI.
-if (process.argv.includes('--next') || process.env.CONKERNFTZ_NEXT === '1') {
-  env.CONKERNFTZ_NEXT = '1';
+// The new React renderer (renderer-next) is the default. Opt OUT to the legacy renderer
+// with --legacy (or CONKERNFTZ_LEGACY=1).
+if (process.argv.includes('--legacy') || process.env.CONKERNFTZ_LEGACY === '1') {
+  env.CONKERNFTZ_LEGACY = '1';
 }
 
 const isWin = process.platform === 'win32';

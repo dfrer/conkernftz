@@ -452,9 +452,13 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > explorer is a later enhancement). **The Design tail is complete** — image renamer,
 > structured rule editors, per-asset overrides, and the canvas **spawn/placement editor** all
 > shipped. The new app now has **feature parity** with the legacy renderer (the only deferred
-> niceties: the Fal model-catalog explorer + dynamic param editor). Remaining for O6 is the
-> **cutover itself**: a parity-matrix sign-off, flipping the Electron default to the new UI,
-> and deleting `app.ts` / the legacy `index.html` / `styles.css`.
+> niceties: the Fal model-catalog explorer + dynamic param editor).
+>
+> **Cutover stage 1 DONE (2026-06-17):** the new React UI is the **default** in Electron
+> (`main.ts` loads `renderer-next` unless `CONKERNFTZ_LEGACY=1`); the legacy renderer is an
+> escape hatch via `pnpm -C packages/ui start:legacy`. **Nothing deleted.** Stage 2 — delete
+> `app.ts` (12k) + the legacy `index.html`/`styles.css` and rewrite README/UI_GUIDE — follows
+> once the new UI is validated in real use.
 
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete
