@@ -145,6 +145,18 @@ function clamp01(n: number): number {
   return n;
 }
 
+/** Parse a #rgb / #rrggbb hex color to 0-255 channels (black on anything unparseable). */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let h = (hex || '').trim().replace(/^#/, '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) return { r: 0, g: 0, b: 0 };
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  };
+}
+
 // Map our extended BlendMode to Sharp's native modes where possible.
 // For modes not supported by Sharp, return null to signal future CPU fallback.
 function mapBlendModeToSharp(mode: BlendMode): sharp.OverlayOptions['blend'] | null {
@@ -294,6 +306,23 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
       saturation: typeof effects.modulate.saturation === 'number' ? effects.modulate.saturation : undefined,
       brightness: typeof effects.modulate.brightness === 'number' ? effects.modulate.brightness : undefined,
     });
+  }
+  if (effects?.recolor) {
+    const lo = hexToRgb(effects.recolor.low ?? '#000000');
+    const hi = hexToRgb(effects.recolor.high ?? '#ffffff');
+    // Duotone gradient map: collapse RGB to luminance (Rec.709) in all three channels via
+    // recomb, then map that luminance linearly onto the low→high ramp per channel. Alpha is
+    // left untouched (multiplier 1, offset 0), so transparency is preserved.
+    const lr = 0.2126;
+    const lg = 0.7152;
+    const lb = 0.0722;
+    base = base
+      .recomb([
+        [lr, lg, lb],
+        [lr, lg, lb],
+        [lr, lg, lb],
+      ])
+      .linear([(hi.r - lo.r) / 255, (hi.g - lo.g) / 255, (hi.b - lo.b) / 255, 1], [lo.r, lo.g, lo.b, 0]);
   }
   if (typeof effects?.blur === 'number' && effects.blur > 0) {
     base = base.blur(Math.max(0, effects.blur));

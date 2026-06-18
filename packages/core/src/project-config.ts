@@ -109,6 +109,13 @@ const EffectsSchema = z
         preset: z.string().optional(),
       })
       .optional(),
+    recolor: z
+      .object({
+        low: z.string().optional(),
+        high: z.string().optional(),
+        preset: z.string().optional(),
+      })
+      .optional(),
   })
   .partial();
 

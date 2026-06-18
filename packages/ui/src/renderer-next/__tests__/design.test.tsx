@@ -105,6 +105,21 @@ describe('DesignScreen', () => {
     expect(saved.rarity).toEqual(baseConfig.rarity); // untouched fields preserved
   });
 
+  it('edits a layer recolor effect and saves losslessly', async () => {
+    const { writeConfig } = installBridge();
+    const { findByLabelText, getByRole, getByLabelText } = mount();
+    await findByLabelText('Layer 1 name');
+    fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
+    fireEvent.click(getByLabelText('Recolor (duotone)'));
+    fireEvent.change(getByLabelText('Preset'), { target: { value: 'sepia' } });
+    fireEvent.click(getByRole('button', { name: 'Save config' }));
+    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const saved = writeConfig.mock.calls.at(-1)![0] as any;
+    expect(saved.layers[0].effects.recolor.preset).toBe('sepia');
+    expect(saved.rarity).toEqual(baseConfig.rarity); // untouched fields preserved
+  });
+
   it('applies rules JSON and saves losslessly', async () => {
     const { writeConfig } = installBridge();
     const { findByLabelText, getByRole } = mount();

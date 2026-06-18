@@ -79,6 +79,10 @@ export interface AssetEffects {
   blur?: number; // Gaussian blur radius in px
   modulate?: { hue?: number; saturation?: number; brightness?: number }; // hue in degrees, others multipliers
   colorOverlay?: { color?: string; opacity?: number; blend?: BlendMode; preset?: string };
+  // Palette recolor (duotone gradient map): maps the layer's luminance onto a color ramp
+  // from `low` (shadows) to `high` (highlights). Turns grayscale source art into colored
+  // variants. Applied to the base content before behind/around effects.
+  recolor?: { low?: string; high?: string; preset?: string };
 }
 
 export interface AssetOverride {
