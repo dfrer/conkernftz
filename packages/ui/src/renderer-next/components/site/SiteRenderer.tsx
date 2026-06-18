@@ -173,5 +173,28 @@ export function BlockBody({ block, images, experience }: { block: Block; images:
       // allowed, but no same-origin) so the artist's markup runs fully isolated from the app
       // and the IPC bridge — and the same isolation carries into the generated static site.
       return <iframe className="site-html" title="Custom HTML" sandbox="allow-scripts allow-popups allow-forms" srcDoc={block.html} />;
+    case 'wordArt':
+      return <div className={cx('site-wordart', `site-wordart--${block.style}`)}>{block.text}</div>;
+    case 'button':
+      return (
+        <a className="site-88x31" href={block.href || undefined} target="_blank" rel="noreferrer">
+          {block.text}
+        </a>
+      );
+    case 'webRing':
+      return (
+        <div className="site-webring">
+          <span>‹ prev</span>
+          <span className="site-webring-name">{block.name}</span>
+          <span>random</span>
+          <span>next ›</span>
+        </div>
+      );
+    case 'underConstruction':
+      return (
+        <div className="site-construction" aria-label="under construction">
+          <span aria-hidden>🚧</span> {block.text} <span aria-hidden>🚧</span>
+        </div>
+      );
   }
 }

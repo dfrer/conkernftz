@@ -186,9 +186,79 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+.site-node-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  cursor: nwse-resize;
+  pointer-events: auto;
+  z-index: 3;
+}
 .site-node-inner {
   width: 100%;
   height: 100%;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* ---- More GeoCities widgets ---- */
+.site-wordart {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-3xl);
+  letter-spacing: 0.02em;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+.site-wordart--rainbow {
+  background-image: linear-gradient(90deg, #ff2d2d, #ffb000, #2bff5a, #5fd0d6, #b14dff, #ff2d9e);
+}
+.site-wordart--chrome {
+  background-image: linear-gradient(180deg, #fff, #9bb0c9 45%, #2b3a55 55%, #cfe0ff);
+}
+.site-wordart--fire {
+  background-image: linear-gradient(0deg, #ff2d00, #ffb000 60%, #ffe85a);
+}
+.site-88x31 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 31px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(180deg, #4a6cff, #1a2e9e);
+  border: 2px outset #7f96ff;
+  text-shadow: 1px 1px 0 #000;
+}
+.site-webring {
+  display: inline-flex;
+  gap: var(--sp-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  border: var(--hair) solid var(--site-accent);
+  padding: var(--sp-1) var(--sp-3);
+}
+.site-webring-name {
+  font-weight: 700;
+  color: var(--site-accent);
+}
+.site-construction {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: var(--sp-2) var(--sp-4);
+  color: #1a1400;
+  background: repeating-linear-gradient(45deg, #ffd000 0 14px, #1a1400 14px 28px);
+  -webkit-text-stroke: 0.5px #1a1400;
+  border: 2px solid #1a1400;
 }

@@ -16,7 +16,11 @@ export type BlockKind =
   | 'blink'
   | 'image'
   | 'hitCounter'
-  | 'html';
+  | 'html'
+  | 'wordArt'
+  | 'button'
+  | 'webRing'
+  | 'underConstruction';
 
 export interface Rect {
   x: number;
@@ -88,6 +92,24 @@ export interface HtmlBlock extends BaseBlock {
   kind: 'html';
   html: string;
 }
+export interface WordArtBlock extends BaseBlock {
+  kind: 'wordArt';
+  text: string;
+  style: 'rainbow' | 'chrome' | 'fire';
+}
+export interface ButtonBlock extends BaseBlock {
+  kind: 'button';
+  text: string;
+  href: string;
+}
+export interface WebRingBlock extends BaseBlock {
+  kind: 'webRing';
+  name: string;
+}
+export interface UnderConstructionBlock extends BaseBlock {
+  kind: 'underConstruction';
+  text: string;
+}
 
 export type Block =
   | HeroBlock
@@ -100,7 +122,11 @@ export type Block =
   | BlinkBlock
   | ImageBlock
   | HitCounterBlock
-  | HtmlBlock;
+  | HtmlBlock
+  | WordArtBlock
+  | ButtonBlock
+  | WebRingBlock
+  | UnderConstructionBlock;
 
 export type SiteLayoutMode = 'flow' | 'canvas';
 export type SiteBackground = 'ink' | 'manila' | 'void' | 'paper';
@@ -139,6 +165,10 @@ export const BLOCK_KINDS: BlockKind[] = [
   'image',
   'hitCounter',
   'html',
+  'wordArt',
+  'button',
+  'webRing',
+  'underConstruction',
 ];
 export const BLOCK_LABELS: Record<BlockKind, string> = {
   hero: 'Hero',
@@ -152,6 +182,10 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   image: 'Image / GIF',
   hitCounter: 'Hit counter',
   html: 'Raw HTML',
+  wordArt: 'WordArt',
+  button: '88×31 button',
+  webRing: 'Web ring',
+  underConstruction: 'Under construction',
 };
 
 const DEFAULT_THEME: SiteTheme = { accent: '#ffb000', background: 'ink', font: 'sans' };
@@ -188,6 +222,14 @@ export function newBlock(kind: BlockKind, id: string = blockId(kind)): Block {
       return { id, kind, label: 'You are visitor #', start: 1337 };
     case 'html':
       return { id, kind, html: '<!-- your HTML here -->\n<b>Hello, web.</b>' };
+    case 'wordArt':
+      return { id, kind, text: 'WELCOME', style: 'rainbow' };
+    case 'button':
+      return { id, kind, text: 'cool site', href: '' };
+    case 'webRing':
+      return { id, kind, name: 'The NFT Web Ring' };
+    case 'underConstruction':
+      return { id, kind, text: 'UNDER CONSTRUCTION' };
   }
 }
 
