@@ -159,6 +159,50 @@ gating only the *mainnet* mint (testnet unblocks the whole site/experience flow)
 - Managed-tier business model + infra (M1).
 - Solana on-chain pack feasibility/primitives (L-Sol).
 
+## 9. Vision II — a more complete NFT internet (endgame · far-future)
+
+> **Status: NORTH STAR / NOT SCHEDULED.** Everything here is the long-term endgame, pursued only
+> AFTER the original A→Z vision (Tracks A–C) is complete, owner-verified end-to-end (site + mints
+> + chain), and — for anything touching funds or trading — externally audited and verified safe.
+> Captured now to steer architecture; none of it is built yet.
+
+**Thesis.** Social media flattened NFTs into profile pictures and timeline posts. They can be far
+more if the *internet infrastructure around them* is richer and user-owned. ConkerNFTZ's endgame
+is to facilitate that whole "more complete NFT internet" from one A→Z program.
+
+1. **Audience expands: creators *and* collectors.** Beyond artists shipping drops, the
+   purchasers/collectors use ConkerNFTZ to build their own spaces — **personal collection-display
+   sites** (import the NFTs a wallet owns, arrange them GeoCities-style, host them) and more. The
+   same builder + experience engine serves both sides.
+2. **Single mint page → full multi-page sites.** The site builder grows from one mint page into
+   **complete multi-page sites** (navigation/routing, shared theme, linked pages) so artists can
+   fully express a project's world and collectors can build real showcases, not one-pagers.
+3. **Flexible deployment: local ↔ cloud ↔ hybrid, phone-capable.** The Electron desktop app is
+   *one* way to run ConkerNFTZ, not the only one. The endgame supports running the **whole
+   workflow in the cloud**, usable from **just a phone/browser** — the user chooses local, cloud,
+   or a mix. Provider integrations (Vercel + storage/RPC/AI/etc.) carry the heavy lifting so the
+   customizability and versatility hold regardless of where it runs. *This generalizes D1:*
+   "self-host first" stays the open-source core; "fully cloud / phone-only" becomes a first-class
+   endgame target, not merely an optional managed tier.
+4. **Trading.** Eventually ConkerNFTZ facilitates **NFT trading** between users — non-custodial
+   (the user's own wallet signs; ConkerNFTZ never custodies). This is the **furthest-out and most
+   security-sensitive** capability: it handles real assets/value and is gated behind the entire
+   original vision being complete, audited, and verified safe. Treat it like Phase L, with even
+   more diligence.
+
+**Principles that still hold:** no-code but deeply custom; GeoCities-deep expressivity;
+non-custodial (wallets sign, keys never custodied); open-core. **Relaxed:** "runs on the user's
+machine" becomes "runs wherever the user wants — local, cloud, or hybrid."
+
+**Open questions (for when this track begins):**
+- Cloud runtime: managed multi-tenant service vs. a deployable self-host server vs. both;
+  accounts/auth; how non-custodial signing works from a phone (WalletConnect on mobile).
+- Collector flow: NFT-ownership import per chain (indexers/APIs), multi-wallet, privacy.
+- Multi-page builder: routing/nav model and how it maps onto static hosting.
+- Trading: mechanism (P2P swap, on-chain order book, marketplace/aggregator integration),
+  chains, settlement/escrow, and the audit + regulatory posture — all TBD, far future.
+- Identity / social / discovery layer — if any.
+
 ---
 
 *This master plan supersedes the renderer-overhaul roadmap (O0–O6, complete) as the forward
