@@ -306,7 +306,7 @@ export interface EffectsPreviewResult {
   b64: string;
 }
 
-const IMG_RE = /\.(png|webp|gif)$/i;
+const IMG_RE = /\.(png|webp|gif|svg)$/i;
 
 export async function renderEffectsPreview(
   projectDir: string,

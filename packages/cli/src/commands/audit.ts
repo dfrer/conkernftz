@@ -10,7 +10,7 @@ async function getAllImageFiles(dir: string): Promise<string[]> {
     for (const d of dirents) {
       const full = path.join(p, d.name);
       if (d.isDirectory()) await walk(full);
-      else if (/\.(png|webp|gif)$/i.test(d.name)) out.push(full);
+      else if (/\.(png|webp|gif|svg)$/i.test(d.name)) out.push(full);
     }
   }
   await walk(dir);

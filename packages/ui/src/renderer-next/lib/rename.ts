@@ -1,7 +1,7 @@
 // Pure helpers for the image renamer. Filename-encoded rarity uses `<value><delim><weight>`,
 // e.g. "Gold Crown#5.png". Kept DOM-free so the logic is unit-tested directly.
 
-const IMG_RE = /\.(png|jpe?g|webp|gif)$/i;
+const IMG_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
 const EXT_RE = /\.[^.]+$/;
 
 export function isImage(name: string): boolean {

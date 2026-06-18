@@ -58,6 +58,8 @@ This file controls generation, compositing, storage, and chain settings. It is v
 }
 ```
 
+Layer asset files may be `.png`, `.webp`, `.gif`, or `.svg`. SVG (vector) assets are rasterized at the render resolution (density scales with the canvas size for crisp output), so they upscale cleanly to any image size.
+
 Effects supported in schema: `blend`, `opacity`, `offsetX`, `offsetY`, `rotate`, `scale`, `glow`, `stroke`, `shadow`, `extrude`, `blur`, `modulate`, `colorOverlay`, `recolor`.
 
 `recolor` is a duotone gradient map: `{ low?: string, high?: string, preset?: string }`. It maps the layer's luminance onto a color ramp from `low` (shadows) to `high` (highlights), turning grayscale source art into colored variants. Named presets: `noir`, `sepia`, `blueprint`, `gold`, `toxic`, `ember`.
