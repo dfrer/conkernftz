@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     environmentMatchGlobs: [['src/renderer-next/**', 'happy-dom']],
+    setupFiles: ['./vitest.setup.ts'],
     passWithNoTests: true,
   },
 });

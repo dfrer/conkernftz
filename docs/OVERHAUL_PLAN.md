@@ -375,6 +375,17 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
   checked; component + E2E tests; manual smoke.
 
 ### Phase O3 — Generate → Preview → Build (guided flow + reports)
+
+> **Status: 🟡 BUILD STAGE LANDED (2026-06-17).** The **Build** screen on renderer-next:
+> count + Build via the engine's `buildWithProgress`, a live progress bar driven by
+> `onBuildProgress` with **pause / resume / stop**, a completion summary, a **rarity
+> report** (reads `build/rarity.json` → per-trait histograms), and **audit assets /
+> outputs**. Bridge expanded (`buildWithProgress`/pause/resume/stop/`onBuildProgress`/
+> `readFile`/`auditAssets`/`auditOutputs`); routed into the shell. Tests: UI 36→38 (build
+> completes + rarity report renders; live progress events update the bar — via a mocked
+> bridge + `act`). Gate green. **Remaining:** wire the Studio-style live preview perf +
+> the worker-pool engine work (parallel track); animation preview in Preview.
+
 - **Goal:** the preview/build experience with the new perf + reports.
 - **Scope:** live preview overlay reimagined; regenerating gallery + lightbox; build with
   progress/pause/resume/stop (preserved); reports (rarity histograms, dupes/audit
