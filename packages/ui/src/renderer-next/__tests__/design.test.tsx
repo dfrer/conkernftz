@@ -87,4 +87,33 @@ describe('DesignScreen', () => {
     const saved = writeConfig.mock.calls[0]![0] as typeof baseConfig;
     expect(saved.layers).toHaveLength(3);
   });
+
+  it('edits a layer effect (glow) and saves losslessly', async () => {
+    const { writeConfig } = installBridge();
+    const { findByDisplayValue, getByRole, getByLabelText } = mount();
+    await findByDisplayValue('Background');
+    fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
+    fireEvent.click(getByLabelText('Glow'));
+    fireEvent.change(getByLabelText('Color'), { target: { value: '#00eaff' } });
+    fireEvent.click(getByRole('button', { name: 'Save config' }));
+    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const saved = writeConfig.mock.calls.at(-1)![0] as any;
+    expect(saved.layers[0].effects.glow.color).toBe('#00eaff');
+    expect(saved.rarity).toEqual(baseConfig.rarity); // untouched fields preserved
+  });
+
+  it('applies rules JSON and saves losslessly', async () => {
+    const { writeConfig } = installBridge();
+    const { findByLabelText, getByRole } = mount();
+    const ta = (await findByLabelText('Rules JSON')) as HTMLTextAreaElement;
+    fireEvent.change(ta, { target: { value: '{"maxOccurrences":[{"trait":"Body:Red","max":3}]}' } });
+    fireEvent.click(getByRole('button', { name: 'Apply rules' }));
+    fireEvent.click(getByRole('button', { name: 'Save config' }));
+    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const saved = writeConfig.mock.calls.at(-1)![0] as any;
+    expect(saved.rules.maxOccurrences[0].max).toBe(3);
+    expect(saved.layers).toHaveLength(2); // untouched fields preserved
+  });
 });

@@ -700,3 +700,42 @@ button {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
+
+.layer-row--active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ===================== Effects editor ===================== */
+.effect-group {
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+}
+.effect-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  user-select: none;
+}
+.effect-group-body {
+  margin-top: var(--sp-3);
+}
+
+.textarea {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text);
+  background: var(--surface-inset);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  resize: vertical;
+  min-height: 120px;
+  width: 100%;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--accent-glow);
+}

@@ -3,6 +3,22 @@ import { bridge } from '../lib/bridge';
 
 // Editable view of foundry.config.json. Known fields are typed; an index signature
 // preserves everything the new UI does not yet surface so saves round-trip losslessly.
+export interface LayerEffects {
+  blend?: string;
+  opacity?: number;
+  offsetX?: number;
+  offsetY?: number;
+  rotate?: number;
+  scale?: number;
+  glow?: { color?: string; radius?: number; opacity?: number; inner?: boolean; preset?: string };
+  stroke?: { color?: string; width?: number; opacity?: number; position?: 'outside' | 'inside' | 'center'; preset?: string };
+  shadow?: { color?: string; blur?: number; offsetX?: number; offsetY?: number; opacity?: number; inner?: boolean; preset?: string };
+  extrude?: { color?: string; depth?: number; angle?: number; opacity?: number; preset?: string };
+  blur?: number;
+  modulate?: { hue?: number; saturation?: number; brightness?: number };
+  colorOverlay?: { color?: string; opacity?: number; blend?: string; preset?: string };
+  [k: string]: unknown;
+}
 export interface LayerCfg {
   name: string;
   path: string;
@@ -10,6 +26,7 @@ export interface LayerCfg {
   required?: boolean;
   blend?: string;
   opacity?: number;
+  effects?: LayerEffects;
   [k: string]: unknown;
 }
 export interface ProjectConfig {

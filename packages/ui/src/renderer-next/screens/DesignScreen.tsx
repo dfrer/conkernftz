@@ -4,7 +4,9 @@ import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
+import { EffectsEditor } from '../components/EffectsEditor';
 import { useToast } from '../components/Toast';
+import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
 import { useProject, type LayerCfg } from '../state/project';
 
@@ -25,6 +27,9 @@ export function DesignScreen() {
   const { project, config, dirty, save, updateConfig, loading } = useProject();
   const toast = useToast();
   const [counts, setCounts] = useState<Record<number, number | null>>({});
+  const [selected, setSelected] = useState<number | null>(null);
+  const [rulesText, setRulesText] = useState('{}');
+  const [rulesErr, setRulesErr] = useState<string | null>(null);
 
   const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
   useEffect(() => {
@@ -54,6 +59,14 @@ export function DesignScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layersKey]);
+
+  // Seed the rules editor from the config when a project loads.
+  useEffect(() => {
+    setRulesText(JSON.stringify(config?.rules ?? {}, null, 2));
+    setRulesErr(null);
+    setSelected(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.dir]);
 
   if (!project) {
     return (
@@ -87,18 +100,25 @@ export function DesignScreen() {
       ls[i] = { ...ls[i], ...patch } as LayerCfg;
       d.layers = ls;
     });
+  const updateLayer = (i: number, fn: (l: LayerCfg) => void) =>
+    updateConfig((d) => {
+      const l = (d.layers ?? [])[i];
+      if (l) fn(l);
+    });
   const addLayer = () =>
     updateConfig((d) => {
       const n = (d.layers?.length ?? 0) + 1;
       d.layers = [...(d.layers ?? []), { name: `Layer ${n}`, path: 'layers/new', rarity: 'filename', required: true }];
     });
-  const removeLayer = (i: number) =>
+  const removeLayer = (i: number) => {
     updateConfig((d) => {
       const ls = [...(d.layers ?? [])];
       ls.splice(i, 1);
       d.layers = ls;
     });
-  const move = (i: number, to: number) =>
+    setSelected((s) => (s === i ? null : s));
+  };
+  const move = (i: number, to: number) => {
     updateConfig((d) => {
       const ls = [...(d.layers ?? [])];
       if (to < 0 || to >= ls.length) return;
@@ -106,10 +126,25 @@ export function DesignScreen() {
       ls.splice(to, 0, x as LayerCfg);
       d.layers = ls;
     });
+    setSelected(null);
+  };
 
   const onSave = async () => {
     const ok = await save();
     toast.push(ok ? 'Config saved' : 'Save failed', ok ? 'ok' : 'danger');
+  };
+
+  const applyRules = () => {
+    try {
+      const parsed = JSON.parse(rulesText);
+      updateConfig((d) => {
+        d.rules = parsed;
+      });
+      setRulesErr(null);
+      toast.push('Rules applied — remember to Save', 'ok');
+    } catch (e) {
+      setRulesErr(String((e as Error)?.message ?? e));
+    }
   };
 
   return (
@@ -134,32 +169,16 @@ export function DesignScreen() {
             <Input value={config.symbol ?? ''} onChange={(e) => setBasic('symbol', e.target.value)} />
           </Field>
           <Field label="Edition size">
-            <Input
-              type="number"
-              value={config.editionSize ?? ''}
-              onChange={(e) => setBasic('editionSize', Number(e.target.value) || 0)}
-            />
+            <Input type="number" value={config.editionSize ?? ''} onChange={(e) => setBasic('editionSize', Number(e.target.value) || 0)} />
           </Field>
           <Field label="Image width">
-            <Input
-              type="number"
-              value={config.image?.width ?? ''}
-              onChange={(e) => setImage('width', Number(e.target.value) || 0)}
-            />
+            <Input type="number" value={config.image?.width ?? ''} onChange={(e) => setImage('width', Number(e.target.value) || 0)} />
           </Field>
           <Field label="Image height">
-            <Input
-              type="number"
-              value={config.image?.height ?? ''}
-              onChange={(e) => setImage('height', Number(e.target.value) || 0)}
-            />
+            <Input type="number" value={config.image?.height ?? ''} onChange={(e) => setImage('height', Number(e.target.value) || 0)} />
           </Field>
           <Field label="Background">
-            <Input
-              value={config.image?.background ?? ''}
-              onChange={(e) => setImage('background', e.target.value)}
-              placeholder="transparent or #RRGGBB"
-            />
+            <Input value={config.image?.background ?? ''} onChange={(e) => setImage('background', e.target.value)} placeholder="transparent or #RRGGBB" />
           </Field>
         </div>
       </Panel>
@@ -173,12 +192,7 @@ export function DesignScreen() {
         }
       >
         {layers.length === 0 ? (
-          <EmptyState
-            code="NO LAYERS"
-            title="No layers yet"
-            hint="Add a layer and point it at an image folder."
-            action={<Button onClick={addLayer}>+ Add layer</Button>}
-          />
+          <EmptyState code="NO LAYERS" title="No layers yet" hint="Add a layer and point it at an image folder." action={<Button onClick={addLayer}>+ Add layer</Button>} />
         ) : (
           <div className="stack">
             <div className="layer-row layer-row--head label">
@@ -192,24 +206,15 @@ export function DesignScreen() {
               <span>Actions</span>
             </div>
             {layers.map((l, i) => (
-              <div className="layer-row" key={i}>
+              <div className={cx('layer-row', selected === i && 'layer-row--active')} key={i}>
                 <span className="nav-index">{String(i + 1).padStart(2, '0')}</span>
                 <Input value={l.name} onChange={(e) => setLayer(i, { name: e.target.value })} aria-label={`Layer ${i + 1} name`} />
                 <Input value={l.path} onChange={(e) => setLayer(i, { path: e.target.value })} aria-label={`Layer ${i + 1} path`} />
-                <Select
-                  value={l.rarity ?? 'filename'}
-                  onChange={(e) => setLayer(i, { rarity: e.target.value as 'filename' | 'uniform' })}
-                  aria-label={`Layer ${i + 1} rarity`}
-                >
+                <Select value={l.rarity ?? 'filename'} onChange={(e) => setLayer(i, { rarity: e.target.value as 'filename' | 'uniform' })} aria-label={`Layer ${i + 1} rarity`}>
                   <option value="filename">filename</option>
                   <option value="uniform">uniform</option>
                 </Select>
-                <input
-                  type="checkbox"
-                  checked={!!l.required}
-                  onChange={(e) => setLayer(i, { required: e.target.checked })}
-                  aria-label={`Layer ${i + 1} required`}
-                />
+                <input type="checkbox" checked={!!l.required} onChange={(e) => setLayer(i, { required: e.target.checked })} aria-label={`Layer ${i + 1} required`} />
                 <Input
                   type="number"
                   step="0.05"
@@ -221,6 +226,9 @@ export function DesignScreen() {
                 />
                 <span className="mono muted">{counts[i] == null ? '—' : counts[i]}</span>
                 <span className="row">
+                  <Button size="sm" onClick={() => setSelected(selected === i ? null : i)} aria-label={`Edit layer ${i + 1} effects`}>
+                    fx
+                  </Button>
                   <Button size="sm" icon onClick={() => move(i, i - 1)} aria-label="Move up" disabled={i === 0}>
                     ▲
                   </Button>
@@ -235,6 +243,43 @@ export function DesignScreen() {
             ))}
           </div>
         )}
+      </Panel>
+
+      {selected != null && layers[selected] ? (
+        <Panel
+          title={`Effects — ${layers[selected]!.name}`}
+          actions={
+            <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>
+              Close
+            </Button>
+          }
+        >
+          <EffectsEditor layer={layers[selected]!} onMutate={(fn) => updateLayer(selected, fn)} />
+        </Panel>
+      ) : null}
+
+      <Panel
+        title="Rules (advanced)"
+        actions={
+          <Button size="sm" onClick={applyRules}>
+            Apply rules
+          </Button>
+        }
+      >
+        <div className="stack">
+          <span className="label">
+            mutuallyExclusive · requires · maxOccurrences · transforms — edited as JSON (structured editors coming next)
+          </span>
+          <textarea
+            className="textarea"
+            rows={10}
+            spellCheck={false}
+            value={rulesText}
+            onChange={(e) => setRulesText(e.target.value)}
+            aria-label="Rules JSON"
+          />
+          {rulesErr ? <div className="banner-error">Invalid JSON: {rulesErr}</div> : null}
+        </div>
       </Panel>
     </div>
   );
