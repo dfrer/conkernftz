@@ -29,6 +29,8 @@ function installBridge(over: Record<string, any> = {}) {
     readConfigAt: async () => ({ ok: false }),
     writeConfig,
     listImages: async () => ({ ok: true, count: 7 }),
+    listDir: async () => ({ ok: true, items: [] }),
+    renameFiles: async () => ({ ok: true, renamed: 0 }),
     previewLive: async () => ({ ok: true, format: 'png', images: [] }),
     openExternal: async () => ({ ok: true }),
     ...over,
@@ -56,9 +58,9 @@ function mount() {
 describe('DesignScreen', () => {
   it('loads config and shows basics + layers', async () => {
     installBridge();
-    const { findByDisplayValue } = mount();
+    const { findByDisplayValue, findByLabelText } = mount();
     expect(await findByDisplayValue('Specimens')).toBeTruthy();
-    expect(await findByDisplayValue('Background')).toBeTruthy();
+    expect(await findByLabelText('Layer 1 name')).toBeTruthy();
     expect(await findByDisplayValue('layers/body')).toBeTruthy();
   });
 
@@ -90,8 +92,8 @@ describe('DesignScreen', () => {
 
   it('edits a layer effect (glow) and saves losslessly', async () => {
     const { writeConfig } = installBridge();
-    const { findByDisplayValue, getByRole, getByLabelText } = mount();
-    await findByDisplayValue('Background');
+    const { findByLabelText, getByRole, getByLabelText } = mount();
+    await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
     fireEvent.click(getByLabelText('Glow'));
     fireEvent.change(getByLabelText('Color'), { target: { value: '#00eaff' } });

@@ -5,6 +5,7 @@ import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
 import { EffectsEditor } from '../components/EffectsEditor';
+import { RenamerPanel } from '../components/RenamerPanel';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
@@ -86,6 +87,9 @@ export function DesignScreen() {
   }
 
   const layers = config.layers ?? [];
+  const rarity = (config.rarity ?? {}) as { delimiter?: string; defaultWeight?: number };
+  const delimiter = rarity.delimiter ?? '#';
+  const defaultWeight = rarity.defaultWeight ?? 1;
   const setBasic = (key: string, value: unknown) =>
     updateConfig((d) => {
       (d as Record<string, unknown>)[key] = value;
@@ -244,6 +248,8 @@ export function DesignScreen() {
           </div>
         )}
       </Panel>
+
+      {layers.length > 0 ? <RenamerPanel layers={layers} delimiter={delimiter} defaultWeight={defaultWeight} /> : null}
 
       {selected != null && layers[selected] ? (
         <Panel
