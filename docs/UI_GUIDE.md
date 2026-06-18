@@ -36,7 +36,7 @@ The left rail is the workflow, in order:
 - **Preview** — render a fresh random set straight from the engine (new seed each time) into a thumbnail gallery.
 - **Build** — build N editions with a live progress bar (Pause / Resume / Stop), a completion summary, a rarity report, and asset/output audits.
 - **Publish** — upload to a storage provider (irys / pinata / local; modes auto/dir/files) and run chain-aware mint actions (Solana direct mint + Candy Machine, or EVM deploy + owner-mint) via the CLI, with a live command console.
-- **AI** — a Fal quick-image generator: API key, model, size, count, prompt → results gallery with save-to-project.
+- **AI** — a Fal generator backed by a model catalog: pick from curated image/video models, fill the model's parameters (a dynamic form per model — image size, steps, guidance, seed, aspect ratio, …), prompt → results gallery with save-to-project. The **Model catalog** panel imports/exports custom models (persisted locally) and a "Custom endpoint" field targets any fal endpoint directly.
 - **Settings** — appearance (theme + accent), storage provider + credentials, chain target + fields, and open-folder shortcuts. All edits save losslessly.
 - **Help** — a field manual of the stages, plus About and links.
 

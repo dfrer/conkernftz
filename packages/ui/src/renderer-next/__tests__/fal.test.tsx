@@ -41,6 +41,21 @@ describe('FalScreen', () => {
     expect((opts as any).headers.Authorization).toBe('Key test-key');
   });
 
+  it('switches the endpoint when a different catalog model is selected', async () => {
+    const fetchMock = vi.fn(async (_url: string, _opts: RequestInit) => ({
+      ok: true,
+      json: async () => ({ images: [{ url: 'https://fal.media/out.png' }] }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getByLabelText, getByRole } = mount();
+    fireEvent.change(getByLabelText('fal.ai API key'), { target: { value: 'k' } });
+    fireEvent.change(getByLabelText('Model'), { target: { value: 'flux/schnell' } });
+    fireEvent.change(getByLabelText('Prompt'), { target: { value: 'x' } });
+    fireEvent.click(getByRole('button', { name: 'Generate' }));
+    expect(fetchMock).toHaveBeenCalled();
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('https://fal.run/fal-ai/flux/schnell');
+  });
+
   it('does not call fal without an API key', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
