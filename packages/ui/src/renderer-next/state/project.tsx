@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { bridge } from '../lib/bridge';
+import type { ExperienceConfig } from '../lib/mintExperience';
 
 // Editable view of foundry.config.json. Known fields are typed; an index signature
 // preserves everything the new UI does not yet surface so saves round-trip losslessly.
@@ -45,6 +46,7 @@ export interface ProjectConfig {
   image?: { width?: number; height?: number; background?: string; [k: string]: unknown };
   layers?: LayerCfg[];
   export?: { imageFormat?: string; outDir?: string; [k: string]: unknown };
+  mintExperience?: ExperienceConfig;
   [k: string]: unknown;
 }
 export interface ProjectRef {

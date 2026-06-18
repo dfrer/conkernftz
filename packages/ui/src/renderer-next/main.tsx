@@ -9,6 +9,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-mono/600.css';
 import './styles/tokens.css';
 import './styles/ui.css';
+import './styles/experience.css';
 import { App } from './App';
 
 const el = document.getElementById('root');
