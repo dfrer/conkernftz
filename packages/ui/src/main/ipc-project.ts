@@ -4,7 +4,8 @@ import fs from 'node:fs/promises';
 import fssync from 'node:fs';
 import { FileManager } from '@conkernftz/storage/file-manager';
 import * as cliRunner from './cli-runner.js';
-import * as engine from './engine-service.js';
+import { getEngineClient } from './engine-client.js';
+import type { LivePreviewResult, EffectsPreviewResult, PreviewToDiskResult } from './engine-service.js';
 
 let projectDir: string | null = null;
 let fileManager: FileManager | null = null;
@@ -269,7 +270,11 @@ export function initProjectIpc(): void {
   electron.ipcMain.handle('foundry:previewEffects', async (_evt, cfgLike: Record<string, unknown>) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
-      const res = await engine.renderEffectsPreview(projectDir, cfgLike);
+      const { result } = getEngineClient().call<EffectsPreviewResult>('renderEffectsPreview', {
+        projectDir,
+        configLike: cfgLike,
+      });
+      const res = await result;
       return { ok: true, format: res.format, b64: res.b64 };
     } catch (e) {
       return { ok: false, error: String((e as Error)?.message ?? e) };
@@ -332,9 +337,12 @@ export function initProjectIpc(): void {
     }
   });
 
-  // Build/preview controllers for pause/resume/stop.
+  // Build/preview controllers for pause/resume/stop. The preview controller's flags are
+  // mirrored into the engine host (which actually owns the cooperative pause/stop) via
+  // engine-client.control(activePreviewId, …); the local flags drive the isPaused display.
   let buildController: { paused: boolean; stopped: boolean } | null = null;
   let previewController: { paused: boolean; stopped: boolean } | null = null;
+  let activePreviewId = 0;
 
   electron.ipcMain.handle('foundry:pauseBuild', async () => {
     if (buildController) buildController.paused = true;
@@ -354,10 +362,12 @@ export function initProjectIpc(): void {
 
   electron.ipcMain.handle('foundry:pausePreview', async () => {
     if (previewController) previewController.paused = true;
+    if (activePreviewId) getEngineClient().control(activePreviewId, 'pause');
     return { ok: true };
   });
   electron.ipcMain.handle('foundry:resumePreview', async () => {
     if (previewController) previewController.paused = false;
+    if (activePreviewId) getEngineClient().control(activePreviewId, 'resume');
     return { ok: true };
   });
   electron.ipcMain.handle('foundry:stopPreview', async () => {
@@ -365,6 +375,7 @@ export function initProjectIpc(): void {
       previewController.paused = false;
       previewController.stopped = true;
     }
+    if (activePreviewId) getEngineClient().control(activePreviewId, 'stop');
     return { ok: true };
   });
 
@@ -373,23 +384,27 @@ export function initProjectIpc(): void {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       buildController = { paused: false, stopped: false };
-      const res = await engine.buildCollection({
-        projectDir,
-        count,
-        onProgress: (p) => {
-          const mainWindow = electron.BrowserWindow.getAllWindows()[0];
-          if (mainWindow) {
-            const progress = Math.round((p.current / p.total) * 100);
-            mainWindow.webContents.send('build-progress', {
-              current: p.current,
-              total: p.total,
-              progress,
-              message: p.message || 'Building...',
-              isPaused: !!(buildController && buildController.paused),
-            });
-          }
+      const { result } = getEngineClient().call<{ editions: number; outDir: string }>(
+        'buildCollection',
+        { projectDir, count },
+        {
+          onProgress: (payload) => {
+            const p = payload as { current: number; total: number; message?: string };
+            const mainWindow = electron.BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+              const progress = Math.round((p.current / p.total) * 100);
+              mainWindow.webContents.send('build-progress', {
+                current: p.current,
+                total: p.total,
+                progress,
+                message: p.message || 'Building...',
+                isPaused: !!(buildController && buildController.paused),
+              });
+            }
+          },
         },
-      });
+      );
+      const res = await result;
       buildController = null;
       return { ok: true, stdout: `Built ${res.editions} editions to ${res.outDir}` };
     } catch (e) {
@@ -403,33 +418,34 @@ export function initProjectIpc(): void {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       previewController = { paused: false, stopped: false };
-      const res = await engine.renderPreviewsToDisk({
-        projectDir,
-        count,
-        onProgress: (current, total, message) => {
-          const mainWindow = electron.BrowserWindow.getAllWindows()[0];
-          if (mainWindow) {
-            mainWindow.webContents.send('preview-progress', {
-              current,
-              total,
-              progress: Math.round((current / total) * 100),
-              message,
-              isPaused: !!(previewController && previewController.paused),
-            });
-          }
+      const { id, result } = getEngineClient().call<PreviewToDiskResult>(
+        'renderPreviewsToDisk',
+        { projectDir, count },
+        {
+          onProgress: (payload) => {
+            const p = payload as { current: number; total: number; message: string };
+            const mainWindow = electron.BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+              mainWindow.webContents.send('preview-progress', {
+                current: p.current,
+                total: p.total,
+                progress: Math.round((p.current / p.total) * 100),
+                message: p.message,
+                isPaused: !!(previewController && previewController.paused),
+              });
+            }
+          },
         },
-        shouldStop: () => !!(previewController && previewController.stopped),
-        waitWhilePaused: async () => {
-          while (previewController && previewController.paused && !previewController.stopped) {
-            await new Promise((r) => setTimeout(r, 100));
-          }
-        },
-      });
+      );
+      activePreviewId = id;
+      const res = await result;
       previewController = null;
+      activePreviewId = 0;
       if (res.stopped) return { ok: false, error: 'Preview stopped by user' };
       return { ok: true, stdout: `Wrote ${res.written} previews to ${res.outDir}` };
     } catch (e) {
       previewController = null;
+      activePreviewId = 0;
       return { ok: false, error: String((e as Error)?.message ?? e) };
     }
   });
@@ -440,7 +456,13 @@ export function initProjectIpc(): void {
     async (_evt, cfgLike: Record<string, unknown>, count = 4, seed = 'ui-live') => {
       try {
         if (!projectDir) return { ok: false, error: 'No project selected' };
-        const res = await engine.renderLivePreviews(projectDir, cfgLike, count, seed);
+        const { result } = getEngineClient().call<LivePreviewResult>('renderLivePreviews', {
+          projectDir,
+          configLike: cfgLike,
+          count,
+          seed,
+        });
+        const res = await result;
         return { ok: true, format: res.format, images: res.images };
       } catch (e) {
         return { ok: false, error: String((e as Error)?.message ?? e) };

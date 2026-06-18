@@ -21,7 +21,9 @@ body {
   text-rendering: optimizeLegibility;
   overflow: hidden;
 }
-/* Film-grain overlay across the whole window. */
+/* Film-grain overlay across the whole window. Promoted to its own cached GPU layer
+ * (translateZ) so this full-viewport fixed scrim is rasterized once and merely
+ * re-composited — never repainted — as content scrolls or animates beneath it. */
 body::after {
   content: '';
   position: fixed;
@@ -30,6 +32,7 @@ body::after {
   z-index: 9999;
   opacity: var(--bg-grain-opacity);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transform: translateZ(0);
 }
 
 h1,
@@ -375,6 +378,9 @@ button {
 }
 .lamp--pulse {
   animation: lamp-pulse 1.4s var(--ease-out) infinite;
+  /* Confine this perpetual animation to its own layer so the 60fps tick only
+   * re-composites the 8px lamp, not the surrounding window. */
+  will-change: opacity;
 }
 @keyframes lamp-pulse {
   0%,
