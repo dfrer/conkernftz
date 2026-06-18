@@ -24,6 +24,22 @@ describe('RulesEditor', () => {
     );
   });
 
+  it('adds a distribution target and preserves transforms (lossless)', () => {
+    const { getByRole, setRules } = mount({ transforms: [{ id: 't1' }] });
+    fireEvent.click(getByRole('button', { name: '+ Add target' }));
+    expect(setRules).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [{ trait: '', count: 0 }], transforms: [{ id: 't1' }] }),
+    );
+  });
+
+  it('edits a distribution target count', () => {
+    const { getByLabelText, setRules } = mount({ targets: [{ trait: 'Background:Gold', count: 0 }] });
+    fireEvent.change(getByLabelText('Target count 1'), { target: { value: '100' } });
+    expect(setRules).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [{ trait: 'Background:Gold', count: 100 }] }),
+    );
+  });
+
   it('edits a max-occurrences trait', () => {
     const { getByLabelText, setRules } = mount({ maxOccurrences: [{ trait: 'X', max: 2 }] });
     fireEvent.change(getByLabelText('Max occurrence trait 1'), { target: { value: 'Background:Gold' } });

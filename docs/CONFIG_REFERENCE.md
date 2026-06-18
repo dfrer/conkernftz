@@ -66,7 +66,8 @@ Note: Some effect knobs (e.g., `rotate`, `scale`) may be partially implemented i
 
 - `mutuallyExclusive`: array of pairs/groups of traits that cannot co-exist.
 - `requires`: array of `{ if: string, thenAnyOf: string[] }`.
-- `maxOccurrences`: array of `{ trait: string, max: int }`.
+- `maxOccurrences`: array of `{ trait: string, max: int }` — an upper bound on how many editions may carry a trait.
+- `targets`: array of `{ trait: string, count: int }` — an **exact** target: the generator steers selection so the trait appears in exactly `count` editions (best-effort if targets over- or under-specify a layer, or conflict with other rules/uniqueness/conditional spawn). Where `maxOccurrences` only caps, `targets` actively fills toward the count.
 
 Trait strings use the form `Layer:Value` (e.g., `Eyes:Laser`).
 

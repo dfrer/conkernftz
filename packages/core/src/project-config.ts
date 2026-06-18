@@ -225,6 +225,9 @@ export const RulesSchema = z.object({
   maxOccurrences: z
     .array(z.object({ trait: z.string(), max: z.number().int().positive() }))
     .optional(),
+  targets: z
+    .array(z.object({ trait: z.string(), count: z.number().int().nonnegative() }))
+    .optional(),
   transforms: z.array(TransformRuleSchema).optional(),
 });
 
