@@ -19,6 +19,10 @@ logic, ERC-1155, cross-chain bridging, secondary-sale enforcement beyond ERC-298
 The existing `ConkernftzCollection.sol` (owner-mint only, settable baseURI, ERC-2981) stays
 as the "simple" option; `ConkernftzLaunch.sol` is the new launch-grade contract.
 
+A full multi-chain launch also targets **Solana** via the already-implemented `chain-solana`
+Candy Machine path — that is out of scope for this contract (it's done), but the launch UX
+spans Base + Ethereum L1 + Solana.
+
 ## 2. Actors & trust model
 
 | Actor | Trust | Capabilities |
@@ -69,7 +73,7 @@ the audit and the launch runbook.
 - `setPhase(Phase)`, `setPrices(allowlist, public)`, `setCaps(allowlistCap, publicCap, maxPerTx)`, `setAllowlistRoot(bytes32)`, `setTreasury(address)` — all only meaningful pre/at-launch; consider locking some after Public opens. **[OPEN: which admin setters lock after launch?]**
 - `reveal(string baseURI)` — requires `!metadataFrozen`; sets `revealedBaseURI`, `revealed=true`.
 - `freezeMetadata()` — one-way; blocks further `reveal`/`setBaseURI`.
-- `withdraw()` — **pull to `treasury`** via `call` with success check; `nonReentrant`; reverts on zero balance. **[OPEN: single treasury vs OZ `PaymentSplitter` for multiple creators — needs the creator-split list if split.]**
+- `withdraw()` — **pull to `treasury`** (a Safe multisig) via `call` with success check; `nonReentrant`; reverts on zero balance. **RESOLVED → single treasury address (multisig); no on-chain `PaymentSplitter`** (splits handled off-chain).
 - `pause()`/`unpause()`.
 
 *Views:*
@@ -82,10 +86,10 @@ the audit and the launch runbook.
   resistant to second-preimage / forged-proof attacks.
 - Leaf encoding: **`StandardMerkleTree.of(entries, ['address','uint256'])`** where the uint256
   is the per-address `maxQty`. The contract recomputes `leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, allowedQty))))`.
-- **[OPEN]** Allowlist allocation model:
-  - **(A) Per-address `maxQty` in the leaf** (recommended) — flexible, but the cap travels in the proof and must be passed to `allowlistMint(qty, allowedQty, proof)`.
-  - **(B) Uniform `allowlistWalletCap`** — leaf is just the address; simpler, every allowlisted wallet gets the same cap.
-  - Pick one. (A) is more powerful; (B) is a smaller attack surface. This choice drives the function signature.
+- **RESOLVED → (A) per-address `maxQty` in the leaf.** Signature
+  `allowlistMint(uint256 qty, uint256 allowedQty, bytes32[] proof)`; leaf
+  `= keccak256(bytes.concat(keccak256(abi.encode(msg.sender, allowedQty))))`; enforce
+  `allowlistMinted[msg.sender] + qty <= allowedQty` (the cap travels in the proof).
 
 ## 4. Invariants (targets for `forge` invariant tests)
 
@@ -156,17 +160,20 @@ the audit and the launch runbook.
 5. Transfer ownership to the **multisig**; mainnet deploy **by the owner's own wallet** (the
    agent never deploys to mainnet or touches keys/funds).
 
-## 9. Open decisions (need owner / auditor input before coding)
+## 9. Decisions
 
-1. **Allowlist model:** per-address `maxQty` in the leaf (A) vs uniform cap (B)? (§3)
-2. **Treasury:** single address vs `PaymentSplitter` (and the split list) for multiple creators?
-3. **Which admin setters lock** once the Public phase opens (price/caps/root immutability)?
-4. **`maxPerTx`** value and per-wallet caps (economic/anti-bot tuning).
-5. **Refund policy:** exact-payment-only (recommended) vs accept-overpay-and-refund?
-6. **Confirm immutability** (no upgrade proxy).
-7. **ERC-721A** acceptable as a dependency (audited but third-party) vs vanilla OZ ERC-721?
-8. **Chains at launch:** Base only first, or Base + Ethereum L1 simultaneously?
-9. **Multisig** provider/threshold for the owner/treasury role.
+**Resolved (owner, 2026-06-18):**
+1. **Allowlist model → (A) per-address `maxQty` in the leaf** — `allowlistMint(qty, allowedQty, proof)`. (§3)
+2. **Contract base → ERC-721A** (audited, gas-efficient batch mint).
+3. **Treasury → single address (Safe multisig)**; no on-chain `PaymentSplitter` (splits off-chain).
+4. **Chains → Base + Ethereum L1** for this contract, launched together (testnet on Base-Sepolia + Sepolia). Solana ships in parallel via the existing `chain-solana` Candy Machine — a full launch spans Base + L1 + Solana.
+
+**Still open (settle with the auditor at/before implementation; defaults noted):**
+5. **Which admin setters lock** once Public opens. *Default: freeze prices, caps, and allowlist root when the phase advances to Public.*
+6. **`maxPerTx` + per-wallet caps** — needs the actual numbers (economic / anti-bot tuning).
+7. **Refund policy.** *Default: exact-payment-only (no refund path).*
+8. **Confirm immutability** (no upgrade proxy). *Default: immutable.*
+9. **Multisig provider/threshold** for owner/treasury (e.g. Safe, 2-of-3).
 
 ---
 
