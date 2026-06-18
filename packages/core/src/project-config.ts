@@ -385,6 +385,23 @@ export const ProjectConfigSchema = z.object({
         .optional(),
     })
     .optional(),
+  // Mint-experience config (the interactive reveal/card-pack moment). The renderer owns the
+  // canonical shape (renderer-next/lib/mintExperience); core validates leniently and
+  // passes unknown keys through so the field round-trips losslessly.
+  mintExperience: z
+    .object({
+      kind: z.enum(['cardPack', 'flip', 'fade']).optional(),
+      packCount: z.number().int().optional(),
+      durationMs: z.number().int().optional(),
+      label: z.string().optional(),
+      shake: z.boolean().optional(),
+      autoFlip: z.boolean().optional(),
+      backArt: z.string().optional(),
+      packArt: z.string().optional(),
+      accent: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;

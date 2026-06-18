@@ -1,0 +1,73 @@
+// Mint-experience engine (P1). A declarative, serializable description of the minting
+// "reveal moment" — a card-pack rip-open, a flip-grid, or a simple fade. DOM-free and
+// pure so it's unit-tested directly; the React player (components/MintExperience.tsx) is a
+// thin renderer over this config, and the SAME config + player will drive the generated
+// static mint site later (no drift between in-app preview and the shipped experience).
+
+export type ExperienceKind = 'cardPack' | 'flip' | 'fade';
+
+export interface ExperienceConfig {
+  kind: ExperienceKind;
+  /** Cards revealed per play. */
+  packCount: number;
+  /** Base animation duration (ms) — drives CSS timing. */
+  durationMs: number;
+  /** Pack / call-to-action label. */
+  label: string;
+  /** cardPack: the pack visibly shakes before it's ripped. */
+  shake: boolean;
+  /** Cards flip to their art automatically vs. requiring a tap each. */
+  autoFlip: boolean;
+  /** Optional custom card-back image (data URL or path). */
+  backArt?: string;
+  /** Optional pack-wrapper image (cardPack). */
+  packArt?: string;
+  /** Optional accent color override (else the app/site theme accent). */
+  accent?: string;
+}
+
+export const EXPERIENCE_KINDS: ExperienceKind[] = ['cardPack', 'flip', 'fade'];
+
+export const EXPERIENCE_PRESETS: Record<string, ExperienceConfig> = {
+  classicPack: { kind: 'cardPack', packCount: 3, durationMs: 700, label: 'CONKER PACK', shake: true, autoFlip: false },
+  holoPack: { kind: 'cardPack', packCount: 5, durationMs: 600, label: 'HOLO PACK', shake: true, autoFlip: true, accent: '#5fd0d6' },
+  flipGrid: { kind: 'flip', packCount: 6, durationMs: 450, label: 'REVEAL', shake: false, autoFlip: false },
+  quickFade: { kind: 'fade', packCount: 1, durationMs: 500, label: 'REVEAL', shake: false, autoFlip: true },
+};
+
+export const DEFAULT_EXPERIENCE: ExperienceConfig = EXPERIENCE_PRESETS.classicPack!;
+
+function clampInt(v: unknown, min: number, max: number, fallback: number): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+/** Fill a partial/untrusted config with defaults, clamping numbers and validating the kind. */
+export function resolveExperience(partial?: Partial<ExperienceConfig> | null): ExperienceConfig {
+  const base = DEFAULT_EXPERIENCE;
+  const p = (partial ?? {}) as Partial<ExperienceConfig>;
+  const kind = EXPERIENCE_KINDS.includes(p.kind as ExperienceKind) ? (p.kind as ExperienceKind) : base.kind;
+  const out: ExperienceConfig = {
+    kind,
+    packCount: clampInt(p.packCount, 1, 12, base.packCount),
+    durationMs: clampInt(p.durationMs, 50, 5000, base.durationMs),
+    label: typeof p.label === 'string' && p.label.trim() ? p.label : base.label,
+    shake: typeof p.shake === 'boolean' ? p.shake : base.shake,
+    autoFlip: typeof p.autoFlip === 'boolean' ? p.autoFlip : base.autoFlip,
+  };
+  if (typeof p.backArt === 'string' && p.backArt) out.backArt = p.backArt;
+  if (typeof p.packArt === 'string' && p.packArt) out.packArt = p.packArt;
+  if (typeof p.accent === 'string' && p.accent) out.accent = p.accent;
+  return out;
+}
+
+/** The call-to-action label for a given experience. */
+export function revealLabel(config: ExperienceConfig): string {
+  return config.kind === 'cardPack' ? 'Rip open' : 'Reveal';
+}
+
+/** Whether the experience opens from a sealed pack (vs. revealing cards directly). */
+export function hasPack(config: ExperienceConfig): boolean {
+  return config.kind === 'cardPack';
+}
