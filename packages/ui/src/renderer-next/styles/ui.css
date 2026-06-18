@@ -783,3 +783,28 @@ button {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ===================== Spawn editor ===================== */
+.spawn-canvas {
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-sm);
+  cursor: crosshair;
+  touch-action: none;
+  display: block;
+}
+.spawn-bg {
+  fill: var(--surface-inset);
+}
+.spawn-cross {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.spawn-dot {
+  fill: var(--accent);
+  cursor: grab;
+  transition: r 90ms var(--ease-out);
+}
+.spawn-dot--sel {
+  stroke: var(--text);
+  stroke-width: 2;
+}

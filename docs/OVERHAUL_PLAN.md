@@ -449,10 +449,12 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > delete `app.ts`/old `index.html`/`styles.css`) stays gated on feature parity.** Migrated:
 > **every nav screen** — the full pipeline (Projects/Design/Preview/Build/Publish), Settings,
 > Help, and **Fal AI** (quick-image generation + save; the full model-catalog/dynamic-param
-> explorer is a later enhancement). Remaining before flipping the default: the **Design tail**
-> — the image **renamer**, **structured rule editors** (maxOccurrences / mutuallyExclusive /
-> requires + a JSON hatch for transforms), and **per-asset effect overrides** are done; the
-> only remaining Design-tail item is the canvas-based **spawn/placement editor**.
+> explorer is a later enhancement). **The Design tail is complete** — image renamer,
+> structured rule editors, per-asset overrides, and the canvas **spawn/placement editor** all
+> shipped. The new app now has **feature parity** with the legacy renderer (the only deferred
+> niceties: the Fal model-catalog explorer + dynamic param editor). Remaining for O6 is the
+> **cutover itself**: a parity-matrix sign-off, flipping the Electron default to the new UI,
+> and deleting `app.ts` / the legacy `index.html` / `styles.css`.
 
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete
