@@ -1,0 +1,145 @@
+# ConkerNFTZ — Platform Master Plan (A → Z creator platform)
+
+> **Status: APPROVED DIRECTION (2026-06-18).** Expands ConkerNFTZ from a generative-art
+> foundry into a complete, artist-controlled NFT platform: create → deploy → build a mint
+> site → host it → run a designed minting experience, all from one tool, no dev skills or
+> external services required. This is the long-term plan; individual phases ship green via PR,
+> and all fund-handling contract work stays **audit-gated** (see `EVM_LAUNCH_SPEC.md`).
+
+## 1. Vision
+
+An artist goes A → Z without leaving ConkerNFTZ:
+
+1. **Create** the collection (generative foundry — *built*).
+2. **Store & deploy** assets + metadata to chain (IPFS/Arweave + multi-chain contracts — *partly built*).
+3. **Design the mint experience** — interactive reveals, card-pack "rip-open," custom animations.
+4. **Build the mint site** — a no-code, block-based, "Geocities-rich" page builder *inside the app*, with deep defaults + deep customization.
+5. **Host it** — one-click deploy of a static mint site to the artist's own host (Vercel/Netlify/IPFS/Pages).
+6. **Operate** the live mint — phases, reveal, withdraw, monitoring — non-custodially, fully artist-owned.
+
+## 2. Locked decisions
+
+| # | Decision | Choice |
+|---|----------|--------|
+| D1 | Product / hosting model | **Open-core**: free/OSS self-host core now; optional managed tier later |
+| D2 | Mint mechanics | **Configurable per project**: delayed-reveal *theater* (front-end) **or** *on-chain packs* (VRF) |
+| D3 | Mint-site runtime | **Static, host-anywhere** (client React/Vite + wallet + public RPC + IPFS gateway; no backend) |
+| D4 | Wallets | Non-custodial **WalletConnect v2**, multi-chain (EVM + Solana); app/site never hold keys |
+| D5 | Chains | Base + Ethereum L1 (EVM contracts) **+** Solana (existing Candy Machine) |
+| D6 | App shell | The builder lives in the existing **Electron + React** app; generated sites are a separate static build |
+| D7 | Contracts | Immutable, audited; standard launch contract first, on-chain packs as a separate heavier module |
+
+## 3. Architecture & principles
+
+- **Two independent tracks.** The **Platform track** (experience + site builder + host) handles
+  no funds and carries no smart-contract risk, so it ships in parallel with the **Contract
+  track** (audit-gated). Mint sites can target testnet contracts during development.
+- **Everything is data.** The collection, the mint experience, and the site are all serializable
+  config (JSON). The in-app preview and the generated static site render from the *same* config
+  and the *same* component library — no drift between "what you design" and "what mints."
+- **Static + portable.** Generated sites are pure client bundles: wallet connect + public RPC +
+  IPFS/Arweave gateway + the contract address/ABI baked in. No server, so any host works and the
+  artist owns it outright.
+- **Non-custodial everywhere.** Every on-chain action (deploy, set-root, reveal, withdraw, mint)
+  is signed by the user's own wallet via WalletConnect v2.
+- **Audit is a hard gate.** No fund-handling contract reaches mainnet without an external audit.
+- **Open-core.** The whole self-host pipeline is free/OSS; a managed tier (hosted deploy,
+  accounts, domains) is an optional later layer, never a requirement.
+
+## 4. Current state (done / in-flight)
+
+- **Foundry** (create): generative engine, layers/rules/rarity/effects, constraint targets,
+  palette recolor, SVG layers, preview/build, worker-pool + incremental builds. ✅
+- **Storage**: IPFS (Pinata)/Arweave (Irys)/local providers, dir-CID upload. ✅
+- **Solana**: Core Candy Machine deploy/mint (allowlist + payment guards). ✅
+- **EVM**: simple `ConkernftzCollection.sol` + `ConkernftzLaunch.sol` **spec'd** (audit-gated). 🟡
+- **UI**: full React app (Projects→Design→Preview→Build→Publish→AI→Settings→Help), responsive
+  (off-process engine), legacy renderer retired. ✅
+
+## 5. Tracks & phases
+
+### Track A — Launch contracts *(audit-gated; see EVM_LAUNCH_SPEC.md)*
+
+- **L1 — Standard launch contract.** `ConkernftzLaunch.sol`: allowlist (per-address maxQty leaf)
+  → fixed-price public → delayed reveal; ERC-721A + ERC-2981 + Ownable2Step + ReentrancyGuard +
+  Pausable; single multisig treasury. Foundry unit/fuzz/invariant + Slither; testnet-first →
+  **external audit** → mainnet. *This is the front contract for the "theater" mint mode (D2).*
+- **L2 — On-chain pack & redemption module** *(advanced, later, separately audited).* Sealed
+  "pack" tokens that are opened/burned on-chain to redeem underlying NFTs, with **verifiable
+  randomness** (Chainlink VRF on EVM / equivalent) and commit-reveal. Powers the *on-chain pack*
+  mint mode (D2). Materially larger contract + audit surface — intentionally decoupled from L1 so
+  a first launch never waits on it.
+- **L-Sol — Solana packs** *(future).* On-chain pack parity on Solana (Metaplex primitives).
+
+### Track B — Platform: experience, site builder, host *(parallel, no fund-risk)*
+
+- **P1 — Mint-experience engine.** A declarative, data-driven system for the minting moment: a
+  sequence of stages (pack appears → shake → rip → cards fan → flip → reveal), card-flip reveals,
+  confetti, sound, etc. Front-end-first ("theater" over a standard reveal); exposes hooks the
+  on-chain pack mode (L2) plugs into later. A library of presets + a no-code editor + in-app
+  preview. Shared component library reused by the generated site.
+- **P2 — Site builder (no-code).** A block-based visual editor in the app: sections/blocks
+  (hero, gallery, roadmap, team, FAQ, mint widget, embeds), a theme system, and a "Geocities-rich"
+  expressive component set — strong opinionated defaults *and* deep customization. Output is a
+  portable **site config (JSON)**.
+- **P3 — Static site generator.** Render (site config + collection + experience + contract
+  address/ABI/chain) → a self-contained static React/Vite bundle, including the mint widget
+  (phase-aware, wallet-connected) and the P1 experience. Deterministic, previewable, no backend.
+- **P4 — Deploy & host.** One-click deploy of the generated bundle to the artist's own host via
+  their token/CLI: **Vercel** (default), Netlify, IPFS/Arweave, GitHub Pages. Domain wiring +
+  redeploy-on-change. The artist owns the deployment.
+- **P5 — Wallet layer (WalletConnect v2).** Shared non-custodial multi-chain connection used by
+  *both* the app (contract admin) and the generated site (minting). Underpins P3 minting and the
+  Phase L admin UI.
+- **P6 — Live ops.** From the app: advance phase, set root, reveal, withdraw, and read-only
+  monitoring (mint progress, holders) — all non-custodial. Client-side chain reads only (honors
+  the static/no-backend constraint).
+
+### Track C — Managed tier *(deferred; the open-core paid layer)*
+
+- **M1 — Managed hosting & accounts.** Optional hosted deploy, accounts, custom domains, and
+  conveniences (e.g. gasless/relayer, analytics). Never required; the self-host path always works.
+
+## 6. Sequencing & dependencies
+
+```
+  Foundry/Storage (done) ─► Publish/deploy (L1 testnet) ─► live mint
+                                   │
+  Track A (contracts, audit-gated):  L1 ──────► (audit) ──────► mainnet
+                                       └► L2 on-chain packs (later, separate audit) ──► L-Sol
+  Track B (platform, parallel):
+        P5 wallet ─┐
+        P1 experience ─┬─► P3 site generator ─► P4 deploy/host ─► P6 live ops
+        P2 site builder ┘
+  Track C: M1 managed tier (last)
+```
+
+Recommended order: **P1 → P5 → P2 → P3 → P4 → P6**, with **L1** proceeding in parallel and
+gating only the *mainnet* mint (testnet unblocks the whole site/experience flow). **L2** and
+**M1** come last. Each phase ships green via PR; the platform track never blocks on the audit.
+
+## 7. Cross-cutting
+
+- **Security/audit:** every fund-handling contract is testnet-first → external audit → mainnet;
+  the app/sites are non-custodial; no secrets in generated bundles; deploy tokens stay on the
+  artist's machine.
+- **Testing:** pure-logic + config round-trip tests (experience/site configs), component tests
+  (RTL), generated-site smoke build, contract Foundry suites, deterministic-where-possible.
+- **Determinism & portability:** generated sites are reproducible from config; host-agnostic.
+- **No drift:** one component library + one config schema power both the in-app preview and the
+  shipped site.
+
+## 8. Open questions (resolve as each phase begins)
+
+- Mint-experience schema shape + how far the no-code editor goes vs. preset-only (P1).
+- Block/theme catalog scope for v1 of the builder; templates included (P2).
+- Deploy auth UX per host (Vercel token vs CLI vs OAuth) (P4).
+- L2 randomness source per chain + economic design of packs (VRF cost, pack odds) (L2).
+- Managed-tier business model + infra (M1).
+- Solana on-chain pack feasibility/primitives (L-Sol).
+
+---
+
+*This master plan supersedes the renderer-overhaul roadmap (O0–O6, complete) as the forward
+plan. `OVERHAUL_PLAN.md` remains the record of the completed overhaul; `EVM_LAUNCH_SPEC.md` is
+the detailed spec for L1.*
