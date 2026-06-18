@@ -23,6 +23,7 @@ export interface FoundryBridge {
   readConfig(): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   readConfigAt(dir: string): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   writeConfig(json: unknown): Promise<OkResult>;
+  saveJson(relPath: string, json: unknown): Promise<OkResult>;
   saveBase64(b64: string, relPath: string): Promise<OkResult>;
   readFile(relativePath: string): Promise<{ ok: boolean; content?: string; error?: string }>;
   listImages(relativePath: string): Promise<{ ok: boolean; count?: number; error?: string }>;

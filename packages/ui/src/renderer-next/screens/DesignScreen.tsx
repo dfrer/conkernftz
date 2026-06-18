@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { EffectsEditor } from '../components/EffectsEditor';
 import { OverridesEditor } from '../components/OverridesEditor';
 import { RenamerPanel } from '../components/RenamerPanel';
+import { SpawnEditor } from '../components/SpawnEditor';
 import { RulesEditor, type RulesObj } from '../components/RulesEditor';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
@@ -87,6 +88,7 @@ export function DesignScreen() {
   const rarity = (config.rarity ?? {}) as { delimiter?: string; defaultWeight?: number };
   const delimiter = rarity.delimiter ?? '#';
   const defaultWeight = rarity.defaultWeight ?? 1;
+  const spawnMapPath = String((config.spawn as { mapPath?: string } | undefined)?.mapPath ?? 'spawn-map.json');
   const setBasic = (key: string, value: unknown) =>
     updateConfig((d) => {
       (d as Record<string, unknown>)[key] = value;
@@ -234,6 +236,17 @@ export function DesignScreen() {
       </Panel>
 
       {layers.length > 0 ? <RenamerPanel layers={layers} delimiter={delimiter} defaultWeight={defaultWeight} /> : null}
+
+      {layers.length > 0 ? (
+        <SpawnEditor
+          layers={layers}
+          mapPath={spawnMapPath}
+          onMapPathChange={(p) => {
+            const cur = (config.spawn as { mapPath?: string } | undefined)?.mapPath;
+            if (cur !== p) updateConfig((d) => { d.spawn = { ...((d.spawn as object) ?? {}), mapPath: p }; });
+          }}
+        />
+      ) : null}
 
       {selected != null && layers[selected] ? (
         <Panel
