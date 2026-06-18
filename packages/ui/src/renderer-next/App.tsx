@@ -8,6 +8,8 @@ import { DesignScreen } from './screens/DesignScreen';
 import { PreviewScreen } from './screens/PreviewScreen';
 import { BuildScreen } from './screens/BuildScreen';
 import { PublishScreen } from './screens/PublishScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
+import { HelpScreen } from './screens/HelpScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PlaygroundScreen } from './screens/PlaygroundScreen';
 import { isBridged } from './lib/bridge';
@@ -19,16 +21,6 @@ const PLACEHOLDERS: Record<string, { kicker: string; title: string; blurb: strin
     kicker: 'SYSTEM // GENERATION',
     title: 'Fal AI',
     blurb: 'The Fal AI image-generation surface (model catalog + dynamic parameters) is ported in a later phase.',
-  },
-  settings: {
-    kicker: 'SYSTEM // CONFIG',
-    title: 'Settings',
-    blurb: 'Theme, accent, provider credentials, and the project file browser consolidate here.',
-  },
-  help: {
-    kicker: 'SYSTEM // MANUAL',
-    title: 'Help',
-    blurb: 'Contextual help popovers and the field manual.',
   },
 };
 
@@ -42,9 +34,11 @@ function Shell() {
   else if (active === 'preview') screen = <PreviewScreen />;
   else if (active === 'build') screen = <BuildScreen />;
   else if (active === 'publish') screen = <PublishScreen />;
+  else if (active === 'settings') screen = <SettingsScreen />;
+  else if (active === 'help') screen = <HelpScreen />;
   else if (active === 'playground') screen = <PlaygroundScreen />;
   else {
-    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.settings!;
+    const p = PLACEHOLDERS[active] ?? PLACEHOLDERS.ai!;
     screen = <PlaceholderScreen stage={active} kicker={p.kicker} title={p.title} blurb={p.blurb} />;
   }
 
