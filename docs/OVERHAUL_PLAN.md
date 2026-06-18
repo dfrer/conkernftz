@@ -450,7 +450,8 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > **every nav screen** — the full pipeline (Projects/Design/Preview/Build/Publish), Settings,
 > Help, and **Fal AI** (quick-image generation + save; the full model-catalog/dynamic-param
 > explorer is a later enhancement). Remaining before flipping the default: the **Design tail**
-> (spawn/placement editor, image renamer, structured rule editors, per-asset overrides).
+> — the image **renamer** (bulk rarity-weight + sequence) is done; still to do are the
+> spawn/placement editor, structured rule editors, and per-asset overrides.
 
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete

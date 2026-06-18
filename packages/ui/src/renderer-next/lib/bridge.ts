@@ -26,6 +26,8 @@ export interface FoundryBridge {
   saveBase64(b64: string, relPath: string): Promise<OkResult>;
   readFile(relativePath: string): Promise<{ ok: boolean; content?: string; error?: string }>;
   listImages(relativePath: string): Promise<{ ok: boolean; count?: number; error?: string }>;
+  listDir(relativePath: string): Promise<{ ok: boolean; items?: string[]; error?: string }>;
+  renameFiles(pairs: { from: string; to: string }[]): Promise<{ ok: boolean; renamed?: number; error?: string }>;
   previewLive(
     config: unknown,
     count: number,
