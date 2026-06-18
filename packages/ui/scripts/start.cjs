@@ -9,12 +9,6 @@ const electronPath = require('electron');
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
-// The new React renderer (renderer-next) is the default. Opt OUT to the legacy renderer
-// with --legacy (or CONKERNFTZ_LEGACY=1).
-if (process.argv.includes('--legacy') || process.env.CONKERNFTZ_LEGACY === '1') {
-  env.CONKERNFTZ_LEGACY = '1';
-}
-
 const isWin = process.platform === 'win32';
 const uiDir = path.join(__dirname, '..');
 
@@ -40,7 +34,7 @@ if (process.env.CONKERNFTZ_SKIP_UI_BUILD === '1') {
   return;
 }
 
-// Otherwise proactively build UI assets so dist/index.html and assets are present. On Windows
+// Otherwise proactively build UI assets so dist/renderer-next and assets are present. On Windows
 // pnpm is a .cmd shim, which Node refuses to spawn without a shell (EINVAL) since 18.20/20.12,
 // so use shell:true there.
 try {

@@ -7,13 +7,12 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "pnpm run build:ts && pnpm run build:renderer-next && pnpm run build:assets",
-    "build:ts": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
+    "build:ts": "tsc -p tsconfig.main.json",
     "build:renderer-next": "vite build",
     "build:assets": "node scripts/copy.js",
     "dev:renderer-next": "vite",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer-next.json --noEmit",
     "start": "node scripts/start.cjs",
-    "start:legacy": "node scripts/start.cjs --legacy",
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests"
   },

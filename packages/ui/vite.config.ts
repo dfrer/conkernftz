@@ -18,10 +18,9 @@ function stripCrossorigin() {
   };
 }
 
-// Builds the new React renderer (src/renderer-next) into dist/renderer-next. `base: './'`
-// keeps asset URLs relative so the bundle can be loaded over file:// by Electron.
-// This is a parallel app: the legacy renderer (src/renderer, built by tsc) remains the
-// default entry until the O6 cutover; the new UI is opt-in via CONKERNFTZ_NEXT=1.
+// Builds the React renderer (src/renderer-next) into dist/renderer-next. `base: './'`
+// keeps asset URLs relative so the bundle can be loaded over file:// by Electron. This is
+// the only renderer — Electron's main process loads dist/renderer-next/index.html directly.
 export default defineConfig({
   root: resolve(here, 'src/renderer-next'),
   base: './',

@@ -27,11 +27,7 @@ function createWindow(): void {
   win.webContents.on('did-fail-load', (_e, code, desc) => {
     console.error('Failed to load UI:', code, desc);
   });
-  // The new React renderer (renderer-next) is the default as of the O6 cutover. The legacy
-  // renderer remains available as an escape hatch via CONKERNFTZ_LEGACY=1 (`pnpm start:legacy`).
-  const useLegacy = process.env.CONKERNFTZ_LEGACY === '1';
-  const indexHtml = useLegacy ? path.join(appDir, 'index.html') : path.join(appDir, 'renderer-next', 'index.html');
-  win.loadFile(indexHtml);
+  win.loadFile(path.join(appDir, 'renderer-next', 'index.html'));
 }
 
 electron.app.whenReady().then(() => {

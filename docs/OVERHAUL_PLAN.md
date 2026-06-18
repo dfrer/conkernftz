@@ -477,6 +477,16 @@ runs parallel to the UI track after O0. **Phase L (EVM launch) is last and audit
 > escape hatch via `pnpm -C packages/ui start:legacy`. **Nothing deleted.** Stage 2 — delete
 > `app.ts` (12k) + the legacy `index.html`/`styles.css` and rewrite README/UI_GUIDE — follows
 > once the new UI is validated in real use.
+>
+> **✅ Cutover stage 2 DONE (2026-06-17) — PHASE O6 COMPLETE.** The user hand-validated the
+> new UI in real use (works end-to-end + responsive after the engine off-process fix), so the
+> legacy renderer was **deleted**: `src/renderer/` (incl. `app.ts`), `src/index.html`,
+> `src/styles.css`, `src/design-system/`, and `tsconfig.renderer.json` are gone; the
+> `CONKERNFTZ_LEGACY` gate, `start:legacy` script, and `build:ts` legacy compile step were
+> removed; `copy.js` no longer ships the legacy HTML/CSS. `main.ts` loads `renderer-next`
+> unconditionally. UI_GUIDE/TESTING rewritten for the new UI. The React app is now the **only**
+> renderer. Full gate green (UI tests 53; the 14 legacy `studio-pure` tests were removed with
+> the code they covered).
 
 - **Goal:** the single gated switch old → new.
 - **Scope:** final parity-matrix sign-off; flip the Electron entry to the React app; delete
