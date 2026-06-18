@@ -8,7 +8,7 @@
     "lib": ["ES2022", "DOM"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/renderer-next/**"]
+  "exclude": ["node_modules", "dist", "src/renderer-next/**", "src/site-template/**"]
 }
 
 
