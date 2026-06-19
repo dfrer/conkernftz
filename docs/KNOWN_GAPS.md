@@ -9,10 +9,10 @@ Legend: **Stub** = placeholder/decorative · **Partial** = works but limited · 
 
 | Area | Feature | State | What's missing / to finish |
 |------|---------|-------|----------------------------|
-| Site builder | **Web ring** widget | Stub | Decorative text only (prev / random / next are not links). Needs configurable ring URLs + a real prev/next/random target set. |
-| Site builder | **88×31 button** | Partial | Single text label + href. No badge image/upload, no preset badge gallery. |
-| Site builder | **Hit counter** | Stub | Static number. A real visit counter needs a backend/service (the site is static) — wire to a counter service or omit at deploy. |
-| Site builder | **Image / GIF** widget | Partial | URL field only — no in-app asset upload/picker or clipart library. |
+| Site builder | **Web ring** widget | Done | Configurable prev / random / next / hub URLs; each becomes a real link when set (else stays decorative); the ring name links to the hub. |
+| Site builder | **88×31 button** | Done | Text label **or** an 88×31 badge image (URL / data URL) + href. (A bundled preset-badge gallery is still a nice-to-have, not required.) |
+| Site builder | **Hit counter** | Done | Static number **or** a real global count via a counter-service image URL (the period-accurate static-site approach, e.g. hitwebcounter). A built-in first-party counter would need a backend (out of scope for static sites). |
+| Site builder | **Image / GIF** widget | Partial | URL / data-URL field. In-app file upload/picker + a bundled clipart library still pending (next P2 increment). |
 | Site builder | Clipart / nostalgia zoo | Pending | Guestbook, comet/star cursor trails, MIDI autoplay, "best viewed in…" badges, animated clipart library — not built yet. |
 | Site builder | Canvas ergonomics | Partial | Drag-move + corner-resize only. No multi-select, snapping/guides, group, undo/redo, or rotation. |
 | Mint experience | Rip animation | Done (U3.7) | Four-phase deterministic reveal: **grab-and-pull** the sealed pack (click/Enter also work) → a short **tear beat** (sealed pack shakes/pops, accent flash on the rip line) → cards sit **stacked inside** the pack, tops emerging from the torn rim with a gentle float → **click** and the cards **spill into a wide fan in front** of the now-blurred pack. **Layered pocket:** when a pack provides split `<packId>-open-front` (pocket face, covers card bottoms) + `<packId>-open-back` (interior wall) variants, cards render *between* them for a true cards-inside-the-pack look (bundled for CONKERCO). Falls back to a single `<packId>-open` image, then to a direct reveal. Geometry/feel is owner-tunable via CSS vars (`--exp-mouth`, `--exp-peek`, `--exp-spread`, `--exp-spill-y`, tear 420ms). |

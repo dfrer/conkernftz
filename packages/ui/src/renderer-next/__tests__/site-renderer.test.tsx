@@ -86,4 +86,36 @@ describe('SiteRenderer', () => {
     expect(getByText('The NFT Web Ring')).toBeTruthy();
     expect(container.querySelector('.site-construction')?.textContent).toContain('UNDER CONSTRUCTION');
   });
+
+  it('web ring renders real links when URLs are set, decorative spans otherwise', () => {
+    let site = addBlock(defaultSite(), 'webRing');
+    const id = site.blocks[site.blocks.length - 1]!.id;
+    // no URLs → prev/next/random are not links
+    let r = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect(r.container.querySelectorAll('.site-webring a').length).toBe(0);
+    r.unmount();
+    // set URLs → real links (prev, random, next, + the name → hub)
+    site = updateBlock(site, id, { prev: 'https://a', random: 'https://r', next: 'https://b', hub: 'https://hub' });
+    r = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    const hrefs = Array.from(r.container.querySelectorAll('.site-webring a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['https://a', 'https://hub', 'https://r', 'https://b']);
+  });
+
+  it('88×31 button shows a badge image when src is set, else the text label', () => {
+    let site = addBlock(defaultSite(), 'button');
+    const id = site.blocks[site.blocks.length - 1]!.id;
+    site = updateBlock(site, id, { text: 'cool site', src: 'data:img/badge' });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    const img = container.querySelector('.site-88x31-img') as HTMLImageElement | null;
+    expect(img?.getAttribute('src')).toBe('data:img/badge');
+  });
+
+  it('hit counter renders a counter-service image when src is set', () => {
+    let site = addBlock(defaultSite(), 'hitCounter');
+    const id = site.blocks[site.blocks.length - 1]!.id;
+    site = updateBlock(site, id, { src: 'https://counter.example/c.gif' });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect((container.querySelector('.site-hitcounter-img') as HTMLImageElement)?.getAttribute('src')).toBe('https://counter.example/c.gif');
+    expect(container.querySelector('.site-hitcounter-num')).toBeNull();
+  });
 });

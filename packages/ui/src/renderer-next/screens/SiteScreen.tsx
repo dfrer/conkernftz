@@ -635,9 +635,15 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
       );
     case 'hitCounter':
       return (
-        <div className="grid cols-auto">
-          <Field label="Label"><Input value={block.label} onChange={(e) => setField({ label: e.target.value })} aria-label="Counter label" /></Field>
-          <Field label="Start"><Input type="number" min="0" value={block.start} onChange={(e) => setField({ start: Number(e.target.value) || 0 })} aria-label="Counter start" /></Field>
+        <div className="stack">
+          <div className="grid cols-auto">
+            <Field label="Label"><Input value={block.label} onChange={(e) => setField({ label: e.target.value })} aria-label="Counter label" /></Field>
+            <Field label="Start"><Input type="number" min="0" value={block.start} onChange={(e) => setField({ start: Number(e.target.value) || 0 })} aria-label="Counter start" /></Field>
+          </div>
+          <Field label="Counter image URL (real count)">
+            <Input value={block.src ?? ''} onChange={(e) => setField({ src: e.target.value || undefined })} placeholder="(static) — paste a counter-service image URL for a live count" aria-label="Counter image URL" />
+          </Field>
+          <span className="label muted">A static site can't count visits itself. Paste a free counter-service image URL (e.g. hitwebcounter) for a real global count; otherwise the number above is decorative.</span>
         </div>
       );
     case 'html':
@@ -660,10 +666,22 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
         <div className="grid cols-auto">
           <Field label="Label"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Button label" /></Field>
           <Field label="Link"><Input value={block.href} onChange={(e) => setField({ href: e.target.value })} placeholder="https://" aria-label="Button href" /></Field>
+          <Field label="Badge image URL (88×31)"><Input value={block.src ?? ''} onChange={(e) => setField({ src: e.target.value || undefined })} placeholder="(text label) — or a data:/https 88×31 badge" aria-label="Button badge image" /></Field>
         </div>
       );
     case 'webRing':
-      return <Field label="Ring name"><Input value={block.name} onChange={(e) => setField({ name: e.target.value })} aria-label="Web ring name" /></Field>;
+      return (
+        <div className="stack">
+          <Field label="Ring name"><Input value={block.name} onChange={(e) => setField({ name: e.target.value })} aria-label="Web ring name" /></Field>
+          <div className="grid cols-auto">
+            <Field label="‹ Prev URL"><Input value={block.prev ?? ''} onChange={(e) => setField({ prev: e.target.value || undefined })} placeholder="https://" aria-label="Web ring prev URL" /></Field>
+            <Field label="Random URL"><Input value={block.random ?? ''} onChange={(e) => setField({ random: e.target.value || undefined })} placeholder="https://" aria-label="Web ring random URL" /></Field>
+            <Field label="Next › URL"><Input value={block.next ?? ''} onChange={(e) => setField({ next: e.target.value || undefined })} placeholder="https://" aria-label="Web ring next URL" /></Field>
+            <Field label="Hub URL (name)"><Input value={block.hub ?? ''} onChange={(e) => setField({ hub: e.target.value || undefined })} placeholder="https://" aria-label="Web ring hub URL" /></Field>
+          </div>
+          <span className="label muted">Prev / Random / Next become real links when a URL is set; the name links to the hub.</span>
+        </div>
+      );
     case 'underConstruction':
       return <Field label="Banner text"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Construction text" /></Field>;
     case 'divider':
