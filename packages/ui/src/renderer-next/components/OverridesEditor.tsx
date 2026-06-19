@@ -26,7 +26,7 @@ export function OverridesEditor({ overrides, onChange }: { overrides: AssetOverr
 
   return (
     <div className="stack">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row spread">
         <span className="label">Per-asset overrides</span>
         <Button size="sm" onClick={add}>
           + Add override

@@ -69,6 +69,25 @@ button {
   color: var(--text-muted);
 }
 
+/* Layout idiom utilities (named so screens don't re-hand-roll the same inline styles). */
+.spread {
+  justify-content: space-between;
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.break-all {
+  word-break: break-all;
+}
+/* Helper caption under a control/panel (pairs with `.label muted`). */
+.hint {
+  display: block;
+  margin-top: var(--sp-3);
+}
+
 /* ===================== Shell ===================== */
 .shell {
   display: grid;

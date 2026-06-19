@@ -143,13 +143,13 @@ export function PublishScreen() {
         </div>
         {manifest?.baseUri ? (
           <div className="row" style={{ marginTop: 'var(--sp-3)', gap: 'var(--sp-2)', alignItems: 'center' }}>
-            <span className="mono muted" style={{ wordBreak: 'break-all' }}>baseURI: {manifest.baseUri}</span>
+            <span className="mono muted break-all">baseURI: {manifest.baseUri}</span>
             <Button size="sm" variant="ghost" onClick={() => copyText(manifest.baseUri!)}>
               Copy
             </Button>
           </div>
         ) : (
-          <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+          <span className="label muted hint">
             Build the collection, then upload — this strip reflects what's ready before you mint.
           </span>
         )}
@@ -181,7 +181,7 @@ export function PublishScreen() {
             </Button>
           </div>
         </div>
-        <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+        <span className="label muted hint">
           Uploads images + metadata; <code>dir</code> mode writes the contract baseURI to .upload-manifest.json (shown in
           Readiness above).
         </span>
@@ -231,7 +231,7 @@ export function PublishScreen() {
             </>
           )}
         </div>
-        <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+        <span className="label muted hint">
           On-chain writes default to testnet/devnet; mainnet stays gated behind explicit CLI flags.
         </span>
       </Panel>

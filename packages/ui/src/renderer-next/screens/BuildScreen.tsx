@@ -164,7 +164,7 @@ export function BuildScreen() {
             <div className="progress">
               <div className="progress-bar" style={{ width: `${pct}%` }} />
             </div>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
+            <div className="row spread">
               <span className="label">{prog?.message ?? 'Working…'}</span>
               <span className="mono muted">
                 {prog?.current ?? 0}/{prog?.total ?? count} · {pct.toFixed(0)}%
@@ -316,7 +316,7 @@ function RarityReport({ data }: { data: RarityData }) {
               const p = editions ? (n / editions) * 100 : 0;
               return (
                 <div key={value} className="histo-row">
-                  <span className="mono" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="mono truncate">
                     {value}
                   </span>
                   <div className="histo-bar">
