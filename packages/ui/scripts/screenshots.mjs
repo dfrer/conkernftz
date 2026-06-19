@@ -170,6 +170,20 @@ const main = async () => {
       console.log('FAILED', id, String(e?.message ?? e));
     }
   }
+
+  // Exercise key in-screen interactions so new features are captured, not just landing views.
+  try {
+    await page.locator('.nav-item', { hasText: 'Design' }).first().click();
+    await page.waitForTimeout(400);
+    await page.getByRole('button', { name: /Browse layer 1 traits/i }).click();
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(outDir, 'design-traits.png'), fullPage: true });
+    // Tight close-up of just the Traits panel so card details (value / % / weight) are legible.
+    await page.locator('.panel', { hasText: 'Traits —' }).first().screenshot({ path: path.join(outDir, 'design-traits-panel.png') });
+    console.log('captured', 'design-traits');
+  } catch (e) {
+    console.log('FAILED', 'design-traits', String(e?.message ?? e));
+  }
   await browser.close();
   server.close();
   console.log('screenshots →', outDir);
