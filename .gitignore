@@ -31,3 +31,6 @@ keys/
 .env
 .env.*
 
+
+# UI screenshot harness output (dev artifact)
+packages/ui/screenshots/
