@@ -97,6 +97,10 @@ export interface HitCounterBlock extends BaseBlock {
   kind: 'hitCounter';
   label: string;
   start: number;
+  /** Optional counter-service image URL (the period-accurate way to get a REAL global count on
+   * a static site, e.g. hitwebcounter/counterapi). When set, the service image replaces the
+   * static number. */
+  src?: string;
 }
 export interface HtmlBlock extends BaseBlock {
   kind: 'html';
@@ -111,10 +115,18 @@ export interface ButtonBlock extends BaseBlock {
   kind: 'button';
   text: string;
   href: string;
+  /** Optional 88×31 badge image (URL or data URL). When set, replaces the text label. */
+  src?: string;
 }
 export interface WebRingBlock extends BaseBlock {
   kind: 'webRing';
   name: string;
+  /** Ring navigation targets — rendered as real links when set (else decorative). */
+  prev?: string;
+  next?: string;
+  random?: string;
+  /** The ring hub/home; the ring name links here when set. */
+  hub?: string;
 }
 export interface UnderConstructionBlock extends BaseBlock {
   kind: 'underConstruction';

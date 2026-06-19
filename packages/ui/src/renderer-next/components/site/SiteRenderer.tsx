@@ -190,8 +190,13 @@ function BlockContent({ block, images, experience }: { block: Block; images: str
     case 'hitCounter':
       return (
         <div className="site-hitcounter">
-          <span className="site-hitcounter-label">{block.label}</span>
-          <span className="site-hitcounter-num">{String(Math.max(0, block.start)).padStart(6, '0')}</span>
+          {block.label ? <span className="site-hitcounter-label">{block.label}</span> : null}
+          {block.src ? (
+            // A real counter from a service (the static-site-friendly way to get a global count).
+            <img className="site-hitcounter-img" src={block.src} alt="visit counter" loading="lazy" />
+          ) : (
+            <span className="site-hitcounter-num">{String(Math.max(0, block.start)).padStart(6, '0')}</span>
+          )}
         </div>
       );
     case 'html':
@@ -203,19 +208,35 @@ function BlockContent({ block, images, experience }: { block: Block; images: str
       return <div className={cx('site-wordart', `site-wordart--${block.style}`)}>{block.text}</div>;
     case 'button':
       return (
-        <a className="site-88x31" href={block.href || undefined} target="_blank" rel="noreferrer">
-          {block.text}
+        <a className={cx('site-88x31', block.src && 'site-88x31--img')} href={block.href || undefined} target="_blank" rel="noreferrer">
+          {block.src ? <img className="site-88x31-img" src={block.src} alt={block.text || 'button'} loading="lazy" /> : block.text}
         </a>
       );
-    case 'webRing':
+    case 'webRing': {
+      // prev / random / next become real links when a target URL is set, else stay decorative.
+      const ringLink = (label: string, href: string | undefined, cls?: string) =>
+        href ? (
+          <a className={cx('site-webring-link', cls)} href={href} target="_blank" rel="noreferrer">
+            {label}
+          </a>
+        ) : (
+          <span className={cls}>{label}</span>
+        );
       return (
         <div className="site-webring">
-          <span>‹ prev</span>
-          <span className="site-webring-name">{block.name}</span>
-          <span>random</span>
-          <span>next ›</span>
+          {ringLink('‹ prev', block.prev)}
+          {block.hub ? (
+            <a className="site-webring-name site-webring-link" href={block.hub} target="_blank" rel="noreferrer">
+              {block.name}
+            </a>
+          ) : (
+            <span className="site-webring-name">{block.name}</span>
+          )}
+          {ringLink('random', block.random)}
+          {ringLink('next ›', block.next)}
         </div>
       );
+    }
     case 'underConstruction':
       return (
         <div className="site-construction" aria-label="under construction">
