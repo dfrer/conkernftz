@@ -289,15 +289,16 @@
   animation-delay: calc(var(--exp-i, 0) * 70ms);
 }
 /* STACKED, layered: cards tucked behind the front pocket — tops emerge in the window between
- * the front rim (--exp-mouth) and ~--exp-peek above it; bottoms hidden behind the front. */
+ * the front rim (--exp-mouth) and ~--exp-peek above it; bottoms hidden behind the front. A
+ * tight, slightly messy hand-piled stack (small per-card offset + random tilt). */
 .exp-rip--layered .exp-rip-cards .exp-card {
-  transform: translate(-50%, calc(var(--exp-mouth) - var(--exp-peek))) translateX(calc(var(--exp-off, 0) * 9px))
-    rotate(calc(var(--exp-rot, 0deg) * 0.4)) scale(0.94);
+  transform: translate(-50%, calc(var(--exp-mouth) - var(--exp-peek)))
+    translateX(calc(var(--exp-off, 0) * 3px + var(--exp-jx, 0px))) rotate(var(--exp-tilt, 0deg)) scale(1.1);
 }
 /* STACKED, single image (no split): cards poke ABOVE the opaque torn-open image. */
 .exp-rip:not(.exp-rip--layered) .exp-rip-cards .exp-card {
-  transform: translate(-50%, calc(-1 * var(--exp-peek))) translateX(calc(var(--exp-off, 0) * 9px))
-    rotate(calc(var(--exp-rot, 0deg) * 0.4)) scale(0.92);
+  transform: translate(-50%, calc(-1 * var(--exp-peek)))
+    translateX(calc(var(--exp-off, 0) * 3px + var(--exp-jx, 0px))) rotate(var(--exp-tilt, 0deg)) scale(1.08);
 }
 .exp-card-inner {
   display: flex;
@@ -318,7 +319,7 @@
 .exp-rip--spilled .exp-rip-cards .exp-card {
   animation: none; /* settle into the spilled transform via the transition */
   transform: translate(-50%, var(--exp-spill-y, -8px)) translateX(calc(var(--exp-off, 0) * var(--exp-spread, 82px)))
-    rotate(var(--exp-rot, 0deg)) scale(1.06);
+    rotate(var(--exp-rot, 0deg)) scale(1.1);
 }
 /* Flip a spilled rip card on its inner wrapper, so the button keeps its fanned position. */
 .exp-rip-cards .exp-card--face .exp-card-inner {
