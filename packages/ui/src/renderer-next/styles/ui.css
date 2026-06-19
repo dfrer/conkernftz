@@ -885,6 +885,45 @@ button {
   background: color-mix(in oklab, var(--accent) 50%, transparent);
 }
 
+/* ===================== Pack library ===================== */
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+.pack-card {
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.pack-card__art {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: var(--surface-inset);
+  display: block;
+}
+.pack-card__art--ph {
+  background: repeating-linear-gradient(45deg, var(--surface-2) 0 6px, var(--surface-inset) 6px 12px);
+}
+.pack-card__meta {
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: var(--hair) solid var(--line);
+}
+.pack-card__name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===================== Trait browser ===================== */
 .trait-grid {
   display: grid;

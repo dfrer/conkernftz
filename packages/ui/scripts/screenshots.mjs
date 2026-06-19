@@ -157,6 +157,17 @@ function installMock() {
     exportSite: () => ok({ outDir: 'C:/demo/collection/site-export' }),
     deploySite: () => ok({ url: 'https://demo.vercel.app' }),
     previewSite: () => ok({ url: 'http://127.0.0.1:5000/' }),
+    packsList: () =>
+      ok({
+        packs: [
+          { id: 'conkerco-default', name: 'CONKERCO Default', kind: 'pack', builtin: true },
+          { id: 'pack-holo', name: 'My Holo Pack', kind: 'pack', builtin: false },
+          { id: 'back-classic', name: 'Classic Back', kind: 'back', builtin: false },
+        ],
+      }),
+    packsRead: (id = '') => ok({ base64: palette[hash(id) % palette.length], mime: 'image/png' }),
+    packsImport: () => ok({ pack: { id: 'pack-new', name: 'New Pack', kind: 'pack', builtin: false } }),
+    packsDelete: () => ok(),
   };
 }
 
@@ -180,6 +191,7 @@ const STAGES = [
   ['experience', 'Mint FX'],
   ['site', 'Site'],
   ['ai', 'Fal AI'],
+  ['packs', 'Packs'],
   ['settings', 'Settings'],
   ['help', 'Help'],
   ['playground', 'Components'],

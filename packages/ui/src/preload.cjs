@@ -43,4 +43,8 @@ contextBridge.exposeInMainWorld('foundry', {
   previewSite: () => ipcRenderer.invoke('foundry:previewSite'),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
+  packsList: () => ipcRenderer.invoke('foundry:packsList'),
+  packsRead: (id) => ipcRenderer.invoke('foundry:packsRead', id),
+  packsImport: (opts) => ipcRenderer.invoke('foundry:packsImport', opts || {}),
+  packsDelete: (id) => ipcRenderer.invoke('foundry:packsDelete', id),
 });
