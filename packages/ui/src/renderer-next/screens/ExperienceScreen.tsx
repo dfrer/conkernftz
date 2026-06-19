@@ -107,6 +107,25 @@ export function ExperienceScreen() {
   // Preview uses the resolved art (packId/backId → data URL), falling back to any inline art.
   const previewExp: ExperienceConfig = { ...exp, ...art };
 
+  // --- rarity backs ---
+  const backsList = packs.filter((p) => p.kind === 'back');
+  const rules = exp.rarityBacks ?? [];
+  const addRule = (): void => {
+    const first = backsList[0];
+    if (!first) {
+      toast.push('Add a card back to the library first', 'danger');
+      return;
+    }
+    set({ rarityBacks: [...rules, { tier: `Tier ${rules.length + 1}`, backId: first.id }] });
+  };
+  const updateRule = (i: number, patch: Partial<{ tier: string; backId: string }>): void =>
+    set({ rarityBacks: rules.map((r, j) => (j === i ? { ...r, ...patch } : r)) });
+  const removeRule = (i: number): void => set({ rarityBacks: rules.filter((_, j) => j !== i) });
+
+  // Preview simulation: make the last card use the first rarity tier so the rare back shows.
+  const previewTiers =
+    rules.length > 0 ? Array.from({ length: exp.packCount }, (_, i) => (i === exp.packCount - 1 ? rules[0]!.tier : '')) : [];
+
   const picker = (kind: 'pack' | 'back', selectedId: string | undefined, onPick: (id: string | undefined) => void) => {
     const items = packs.filter((p) => p.kind === kind);
     return (
@@ -216,6 +235,39 @@ export function ExperienceScreen() {
                 <>
                   {picker('pack', exp.packId, (id) => set({ packId: id }))}
                   {picker('back', exp.backId, (id) => set({ backId: id }))}
+                  <div className="stack" style={{ gap: 4 }}>
+                    <div className="row spread">
+                      <span className="label">RARITY BACKS (optional)</span>
+                      <Button size="sm" onClick={addRule} disabled={backsList.length === 0}>
+                        + Rarity rule
+                      </Button>
+                    </div>
+                    <span className="label muted">
+                      Cards of a tier flip to a designated back instead of the default. Live mint maps a card's tier from
+                      its rarity rank; the preview simulates one rare card.
+                    </span>
+                    {rules.map((r, i) => (
+                      <div className="grid cols-auto" key={i}>
+                        <Field label="Tier">
+                          <Input value={r.tier} onChange={(e) => updateRule(i, { tier: e.target.value })} aria-label={`Rarity tier ${i + 1}`} />
+                        </Field>
+                        <Field label="Back">
+                          <Select value={r.backId} onChange={(e) => updateRule(i, { backId: e.target.value })} aria-label={`Rarity back ${i + 1}`}>
+                            {backsList.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.name}
+                              </option>
+                            ))}
+                          </Select>
+                        </Field>
+                        <div style={{ alignSelf: 'end' }}>
+                          <Button size="sm" variant="danger" icon onClick={() => removeRule(i)} aria-label={`Remove rarity rule ${i + 1}`}>
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -232,7 +284,7 @@ export function ExperienceScreen() {
               </div>
             }
           >
-            <MintExperience key={replayKey} config={previewExp} images={images} />
+            <MintExperience key={replayKey} config={previewExp} images={images} cardTiers={previewTiers} />
           </Panel>
         </>
       )}
