@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { Field, Input } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
 import { Skeleton } from '../components/Skeleton';
-import { Dialog } from '../components/Dialog';
+import { Lightbox } from '../components/Lightbox';
 import { useToast } from '../components/Toast';
 import { bridge, isBridged } from '../lib/bridge';
 import { useProject } from '../state/project';
@@ -61,8 +61,6 @@ export function PreviewScreen() {
   };
 
   const mime = format === 'webp' ? 'image/webp' : 'image/png';
-  const step = (delta: number) =>
-    setLightbox((l) => (l == null || images.length === 0 ? l : (l + delta + images.length) % images.length));
 
   return (
     <div className="stack stagger">
@@ -155,26 +153,14 @@ export function PreviewScreen() {
         )}
       </Panel>
 
-      <Dialog
-        open={lightbox != null}
-        title={lightbox != null ? `Preview ${lightbox + 1} / ${images.length}` : ''}
+      <Lightbox
+        images={images}
+        index={lightbox}
+        onIndexChange={setLightbox}
         onClose={() => setLightbox(null)}
-      >
-        {lightbox != null && images[lightbox] ? (
-          <div className="stack">
-            <img className="lightbox-img" src={`data:${mime};base64,${images[lightbox]}`} alt={`Preview ${lightbox + 1}`} />
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <Button onClick={() => step(-1)} disabled={images.length < 2} aria-label="Previous preview">
-                ‹ Prev
-              </Button>
-              <span className="mono muted">{format.toUpperCase()}</span>
-              <Button onClick={() => step(1)} disabled={images.length < 2} aria-label="Next preview">
-                Next ›
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </Dialog>
+        mime={mime}
+        labelPrefix="Preview"
+      />
     </div>
   );
 }

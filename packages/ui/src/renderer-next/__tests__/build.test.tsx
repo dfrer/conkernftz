@@ -14,6 +14,8 @@ const cfg = {
   rarity: { mode: 'filenameDelimiter', delimiter: '#', defaultWeight: 1 },
   export: { outDir: 'build', imageFormat: 'png' },
 };
+// 1x1 PNG
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottQAAAABJRU5ErkJggg==';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function installBridge(over: Record<string, any> = {}) {
@@ -27,6 +29,9 @@ function installBridge(over: Record<string, any> = {}) {
     writeConfig: async () => ({ ok: true }),
     readFile: async () => ({ ok: false }),
     listImages: async () => ({ ok: true, count: 0 }),
+    listDir: async () => ({ ok: true, items: [] }),
+    readFileBase64: async () => ({ ok: true, base64: PNG, mime: 'image/png' }),
+    openInExplorer: async () => ({ ok: true }),
     previewLive: async () => ({ ok: true, format: 'png', images: [] }),
     buildWithProgress: vi.fn(async () => ({ ok: true, stdout: 'Build complete' })),
     pauseBuild: async () => ({ ok: true }),
@@ -72,6 +77,24 @@ describe('BuildScreen', () => {
     fireEvent.click(getAllByRole('button', { name: 'Build collection' })[0]!);
     expect(await findByText(/Built 4 editions/)).toBeTruthy();
     expect(await findByText('Red')).toBeTruthy();
+  });
+
+  it('loads the built editions into the output gallery and opens a lightbox', async () => {
+    installBridge({
+      buildWithProgress: vi.fn(async () => ({ ok: true, stdout: 'Built 3 editions' })),
+      listDir: vi.fn(async (rel: string) =>
+        rel.endsWith('/images') ? { ok: true, items: ['1.png', '2.png', '3.png'] } : { ok: true, items: [] },
+      ),
+      readFileBase64: vi.fn(async () => ({ ok: true, base64: PNG, mime: 'image/png' })),
+    });
+    const { findByText, findByLabelText, getAllByRole, findByRole } = mount();
+    await findByText('Ready to build');
+    fireEvent.click(getAllByRole('button', { name: 'Build collection' })[0]!);
+    // The gallery picks up the 3 built editions.
+    await findByLabelText('Inspect edition 3');
+    // Clicking an edition opens the shared inspection lightbox.
+    fireEvent.click(await findByLabelText('Inspect edition 1'));
+    expect(await findByRole('dialog')).toBeTruthy();
   });
 
   it('reflects live build progress events', async () => {
