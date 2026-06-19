@@ -31,6 +31,7 @@ export function DesignScreen() {
   const { project, config, dirty, save, updateConfig, loading } = useProject();
   const toast = useToast();
   const [counts, setCounts] = useState<Record<number, number | null>>({});
+  const [thumbs, setThumbs] = useState<Record<number, string | null>>({});
   const [selected, setSelected] = useState<number | null>(null);
 
   const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
@@ -55,6 +56,45 @@ export function DesignScreen() {
         }),
       );
       if (!cancelled) setCounts(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layersKey]);
+
+  // Load a representative thumbnail (first image) per layer so the table shows the art.
+  useEffect(() => {
+    const fb = bridge();
+    const layers = config?.layers ?? [];
+    if (!fb || layers.length === 0) {
+      setThumbs({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const next: Record<number, string | null> = {};
+      await Promise.all(
+        layers.map(async (l, i) => {
+          try {
+            const dir = await fb.listDir(l.path);
+            const name =
+              dir.ok && Array.isArray(dir.items)
+                ? dir.items.find((n) => !n.endsWith('/') && /\.(png|webp|gif|svg|jpe?g)$/i.test(n))
+                : undefined;
+            if (!name) {
+              next[i] = null;
+              return;
+            }
+            const rel = `${l.path.replace(/[\\/]+$/, '')}/${name}`;
+            const r = await fb.readFileBase64(rel);
+            next[i] = r.ok && r.base64 ? `data:${r.mime || 'image/png'};base64,${r.base64}` : null;
+          } catch {
+            next[i] = null;
+          }
+        }),
+      );
+      if (!cancelled) setThumbs(next);
     })();
     return () => {
       cancelled = true;
@@ -187,6 +227,7 @@ export function DesignScreen() {
           <div className="stack">
             <div className="layer-row layer-row--head label">
               <span>#</span>
+              <span>Art</span>
               <span>Name</span>
               <span>Path</span>
               <span>Rarity</span>
@@ -198,6 +239,11 @@ export function DesignScreen() {
             {layers.map((l, i) => (
               <div className={cx('layer-row', selected === i && 'layer-row--active')} key={i}>
                 <span className="nav-index">{String(i + 1).padStart(2, '0')}</span>
+                {thumbs[i] ? (
+                  <img className="layer-thumb" src={thumbs[i]!} alt="" />
+                ) : (
+                  <span className="layer-thumb layer-thumb--ph" aria-hidden />
+                )}
                 <Input value={l.name} onChange={(e) => setLayer(i, { name: e.target.value })} aria-label={`Layer ${i + 1} name`} />
                 <Input value={l.path} onChange={(e) => setLayer(i, { path: e.target.value })} aria-label={`Layer ${i + 1} path`} />
                 <Select value={l.rarity ?? 'filename'} onChange={(e) => setLayer(i, { rarity: e.target.value as 'filename' | 'uniform' })} aria-label={`Layer ${i + 1} rarity`}>
