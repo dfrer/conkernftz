@@ -277,6 +277,18 @@ const main = async () => {
   } catch (e) {
     console.log('FAILED', 'build-interactions', String(e?.message ?? e));
   }
+
+  // Site: apply a starter template and capture the resulting builder + preview.
+  try {
+    await page.locator('.nav-item', { hasText: 'Site' }).first().click();
+    await page.waitForTimeout(300);
+    await page.locator('.template-card', { hasText: 'GeoCities' }).click();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(outDir, 'site-geocities.png'), fullPage: true });
+    console.log('captured', 'site-geocities');
+  } catch (e) {
+    console.log('FAILED', 'site-interactions', String(e?.message ?? e));
+  }
   await browser.close();
   server.close();
   console.log('screenshots →', outDir);
