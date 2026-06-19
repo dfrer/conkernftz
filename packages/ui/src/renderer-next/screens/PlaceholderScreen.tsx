@@ -1,4 +1,5 @@
 import { EmptyState } from '../components/EmptyState';
+import { StageHeader } from '../components/StageHeader';
 
 export function PlaceholderScreen({
   stage,
@@ -13,12 +14,7 @@ export function PlaceholderScreen({
 }) {
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">{kicker}</div>
-          <h1 className="main-title">{title}</h1>
-        </div>
-      </div>
+      <StageHeader kicker={kicker} title={title} />
       <EmptyState code={`STAGE // ${stage.toUpperCase()}`} title={`${title} — under construction`} hint={blurb} />
     </div>
   );

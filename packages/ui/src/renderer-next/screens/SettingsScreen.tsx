@@ -1,4 +1,5 @@
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
@@ -52,20 +53,20 @@ export function SettingsScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">SYSTEM // CONFIG</div>
-          <h1 className="main-title">Settings</h1>
-        </div>
-        {config ? (
-          <div className="row">
-            {dirty ? <Badge tone="accent">UNSAVED</Badge> : null}
-            <Button variant="primary" disabled={!dirty} onClick={onSave}>
-              Save config
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      <StageHeader
+        kicker="SYSTEM // CONFIG"
+        title="Settings"
+        actions={
+          config ? (
+            <div className="row">
+              {dirty ? <Badge tone="accent">UNSAVED</Badge> : null}
+              <Button variant="primary" disabled={!dirty} onClick={onSave}>
+                Save config
+              </Button>
+            </div>
+          ) : undefined
+        }
+      />
 
       <Panel title="Appearance">
         <div className="grid cols-auto">

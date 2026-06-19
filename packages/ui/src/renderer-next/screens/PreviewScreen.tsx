@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
@@ -64,36 +65,36 @@ export function PreviewScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE 02 // INSPECTION</div>
-          <h1 className="main-title">Preview</h1>
-        </div>
-        <div className="row">
-          <Field label="Count">
-            <Input
-              type="number"
-              min="1"
-              max="12"
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value) || 1)}
-              style={{ width: 72 }}
-            />
-          </Field>
-          <Field label="Seed">
-            <Input
-              value={seed}
-              onChange={(e) => setSeed(e.target.value)}
-              placeholder="random"
-              aria-label="Seed"
-              style={{ width: 168 }}
-            />
-          </Field>
-          <Button variant="primary" onClick={generate} disabled={busy || !isBridged()}>
-            {busy ? 'Generating…' : 'Generate previews'}
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE 02 // INSPECTION"
+        title="Preview"
+        actions={
+          <div className="row">
+            <Field label="Count">
+              <Input
+                type="number"
+                min="1"
+                max="12"
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value) || 1)}
+                style={{ width: 72 }}
+              />
+            </Field>
+            <Field label="Seed">
+              <Input
+                value={seed}
+                onChange={(e) => setSeed(e.target.value)}
+                placeholder="random"
+                aria-label="Seed"
+                style={{ width: 168 }}
+              />
+            </Field>
+            <Button variant="primary" onClick={generate} disabled={busy || !isBridged()}>
+              {busy ? 'Generating…' : 'Generate previews'}
+            </Button>
+          </div>
+        }
+      />
 
       <Panel
         title="Live preview"

@@ -1,4 +1,5 @@
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { RedactionStamp } from '../components/RedactionStamp';
 import { bridge } from '../lib/bridge';
@@ -19,12 +20,7 @@ export function HelpScreen() {
   const open = (url: string) => bridge()?.openExternal(url);
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">SYSTEM // MANUAL</div>
-          <h1 className="main-title">Help</h1>
-        </div>
-      </div>
+      <StageHeader kicker="SYSTEM // MANUAL" title="Help" />
 
       <Panel title="Field manual">
         <div className="stack">

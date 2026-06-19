@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input } from '../components/Field';
 import { Badge } from '../components/Badge';
@@ -137,20 +138,20 @@ export function BuildScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE 03 // PRODUCTION</div>
-          <h1 className="main-title">Build</h1>
-        </div>
-        <div className="row">
-          <Field label="Count">
-            <Input type="number" min="1" value={count} onChange={(e) => setCount(Number(e.target.value) || 1)} style={{ width: 90 }} disabled={building} />
-          </Field>
-          <Button variant="primary" onClick={build} disabled={building || !isBridged()}>
-            {building ? 'Building…' : 'Build collection'}
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE 03 // PRODUCTION"
+        title="Build"
+        actions={
+          <div className="row">
+            <Field label="Count">
+              <Input type="number" min="1" value={count} onChange={(e) => setCount(Number(e.target.value) || 1)} style={{ width: 90 }} disabled={building} />
+            </Field>
+            <Button variant="primary" onClick={build} disabled={building || !isBridged()}>
+              {building ? 'Building…' : 'Build collection'}
+            </Button>
+          </div>
+        }
+      />
 
       <Panel
         title="Production"

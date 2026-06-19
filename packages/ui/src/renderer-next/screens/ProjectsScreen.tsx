@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Dialog } from '../components/Dialog';
@@ -57,19 +58,19 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE 00 // INTAKE</div>
-          <h1 className="main-title">Projects</h1>
-        </div>
-        <div className="row">
-          <Badge tone={isBridged() ? 'ok' : 'default'}>{isBridged() ? 'BRIDGE ONLINE' : 'BRIDGE OFFLINE'}</Badge>
-          <Button onClick={open}>Open project…</Button>
-          <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
-            New project
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE 00 // INTAKE"
+        title="Projects"
+        actions={
+          <div className="row">
+            <Badge tone={isBridged() ? 'ok' : 'default'}>{isBridged() ? 'BRIDGE ONLINE' : 'BRIDGE OFFLINE'}</Badge>
+            <Button onClick={open}>Open project…</Button>
+            <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
+              New project
+            </Button>
+          </div>
+        }
+      />
 
       {error && !newOpen ? <div className="banner-error">{error}</div> : null}
 

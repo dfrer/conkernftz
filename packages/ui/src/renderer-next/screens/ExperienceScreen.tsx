@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
@@ -65,17 +66,17 @@ export function ExperienceScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE // MINT FX</div>
-          <h1 className="main-title">Mint experience</h1>
-        </div>
-        <div className="row">
-          <Button onClick={onSave} variant="primary" disabled={!project}>
-            Save
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE // MINT FX"
+        title="Mint experience"
+        actions={
+          <div className="row">
+            <Button onClick={onSave} variant="primary" disabled={!project}>
+              Save
+            </Button>
+          </div>
+        }
+      />
 
       {!project ? (
         <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project to design its mint experience." />

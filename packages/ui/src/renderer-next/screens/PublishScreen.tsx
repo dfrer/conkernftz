@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
@@ -112,12 +113,7 @@ export function PublishScreen() {
   if (!project) {
     return (
       <div className="stack stagger">
-        <div className="main-head">
-          <div>
-            <div className="label main-kicker">STAGE 04 // DISPATCH</div>
-            <h1 className="main-title">Publish</h1>
-          </div>
-        </div>
+        <StageHeader kicker="STAGE 04 // DISPATCH" title="Publish" />
         <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project to upload assets and mint." />
       </div>
     );
@@ -125,17 +121,17 @@ export function PublishScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE 04 // DISPATCH</div>
-          <h1 className="main-title">Publish</h1>
-        </div>
-        <div className="row">
-          <Badge tone="accent">
-            {chainTarget === 'evm' ? `EVM · chain ${chain.evm?.chainId ?? '?'}` : `SOLANA · ${chain.solana?.cluster ?? 'devnet'}`}
-          </Badge>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE 04 // DISPATCH"
+        title="Publish"
+        actions={
+          <div className="row">
+            <Badge tone="accent">
+              {chainTarget === 'evm' ? `EVM · chain ${chain.evm?.chainId ?? '?'}` : `SOLANA · ${chain.solana?.cluster ?? 'devnet'}`}
+            </Badge>
+          </div>
+        }
+      />
 
       <Panel title="Readiness" actions={<Button size="sm" onClick={loadReadiness} disabled={!isBridged()}>Refresh</Button>}>
         <div className="row wrap" style={{ gap: 'var(--sp-3)' }}>

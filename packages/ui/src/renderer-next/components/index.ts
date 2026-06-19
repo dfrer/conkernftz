@@ -1,6 +1,7 @@
 export { Button } from './Button';
 export type { ButtonVariant } from './Button';
 export { Panel } from './Panel';
+export { StageHeader } from './StageHeader';
 export { Field, Input, Select } from './Field';
 export { Lamp } from './Lamp';
 export type { LampState } from './Lamp';
