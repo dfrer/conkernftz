@@ -76,6 +76,23 @@ describe('MintExperience — interactive rip', () => {
     expect(container.querySelector('.exp-card-art')?.getAttribute('src')).toBe('data:img/card');
   });
 
+  it('drops the placeholder box (exp-pack--art / exp-card--art) when real art is present', () => {
+    const { getByRole, container } = render(<MintExperience config={ripConfig()} images={[]} />);
+    // sealed pack with packArt → no gradient/border box, just the pack
+    expect(getByRole('button', { name: 'Rip open the pack' }).classList.contains('exp-pack--art')).toBe(true);
+    fireEvent.click(getByRole('button', { name: 'Rip open the pack' }));
+    fireEvent.animationEnd(container.querySelector('.exp-tear-sealed')!); // → stacked
+    // cards showing a real back image → no placeholder box
+    const card = container.querySelector('.exp-rip-cards .exp-card');
+    expect(card?.classList.contains('exp-card--art')).toBe(true);
+  });
+
+  it('keeps the placeholder box when there is NO art (label pack / ◇ cards)', () => {
+    const config = { ...resolveExperience({ kind: 'cardPack', packCount: 1 }) }; // no packArt/backArt
+    const { getByRole } = render(<MintExperience config={config} images={[]} />);
+    expect(getByRole('button', { name: 'Rip open the pack' }).classList.contains('exp-pack--art')).toBe(false);
+  });
+
   it('Enter on the pack also rips it open', () => {
     const { getByRole, container } = render(<MintExperience config={ripConfig({ packCount: 1 })} images={[]} />);
     fireEvent.keyDown(getByRole('button', { name: 'Rip open the pack' }), { key: 'Enter' });

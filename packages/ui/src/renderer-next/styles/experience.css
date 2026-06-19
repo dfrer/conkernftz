@@ -54,6 +54,23 @@
   height: 100%;
   object-fit: cover;
 }
+/* Real pack art is a transparent cut-out — drop the placeholder box (gradient/border/glow/
+ * rounded clip) so it's JUST the pack, with a shape-following drop-shadow instead of a box one. */
+.exp-pack--art {
+  border: none;
+  background: none;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+}
+.exp-pack--art .exp-pack-art {
+  object-fit: contain;
+}
+.exp-pack--art.exp-pack--dragging {
+  box-shadow: none;
+  filter: drop-shadow(0 0 10px var(--exp-accent)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+}
 .exp-pack-label {
   font-family: var(--font-display);
   font-weight: 800;
@@ -113,6 +130,14 @@
 }
 .exp-card--face {
   box-shadow: 0 0 0 1px var(--exp-accent) inset;
+}
+/* With real card art (back or face image), drop the placeholder box (surface fill, --back
+ * gradient, border, accent inset) so it's JUST the card. Keep the rounded clip + cover-fit.
+ * Placed after --back/--face so it wins for cards carrying both classes. */
+.exp-card--art {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 .exp-card-mark {
   font-size: var(--text-xl);
