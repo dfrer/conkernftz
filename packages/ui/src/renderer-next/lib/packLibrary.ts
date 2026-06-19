@@ -49,6 +49,9 @@ export async function resolveExperienceArt(exp: ExperienceConfig): Promise<Exper
   if (exp.packId) {
     const url = await readPackDataUrl(exp.packId);
     if (url) out.packArt = url;
+    // Optional torn-open variant (convention: "<packId>-open") drives the full rip animation.
+    const open = await readPackDataUrl(`${exp.packId}-open`);
+    if (open) out.packOpenArt = open;
   }
   if (exp.backId) {
     const url = await readPackDataUrl(exp.backId);

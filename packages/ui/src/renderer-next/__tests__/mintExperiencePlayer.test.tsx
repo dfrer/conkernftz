@@ -28,3 +28,29 @@ describe('MintExperience — rarity backs', () => {
     expect(container.querySelector('.exp-card-art')?.getAttribute('src')).toBe('data:img/default');
   });
 });
+
+describe('MintExperience — interactive rip', () => {
+  it('a cardPack with a torn-open image rips into the cards-from-pack stage on click', () => {
+    const config = {
+      ...resolveExperience({ kind: 'cardPack', packCount: 2, autoFlip: false }),
+      packArt: 'data:img/sealed',
+      packOpenArt: 'data:img/open',
+      backArt: 'data:img/back',
+    };
+    const { getByRole, container } = render(<MintExperience config={config} images={[]} />);
+    const pack = getByRole('button', { name: 'Rip open the pack' });
+    // A click (no drag) opens it via the accessible fallback.
+    fireEvent.pointerDown(pack, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(pack, { clientY: 100, pointerId: 1 });
+    // Rip stage: the torn-open pack + the cards rising out of it.
+    expect((container.querySelector('.exp-rip-pack') as HTMLImageElement)?.getAttribute('src')).toBe('data:img/open');
+    expect(container.querySelectorAll('.exp-rip-cards .exp-card')).toHaveLength(2);
+  });
+
+  it('Enter on the pack also rips it open', () => {
+    const config = { ...resolveExperience({ kind: 'cardPack', packCount: 1 }), packArt: 'data:img/sealed', packOpenArt: 'data:img/open' };
+    const { getByRole, container } = render(<MintExperience config={config} images={[]} />);
+    fireEvent.keyDown(getByRole('button', { name: 'Rip open the pack' }), { key: 'Enter' });
+    expect(container.querySelector('.exp-rip-pack')).toBeTruthy();
+  });
+});

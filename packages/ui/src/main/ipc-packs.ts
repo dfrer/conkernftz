@@ -15,8 +15,11 @@ interface UserPack {
   file: string;
 }
 
-const BUILTINS: { id: string; name: string; kind: PackKind; file: string }[] = [
+// `variant: true` entries are readable (e.g. the torn-open "<pack>-open" image used by the
+// rip animation) but hidden from the listed library so they don't show as standalone cards.
+const BUILTINS: { id: string; name: string; kind: PackKind; file: string; variant?: boolean }[] = [
   { id: 'conkerco-default', name: 'CONKERCO Default', kind: 'pack', file: 'conkerco-default.png' },
+  { id: 'conkerco-default-open', name: 'CONKERCO Default (open)', kind: 'pack', file: 'conkerco-default-open.png', variant: true },
   { id: 'conkerco-back-holo', name: 'CONKERCO Holo', kind: 'back', file: 'conkerco-back-holo.png' },
   { id: 'conkerco-back-eye', name: 'All-Seeing Eye', kind: 'back', file: 'conkerco-back-eye.png' },
   { id: 'conkerco-back-chrome', name: 'CONKERCO Chrome', kind: 'back', file: 'conkerco-back-chrome.png' },
@@ -57,7 +60,7 @@ export function initPacksIpc(): void {
       return {
         ok: true,
         packs: [
-          ...BUILTINS.map((b) => ({ id: b.id, name: b.name, kind: b.kind, builtin: true })),
+          ...BUILTINS.filter((b) => !b.variant).map((b) => ({ id: b.id, name: b.name, kind: b.kind, builtin: true })),
           ...user.map((u) => ({ id: u.id, name: u.name, kind: u.kind, builtin: false })),
         ],
       };

@@ -151,3 +151,65 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ---- Interactive rip: grab & pull the sealed pack ---- */
+.exp-pack--grab {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  -webkit-user-drag: none;
+}
+.exp-pack--grab:focus-visible {
+  outline: 2px solid var(--exp-accent);
+  outline-offset: 4px;
+}
+.exp-pack--dragging {
+  cursor: grabbing;
+  box-shadow: var(--shadow-2), 0 0 0 1px var(--exp-accent) inset, var(--accent-glow);
+}
+.exp-hint {
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-label);
+}
+
+/* ---- Rip stage: cards rise out of the torn-open pack (deterministic) ---- */
+.exp-rip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.exp-rip-cards {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  max-width: 440px;
+  margin-bottom: -46px; /* tuck the card bottoms behind the pack's torn mouth */
+}
+.exp-rip-cards .exp-card {
+  transform: rotate(var(--exp-rot, 0deg));
+  animation: exp-rise var(--exp-dur) var(--ease-out) backwards;
+  animation-delay: calc(var(--exp-i, 0) * 110ms);
+}
+.exp-rip-pack {
+  position: relative;
+  z-index: 2;
+  width: 188px;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+@keyframes exp-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(190px) scale(0.7) rotate(var(--exp-rot, 0deg));
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(var(--exp-rot, 0deg));
+  }
+}

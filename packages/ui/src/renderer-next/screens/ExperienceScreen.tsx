@@ -8,7 +8,7 @@ import { useToast } from '../components/Toast';
 import { MintExperience } from '../components/MintExperience';
 import { cx } from '../lib/cx';
 import { bridge, isBridged } from '../lib/bridge';
-import { listPacks, readPackDataUrl, type PackEntry } from '../lib/packLibrary';
+import { listPacks, readPackDataUrl, resolveExperienceArt, type PackEntry } from '../lib/packLibrary';
 import { useProject } from '../state/project';
 import {
   EXPERIENCE_KINDS,
@@ -29,7 +29,7 @@ export function ExperienceScreen() {
   const [replayKey, setReplayKey] = useState(0);
   const [packs, setPacks] = useState<PackEntry[]>([]);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
-  const [art, setArt] = useState<{ packArt?: string; backArt?: string }>({});
+  const [art, setArt] = useState<Partial<ExperienceConfig>>({});
 
   const set = (patch: Partial<ExperienceConfig>): void => setExp((e) => resolveExperience({ ...e, ...patch }));
 
@@ -54,19 +54,18 @@ export function ExperienceScreen() {
     };
   }, []);
 
-  // Resolve the chosen pack/back ids → images for the live preview.
+  // Resolve the chosen pack/back/rarity ids → images for the live preview (pack, default
+  // back, per-tier backs, and the torn-open pack variant).
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const next: { packArt?: string; backArt?: string } = {};
-      if (exp.packId) next.packArt = (await readPackDataUrl(exp.packId)) ?? undefined;
-      if (exp.backId) next.backArt = (await readPackDataUrl(exp.backId)) ?? undefined;
-      if (!cancelled) setArt(next);
+      const r = await resolveExperienceArt(exp);
+      if (!cancelled) setArt({ packArt: r.packArt, backArt: r.backArt, tierBacks: r.tierBacks, packOpenArt: r.packOpenArt });
     })();
     return () => {
       cancelled = true;
     };
-  }, [exp.packId, exp.backId]);
+  }, [exp.packId, exp.backId, exp.rarityBacks]);
 
   const applyPreset = (name: string): void => {
     const p = EXPERIENCE_PRESETS[name];
