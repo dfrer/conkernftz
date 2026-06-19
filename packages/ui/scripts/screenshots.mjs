@@ -207,6 +207,22 @@ const main = async () => {
   } catch (e) {
     console.log('FAILED', 'design-interactions', String(e?.message ?? e));
   }
+
+  // Preview: generate a set, then open the inspection lightbox.
+  try {
+    await page.locator('.nav-item', { hasText: 'Preview' }).first().click();
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'Generate previews' }).first().click();
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(outDir, 'preview-gallery.png'), fullPage: true });
+    console.log('captured', 'preview-gallery');
+    await page.getByRole('button', { name: /Inspect preview 1/i }).click();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(outDir, 'preview-lightbox.png'), fullPage: true });
+    console.log('captured', 'preview-lightbox');
+  } catch (e) {
+    console.log('FAILED', 'preview-interactions', String(e?.message ?? e));
+  }
   await browser.close();
   server.close();
   console.log('screenshots →', outDir);

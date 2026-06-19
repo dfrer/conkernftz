@@ -750,6 +750,51 @@ button {
   border: var(--hair) solid var(--line);
   border-radius: var(--r-sm);
 }
+.thumb-btn {
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: var(--r-sm);
+  display: block;
+}
+.thumb-btn:hover .thumb {
+  border-color: var(--line-amber);
+}
+.thumb-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lightbox-img {
+  max-width: min(72vw, 720px);
+  max-height: 64vh;
+  object-fit: contain;
+  background: var(--surface-inset);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  display: block;
+  margin: 0 auto;
+}
+.seed-chip {
+  appearance: none;
+  border: var(--hair) solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border-radius: var(--r-xs);
+  padding: 2px 8px;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seed-chip:hover {
+  color: var(--text);
+  border-color: var(--line-amber);
+}
 
 .banner-error {
   color: var(--danger);

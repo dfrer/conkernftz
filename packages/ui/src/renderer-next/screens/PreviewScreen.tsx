@@ -4,17 +4,27 @@ import { Button } from '../components/Button';
 import { Field, Input } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
 import { Skeleton } from '../components/Skeleton';
+import { Dialog } from '../components/Dialog';
 import { useToast } from '../components/Toast';
 import { bridge, isBridged } from '../lib/bridge';
 import { useProject } from '../state/project';
+
+/** Empty seed input = a fresh random seed each run; a set value reproduces the same set. */
+export function resolvePreviewSeed(input: string): string {
+  const trimmed = input.trim();
+  return trimmed || `studio-next:${Date.now().toString(36)}`;
+}
 
 export function PreviewScreen() {
   const { project, config } = useProject();
   const toast = useToast();
   const [count, setCount] = useState(6);
+  const [seed, setSeed] = useState('');
+  const [lastSeed, setLastSeed] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<'png' | 'webp'>('png');
   const [busy, setBusy] = useState(false);
+  const [lightbox, setLightbox] = useState<number | null>(null);
 
   const generate = async () => {
     const fb = bridge();
@@ -27,12 +37,13 @@ export function PreviewScreen() {
       return;
     }
     const n = Math.max(1, Math.min(12, count));
+    const usedSeed = resolvePreviewSeed(seed);
     setBusy(true);
     try {
-      const seed = `studio-next:${Date.now().toString(36)}`;
-      const r = await fb.previewLive(config, n, seed);
+      const r = await fb.previewLive(config, n, usedSeed);
       if (r.ok && Array.isArray(r.images)) {
         setImages(r.images);
+        setLastSeed(usedSeed);
         setFormat(r.format === 'webp' ? 'webp' : 'png');
       } else {
         toast.push(r.error ?? 'Preview failed', 'danger');
@@ -44,7 +55,14 @@ export function PreviewScreen() {
     }
   };
 
+  const lockSeed = () => {
+    setSeed(lastSeed);
+    toast.push('Seed copied to the field — regenerate to reproduce this set', 'ok');
+  };
+
   const mime = format === 'webp' ? 'image/webp' : 'image/png';
+  const step = (delta: number) =>
+    setLightbox((l) => (l == null || images.length === 0 ? l : (l + delta + images.length) % images.length));
 
   return (
     <div className="stack stagger">
@@ -64,13 +82,39 @@ export function PreviewScreen() {
               style={{ width: 72 }}
             />
           </Field>
+          <Field label="Seed">
+            <Input
+              value={seed}
+              onChange={(e) => setSeed(e.target.value)}
+              placeholder="random"
+              aria-label="Seed"
+              style={{ width: 168 }}
+            />
+          </Field>
           <Button variant="primary" onClick={generate} disabled={busy || !isBridged()}>
             {busy ? 'Generating…' : 'Generate previews'}
           </Button>
         </div>
       </div>
 
-      <Panel title="Live preview" actions={<span className="label">{images.length} FRAMES</span>}>
+      <Panel
+        title="Live preview"
+        actions={
+          <div className="row">
+            {lastSeed ? (
+              <button
+                type="button"
+                className="seed-chip mono"
+                onClick={lockSeed}
+                title="Click to copy this seed into the field, then regenerate to reproduce this exact set"
+              >
+                SEED {lastSeed}
+              </button>
+            ) : null}
+            <span className="label">{images.length} FRAMES</span>
+          </div>
+        }
+      >
         {!project ? (
           <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project to render live previews." />
         ) : busy ? (
@@ -85,7 +129,7 @@ export function PreviewScreen() {
             title="No previews yet"
             hint={
               isBridged()
-                ? 'Generate a fresh random set rendered straight from the engine (new seed each time).'
+                ? 'Generate a fresh random set rendered straight from the engine. Set a seed to reproduce a specific set.'
                 : 'Bridge offline — live preview runs inside the desktop app.'
             }
             action={
@@ -97,11 +141,40 @@ export function PreviewScreen() {
         ) : (
           <div className="thumb-grid">
             {images.map((b64, i) => (
-              <img key={i} className="thumb" src={`data:${mime};base64,${b64}`} alt={`Preview ${i + 1}`} loading="lazy" />
+              <button
+                key={i}
+                type="button"
+                className="thumb-btn"
+                onClick={() => setLightbox(i)}
+                aria-label={`Inspect preview ${i + 1}`}
+              >
+                <img className="thumb" src={`data:${mime};base64,${b64}`} alt={`Preview ${i + 1}`} loading="lazy" />
+              </button>
             ))}
           </div>
         )}
       </Panel>
+
+      <Dialog
+        open={lightbox != null}
+        title={lightbox != null ? `Preview ${lightbox + 1} / ${images.length}` : ''}
+        onClose={() => setLightbox(null)}
+      >
+        {lightbox != null && images[lightbox] ? (
+          <div className="stack">
+            <img className="lightbox-img" src={`data:${mime};base64,${images[lightbox]}`} alt={`Preview ${lightbox + 1}`} />
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <Button onClick={() => step(-1)} disabled={images.length < 2} aria-label="Previous preview">
+                ‹ Prev
+              </Button>
+              <span className="mono muted">{format.toUpperCase()}</span>
+              <Button onClick={() => step(1)} disabled={images.length < 2} aria-label="Next preview">
+                Next ›
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Dialog>
     </div>
   );
 }
