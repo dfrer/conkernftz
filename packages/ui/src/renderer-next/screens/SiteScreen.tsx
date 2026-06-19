@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
@@ -270,26 +271,26 @@ export function SiteScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">STAGE // MINT SITE</div>
-          <h1 className="main-title">Site builder</h1>
-        </div>
-        <div className="row">
-          <Button size="sm" onClick={loadArt} disabled={busy || !isBridged()}>
-            {busy ? 'Loading…' : 'Use live art'}
-          </Button>
-          <Button size="sm" onClick={generateSite} disabled={exporting || !isBridged()}>
-            {exporting ? 'Generating…' : 'Generate site'}
-          </Button>
-          <Button size="sm" onClick={previewLocal} disabled={previewingLocal || !isBridged()}>
-            {previewingLocal ? 'Opening…' : 'Preview locally'}
-          </Button>
-          <Button onClick={onSave} variant="primary" disabled={!project}>
-            Save
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="STAGE // MINT SITE"
+        title="Site builder"
+        actions={
+          <div className="row">
+            <Button size="sm" onClick={loadArt} disabled={busy || !isBridged()}>
+              {busy ? 'Loading…' : 'Use live art'}
+            </Button>
+            <Button size="sm" onClick={generateSite} disabled={exporting || !isBridged()}>
+              {exporting ? 'Generating…' : 'Generate site'}
+            </Button>
+            <Button size="sm" onClick={previewLocal} disabled={previewingLocal || !isBridged()}>
+              {previewingLocal ? 'Opening…' : 'Preview locally'}
+            </Button>
+            <Button onClick={onSave} variant="primary" disabled={!project}>
+              Save
+            </Button>
+          </div>
+        }
+      />
 
       {!project ? (
         <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project to build its mint site." />

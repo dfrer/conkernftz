@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
@@ -212,17 +213,17 @@ export function FalScreen() {
 
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">SYSTEM // GENERATION</div>
-          <h1 className="main-title">Fal AI</h1>
-        </div>
-        <div className="row">
-          <Button onClick={() => bridge()?.openInExplorer('fal')} size="sm" variant="ghost">
-            Open fal folder
-          </Button>
-        </div>
-      </div>
+      <StageHeader
+        kicker="SYSTEM // GENERATION"
+        title="Fal AI"
+        actions={
+          <div className="row">
+            <Button onClick={() => bridge()?.openInExplorer('fal')} size="sm" variant="ghost">
+              Open fal folder
+            </Button>
+          </div>
+        }
+      />
 
       <Panel title="Generate">
         <div className="stack">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Panel, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, RarityBar, useToast } from '../components';
+import { Panel, StageHeader, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, RarityBar, useToast } from '../components';
 
 // In-app component playground — the visual catalog of the design system. Doubles as a
 // manual-QA surface until full visual-regression tooling lands.
@@ -9,12 +9,7 @@ export function PlaygroundScreen() {
   const toast = useToast();
   return (
     <div className="stack stagger">
-      <div className="main-head">
-        <div>
-          <div className="label main-kicker">SYSTEM // DESIGN LIBRARY</div>
-          <h1 className="main-title">Components</h1>
-        </div>
-      </div>
+      <StageHeader kicker="SYSTEM // DESIGN LIBRARY" title="Components" />
 
       <Panel title="Buttons">
         <div className="row wrap">

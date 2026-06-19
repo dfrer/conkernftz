@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
+import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
 import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
@@ -18,19 +19,6 @@ import { bridge } from '../lib/bridge';
 import { isImage } from '../lib/rename';
 import { computeTraitTable } from '../lib/traits';
 import { useProject, type LayerCfg, type AssetOverrideCfg } from '../state/project';
-
-function StageHead({ children, actions }: { children?: ReactNode; actions?: ReactNode }) {
-  return (
-    <div className="main-head">
-      <div>
-        <div className="label main-kicker">STAGE 01 // COMPOSITION</div>
-        <h1 className="main-title">Design</h1>
-      </div>
-      {actions}
-      {children}
-    </div>
-  );
-}
 
 export function DesignScreen() {
   const { project, config, dirty, save, updateConfig, loading } = useProject();
@@ -125,7 +113,7 @@ export function DesignScreen() {
   if (!project) {
     return (
       <div className="stack stagger">
-        <StageHead />
+        <StageHeader kicker="STAGE 01 // COMPOSITION" title="Design" />
         <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project from the Projects stage to edit its layers and rarity." />
       </div>
     );
@@ -133,7 +121,7 @@ export function DesignScreen() {
   if (!config) {
     return (
       <div className="stack stagger">
-        <StageHead />
+        <StageHeader kicker="STAGE 01 // COMPOSITION" title="Design" />
         <EmptyState code="NO CONFIG" title="No foundry.config.json" hint={loading ? 'Loading…' : 'This folder has no readable config.'} />
       </div>
     );
@@ -203,7 +191,9 @@ export function DesignScreen() {
 
   return (
     <div className="stack stagger">
-      <StageHead
+      <StageHeader
+        kicker="STAGE 01 // COMPOSITION"
+        title="Design"
         actions={
           <div className="row">
             {dirty ? <Badge tone="accent">UNSAVED</Badge> : null}
