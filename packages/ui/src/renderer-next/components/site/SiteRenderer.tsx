@@ -2,7 +2,7 @@ import { type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import type { Block, BlockLayout, Rect, SiteConfig } from '../../lib/site';
+import { clampFontScale, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
 
 const MOBILE_W = 390;
 
@@ -81,7 +81,20 @@ function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desk
   return { x: base.x, y: base.y, w: base.w, h: base.h };
 }
 
-export function BlockBody({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
+// Wraps each block's content in a `display:contents` element carrying its text-size scale, so
+// the per-block font size flows everywhere BlockBody is used (flow + canvas preview + editor)
+// without affecting layout. Text rules in site.css multiply their size by var(--site-fscale).
+export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig }) {
+  const scale = clampFontScale(props.block.fontScale);
+  const style = scale !== 1 ? ({ '--site-fscale': scale } as CSSProperties) : undefined;
+  return (
+    <div className="site-block" style={style}>
+      <BlockContent {...props} />
+    </div>
+  );
+}
+
+function BlockContent({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
   switch (block.kind) {
     case 'hero':
       return (

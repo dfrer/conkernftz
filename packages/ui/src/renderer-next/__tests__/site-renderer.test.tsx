@@ -45,6 +45,18 @@ describe('SiteRenderer', () => {
     expect(container.querySelector('.site-hitcounter-num')).toBeTruthy();
   });
 
+  it('applies a per-block font scale via the --site-fscale custom property', () => {
+    let site = defaultSite();
+    // bump the hero's font scale
+    site = { ...site, blocks: site.blocks.map((b) => (b.kind === 'hero' ? { ...b, fontScale: 2 } : b)) };
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    const heroWrap = container.querySelector('.site-hero')?.closest('.site-block') as HTMLElement | null;
+    expect(heroWrap?.style.getPropertyValue('--site-fscale')).toBe('2');
+    // a block without a scale doesn't set the variable
+    const galleryWrap = container.querySelector('.site-gallery')?.closest('.site-block') as HTMLElement | null;
+    expect(galleryWrap?.style.getPropertyValue('--site-fscale')).toBe('');
+  });
+
   it('renders the extra nostalgia widgets (wordart / webring / under-construction)', () => {
     let site = addBlock(defaultSite(), 'wordArt');
     site = addBlock(site, 'webRing');
