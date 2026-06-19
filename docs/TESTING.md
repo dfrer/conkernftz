@@ -82,3 +82,20 @@ pnpm -C packages/ui test         # UI unit + functional + contract
 pnpm -C packages/core test       # engine + golden images
 UPDATE_GOLDEN=1 pnpm -C packages/core test   # regenerate golden refs (document why)
 ```
+
+## 5. Visual review: screenshot harness
+
+Unit tests prove inputs, not pixels — they can pass while a screen renders blank
+(we hit exactly that with the file:// site export). The screenshot harness closes
+that gap: it renders the built renderer in headless Edge/Chrome behind a mocked
+`window.foundry` (sample project + canvas-generated art), drives the pipeline nav,
+and writes a full-page PNG per stage to `packages/ui/screenshots/` (gitignored).
+
+```
+pnpm -C packages/ui build:renderer-next   # build what the harness will serve
+pnpm -C packages/ui screenshots           # capture every stage → packages/ui/screenshots/*.png
+```
+
+It uses `playwright-core` against the **system** browser (no ~150 MB browser
+download). The mock bridge lives in `scripts/screenshots.mjs` (`installMock`) —
+extend it there when a new screen needs more bridge methods or richer sample data.

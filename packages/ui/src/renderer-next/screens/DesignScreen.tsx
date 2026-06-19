@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { EffectsEditor } from '../components/EffectsEditor';
 import { OverridesEditor } from '../components/OverridesEditor';
 import { RenamerPanel } from '../components/RenamerPanel';
+import { TraitBrowser } from '../components/TraitBrowser';
 import { SpawnEditor } from '../components/SpawnEditor';
 import { RulesEditor, type RulesObj } from '../components/RulesEditor';
 import { useToast } from '../components/Toast';
@@ -33,6 +34,7 @@ export function DesignScreen() {
   const [counts, setCounts] = useState<Record<number, number | null>>({});
   const [thumbs, setThumbs] = useState<Record<number, string | null>>({});
   const [selected, setSelected] = useState<number | null>(null);
+  const [browsing, setBrowsing] = useState<number | null>(null);
 
   const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
   useEffect(() => {
@@ -102,9 +104,10 @@ export function DesignScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layersKey]);
 
-  // Reset the selected layer when a project loads.
+  // Reset the selected/expanded layer when a project loads.
   useEffect(() => {
     setSelected(null);
+    setBrowsing(null);
   }, [project?.dir]);
 
   if (!project) {
@@ -160,6 +163,7 @@ export function DesignScreen() {
       d.layers = ls;
     });
     setSelected((s) => (s === i ? null : s));
+    setBrowsing((b) => (b === i ? null : b));
   };
   const move = (i: number, to: number) => {
     updateConfig((d) => {
@@ -170,6 +174,7 @@ export function DesignScreen() {
       d.layers = ls;
     });
     setSelected(null);
+    setBrowsing(null);
   };
 
   const onSave = async () => {
@@ -262,6 +267,14 @@ export function DesignScreen() {
                 />
                 <span className="mono muted">{counts[i] == null ? '—' : counts[i]}</span>
                 <span className="row">
+                  <Button
+                    size="sm"
+                    onClick={() => setBrowsing(browsing === i ? null : i)}
+                    aria-label={`Browse layer ${i + 1} traits`}
+                    aria-expanded={browsing === i}
+                  >
+                    traits
+                  </Button>
                   <Button size="sm" onClick={() => setSelected(selected === i ? null : i)} aria-label={`Edit layer ${i + 1} effects`}>
                     fx
                   </Button>
@@ -280,6 +293,19 @@ export function DesignScreen() {
           </div>
         )}
       </Panel>
+
+      {browsing != null && layers[browsing] ? (
+        <Panel
+          title={`Traits — ${layers[browsing]!.name}`}
+          actions={
+            <Button size="sm" variant="ghost" onClick={() => setBrowsing(null)}>
+              Close
+            </Button>
+          }
+        >
+          <TraitBrowser layer={layers[browsing]!} delimiter={delimiter} defaultWeight={defaultWeight} />
+        </Panel>
+      ) : null}
 
       {layers.length > 0 ? <RenamerPanel layers={layers} delimiter={delimiter} defaultWeight={defaultWeight} /> : null}
 

@@ -723,6 +723,45 @@ button {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* ===================== Trait browser ===================== */
+.trait-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: var(--sp-3);
+}
+.trait-card {
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.trait-card__art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  background: var(--surface-inset);
+  display: block;
+}
+.trait-card__art--ph {
+  background: repeating-linear-gradient(45deg, var(--surface-2) 0 6px, var(--surface-inset) 6px 12px);
+}
+.trait-card__meta {
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: var(--hair) solid var(--line);
+}
+.trait-card__name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===================== Effects editor ===================== */
 .effect-group {
   border: var(--hair) solid var(--line);
