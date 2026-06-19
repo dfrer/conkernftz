@@ -22,6 +22,9 @@ export interface JsonResult extends OkResult {
 export interface PathResult extends OkResult {
   path?: string;
 }
+export interface OutDirResult extends OkResult {
+  outDir?: string;
+}
 export interface ContentResult extends OkResult {
   content?: string;
 }
@@ -103,6 +106,8 @@ export interface FoundryApi {
   saveBase64(b64: string, relPath: string): Promise<OkResult>;
   listFiles(relDir: string): Promise<FilesResult>;
   deleteFile(relPath: string): Promise<OkResult>;
+  /** Generate the deployable static mint site into <project>/site-export. */
+  exportSite(payload: { dataJs: string; dataFile: string }): Promise<OutDirResult>;
 }
 
 /**
@@ -146,6 +151,7 @@ export const FOUNDRY_METHODS = [
   'saveBase64',
   'listFiles',
   'deleteFile',
+  'exportSite',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

@@ -45,6 +45,8 @@ export interface FoundryBridge {
   run(args: string[]): Promise<{ ok: boolean; stdout?: string; error?: string }>;
   openInExplorer(relativePath: string): Promise<OkResult>;
   openExternal(url: string): Promise<OkResult>;
+  /** Generate the deployable static mint site; returns the output folder. */
+  exportSite(payload: { dataJs: string; dataFile: string }): Promise<{ ok: boolean; outDir?: string; error?: string }>;
 }
 
 export function bridge(): FoundryBridge | undefined {

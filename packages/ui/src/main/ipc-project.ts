@@ -470,6 +470,37 @@ export function initProjectIpc(): void {
     },
   );
 
+  // Generate the deployable static mint site: copy the prebuilt template (dist/site-template)
+  // into <project>/site-export, drop the renderer-supplied site-data.js bundle beside it, and
+  // wire it into index.html. The renderer owns the (tested) bundle/script generation; this
+  // handler is just the file writer.
+  electron.ipcMain.handle('foundry:exportSite', async (_evt, payload: { dataJs?: string; dataFile?: string }) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const dataFile = typeof payload?.dataFile === 'string' && payload.dataFile ? payload.dataFile : 'site-data.js';
+      const dataJs = typeof payload?.dataJs === 'string' ? payload.dataJs : 'window.__CONKER_SITE__ = {};';
+      const templateDir = path.resolve(baseDir, '..', 'site-template');
+      if (!fssync.existsSync(path.join(templateDir, 'index.html'))) {
+        return { ok: false, error: 'Site template not built — run the app build first.' };
+      }
+      const outDir = path.join(projectDir, 'site-export');
+      await fs.rm(outDir, { recursive: true, force: true });
+      await fs.cp(templateDir, outDir, { recursive: true });
+      await fs.writeFile(path.join(outDir, dataFile), dataJs, 'utf8');
+      const indexPath = path.join(outDir, 'index.html');
+      let html = await fs.readFile(indexPath, 'utf8');
+      const tag = `<script src="./${dataFile}"></script>`;
+      if (!html.includes(tag)) {
+        const i = html.indexOf('<script type="module"');
+        html = i >= 0 ? `${html.slice(0, i)}${tag}\n    ${html.slice(i)}` : html.replace('</head>', `  ${tag}\n  </head>`);
+        await fs.writeFile(indexPath, html, 'utf8');
+      }
+      return { ok: true, outDir };
+    } catch (e) {
+      return { ok: false, error: String((e as Error)?.message ?? e) };
+    }
+  });
+
   // Save arbitrary JSON inside the project (constrained to the project root).
   electron.ipcMain.handle('foundry:saveJson', async (_evt, relativePath: string, json: unknown) => {
     try {
