@@ -32,9 +32,8 @@
   color: var(--site-accent);
 }
 
-/* Hero */
+/* Hero (alignment comes from the per-block wrapper text-align; default center) */
 .site-hero { padding: var(--sp-6) 0; }
-.site-hero--center { text-align: center; }
 .site-hero-title {
   font-family: var(--font-display);
   font-weight: 800;
