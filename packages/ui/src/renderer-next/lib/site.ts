@@ -351,11 +351,20 @@ export function moveBlock(site: SiteConfig, id: string, dir: -1 | 1): SiteConfig
   const i = site.blocks.findIndex((b) => b.id === id);
   const j = i + dir;
   if (i < 0 || j < 0 || j >= site.blocks.length) return site;
+  const bi = site.blocks[i]!;
+  const bj = site.blocks[j]!;
   const blocks = [...site.blocks];
-  const tmp = blocks[i]!;
-  blocks[i] = blocks[j]!;
-  blocks[j] = tmp;
+  // Swap list positions, AND keep each canvas z-index with its POSITION — otherwise in
+  // free-form/canvas mode reordering does nothing visible (stacking is by z, not list order).
+  // Net effect: moving a block down the list also brings it forward (matches the default
+  // z = index + 1 convention); in flow mode there's no z so it's a plain reorder.
+  blocks[i] = withZ(bj, bi.layout?.z);
+  blocks[j] = withZ(bi, bj.layout?.z);
   return { ...site, blocks };
+}
+function withZ(block: Block, z: number | undefined): Block {
+  if (block.layout && typeof z === 'number') return { ...block, layout: { ...block.layout, z } };
+  return block;
 }
 export function updateBlock(site: SiteConfig, id: string, patch: Record<string, unknown>): SiteConfig {
   return {

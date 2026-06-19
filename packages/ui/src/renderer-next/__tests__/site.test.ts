@@ -57,6 +57,19 @@ describe('site model', () => {
     expect(removeBlock(s, galleryId).blocks.map((b) => b.kind)).toEqual(['hero']);
   });
 
+  it('moveBlock restacks in canvas mode: z follows position so reordering changes stacking', () => {
+    const s = setLayoutMode(defaultSite(), 'canvas'); // seeds z = index + 1
+    const [id0, id1] = [s.blocks[0]!.id, s.blocks[1]!.id];
+    const z0 = s.blocks[0]!.layout!.z;
+    const z1 = s.blocks[1]!.layout!.z;
+    expect(z0).not.toBe(z1);
+    const moved = moveBlock(s, id0, 1); // move first block down one
+    expect(moved.blocks[1]!.id).toBe(id0); // list order changed
+    // z stays with the position, so the moved block takes the other's z (and restacks)
+    expect(moved.blocks.find((b) => b.id === id0)!.layout!.z).toBe(z1);
+    expect(moved.blocks.find((b) => b.id === id1)!.layout!.z).toBe(z0);
+  });
+
   it('moveBlock is a no-op at the edges', () => {
     const s: SiteConfig = { theme: emptySite().theme, blocks: [newBlock('hero', 'a'), newBlock('mint', 'b')] };
     expect(moveBlock(s, 'a', -1)).toBe(s);
