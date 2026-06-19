@@ -9,6 +9,7 @@ import { SiteCanvas } from '../components/site/SiteCanvas';
 import { bridge, isBridged } from '../lib/bridge';
 import { useProject } from '../state/project';
 import { resolveExperience, type ExperienceConfig } from '../lib/mintExperience';
+import { buildSiteData, siteDataScript, SITE_DATA_FILENAME } from '../lib/siteBundle';
 import {
   BLOCK_KINDS,
   BLOCK_LABELS,
@@ -55,6 +56,7 @@ export function SiteScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [viewport, setViewport] = useState<Viewport>('desktop');
 
   const mode = site.layout ?? 'flow';
@@ -107,6 +109,45 @@ export function SiteScreen() {
     if (ok) toast.push('Mint site saved', 'ok');
   };
 
+  const generateSite = async (): Promise<void> => {
+    const fb = bridge();
+    if (!fb || !config) {
+      toast.push('Open a project first', 'danger');
+      return;
+    }
+    setExporting(true);
+    try {
+      let imgs = images;
+      try {
+        const r = await fb.previewLive(config, 8, `site:${Date.now().toString(36)}`);
+        if (r.ok && Array.isArray(r.images)) {
+          const mime = r.format === 'webp' ? 'image/webp' : 'image/png';
+          imgs = r.images.map((b) => `data:${mime};base64,${b}`);
+          setImages(imgs);
+        }
+      } catch {
+        /* fall back to existing images / placeholders */
+      }
+      const bundle = buildSiteData({
+        name: typeof config.name === 'string' ? config.name : undefined,
+        site,
+        experience,
+        images: imgs,
+      });
+      const res = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
+      if (res.ok && res.outDir) {
+        toast.push(`Static site exported → ${res.outDir}`, 'ok');
+        fb.openInExplorer(res.outDir);
+      } else {
+        toast.push(res.error ?? 'Export failed', 'danger');
+      }
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const lay = selected ? (selected.layout ?? defaultLayout(Math.max(0, selIndex))) : null;
   const canvas = site.canvas ?? { width: 960, height: 1400 };
   const pageBg = site.pageBg ?? { kind: 'theme' as const, color: '#101312', tile: '' };
@@ -121,6 +162,9 @@ export function SiteScreen() {
         <div className="row">
           <Button size="sm" onClick={loadArt} disabled={busy || !isBridged()}>
             {busy ? 'Loading…' : 'Use live art'}
+          </Button>
+          <Button size="sm" onClick={generateSite} disabled={exporting || !isBridged()}>
+            {exporting ? 'Generating…' : 'Generate site'}
           </Button>
           <Button onClick={onSave} variant="primary" disabled={!project}>
             Save

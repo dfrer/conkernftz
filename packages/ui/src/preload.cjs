@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('foundry', {
   listFiles: (relDir) => ipcRenderer.invoke('foundry:fsList', relDir),
   deleteFile: (relPath) => ipcRenderer.invoke('foundry:fsDelete', relPath),
   saveJson: (relPath, json) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
+  exportSite: (payload) => ipcRenderer.invoke('foundry:exportSite', payload),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
 });
