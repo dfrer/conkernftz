@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
@@ -77,6 +77,20 @@ export function SiteScreen() {
 
   const mode = site.layout ?? 'flow';
   const experience: ExperienceConfig = resolveExperience(config?.mintExperience as Partial<ExperienceConfig> | undefined);
+  // Resolve the pack/back/rip art for the live preview (same as the export does) so the mint
+  // block shows the REAL pack + layered rip + card backs, not the placeholder pack/◇ cards.
+  const [previewExp, setPreviewExp] = useState<ExperienceConfig>(experience);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const r = await resolveExperienceArt(experience);
+      if (!cancelled) setPreviewExp(r);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [experience.packId, experience.backId, experience.kind, JSON.stringify(experience.rarityBacks)]);
   const selected = site.blocks.find((b) => b.id === selectedId) ?? site.blocks[0] ?? null;
   const selIndex = selected ? site.blocks.findIndex((b) => b.id === selected.id) : -1;
   const setField = (patch: Record<string, unknown>): void => {
@@ -527,9 +541,9 @@ export function SiteScreen() {
 
           <Panel title={mode === 'canvas' ? `Canvas — ${viewport}` : 'Preview'}>
             {mode === 'canvas' ? (
-              <SiteCanvas site={site} images={images} experience={experience} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} />
+              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} />
             ) : (
-              <SiteRenderer site={site} images={images} experience={experience} />
+              <SiteRenderer site={site} images={images} experience={previewExp} />
             )}
           </Panel>
 
