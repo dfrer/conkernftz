@@ -57,6 +57,16 @@ describe('SiteRenderer', () => {
     expect(galleryWrap?.style.getPropertyValue('--site-fscale')).toBe('');
   });
 
+  it('scales the whole widget (e.g. the mint pack) via zoom on a real box', () => {
+    let site = defaultSite();
+    const mint = site.blocks.find((b) => b.kind === 'mint')!;
+    site = updateBlock(site, mint.id, { scale: 1.5 });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({ kind: 'cardPack' })} />);
+    const wrap = container.querySelector('.site-mint')?.closest('.site-block') as HTMLElement | null;
+    expect(wrap?.classList.contains('site-block--scaled')).toBe(true);
+    expect(wrap?.style.zoom).toBe('1.5');
+  });
+
   it('applies per-block align + color via the wrapper style', () => {
     let site = addBlock(defaultSite(), 'richText');
     const rt = site.blocks[site.blocks.length - 1]!;

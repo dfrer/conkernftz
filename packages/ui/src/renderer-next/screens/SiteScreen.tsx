@@ -18,6 +18,7 @@ import {
   addBlock,
   blockHasText,
   clampFontScale,
+  clampScale,
   SITE_ALIGNS,
   defaultLayout,
   defaultSite,
@@ -418,6 +419,36 @@ export function SiteScreen() {
             <Panel title={`Edit — ${BLOCK_LABELS[selected.kind]}`}>
               <div className="stack">
                 <BlockFields block={selected} setField={setField} />
+                {selected.kind !== 'divider' ? (
+                  <>
+                    <div className="label">SIZE</div>
+                    <Field label="Widget scale %">
+                      <div className="row">
+                        <input
+                          type="range"
+                          min="25"
+                          max="400"
+                          step="5"
+                          value={Math.round((selected.scale ?? 1) * 100)}
+                          onChange={(e) => setField({ scale: clampScale(Number(e.target.value) / 100) })}
+                          aria-label="Widget scale percent"
+                          style={{ flex: 1 }}
+                        />
+                        <Input
+                          type="number"
+                          min="25"
+                          max="400"
+                          step="5"
+                          value={Math.round((selected.scale ?? 1) * 100)}
+                          onChange={(e) => setField({ scale: clampScale((Number(e.target.value) || 100) / 100) })}
+                          aria-label="Widget scale percent value"
+                          style={{ width: 80 }}
+                        />
+                      </div>
+                    </Field>
+                    <span className="label muted">Scales the whole widget — the card-pack, images, everything. Font size below affects text only.</span>
+                  </>
+                ) : null}
                 {blockHasText(selected.kind) ? (
                   <>
                     <div className="label">TEXT STYLE</div>

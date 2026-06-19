@@ -40,8 +40,11 @@ export interface BaseBlock {
   kind: BlockKind;
   /** Free-form (canvas) placement. Ignored in 'flow' mode. */
   layout?: BlockLayout;
-  /** Text size multiplier (1 = default). Scales the block's text; resizing the box doesn't. */
+  /** Text size multiplier (1 = default). Scales the block's TEXT only. */
   fontScale?: number;
+  /** Whole-widget size multiplier (1 = default) — scales everything in the block (the mint
+   * pack, images, text…) via CSS zoom, reserving the scaled space. */
+  scale?: number;
   /** Text alignment override (default: inherit / left). */
   align?: SiteAlign;
   /** Text color override (default: theme color). */
@@ -201,14 +204,23 @@ export function normalizeAlign(v: unknown): SiteAlign | undefined {
   return (SITE_ALIGNS as readonly string[]).includes(v as string) ? (v as SiteAlign) : undefined;
 }
 
-// Per-block text-size multiplier bounds.
+// Per-block multiplier bounds (text size + whole-widget scale).
 export const MIN_FONT_SCALE = 0.5;
 export const MAX_FONT_SCALE = 4;
-/** Clamp an untrusted font-size multiplier; defaults to 1 (unscaled). */
-export function clampFontScale(v: unknown): number {
+export const MIN_BLOCK_SCALE = 0.25;
+export const MAX_BLOCK_SCALE = 4;
+function clampMul(v: unknown, min: number, max: number): number {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) return 1;
-  return Math.max(MIN_FONT_SCALE, Math.min(MAX_FONT_SCALE, Math.round(n * 100) / 100));
+  return Math.max(min, Math.min(max, Math.round(n * 100) / 100));
+}
+/** Clamp an untrusted font-size multiplier; defaults to 1 (unscaled). */
+export function clampFontScale(v: unknown): number {
+  return clampMul(v, MIN_FONT_SCALE, MAX_FONT_SCALE);
+}
+/** Clamp an untrusted whole-widget scale; defaults to 1 (unscaled). */
+export function clampScale(v: unknown): number {
+  return clampMul(v, MIN_BLOCK_SCALE, MAX_BLOCK_SCALE);
 }
 // Blocks whose text the font-size control applies to. Excludes image/divider/gallery/raw-HTML
 // (no own text) and the 88×31 button (a fixed-dimension retro badge — scaling overflows it).
