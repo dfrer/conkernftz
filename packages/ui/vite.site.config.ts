@@ -5,27 +5,42 @@ import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// Strip `crossorigin` so the bundle loads over file:// (matches vite.config.ts) — generated
-// sites are commonly opened/served as static files.
-function stripCrossorigin() {
+// Make the built HTML load from a plain file:// double-click, not just http. ES-module
+// scripts (`type="module"`) are CORS-blocked from file:// (opaque origin) in browsers, so we
+// emit a single classic (IIFE) bundle and rewrite the entry tag to a non-module script. CSS
+// (<link>) and @font-face url() both load fine from file://, so only the JS needs this.
+function staticFriendlyHtml() {
   return {
-    name: 'strip-crossorigin',
+    name: 'static-friendly-html',
     transformIndexHtml(html: string): string {
-      return html.replace(/\s+crossorigin/g, '');
+      return html
+        .replace(/\s+crossorigin/g, '')
+        .replace(/<script type="module"/g, '<script')
+        .replace(/\s*<link[^>]+rel="modulepreload"[^>]*>/g, '');
     },
   };
 }
 
 // Builds the standalone static mint-site template (src/site-template) into dist/site-template.
 // The generator copies this output and drops a site-data.js (window.__CONKER_SITE__) beside
-// it. `base: './'` keeps asset URLs relative so it deploys to any static host (or file://).
+// it. `base: './'` + a classic IIFE bundle keep it host-anywhere — any static host, IPFS, or a
+// double-clicked file://.
 export default defineConfig({
   root: resolve(here, 'src/site-template'),
   base: './',
-  plugins: [react(), stripCrossorigin()],
+  plugins: [react(), staticFriendlyHtml()],
   build: {
     outDir: resolve(here, 'dist/site-template'),
     emptyOutDir: true,
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        format: 'iife',
+        inlineDynamicImports: true,
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]',
+      },
+    },
   },
 });
