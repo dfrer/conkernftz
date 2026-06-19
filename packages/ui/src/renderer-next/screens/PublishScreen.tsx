@@ -26,6 +26,8 @@ export function PublishScreen() {
   const [busy, setBusy] = useState<string | null>(null);
   const [log, setLog] = useState('');
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [readyEditions, setReadyEditions] = useState(0);
+  const [readyMeta, setReadyMeta] = useState(0);
 
   const storage = (config?.storage ?? {}) as { provider?: string };
   const chain = (config?.chain ?? {}) as { target?: string; solana?: { cluster?: string }; evm?: { chainId?: number } };
@@ -34,8 +36,38 @@ export function PublishScreen() {
 
   useEffect(() => {
     if (storage.provider) setProvider(storage.provider);
+    void loadReadiness();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.dir]);
+
+  // Pipeline preflight: how many editions are built, how much metadata, and whether
+  // assets have been uploaded (manifest) — so the operator knows the state before acting.
+  const loadReadiness = async () => {
+    const fb = bridge();
+    if (!fb) return;
+    try {
+      const imgs = await fb.listImages(`${outDir}/images`);
+      setReadyEditions(imgs.ok ? (imgs.count ?? 0) : 0);
+    } catch {
+      setReadyEditions(0);
+    }
+    try {
+      const md = await fb.listDir(`${outDir}/json`);
+      setReadyMeta(md.ok && Array.isArray(md.items) ? md.items.filter((n) => n.endsWith('.json')).length : 0);
+    } catch {
+      setReadyMeta(0);
+    }
+    await loadManifest();
+  };
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard?.writeText(text);
+      toast.push('Copied baseURI', 'ok');
+    } catch {
+      toast.push('Copy failed', 'danger');
+    }
+  };
 
   // Run a conkernftz CLI command in the active project via the bridge and stream output.
   const runCli = async (label: string, args: string[]): Promise<boolean> => {
@@ -74,7 +106,7 @@ export function PublishScreen() {
   const upload = async () => {
     const args = ['upload', '--provider', provider, '--mode', mode];
     if (force) args.push('--force');
-    if (await runCli('Upload', args)) await loadManifest();
+    if (await runCli('Upload', args)) await loadReadiness();
   };
 
   if (!project) {
@@ -105,6 +137,28 @@ export function PublishScreen() {
         </div>
       </div>
 
+      <Panel title="Readiness" actions={<Button size="sm" onClick={loadReadiness} disabled={!isBridged()}>Refresh</Button>}>
+        <div className="row wrap" style={{ gap: 'var(--sp-3)' }}>
+          <Badge tone={readyEditions > 0 ? 'ok' : 'default'}>BUILD · {readyEditions} images</Badge>
+          <Badge tone={readyMeta > 0 ? 'ok' : 'default'}>METADATA · {readyMeta} json</Badge>
+          <Badge tone={manifest ? 'ok' : 'default'}>
+            {manifest ? `UPLOADED · ${manifest.provider ?? '?'}/${manifest.mode ?? '?'}` : 'NOT UPLOADED'}
+          </Badge>
+        </div>
+        {manifest?.baseUri ? (
+          <div className="row" style={{ marginTop: 'var(--sp-3)', gap: 'var(--sp-2)', alignItems: 'center' }}>
+            <span className="mono muted" style={{ wordBreak: 'break-all' }}>baseURI: {manifest.baseUri}</span>
+            <Button size="sm" variant="ghost" onClick={() => copyText(manifest.baseUri!)}>
+              Copy
+            </Button>
+          </div>
+        ) : (
+          <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+            Build the collection, then upload — this strip reflects what's ready before you mint.
+          </span>
+        )}
+      </Panel>
+
       <Panel title="Upload">
         <div className="grid cols-auto">
           <Field label="Provider">
@@ -131,23 +185,10 @@ export function PublishScreen() {
             </Button>
           </div>
         </div>
-        {manifest ? (
-          <div className="stack" style={{ marginTop: 'var(--sp-4)' }}>
-            <span className="label">
-              Manifest · {String(manifest.provider)} · {String(manifest.mode)}
-            </span>
-            {manifest.baseUri ? (
-              <div className="mono" style={{ wordBreak: 'break-all' }}>
-                baseUri: {manifest.baseUri}
-              </div>
-            ) : null}
-            {Array.isArray(manifest.files) ? <span className="mono muted">{manifest.files.length} files</span> : null}
-          </div>
-        ) : (
-          <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
-            Uploads images + metadata; <code>dir</code> mode writes the contract baseURI to .upload-manifest.json.
-          </span>
-        )}
+        <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+          Uploads images + metadata; <code>dir</code> mode writes the contract baseURI to .upload-manifest.json (shown in
+          Readiness above).
+        </span>
       </Panel>
 
       <Panel title={chainTarget === 'evm' ? 'Mint — EVM' : 'Mint — Solana'}>

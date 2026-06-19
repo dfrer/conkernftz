@@ -95,7 +95,22 @@ function installMock() {
     writeConfig: () => ok(),
     saveJson: () => ok(),
     saveBase64: () => ok(),
-    readFile: () => ok({ content: '{}' }),
+    // Path-aware so Publish readiness (manifest) + Build rarity report populate.
+    readFile: (rel = '') => {
+      const s = String(rel);
+      if (s.includes('upload-manifest')) {
+        return ok({ content: JSON.stringify({ provider: 'pinata', mode: 'dir', baseUri: 'ipfs://bafybeigdyrexamplecid/', files: Array.from({ length: 12 }) }) });
+      }
+      if (s.includes('rarity.json')) {
+        return ok({
+          content: JSON.stringify({
+            editionCount: 12,
+            traitCounts: { Background: { Gold: 6, Silver: 4, Bronze: 2 }, Headwear: { None: 11, Crown: 1 } },
+          }),
+        });
+      }
+      return ok({ content: '{}' });
+    },
     // Return a varied color per requested path so galleries/thumbnails aren't all identical.
     readFileBase64: (rel = '') => ok({ base64: palette[hash(rel) % palette.length], mime: 'image/png' }),
     listImages: () => ok({ count: 8 }),
@@ -104,6 +119,9 @@ function installMock() {
       const s = String(p);
       if (s.includes('images')) {
         return ok({ items: Array.from({ length: 12 }, (_, i) => `${i + 1}.png`) });
+      }
+      if (s.includes('json')) {
+        return ok({ items: Array.from({ length: 12 }, (_, i) => `${i + 1}.json`) });
       }
       const sets = {
         background: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'],

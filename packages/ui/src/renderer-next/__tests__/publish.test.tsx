@@ -27,6 +27,7 @@ function installBridge(over: Record<string, any> = {}) {
     writeConfig: async () => ({ ok: true }),
     readFile: async () => ({ ok: false }),
     listImages: async () => ({ ok: true, count: 0 }),
+    listDir: async () => ({ ok: true, items: [] }),
     previewLive: async () => ({ ok: true, format: 'png', images: [] }),
     buildWithProgress: async () => ({ ok: true }),
     pauseBuild: async () => ({ ok: true }),
@@ -72,6 +73,22 @@ describe('PublishScreen', () => {
     fireEvent.click(await findByRole('button', { name: 'Upload assets' }));
     await waitFor(() => expect(run).toHaveBeenCalledWith(['upload', '--provider', 'local', '--mode', 'auto']));
     expect(await findByText(/file:\/\/\/proj\/build\/json\//)).toBeTruthy();
+  });
+
+  it('shows pipeline readiness — build images, metadata, and upload manifest', async () => {
+    installBridge({
+      listImages: async () => ({ ok: true, count: 12 }),
+      listDir: async (rel: string) => (rel.endsWith('/json') ? { ok: true, items: ['1.json', '2.json'] } : { ok: true, items: [] }),
+      readFile: async (rel: string) =>
+        rel.endsWith('.upload-manifest.json')
+          ? { ok: true, content: JSON.stringify({ provider: 'pinata', mode: 'dir', baseUri: 'ipfs://bafy/' }) }
+          : { ok: false },
+    });
+    const { findByText } = mount();
+    expect(await findByText(/BUILD · 12 images/)).toBeTruthy();
+    expect(await findByText(/METADATA · 2 json/)).toBeTruthy();
+    expect(await findByText(/UPLOADED · pinata\/dir/)).toBeTruthy();
+    expect(await findByText(/ipfs:\/\/bafy\//)).toBeTruthy();
   });
 
   it('mints via the CLI bridge (Solana direct)', async () => {
