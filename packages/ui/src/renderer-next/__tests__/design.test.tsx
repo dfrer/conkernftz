@@ -58,15 +58,19 @@ function mount() {
 describe('DesignScreen', () => {
   it('loads config and shows basics + layers', async () => {
     installBridge();
-    const { findByDisplayValue, findByLabelText } = mount();
-    expect(await findByDisplayValue('Specimens')).toBeTruthy();
+    const { findByDisplayValue, findByLabelText, getByRole } = mount();
+    // Layers is the default tab.
     expect(await findByLabelText('Layer 1 name')).toBeTruthy();
     expect(await findByDisplayValue('layers/body')).toBeTruthy();
+    // Basics lives behind its own tab.
+    fireEvent.click(getByRole('tab', { name: 'Basics' }));
+    expect(await findByDisplayValue('Specimens')).toBeTruthy();
   });
 
   it('edits a field and saves via the bridge, preserving untouched fields', async () => {
     const { writeConfig } = installBridge();
-    const { findByDisplayValue, getByRole } = mount();
+    const { findByDisplayValue, findByRole, getByRole } = mount();
+    fireEvent.click(await findByRole('tab', { name: 'Basics' }));
     const nameInput = (await findByDisplayValue('Specimens')) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Renamed' } });
     fireEvent.click(getByRole('button', { name: 'Save config' }));
@@ -81,8 +85,8 @@ describe('DesignScreen', () => {
 
   it('adds a layer', async () => {
     const { writeConfig } = installBridge();
-    const { findByText, getByRole } = mount();
-    await findByText('Layers');
+    const { findByLabelText, getByRole } = mount();
+    await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: '+ Add layer' }));
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
@@ -122,7 +126,8 @@ describe('DesignScreen', () => {
 
   it('applies rules JSON and saves losslessly', async () => {
     const { writeConfig } = installBridge();
-    const { findByLabelText, getByRole } = mount();
+    const { findByLabelText, findByRole, getByRole } = mount();
+    fireEvent.click(await findByRole('tab', { name: 'Rules' }));
     const ta = (await findByLabelText('Rules JSON')) as HTMLTextAreaElement;
     fireEvent.change(ta, { target: { value: '{"maxOccurrences":[{"trait":"Body:Red","max":3}]}' } });
     fireEvent.click(getByRole('button', { name: 'Apply JSON' }));
