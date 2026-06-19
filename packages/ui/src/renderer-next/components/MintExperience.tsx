@@ -10,11 +10,14 @@ import { revealLabel, hasPack, type ExperienceConfig } from '../lib/mintExperien
 export function MintExperience({
   config,
   images = [],
+  cardTiers = [],
   onComplete,
   className,
 }: {
   config: ExperienceConfig;
   images?: string[];
+  /** Per-card rarity tier label (parallel to images); selects a rarity-specific back. */
+  cardTiers?: string[];
   onComplete?: () => void;
   className?: string;
 }) {
@@ -56,6 +59,11 @@ export function MintExperience({
   }, [config.durationMs, config.accent]);
 
   const cardArt = (i: number): string | undefined => (images.length ? images[i % images.length] : undefined);
+  // A card's back: its rarity-tier back if one is mapped, else the default back, else the CSS mark.
+  const cardBack = (i: number): string | undefined => {
+    const tier = cardTiers[i];
+    return (tier && config.tierBacks?.[tier]) || config.backArt || undefined;
+  };
 
   return (
     <div className={cx('exp', `exp--${config.kind}`, className)} style={style} data-stage={opened ? 'revealing' : 'idle'}>
@@ -80,6 +88,7 @@ export function MintExperience({
             {Array.from({ length: count }).map((_, i) => {
               const isFlipped = !!flipped[i];
               const art = cardArt(i);
+              const back = cardBack(i);
               return (
                 <button
                   key={i}
@@ -96,8 +105,8 @@ export function MintExperience({
                     ) : (
                       <span className="exp-card-ph">{i + 1}</span>
                     )
-                  ) : config.backArt ? (
-                    <img className="exp-card-art" src={config.backArt} alt="" />
+                  ) : back ? (
+                    <img className="exp-card-art" src={back} alt="" />
                   ) : (
                     <span className="exp-card-mark">◇</span>
                   )}

@@ -41,6 +41,26 @@ describe('mintExperience', () => {
     expect(hasPack(resolveExperience({ kind: 'flip' }))).toBe(false);
   });
 
+  it('keeps valid rarity-back rules and drops malformed ones', () => {
+    const r = resolveExperience({
+      packId: 'p1',
+      backId: 'b-default',
+      rarityBacks: [
+        { tier: 'Rare', backId: 'b-eye' },
+        { tier: '', backId: 'b-x' }, // empty tier → dropped
+        { tier: 'Legendary', backId: '' }, // empty back → dropped
+        { tier: 'Holo' } as unknown as { tier: string; backId: string }, // missing back → dropped
+      ],
+    });
+    expect(r.packId).toBe('p1');
+    expect(r.backId).toBe('b-default');
+    expect(r.rarityBacks).toEqual([{ tier: 'Rare', backId: 'b-eye' }]);
+  });
+
+  it('omits rarityBacks entirely when no rule is valid', () => {
+    expect('rarityBacks' in resolveExperience({ rarityBacks: [{ tier: '', backId: '' }] })).toBe(false);
+  });
+
   it('every preset is stable through resolve (idempotent)', () => {
     for (const p of Object.values(EXPERIENCE_PRESETS)) {
       expect(resolveExperience(resolveExperience(p))).toEqual(resolveExperience(p));

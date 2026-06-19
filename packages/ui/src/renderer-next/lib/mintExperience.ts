@@ -24,10 +24,21 @@ export interface ExperienceConfig {
   packArt?: string;
   /** App-level pack-library id (the canonical, lean reference stored in the project config). */
   packId?: string;
-  /** App-level card-back-library id. */
+  /** App-level card-back-library id (the DEFAULT back for ordinary pulls). */
   backId?: string;
+  /** Optional per-rarity card backs: a tier label → library back id (stored, lean). */
+  rarityBacks?: RarityBack[];
+  /** Runtime-only: tier label → resolved back image (filled by resolveExperienceArt). */
+  tierBacks?: Record<string, string>;
   /** Optional accent color override (else the app/site theme accent). */
   accent?: string;
+}
+
+export interface RarityBack {
+  /** Rarity tier label, e.g. "Rare", "Legendary". */
+  tier: string;
+  /** App-level card-back-library id used for cards of this tier. */
+  backId: string;
 }
 
 export const EXPERIENCE_KINDS: ExperienceKind[] = ['cardPack', 'flip', 'fade'];
@@ -64,6 +75,12 @@ export function resolveExperience(partial?: Partial<ExperienceConfig> | null): E
   if (typeof p.packArt === 'string' && p.packArt) out.packArt = p.packArt;
   if (typeof p.packId === 'string' && p.packId) out.packId = p.packId;
   if (typeof p.backId === 'string' && p.backId) out.backId = p.backId;
+  if (Array.isArray(p.rarityBacks)) {
+    const rules = p.rarityBacks.filter(
+      (r): r is RarityBack => !!r && typeof r.tier === 'string' && !!r.tier.trim() && typeof r.backId === 'string' && !!r.backId,
+    );
+    if (rules.length) out.rarityBacks = rules.map((r) => ({ tier: r.tier, backId: r.backId }));
+  }
   if (typeof p.accent === 'string' && p.accent) out.accent = p.accent;
   return out;
 }

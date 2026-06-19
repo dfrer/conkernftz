@@ -54,6 +54,14 @@ export async function resolveExperienceArt(exp: ExperienceConfig): Promise<Exper
     const url = await readPackDataUrl(exp.backId);
     if (url) out.backArt = url;
   }
+  if (exp.rarityBacks?.length) {
+    const tierBacks: Record<string, string> = {};
+    for (const r of exp.rarityBacks) {
+      const url = await readPackDataUrl(r.backId);
+      if (url) tierBacks[r.tier] = url;
+    }
+    if (Object.keys(tierBacks).length) out.tierBacks = tierBacks;
+  }
   return out;
 }
 
