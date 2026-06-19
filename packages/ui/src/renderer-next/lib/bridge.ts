@@ -47,6 +47,8 @@ export interface FoundryBridge {
   openExternal(url: string): Promise<OkResult>;
   /** Generate the deployable static mint site; returns the output folder. */
   exportSite(payload: { dataJs: string; dataFile: string }): Promise<{ ok: boolean; outDir?: string; error?: string }>;
+  /** Deploy the generated site to a host (Vercel); returns the live URL. */
+  deploySite(payload: { provider: string; token: string }): Promise<{ ok: boolean; url?: string; error?: string }>;
 }
 
 export function bridge(): FoundryBridge | undefined {

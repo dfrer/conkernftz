@@ -45,7 +45,58 @@ export function runNodeModule(
   });
 }
 
+/**
+ * Deploy <project>/site-export to a static host. Currently Vercel, via the user's own access
+ * token (passed as VERCEL_TOKEN env, not on the command line) through `npx vercel`. The token
+ * stays on the user's machine; ConkerNFTZ never stores or transmits it elsewhere.
+ */
+function deploySiteHandler(): void {
+  electron.ipcMain.handle('foundry:deploySite', async (_evt, payload: { provider?: string; token?: string }) => {
+    try {
+      const projectDir = getProjectDir();
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const provider = payload?.provider || 'vercel';
+      if (provider !== 'vercel') return { ok: false, error: `Unsupported host: ${provider}` };
+      const token = (payload?.token || '').trim();
+      if (!token) return { ok: false, error: 'A Vercel access token is required (Vercel → Account → Tokens).' };
+      const siteDir = path.join(projectDir, 'site-export');
+      if (!fssync.existsSync(path.join(siteDir, 'index.html'))) {
+        return { ok: false, error: 'No generated site found — run “Generate site” first.' };
+      }
+      const isWin = process.platform === 'win32';
+      const env = { ...process.env, VERCEL_TOKEN: token } as NodeJS.ProcessEnv;
+      const out = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve, reject) => {
+        const child = spawn('npx', ['--yes', 'vercel', 'deploy', '--prod', '--yes'], {
+          cwd: siteDir,
+          env,
+          shell: isWin,
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        let stdout = '';
+        let stderr = '';
+        child.stdout?.on('data', (d) => {
+          stdout += String(d);
+        });
+        child.stderr?.on('data', (d) => {
+          stderr += String(d);
+        });
+        child.on('error', (err) => reject(err));
+        child.on('exit', (code) => resolve({ stdout, stderr, code }));
+      });
+      const urls = `${out.stdout}\n${out.stderr}`.match(/https?:\/\/[^\s]+\.vercel\.app[^\s]*/g);
+      const url = urls && urls.length ? urls[urls.length - 1] : undefined;
+      if ((out.code ?? 0) !== 0 && !url) {
+        return { ok: false, error: out.stderr.trim() || out.stdout.trim() || `Deploy failed (code ${out.code})` };
+      }
+      return { ok: true, url };
+    } catch (e) {
+      return { ok: false, error: String((e as Error)?.message ?? e) };
+    }
+  });
+}
+
 export function initCliRunner(): void {
+  deploySiteHandler();
   electron.ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
     try {
       let projectDir = getProjectDir();
