@@ -12,6 +12,13 @@ import { revealLabel, hasPack, type ExperienceConfig } from '../lib/mintExperien
 // Other kinds (or a pack without a torn-open image) go straight sealed → spilled.
 type RipPhase = 'sealed' | 'tearing' | 'stacked' | 'spilled';
 
+// Deterministic per-card pseudo-random in [0,1) — gives the resting stack a hand-piled look
+// (slight tilt + offset per card) that's stable across renders, not jittery.
+const jitter = (n: number): number => {
+  const x = Math.sin((n + 1) * 127.1) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 export function MintExperience({
   config,
   images = [],
@@ -127,13 +134,15 @@ export function MintExperience({
     const art = cardArt(i);
     const back = cardBack(i);
     const off = i - (count - 1) / 2; // centered index (e.g. -1, 0, 1) → fan direction/spread
+    const tilt = (jitter(i) - 0.5) * 14; // resting-stack tilt, ~ -7..+7°
+    const jx = (jitter(i + 7) - 0.5) * 10; // resting-stack horizontal jitter, ~ -5..+5px
     return (
       <button
         key={i}
         type="button"
         className={cx('exp-card', isFlipped ? 'exp-card--face' : 'exp-card--back')}
-        // --exp-off drives the horizontal fan spread; --exp-rot the per-card tilt.
-        style={{ '--exp-i': i, '--exp-off': off, '--exp-rot': `${off * 6}deg` } as CSSProperties}
+        // --exp-off/--exp-rot drive the spilled fan; --exp-tilt/--exp-jx the resting pile.
+        style={{ '--exp-i': i, '--exp-off': off, '--exp-rot': `${off * 6}deg`, '--exp-tilt': `${tilt}deg`, '--exp-jx': `${jx}px` } as CSSProperties}
         // In the stacked phase a card click pulls the whole stack out; once spilled, it flips.
         onClick={() => (phase === 'stacked' ? spill() : !isFlipped && flip(i))}
         aria-label={phase === 'stacked' ? 'Pull the cards out' : isFlipped ? `Card ${i + 1}` : `Reveal card ${i + 1}`}
