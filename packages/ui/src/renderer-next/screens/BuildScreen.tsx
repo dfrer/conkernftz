@@ -4,9 +4,14 @@ import { Button } from '../components/Button';
 import { Field, Input } from '../components/Field';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
+import { Skeleton } from '../components/Skeleton';
+import { Lightbox } from '../components/Lightbox';
 import { useToast } from '../components/Toast';
 import { bridge, isBridged, type BuildProgressEvent } from '../lib/bridge';
+import { isImage } from '../lib/rename';
 import { useProject } from '../state/project';
+
+const OUTPUT_CAP = 120;
 
 interface RarityData {
   traitCounts?: Record<string, Record<string, number>>;
@@ -22,6 +27,11 @@ export function BuildScreen() {
   const [result, setResult] = useState<string | null>(null);
   const [rarity, setRarity] = useState<RarityData | null>(null);
   const [audit, setAudit] = useState<{ label: string; json: unknown } | null>(null);
+  const [outputs, setOutputs] = useState<string[]>([]);
+  const [outCount, setOutCount] = useState(0);
+  const [outMime, setOutMime] = useState('image/png');
+  const [outIndex, setOutIndex] = useState<number | null>(null);
+  const [loadingOut, setLoadingOut] = useState(false);
 
   useEffect(() => {
     if (config?.editionSize) setCount(Number(config.editionSize));
@@ -46,6 +56,43 @@ export function BuildScreen() {
     }
   };
 
+  // Scan the built editions on disk (outDir/images) and load thumbnails for the gallery.
+  const loadOutputs = async () => {
+    const fb = bridge();
+    if (!fb) return;
+    setLoadingOut(true);
+    try {
+      const dir = await fb.listDir(`${outDir}/images`);
+      const names = (dir.ok && Array.isArray(dir.items) ? dir.items.filter(isImage) : []).sort((a, b) => {
+        const na = parseInt(a, 10);
+        const nb = parseInt(b, 10);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        return a.localeCompare(b);
+      });
+      setOutCount(names.length);
+      const capped = names.slice(0, OUTPUT_CAP);
+      const imgs: string[] = [];
+      let mime = 'image/png';
+      await Promise.all(
+        capped.map(async (name, i) => {
+          try {
+            const r = await fb.readFileBase64(`${outDir}/images/${name}`);
+            if (r.ok && r.base64) {
+              imgs[i] = r.base64;
+              if (i === 0 && r.mime) mime = r.mime;
+            }
+          } catch {
+            /* skip unreadable edition */
+          }
+        }),
+      );
+      setOutputs(imgs.filter(Boolean));
+      setOutMime(mime);
+    } finally {
+      setLoadingOut(false);
+    }
+  };
+
   const build = async () => {
     const fb = bridge();
     if (!fb) {
@@ -66,6 +113,7 @@ export function BuildScreen() {
         setResult(r.stdout ?? 'Build complete');
         toast.push('Build complete', 'ok');
         await loadRarity();
+        await loadOutputs();
       } else {
         toast.push(r.error ?? 'Build failed', 'danger');
       }
@@ -156,6 +204,58 @@ export function BuildScreen() {
         )}
       </Panel>
 
+      <Panel
+        title="Output"
+        actions={
+          <div className="row">
+            <span className="label">{outCount} EDITIONS</span>
+            <Button size="sm" onClick={loadOutputs} disabled={!isBridged() || loadingOut}>
+              {loadingOut ? 'Loading…' : 'Reload'}
+            </Button>
+            <Button size="sm" onClick={() => bridge()?.openInExplorer(`${outDir}/images`)} disabled={!isBridged()}>
+              Open folder
+            </Button>
+          </div>
+        }
+      >
+        {loadingOut ? (
+          <div className="thumb-grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} h={120} />
+            ))}
+          </div>
+        ) : outputs.length === 0 ? (
+          <EmptyState
+            code="NO OUTPUT"
+            title="No built editions yet"
+            hint={
+              isBridged()
+                ? `Build the collection, or Reload to scan ${outDir}/images for existing editions.`
+                : 'Bridge offline — build runs inside the desktop app.'
+            }
+          />
+        ) : (
+          <div className="stack">
+            <div className="thumb-grid">
+              {outputs.map((b64, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="thumb-btn"
+                  onClick={() => setOutIndex(i)}
+                  aria-label={`Inspect edition ${i + 1}`}
+                >
+                  <img className="thumb" src={`data:${outMime};base64,${b64}`} alt={`Edition ${i + 1}`} loading="lazy" />
+                </button>
+              ))}
+            </div>
+            {outCount > outputs.length ? (
+              <span className="label muted">…and {outCount - outputs.length} more (showing first {outputs.length})</span>
+            ) : null}
+          </div>
+        )}
+      </Panel>
+
       <Panel title="Rarity report" actions={<Button size="sm" onClick={loadRarity}>Reload</Button>}>
         {!rarity || !rarity.traitCounts ? (
           <EmptyState code="NO REPORT" title="No rarity.json yet" hint="Build the collection to generate the rarity report." />
@@ -183,6 +283,15 @@ export function BuildScreen() {
           <span className="label muted">Scan layer assets or built outputs for duplicates and issues.</span>
         )}
       </Panel>
+
+      <Lightbox
+        images={outputs}
+        index={outIndex}
+        onIndexChange={setOutIndex}
+        onClose={() => setOutIndex(null)}
+        mime={outMime}
+        labelPrefix="Edition"
+      />
     </div>
   );
 }

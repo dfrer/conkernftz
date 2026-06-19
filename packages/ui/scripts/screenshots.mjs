@@ -64,7 +64,8 @@ function installMock() {
   };
   const colors = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#16a085'];
   const previews = colors.map((c) => mkPng(c, 240, 336));
-  const thumb = mkPng('#3a3f3a', 64, 64);
+  const palette = colors.map((c) => mkPng(c, 200, 200));
+  const hash = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
   const CONFIG = {
     name: 'Demo Collection',
     symbol: 'DEMO',
@@ -95,22 +96,27 @@ function installMock() {
     saveJson: () => ok(),
     saveBase64: () => ok(),
     readFile: () => ok({ content: '{}' }),
-    readFileBase64: () => ok({ base64: thumb, mime: 'image/png' }),
+    // Return a varied color per requested path so galleries/thumbnails aren't all identical.
+    readFileBase64: (rel = '') => ok({ base64: palette[hash(rel) % palette.length], mime: 'image/png' }),
     listImages: () => ok({ count: 8 }),
-    // Path-aware so each layer shows a different rarity distribution in the table bars.
+    // Path-aware: layer folders → rarity-distribution sample; the build images dir → editions.
     listDir: (p = '') => {
+      const s = String(p);
+      if (s.includes('images')) {
+        return ok({ items: Array.from({ length: 12 }, (_, i) => `${i + 1}.png`) });
+      }
       const sets = {
         background: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'],
         body: ['Common#80.png', 'Uncommon#15.png', 'Rare#4.png', 'Legendary#1.png'],
         eyes: ['Open#1.png', 'Closed#1.png', 'Wink#1.png', 'Laser#1.png', 'Glow#1.png'],
         headwear: ['None#50.png', 'Crown#1.png'],
       };
-      const key = Object.keys(sets).find((k) => String(p).includes(k));
+      const key = Object.keys(sets).find((k) => s.includes(k));
       return ok({ items: sets[key] ?? sets.background });
     },
     renameFiles: () => ok({ renamed: 0 }),
     previewLive: () => ok({ format: 'png', images: previews }),
-    previewEffects: () => ok({ format: 'png', b64: thumb }),
+    previewEffects: () => ok({ format: 'png', b64: palette[0] }),
     buildWithProgress: () => ok({ stdout: 'Built 8 editions' }),
     pauseBuild: () => ok(),
     resumeBuild: () => ok(),
@@ -222,6 +228,20 @@ const main = async () => {
     console.log('captured', 'preview-lightbox');
   } catch (e) {
     console.log('FAILED', 'preview-interactions', String(e?.message ?? e));
+  }
+
+  // Build: run a build, which populates the output gallery (editions on disk).
+  try {
+    await page.keyboard.press('Escape'); // close any open lightbox so the backdrop doesn't block nav
+    await page.waitForTimeout(200);
+    await page.locator('.nav-item', { hasText: 'Build' }).first().click();
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'Build collection' }).first().click();
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: path.join(outDir, 'build-output.png'), fullPage: true });
+    console.log('captured', 'build-output');
+  } catch (e) {
+    console.log('FAILED', 'build-interactions', String(e?.message ?? e));
   }
   await browser.close();
   server.close();

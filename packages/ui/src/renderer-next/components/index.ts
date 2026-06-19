@@ -8,6 +8,7 @@ export { Badge } from './Badge';
 export { EmptyState } from './EmptyState';
 export { Skeleton } from './Skeleton';
 export { Dialog } from './Dialog';
+export { Lightbox } from './Lightbox';
 export { Tabs, TabPanel } from './Tabs';
 export type { TabDef } from './Tabs';
 export { RarityBar } from './RarityBar';
