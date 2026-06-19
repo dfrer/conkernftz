@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { bridge } from '../lib/bridge';
+import { makeStarterConfig, type NewProjectOpts } from '../lib/newProject';
 import type { ExperienceConfig } from '../lib/mintExperience';
 import type { SiteConfig } from '../lib/site';
 
@@ -65,6 +66,7 @@ interface ProjectApi {
   recents: ProjectRef[];
   openViaDialog(): Promise<boolean>;
   openDir(ref: ProjectRef): Promise<boolean>;
+  createProject(opts: NewProjectOpts): Promise<boolean>;
   reload(): Promise<void>;
   updateConfig(mut: (draft: ProjectConfig) => void): void;
   save(): Promise<boolean>;
@@ -189,6 +191,42 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return loadFor({ dir: res.projectDir, name: basename(res.projectDir) }, true);
   }, [loadFor]);
 
+  // Scaffold a fresh collection: pick/create a folder, refuse to clobber an existing
+  // project, write a starter config + empty layer folders, then open it. Orchestrates
+  // existing (path-guarded) bridge calls — no new file-writing surface.
+  const createProject = useCallback(
+    async (opts: NewProjectOpts): Promise<boolean> => {
+      const fb = bridge();
+      if (!fb) {
+        setError('Bridge offline — create a project from the desktop app');
+        return false;
+      }
+      setError(null);
+      const res = await fb.chooseProjectDir(); // also sets the active project dir on the main side
+      if (!res.ok || !res.projectDir) return false;
+      const dir = res.projectDir;
+      try {
+        const existing = await fb.readConfigAt(dir);
+        if (existing.ok && existing.json) {
+          setError('That folder already contains a project — use “Open project” instead.');
+          return false;
+        }
+        const starter = makeStarterConfig(opts);
+        const w = await fb.writeConfig(starter);
+        if (!w.ok) {
+          setError(w.error ?? 'Could not write the starter config');
+          return false;
+        }
+        await fb.ensureDirs((starter.layers ?? []).map((l) => l.path));
+        return loadFor({ dir, name: starter.name ?? basename(dir) }, true);
+      } catch (e) {
+        setError(String((e as Error)?.message ?? e));
+        return false;
+      }
+    },
+    [loadFor],
+  );
+
   const reload = useCallback(async () => {
     if (project) await loadFor(project, false);
   }, [project, loadFor]);
@@ -220,7 +258,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ project, config, loading, error, dirty, recents, openViaDialog, openDir, reload, updateConfig, save }}
+      value={{ project, config, loading, error, dirty, recents, openViaDialog, openDir, createProject, reload, updateConfig, save }}
     >
       {children}
     </Ctx.Provider>

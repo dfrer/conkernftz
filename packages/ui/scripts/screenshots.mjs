@@ -91,7 +91,7 @@ function installMock() {
     setProjectDir: () => ok({ projectDir: 'C:/demo/collection' }),
     chooseProjectDir: () => ok({ projectDir: 'C:/demo/collection' }),
     readConfig: () => ok({ json: CONFIG }),
-    readConfigAt: () => ok({ json: CONFIG }),
+    readConfigAt: () => Promise.resolve({ ok: false }), // empty folder → New project can scaffold
     writeConfig: () => ok(),
     saveJson: () => ok(),
     saveBase64: () => ok(),
@@ -212,6 +212,22 @@ const main = async () => {
     console.log('captured', 'design-traits');
   } catch (e) {
     console.log('FAILED', 'design-interactions', String(e?.message ?? e));
+  }
+
+  // Projects: open the New collection dialog.
+  try {
+    await page.locator('.nav-item', { hasText: 'Projects' }).first().click();
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'New project' }).first().click();
+    await page.waitForTimeout(300);
+    await page.getByLabel('Collection name').fill('Specimens');
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(outDir, 'projects-new.png'), fullPage: true });
+    console.log('captured', 'projects-new');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+  } catch (e) {
+    console.log('FAILED', 'projects-new', String(e?.message ?? e));
   }
 
   // Preview: generate a set, then open the inspection lightbox.
