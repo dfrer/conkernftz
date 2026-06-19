@@ -312,6 +312,19 @@ const main = async () => {
   } catch (e) {
     console.log('FAILED', 'site-interactions', String(e?.message ?? e));
   }
+
+  // Mint FX: rip the pack open and capture the cards-from-pack rip stage.
+  try {
+    await page.locator('.nav-item', { hasText: 'Mint FX' }).first().click();
+    await page.waitForTimeout(400);
+    const pack = page.getByRole('button', { name: 'Rip open the pack' }).first();
+    await pack.click(); // click opens via the fallback (the drag gesture is unit-tested)
+    await page.waitForTimeout(1100); // let the rise animation settle
+    await page.locator('.exp').first().screenshot({ path: path.join(outDir, 'experience-rip.png') });
+    console.log('captured', 'experience-rip');
+  } catch (e) {
+    console.log('FAILED', 'experience-rip', String(e?.message ?? e));
+  }
   await browser.close();
   server.close();
   console.log('screenshots →', outDir);

@@ -10,7 +10,8 @@ describe('MintExperience', () => {
     const cfg = resolveExperience({ kind: 'cardPack', packCount: 2, autoFlip: true });
     const { getByRole, getByAltText, queryByAltText } = render(<MintExperience config={cfg} images={['a.png', 'b.png']} />);
     expect(queryByAltText('Card 1')).toBeNull(); // sealed until opened
-    fireEvent.click(getByRole('button', { name: 'Rip open' }));
+    fireEvent.click(getByRole('button', { name: 'Rip open the pack' })); // the pack itself is the rip control
+
     expect(getByAltText('Card 1')).toBeTruthy();
     expect(getByAltText('Card 2')).toBeTruthy();
   });

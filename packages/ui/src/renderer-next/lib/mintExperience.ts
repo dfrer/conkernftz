@@ -22,6 +22,8 @@ export interface ExperienceConfig {
   backArt?: string;
   /** Optional pack-wrapper image (data URL) — resolved from packId at render/export. */
   packArt?: string;
+  /** Runtime-only: the torn-open pack image (resolved from the pack's `-open` library variant). */
+  packOpenArt?: string;
   /** App-level pack-library id (the canonical, lean reference stored in the project config). */
   packId?: string;
   /** App-level card-back-library id (the DEFAULT back for ordinary pulls). */

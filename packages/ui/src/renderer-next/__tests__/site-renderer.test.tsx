@@ -16,8 +16,8 @@ describe('SiteRenderer', () => {
     expect(getByText('Untitled Collection')).toBeTruthy();
     // Gallery default count → 6 placeholder tiles (no images supplied)
     expect(container.querySelectorAll('.site-tile--ph').length).toBe(6);
-    // Mint block mounts the P1 experience player → its call-to-action
-    expect(getByRole('button', { name: 'Rip open' })).toBeTruthy();
+    // Mint block mounts the P1 experience player → the pack is the rip control
+    expect(getByRole('button', { name: 'Rip open the pack' })).toBeTruthy();
     // Marquee flair
     expect(getByText(/MINTING NOW/)).toBeTruthy();
   });
