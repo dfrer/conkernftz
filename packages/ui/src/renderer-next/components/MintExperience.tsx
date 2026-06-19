@@ -27,8 +27,12 @@ export function MintExperience({
   className?: string;
 }) {
   const count = Math.max(1, config.packCount);
-  // The full rip flow (tear → cards-stacked-in-pack → spill) needs cardPack + a torn-open image.
-  const ripStage = config.kind === 'cardPack' && !!config.packOpenArt;
+  // Rip art: prefer the split front/back pieces (true cards-inside-the-pack pocket); fall back
+  // to a single torn-open image. `openArt` is the tear-beat crossfade target.
+  const layered = !!config.packOpenFrontArt;
+  const openArt = config.packOpenFrontArt || config.packOpenArt;
+  // The full rip flow (tear → cards-stacked-in-pack → spill) needs cardPack + any torn-open art.
+  const ripStage = config.kind === 'cardPack' && !!openArt;
   const [phase, setPhase] = useState<RipPhase>('sealed');
   const [flipped, setFlipped] = useState<boolean[]>(() => Array(count).fill(false));
   const [pull, setPull] = useState(0); // 0..1 rip progress while dragging the pack
@@ -122,28 +126,33 @@ export function MintExperience({
     const isFlipped = !!flipped[i];
     const art = cardArt(i);
     const back = cardBack(i);
+    const off = i - (count - 1) / 2; // centered index (e.g. -1, 0, 1) → fan direction/spread
     return (
       <button
         key={i}
         type="button"
         className={cx('exp-card', isFlipped ? 'exp-card--face' : 'exp-card--back')}
-        style={{ '--exp-i': i, '--exp-rot': `${(i - (count - 1) / 2) * 6}deg` } as CSSProperties}
+        // --exp-off drives the horizontal fan spread; --exp-rot the per-card tilt.
+        style={{ '--exp-i': i, '--exp-off': off, '--exp-rot': `${off * 6}deg` } as CSSProperties}
         // In the stacked phase a card click pulls the whole stack out; once spilled, it flips.
         onClick={() => (phase === 'stacked' ? spill() : !isFlipped && flip(i))}
         aria-label={phase === 'stacked' ? 'Pull the cards out' : isFlipped ? `Card ${i + 1}` : `Reveal card ${i + 1}`}
         disabled={isFlipped && phase === 'spilled'}
       >
-        {isFlipped ? (
-          art ? (
-            <img className="exp-card-art" src={art} alt={`Card ${i + 1}`} loading="lazy" />
+        {/* Inner wrapper isolates the gentle floating idle from the card's positioning transform. */}
+        <span className="exp-card-inner">
+          {isFlipped ? (
+            art ? (
+              <img className="exp-card-art" src={art} alt={`Card ${i + 1}`} loading="lazy" />
+            ) : (
+              <span className="exp-card-ph">{i + 1}</span>
+            )
+          ) : back ? (
+            <img className="exp-card-art" src={back} alt="" />
           ) : (
-            <span className="exp-card-ph">{i + 1}</span>
-          )
-        ) : back ? (
-          <img className="exp-card-art" src={back} alt="" />
-        ) : (
-          <span className="exp-card-mark">◇</span>
-        )}
+            <span className="exp-card-mark">◇</span>
+          )}
+        </span>
       </button>
     );
   };
@@ -198,22 +207,33 @@ export function MintExperience({
       ) : ripStage && phase === 'tearing' ? (
         <div className="exp-stage">
           <div className="exp-tear">
-            <img className="exp-tear-open" src={config.packOpenArt} alt="" draggable={false} />
+            <img className="exp-tear-open" src={openArt} alt="" draggable={false} />
             <img className="exp-tear-sealed" src={config.packArt} alt="" draggable={false} onAnimationEnd={() => setPhase('stacked')} />
             <span className="exp-tear-flash" aria-hidden />
           </div>
         </div>
       ) : ripStage ? (
         <div className="exp-stage">
-          <div className={cx('exp-rip', phase === 'spilled' ? 'exp-rip--spilled' : 'exp-rip--stacked')}>
-            <div className="exp-rip-cards">{cards.map(renderCard)}</div>
-            <img
-              className="exp-rip-pack"
-              src={config.packOpenArt}
-              alt=""
-              draggable={false}
-              onClick={phase === 'stacked' ? spill : undefined}
-            />
+          <div className={cx('exp-rip', layered && 'exp-rip--layered', phase === 'spilled' ? 'exp-rip--spilled' : 'exp-rip--stacked')}>
+            {layered ? (
+              <>
+                {/* back wall (behind cards) → cards → front pocket (covers card bottoms) */}
+                {config.packOpenBackArt ? <img className="exp-rip-back" src={config.packOpenBackArt} alt="" draggable={false} /> : null}
+                <div className="exp-rip-cards">{cards.map(renderCard)}</div>
+                <img
+                  className="exp-rip-front"
+                  src={config.packOpenFrontArt}
+                  alt=""
+                  draggable={false}
+                  onClick={phase === 'stacked' ? spill : undefined}
+                />
+              </>
+            ) : (
+              <>
+                <div className="exp-rip-cards">{cards.map(renderCard)}</div>
+                <img className="exp-rip-pack" src={config.packOpenArt} alt="" draggable={false} onClick={phase === 'stacked' ? spill : undefined} />
+              </>
+            )}
           </div>
           {phase === 'stacked' ? <span className="exp-hint label">Click to pull the cards out</span> : replayRow}
         </div>

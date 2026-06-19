@@ -83,4 +83,21 @@ describe('MintExperience — interactive rip', () => {
     fireEvent.animationEnd(container.querySelector('.exp-tear-sealed')!);
     expect(container.querySelector('.exp-rip-pack')).toBeTruthy();
   });
+
+  it('split front/back art renders the layered cards-inside-the-pack pocket', () => {
+    const config = ripConfig({ packOpenFrontArt: 'data:img/front', packOpenBackArt: 'data:img/back-wall' });
+    const { getByRole, container } = render(<MintExperience config={config} images={[]} />);
+    fireEvent.click(getByRole('button', { name: 'Rip open the pack' }));
+    // Tear crossfades to the FRONT piece (preferred over the single open image).
+    expect((container.querySelector('.exp-tear-open') as HTMLImageElement).getAttribute('src')).toBe('data:img/front');
+    fireEvent.animationEnd(container.querySelector('.exp-tear-sealed')!); // → stacked
+    // Three-layer sandwich: back wall (behind), cards, front pocket (in front).
+    expect(container.querySelector('.exp-rip--layered')).toBeTruthy();
+    expect((container.querySelector('.exp-rip-back') as HTMLImageElement).getAttribute('src')).toBe('data:img/back-wall');
+    expect((container.querySelector('.exp-rip-front') as HTMLImageElement).getAttribute('src')).toBe('data:img/front');
+    expect(container.querySelector('.exp-rip-pack')).toBeNull(); // single-image element not used
+    // Clicking the front pocket spills the cards out.
+    fireEvent.click(container.querySelector('.exp-rip-front')!);
+    expect(container.querySelector('.exp-rip--spilled')).toBeTruthy();
+  });
 });
