@@ -3,10 +3,15 @@ import { cx } from '../lib/cx';
 import { Button } from './Button';
 import { revealLabel, hasPack, type ExperienceConfig } from '../lib/mintExperience';
 
-// Config-driven player for a mint "reveal moment". State is interaction-driven (open →
-// flip), never timer-driven, so it's deterministic and testable; the staged look is pure
-// CSS keyframes keyed off the kind. Renders the same way in the app preview and (later) the
-// generated static mint site.
+// Config-driven player for a mint "reveal moment". Interaction-driven (rip → pull → flip),
+// never timer-driven, so it's deterministic and testable; the staged look is pure CSS keyed
+// off the phase/kind. Renders the same in the app preview and the generated static mint site.
+//
+// Rip flow (cardPack + a torn-open pack image):
+//   sealed → (grab/pull/click) tearing → (tear anim ends) stacked → (click) spilled → flip cards.
+// Other kinds (or a pack without a torn-open image) go straight sealed → spilled.
+type RipPhase = 'sealed' | 'tearing' | 'stacked' | 'spilled';
+
 export function MintExperience({
   config,
   images = [],
@@ -22,7 +27,9 @@ export function MintExperience({
   className?: string;
 }) {
   const count = Math.max(1, config.packCount);
-  const [opened, setOpened] = useState(false);
+  // The full rip flow (tear → cards-stacked-in-pack → spill) needs cardPack + a torn-open image.
+  const ripStage = config.kind === 'cardPack' && !!config.packOpenArt;
+  const [phase, setPhase] = useState<RipPhase>('sealed');
   const [flipped, setFlipped] = useState<boolean[]>(() => Array(count).fill(false));
   const [pull, setPull] = useState(0); // 0..1 rip progress while dragging the pack
   const [dragging, setDragging] = useState(false);
@@ -32,26 +39,32 @@ export function MintExperience({
   // Reset when the experience meaningfully changes (kind/count) — NOT on every new config
   // object, since the parent passes a freshly-resolved config each render, which would
   // otherwise snap a just-opened reveal back to idle.
-  useEffect(() => {
-    setOpened(false);
+  const reset = (): void => {
+    setPhase('sealed');
     setFlipped(Array(count).fill(false));
     setPull(0);
     setDragging(false);
     completedRef.current = false;
-  }, [config.kind, count]);
+  };
+  useEffect(reset, [config.kind, count]);
 
-  const open = (): void => {
-    setOpened(true);
+  const autoFlipMaybe = (): void => {
     if (config.autoFlip) setFlipped(Array(count).fill(true));
   };
-  const flip = (i: number): void => setFlipped((prev) => (prev[i] ? prev : prev.map((v, j) => (j === i ? true : v))));
-  const replay = (): void => {
-    setOpened(false);
-    setFlipped(Array(count).fill(false));
-    setPull(0);
-    setDragging(false);
-    completedRef.current = false;
+  // Rip trigger: tear first (if we have a sealed image to tear), else go straight to the stack.
+  const open = (): void => {
+    if (ripStage) setPhase(config.packArt ? 'tearing' : 'stacked');
+    else {
+      setPhase('spilled');
+      autoFlipMaybe();
+    }
   };
+  // Pull the stacked cards out of the open pack.
+  const spill = (): void => {
+    setPhase('spilled');
+    autoFlipMaybe();
+  };
+  const flip = (i: number): void => setFlipped((prev) => (prev[i] ? prev : prev.map((v, j) => (j === i ? true : v))));
 
   // Grab-and-pull rip: drag the pack upward; past the threshold it tears open. A plain
   // click/tap (negligible drag) or Enter/Space also opens it (accessible fallback).
@@ -59,8 +72,6 @@ export function MintExperience({
   const onPackDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
     dragRef.current = { startY: e.clientY, delta: 0 };
     setDragging(true);
-    // Pointer capture keeps move/up events flowing if the cursor leaves the pack; it's a
-    // nicety, so never let it break the interaction if the id is rejected.
     try {
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     } catch {
@@ -77,7 +88,7 @@ export function MintExperience({
     const d = dragRef.current;
     dragRef.current = null;
     setDragging(false);
-    if (d && (d.delta >= RIP_THRESHOLD || d.delta < 6)) open();
+    if (d && d.delta >= RIP_THRESHOLD) open();
     else setPull(0);
   };
   const onPackCancel = (): void => {
@@ -86,7 +97,7 @@ export function MintExperience({
     setPull(0);
   };
 
-  const allFlipped = opened && flipped.every(Boolean);
+  const allFlipped = phase === 'spilled' && flipped.every(Boolean);
   useEffect(() => {
     if (allFlipped && !completedRef.current) {
       completedRef.current = true;
@@ -117,9 +128,10 @@ export function MintExperience({
         type="button"
         className={cx('exp-card', isFlipped ? 'exp-card--face' : 'exp-card--back')}
         style={{ '--exp-i': i, '--exp-rot': `${(i - (count - 1) / 2) * 6}deg` } as CSSProperties}
-        onClick={() => !isFlipped && flip(i)}
-        aria-label={isFlipped ? `Card ${i + 1}` : `Reveal card ${i + 1}`}
-        disabled={isFlipped}
+        // In the stacked phase a card click pulls the whole stack out; once spilled, it flips.
+        onClick={() => (phase === 'stacked' ? spill() : !isFlipped && flip(i))}
+        aria-label={phase === 'stacked' ? 'Pull the cards out' : isFlipped ? `Card ${i + 1}` : `Reveal card ${i + 1}`}
+        disabled={isFlipped && phase === 'spilled'}
       >
         {isFlipped ? (
           art ? (
@@ -137,19 +149,17 @@ export function MintExperience({
   };
 
   const cards = Array.from({ length: count }, (_, i) => i);
-  // The full rip stage (cards rise out of the torn-open pack) needs cardPack + a torn-open image.
-  const ripStage = config.kind === 'cardPack' && !!config.packOpenArt;
   const replayRow = (
     <div className="row">
-      <Button size="sm" variant="ghost" onClick={replay}>
+      <Button size="sm" variant="ghost" onClick={reset}>
         Replay
       </Button>
     </div>
   );
 
   return (
-    <div className={cx('exp', `exp--${config.kind}`, className)} style={style} data-stage={opened ? 'revealing' : 'idle'}>
-      {!opened ? (
+    <div className={cx('exp', `exp--${config.kind}`, className)} style={style} data-stage={phase === 'sealed' ? 'idle' : 'revealing'}>
+      {phase === 'sealed' ? (
         <div className="exp-idle">
           {hasPack(config) ? (
             <>
@@ -185,13 +195,27 @@ export function MintExperience({
             </Button>
           )}
         </div>
+      ) : ripStage && phase === 'tearing' ? (
+        <div className="exp-stage">
+          <div className="exp-tear">
+            <img className="exp-tear-open" src={config.packOpenArt} alt="" draggable={false} />
+            <img className="exp-tear-sealed" src={config.packArt} alt="" draggable={false} onAnimationEnd={() => setPhase('stacked')} />
+            <span className="exp-tear-flash" aria-hidden />
+          </div>
+        </div>
       ) : ripStage ? (
         <div className="exp-stage">
-          <div className="exp-rip">
+          <div className={cx('exp-rip', phase === 'spilled' ? 'exp-rip--spilled' : 'exp-rip--stacked')}>
             <div className="exp-rip-cards">{cards.map(renderCard)}</div>
-            <img className="exp-rip-pack" src={config.packOpenArt} alt="" draggable={false} />
+            <img
+              className="exp-rip-pack"
+              src={config.packOpenArt}
+              alt=""
+              draggable={false}
+              onClick={phase === 'stacked' ? spill : undefined}
+            />
           </div>
-          {replayRow}
+          {phase === 'stacked' ? <span className="exp-hint label">Click to pull the cards out</span> : replayRow}
         </div>
       ) : (
         <div className="exp-stage">

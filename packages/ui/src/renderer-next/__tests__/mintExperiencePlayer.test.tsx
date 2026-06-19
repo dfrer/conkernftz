@@ -30,27 +30,57 @@ describe('MintExperience — rarity backs', () => {
 });
 
 describe('MintExperience — interactive rip', () => {
-  it('a cardPack with a torn-open image rips into the cards-from-pack stage on click', () => {
-    const config = {
-      ...resolveExperience({ kind: 'cardPack', packCount: 2, autoFlip: false }),
-      packArt: 'data:img/sealed',
-      packOpenArt: 'data:img/open',
-      backArt: 'data:img/back',
-    };
-    const { getByRole, container } = render(<MintExperience config={config} images={[]} />);
+  const ripConfig = (over: Record<string, unknown> = {}) => ({
+    ...resolveExperience({ kind: 'cardPack', packCount: 2, autoFlip: false }),
+    packArt: 'data:img/sealed',
+    packOpenArt: 'data:img/open',
+    backArt: 'data:img/back',
+    ...over,
+  });
+
+  it('drag past the threshold tears the pack, then settles into the stacked cards', () => {
+    const { getByRole, container } = render(<MintExperience config={ripConfig()} images={[]} />);
     const pack = getByRole('button', { name: 'Rip open the pack' });
-    // A click (no drag) opens it via the accessible fallback.
-    fireEvent.pointerDown(pack, { clientY: 100, pointerId: 1 });
-    fireEvent.pointerUp(pack, { clientY: 100, pointerId: 1 });
-    // Rip stage: the torn-open pack + the cards rising out of it.
-    expect((container.querySelector('.exp-rip-pack') as HTMLImageElement)?.getAttribute('src')).toBe('data:img/open');
+    // Grab and pull upward past the rip threshold (120px).
+    fireEvent.pointerDown(pack, { clientY: 220, pointerId: 1 });
+    fireEvent.pointerMove(pack, { clientY: 60, pointerId: 1 });
+    fireEvent.pointerUp(pack, { clientY: 60, pointerId: 1 });
+    // Tear beat first — the torn-open art is fading in, no rip scene yet.
+    const tearSealed = container.querySelector('.exp-tear-sealed');
+    expect(tearSealed).toBeTruthy();
+    expect(container.querySelector('.exp-rip-pack')).toBeNull();
+    // Tear animation ends → settle into the stacked phase (cards tucked in the open pack).
+    fireEvent.animationEnd(tearSealed!);
+    expect((container.querySelector('.exp-rip-pack') as HTMLImageElement).getAttribute('src')).toBe('data:img/open');
+    expect(container.querySelector('.exp-rip--stacked')).toBeTruthy();
     expect(container.querySelectorAll('.exp-rip-cards .exp-card')).toHaveLength(2);
   });
 
+  it('clicking the open pack spills the stacked cards out on top', () => {
+    const { getByRole, container } = render(<MintExperience config={ripConfig()} images={[]} />);
+    fireEvent.click(getByRole('button', { name: 'Rip open the pack' })); // click fallback → tear
+    fireEvent.animationEnd(container.querySelector('.exp-tear-sealed')!); // → stacked
+    expect(container.querySelector('.exp-rip--stacked')).toBeTruthy();
+    fireEvent.click(container.querySelector('.exp-rip-pack')!); // pull the cards out
+    expect(container.querySelector('.exp-rip--spilled')).toBeTruthy();
+    expect(container.querySelector('.exp-rip--stacked')).toBeNull();
+  });
+
+  it('a pack without a torn-open image skips the tear and reveals directly', () => {
+    const config = { ...resolveExperience({ kind: 'cardPack', packCount: 1, autoFlip: true }), packArt: 'data:img/sealed' };
+    const { getByRole, container } = render(<MintExperience config={config} images={['data:img/card']} />);
+    fireEvent.click(getByRole('button', { name: 'Rip open the pack' }));
+    // No torn-open art → no tear/rip scene; falls back to the flat reveal grid (auto-flipped).
+    expect(container.querySelector('.exp-tear')).toBeNull();
+    expect(container.querySelector('.exp-rip')).toBeNull();
+    expect(container.querySelector('.exp-card-art')?.getAttribute('src')).toBe('data:img/card');
+  });
+
   it('Enter on the pack also rips it open', () => {
-    const config = { ...resolveExperience({ kind: 'cardPack', packCount: 1 }), packArt: 'data:img/sealed', packOpenArt: 'data:img/open' };
-    const { getByRole, container } = render(<MintExperience config={config} images={[]} />);
+    const { getByRole, container } = render(<MintExperience config={ripConfig({ packCount: 1 })} images={[]} />);
     fireEvent.keyDown(getByRole('button', { name: 'Rip open the pack' }), { key: 'Enter' });
+    expect(container.querySelector('.exp-tear')).toBeTruthy(); // tear beat starts
+    fireEvent.animationEnd(container.querySelector('.exp-tear-sealed')!);
     expect(container.querySelector('.exp-rip-pack')).toBeTruthy();
   });
 });
