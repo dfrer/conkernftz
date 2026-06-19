@@ -2,7 +2,7 @@ import { type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import { clampFontScale, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
+import { clampFontScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
 
 const MOBILE_W = 390;
 
@@ -81,14 +81,21 @@ function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desk
   return { x: base.x, y: base.y, w: base.w, h: base.h };
 }
 
-// Wraps each block's content in a `display:contents` element carrying its text-size scale, so
-// the per-block font size flows everywhere BlockBody is used (flow + canvas preview + editor)
-// without affecting layout. Text rules in site.css multiply their size by var(--site-fscale).
+// Wraps each block's content in a `display:contents` element carrying its per-block text style
+// (size scale + alignment + color), so it flows everywhere BlockBody is used (flow + canvas
+// preview + editor + exported site) without affecting layout. font-size, text-align and color
+// are inherited properties, so they cascade through the box-less wrapper to the block's text;
+// site.css multiplies sizes by var(--site-fscale). All three are no-ops when unset.
 export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig }) {
-  const scale = clampFontScale(props.block.fontScale);
-  const style = scale !== 1 ? ({ '--site-fscale': scale } as CSSProperties) : undefined;
+  const { block } = props;
+  const scale = clampFontScale(block.fontScale);
+  const align = normalizeAlign(block.align);
+  const style: Record<string, string | number> = {};
+  if (scale !== 1) style['--site-fscale'] = scale;
+  if (align) style.textAlign = align;
+  if (typeof block.color === 'string' && block.color) style.color = block.color;
   return (
-    <div className="site-block" style={style}>
+    <div className="site-block" style={Object.keys(style).length ? (style as CSSProperties) : undefined}>
       <BlockContent {...props} />
     </div>
   );
@@ -97,8 +104,10 @@ export function BlockBody(props: { block: Block; images: string[]; experience?: 
 function BlockContent({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
   switch (block.kind) {
     case 'hero':
+      // Alignment comes from the block wrapper's text-align (the general per-block control),
+      // defaulting to center when unset so existing/blank heroes stay centered.
       return (
-        <section className={cx('site-hero', `site-hero--${block.align}`)}>
+        <section className="site-hero" style={block.align ? undefined : { textAlign: 'center' }}>
           <h1 className="site-hero-title">{block.title}</h1>
           {block.subtitle ? <p className="site-hero-sub">{block.subtitle}</p> : null}
         </section>

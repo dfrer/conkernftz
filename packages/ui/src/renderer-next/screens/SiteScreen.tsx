@@ -18,6 +18,7 @@ import {
   addBlock,
   blockHasText,
   clampFontScale,
+  SITE_ALIGNS,
   defaultLayout,
   defaultSite,
   moveBlock,
@@ -418,30 +419,57 @@ export function SiteScreen() {
               <div className="stack">
                 <BlockFields block={selected} setField={setField} />
                 {blockHasText(selected.kind) ? (
-                  <Field label="Font size %">
-                    <div className="row">
-                      <input
-                        type="range"
-                        min="50"
-                        max="400"
-                        step="5"
-                        value={Math.round((selected.fontScale ?? 1) * 100)}
-                        onChange={(e) => setField({ fontScale: clampFontScale(Number(e.target.value) / 100) })}
-                        aria-label="Font size percent"
-                        style={{ flex: 1 }}
-                      />
-                      <Input
-                        type="number"
-                        min="50"
-                        max="400"
-                        step="5"
-                        value={Math.round((selected.fontScale ?? 1) * 100)}
-                        onChange={(e) => setField({ fontScale: clampFontScale((Number(e.target.value) || 100) / 100) })}
-                        aria-label="Font size percent value"
-                        style={{ width: 80 }}
-                      />
+                  <>
+                    <div className="label">TEXT STYLE</div>
+                    <Field label="Font size %">
+                      <div className="row">
+                        <input
+                          type="range"
+                          min="50"
+                          max="400"
+                          step="5"
+                          value={Math.round((selected.fontScale ?? 1) * 100)}
+                          onChange={(e) => setField({ fontScale: clampFontScale(Number(e.target.value) / 100) })}
+                          aria-label="Font size percent"
+                          style={{ flex: 1 }}
+                        />
+                        <Input
+                          type="number"
+                          min="50"
+                          max="400"
+                          step="5"
+                          value={Math.round((selected.fontScale ?? 1) * 100)}
+                          onChange={(e) => setField({ fontScale: clampFontScale((Number(e.target.value) || 100) / 100) })}
+                          aria-label="Font size percent value"
+                          style={{ width: 80 }}
+                        />
+                      </div>
+                    </Field>
+                    <div className="grid cols-auto">
+                      <Field label="Align">
+                        <Select
+                          aria-label="Text align"
+                          value={selected.align ?? ''}
+                          onChange={(e) => setField({ align: e.target.value || undefined })}
+                        >
+                          <option value="">(default)</option>
+                          {SITE_ALIGNS.map((a) => (
+                            <option key={a} value={a}>
+                              {a}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field label="Text color">
+                        <Input
+                          value={selected.color ?? ''}
+                          onChange={(e) => setField({ color: e.target.value || undefined })}
+                          placeholder="(theme color)"
+                          aria-label="Text color"
+                        />
+                      </Field>
                     </div>
-                  </Field>
+                  </>
                 ) : null}
                 {mode === 'canvas' && lay ? (
                   <>
@@ -503,12 +531,6 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
         <div className="grid cols-auto">
           <Field label="Title"><Input value={block.title} onChange={(e) => setField({ title: e.target.value })} aria-label="Hero title" /></Field>
           <Field label="Subtitle"><Input value={block.subtitle} onChange={(e) => setField({ subtitle: e.target.value })} aria-label="Hero subtitle" /></Field>
-          <Field label="Align">
-            <Select aria-label="Hero align" value={block.align} onChange={(e) => setField({ align: e.target.value })}>
-              <option value="center">center</option>
-              <option value="left">left</option>
-            </Select>
-          </Field>
         </div>
       );
     case 'richText':

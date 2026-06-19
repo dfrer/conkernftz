@@ -33,6 +33,8 @@ export interface BlockLayout extends Rect {
   mobile?: Rect;
 }
 
+export type SiteAlign = 'left' | 'center' | 'right';
+
 export interface BaseBlock {
   id: string;
   kind: BlockKind;
@@ -40,12 +42,15 @@ export interface BaseBlock {
   layout?: BlockLayout;
   /** Text size multiplier (1 = default). Scales the block's text; resizing the box doesn't. */
   fontScale?: number;
+  /** Text alignment override (default: inherit / left). */
+  align?: SiteAlign;
+  /** Text color override (default: theme color). */
+  color?: string;
 }
 export interface HeroBlock extends BaseBlock {
   kind: 'hero';
   title: string;
   subtitle: string;
-  align: 'left' | 'center';
 }
 export interface RichTextBlock extends BaseBlock {
   kind: 'richText';
@@ -189,6 +194,12 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   webRing: 'Web ring',
   underConstruction: 'Under construction',
 };
+
+export const SITE_ALIGNS: readonly SiteAlign[] = ['left', 'center', 'right'];
+/** Validate an untrusted alignment; returns undefined (inherit) when not a known value. */
+export function normalizeAlign(v: unknown): SiteAlign | undefined {
+  return (SITE_ALIGNS as readonly string[]).includes(v as string) ? (v as SiteAlign) : undefined;
+}
 
 // Per-block text-size multiplier bounds.
 export const MIN_FONT_SCALE = 0.5;

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { SiteRenderer } from '../components/site/SiteRenderer';
-import { addBlock, defaultSite, setLayoutMode } from '../lib/site';
+import { addBlock, defaultSite, setLayoutMode, updateBlock } from '../lib/site';
 import { resolveExperience } from '../lib/mintExperience';
 
 afterEach(cleanup);
@@ -55,6 +55,16 @@ describe('SiteRenderer', () => {
     // a block without a scale doesn't set the variable
     const galleryWrap = container.querySelector('.site-gallery')?.closest('.site-block') as HTMLElement | null;
     expect(galleryWrap?.style.getPropertyValue('--site-fscale')).toBe('');
+  });
+
+  it('applies per-block align + color via the wrapper style', () => {
+    let site = addBlock(defaultSite(), 'richText');
+    const rt = site.blocks[site.blocks.length - 1]!;
+    site = updateBlock(site, rt.id, { align: 'right', color: 'rgb(0, 255, 0)' });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    const wrap = container.querySelector('.site-rich')?.closest('.site-block') as HTMLElement | null;
+    expect(wrap?.style.textAlign).toBe('right');
+    expect(wrap?.style.color).toBe('rgb(0, 255, 0)');
   });
 
   it('renders the extra nostalgia widgets (wordart / webring / under-construction)', () => {

@@ -4,6 +4,7 @@ import {
   addBlock,
   blockHasText,
   clampFontScale,
+  normalizeAlign,
   defaultSite,
   moveBlock,
   newBlock,
@@ -94,6 +95,19 @@ describe('site model', () => {
     expect(blockHasText('divider')).toBe(false);
     expect(blockHasText('image')).toBe(false);
     expect(blockHasText('button')).toBe(false); // fixed-size badge
+  });
+
+  it('per-block align + color survive round-trips; normalizeAlign validates', () => {
+    let s = addBlock(emptySite(), 'richText');
+    const id = s.blocks[0]!.id;
+    s = updateBlock(s, id, { align: 'right', color: '#0ff' });
+    expect(s.blocks[0]!.align).toBe('right');
+    expect(s.blocks[0]!.color).toBe('#0ff');
+    const r = resolveSite(s).blocks[0]!;
+    expect(r.align).toBe('right');
+    expect(r.color).toBe('#0ff');
+    expect(normalizeAlign('center')).toBe('center');
+    expect(normalizeAlign('bogus')).toBeUndefined();
   });
 });
 
