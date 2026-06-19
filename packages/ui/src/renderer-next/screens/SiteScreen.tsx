@@ -10,6 +10,7 @@ import { SiteCanvas } from '../components/site/SiteCanvas';
 import { bridge, isBridged } from '../lib/bridge';
 import { useProject } from '../state/project';
 import { resolveExperience, type ExperienceConfig } from '../lib/mintExperience';
+import { resolveExperienceArt } from '../lib/packLibrary';
 import { buildSiteData, siteDataScript, SITE_DATA_FILENAME } from '../lib/siteBundle';
 import {
   BLOCK_KINDS,
@@ -148,7 +149,7 @@ export function SiteScreen() {
       const bundle = buildSiteData({
         name: typeof config.name === 'string' ? config.name : undefined,
         site,
-        experience,
+        experience: await resolveExperienceArt(experience),
         images: imgs,
       });
       const res = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
@@ -187,7 +188,7 @@ export function SiteScreen() {
       const bundle = buildSiteData({
         name: typeof config.name === 'string' ? config.name : undefined,
         site,
-        experience,
+        experience: await resolveExperienceArt(experience),
         images: imgs,
       });
       const ex = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
@@ -241,7 +242,7 @@ export function SiteScreen() {
       const bundle = buildSiteData({
         name: typeof config.name === 'string' ? config.name : undefined,
         site,
-        experience,
+        experience: await resolveExperienceArt(experience),
         images: imgs,
       });
       const ex = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });

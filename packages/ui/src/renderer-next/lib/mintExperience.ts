@@ -18,10 +18,14 @@ export interface ExperienceConfig {
   shake: boolean;
   /** Cards flip to their art automatically vs. requiring a tap each. */
   autoFlip: boolean;
-  /** Optional custom card-back image (data URL or path). */
+  /** Optional custom card-back image (data URL) — resolved from backId at render/export. */
   backArt?: string;
-  /** Optional pack-wrapper image (cardPack). */
+  /** Optional pack-wrapper image (data URL) — resolved from packId at render/export. */
   packArt?: string;
+  /** App-level pack-library id (the canonical, lean reference stored in the project config). */
+  packId?: string;
+  /** App-level card-back-library id. */
+  backId?: string;
   /** Optional accent color override (else the app/site theme accent). */
   accent?: string;
 }
@@ -58,6 +62,8 @@ export function resolveExperience(partial?: Partial<ExperienceConfig> | null): E
   };
   if (typeof p.backArt === 'string' && p.backArt) out.backArt = p.backArt;
   if (typeof p.packArt === 'string' && p.packArt) out.packArt = p.packArt;
+  if (typeof p.packId === 'string' && p.packId) out.packId = p.packId;
+  if (typeof p.backId === 'string' && p.backId) out.backId = p.backId;
   if (typeof p.accent === 'string' && p.accent) out.accent = p.accent;
   return out;
 }

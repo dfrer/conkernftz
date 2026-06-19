@@ -2,6 +2,7 @@
 // Thin wrappers over the bridge + a small data-URL cache used to resolve a packId to an
 // image for the Mint FX preview and the site export.
 import { bridge, type PackEntry, type PackKind } from './bridge';
+import type { ExperienceConfig } from './mintExperience';
 
 export type { PackEntry, PackKind } from './bridge';
 
@@ -36,6 +37,24 @@ export async function readPackDataUrl(id: string): Promise<string | null> {
     /* ignore */
   }
   return null;
+}
+
+/**
+ * Fill packArt/backArt from the library ids (packId/backId) so the player can render them.
+ * Used by the Mint FX preview and the static-site export — the project config keeps only the
+ * lean ids; the image is resolved at render/export time.
+ */
+export async function resolveExperienceArt(exp: ExperienceConfig): Promise<ExperienceConfig> {
+  const out = { ...exp };
+  if (exp.packId) {
+    const url = await readPackDataUrl(exp.packId);
+    if (url) out.packArt = url;
+  }
+  if (exp.backId) {
+    const url = await readPackDataUrl(exp.backId);
+    if (url) out.backArt = url;
+  }
+  return out;
 }
 
 export async function importPack(kind: PackKind, name?: string): Promise<PackEntry | null> {

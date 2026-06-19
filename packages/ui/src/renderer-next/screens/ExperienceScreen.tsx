@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
@@ -6,7 +6,9 @@ import { Field, Input, Select } from '../components/Field';
 import { EmptyState } from '../components/EmptyState';
 import { useToast } from '../components/Toast';
 import { MintExperience } from '../components/MintExperience';
+import { cx } from '../lib/cx';
 import { bridge, isBridged } from '../lib/bridge';
+import { listPacks, readPackDataUrl, type PackEntry } from '../lib/packLibrary';
 import { useProject } from '../state/project';
 import {
   EXPERIENCE_KINDS,
@@ -25,41 +27,46 @@ export function ExperienceScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
-  const [packPath, setPackPath] = useState('packs/conkerco-default.png');
-  const [backPath, setBackPath] = useState('');
-  const [loadingArt, setLoadingArt] = useState<string | null>(null);
+  const [packs, setPacks] = useState<PackEntry[]>([]);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  const [art, setArt] = useState<{ packArt?: string; backArt?: string }>({});
 
   const set = (patch: Partial<ExperienceConfig>): void => setExp((e) => resolveExperience({ ...e, ...patch }));
 
-  // Load a finished pack / card-back image from the project into the config as a self-contained
-  // data URL (so it renders identically in this preview and the exported static mint site).
-  const loadImageArt = async (which: 'packArt' | 'backArt', rel: string): Promise<void> => {
-    const fb = bridge();
-    if (!fb) {
-      toast.push('Bridge offline — load in the desktop app', 'danger');
-      return;
-    }
-    const p = rel.trim();
-    if (!p) {
-      toast.push('Enter a project-relative image path', 'danger');
-      return;
-    }
-    setLoadingArt(which);
-    try {
-      const r = await fb.readFileBase64(p);
-      if (r.ok && r.base64) {
-        set({ [which]: `data:${r.mime || 'image/png'};base64,${r.base64}` } as Partial<ExperienceConfig>);
-        toast.push(`${which === 'packArt' ? 'Pack' : 'Card back'} image loaded`, 'ok');
-      } else {
-        toast.push(r.error ?? 'Could not read that image', 'danger');
-      }
-    } catch (e) {
-      toast.push(String((e as Error)?.message ?? e), 'danger');
-    } finally {
-      setLoadingArt(null);
-    }
-  };
-  const clearArt = (which: 'packArt' | 'backArt'): void => set({ [which]: undefined } as Partial<ExperienceConfig>);
+  // Load the app-level pack library (thumbnails for the picker).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const list = await listPacks();
+      if (cancelled) return;
+      setPacks(list);
+      const next: Record<string, string> = {};
+      await Promise.all(
+        list.map(async (p) => {
+          const url = await readPackDataUrl(p.id);
+          if (url) next[p.id] = url;
+        }),
+      );
+      if (!cancelled) setThumbs(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Resolve the chosen pack/back ids → images for the live preview.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next: { packArt?: string; backArt?: string } = {};
+      if (exp.packId) next.packArt = (await readPackDataUrl(exp.packId)) ?? undefined;
+      if (exp.backId) next.backArt = (await readPackDataUrl(exp.backId)) ?? undefined;
+      if (!cancelled) setArt(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [exp.packId, exp.backId]);
 
   const applyPreset = (name: string): void => {
     const p = EXPERIENCE_PRESETS[name];
@@ -95,6 +102,36 @@ export function ExperienceScreen() {
     });
     const ok = await save();
     if (ok) toast.push('Mint experience saved', 'ok');
+  };
+
+  // Preview uses the resolved art (packId/backId → data URL), falling back to any inline art.
+  const previewExp: ExperienceConfig = { ...exp, ...art };
+
+  const picker = (kind: 'pack' | 'back', selectedId: string | undefined, onPick: (id: string | undefined) => void) => {
+    const items = packs.filter((p) => p.kind === kind);
+    return (
+      <div className="stack" style={{ gap: 4 }}>
+        <span className="label">{kind === 'pack' ? 'PACK' : 'CARD BACK'}</span>
+        <div className="row wrap">
+          <button type="button" className={cx('pack-pick', !selectedId && 'pack-pick--sel')} onClick={() => onPick(undefined)}>
+            None
+          </button>
+          {items.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={cx('pack-pick', selectedId === p.id && 'pack-pick--sel')}
+              onClick={() => onPick(p.id)}
+              title={p.name}
+              aria-label={`Use ${p.name}`}
+              aria-pressed={selectedId === p.id}
+            >
+              {thumbs[p.id] ? <img src={thumbs[p.id]} alt={p.name} /> : <span className="pack-pick__ph">{p.name}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -170,52 +207,17 @@ export function ExperienceScreen() {
           <Panel title="Pack & card art">
             <div className="stack">
               <span className="label muted">
-                Use your own finished pack art as the sealed pack that rips open (and an optional custom card back).
-                Point to a project-relative image path, then Load — it's embedded into the config so it ships with the
-                mint site.
+                Pick a pack (and optional card back) from your app-level library — selecting stores a small reference, and
+                the image ships with the mint site at export. Add or manage art in the <strong>Packs</strong> stage.
               </span>
-              <div className="grid cols-auto">
-                <Field label="Pack image (path)">
-                  <Input value={packPath} onChange={(e) => setPackPath(e.target.value)} placeholder="packs/your-pack.png" aria-label="Pack image path" />
-                </Field>
-                <div className="row" style={{ alignSelf: 'end' }}>
-                  <Button size="sm" onClick={() => loadImageArt('packArt', packPath)} disabled={loadingArt !== null || !isBridged()}>
-                    {loadingArt === 'packArt' ? 'Loading…' : 'Load pack'}
-                  </Button>
-                  {exp.packArt ? (
-                    <Button size="sm" variant="ghost" onClick={() => clearArt('packArt')}>
-                      Clear
-                    </Button>
-                  ) : null}
-                </div>
-                <Field label="Card back (path, optional)">
-                  <Input value={backPath} onChange={(e) => setBackPath(e.target.value)} placeholder="packs/card-back.png" aria-label="Card back path" />
-                </Field>
-                <div className="row" style={{ alignSelf: 'end' }}>
-                  <Button size="sm" onClick={() => loadImageArt('backArt', backPath)} disabled={loadingArt !== null || !isBridged()}>
-                    {loadingArt === 'backArt' ? 'Loading…' : 'Load back'}
-                  </Button>
-                  {exp.backArt ? (
-                    <Button size="sm" variant="ghost" onClick={() => clearArt('backArt')}>
-                      Clear
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-              <div className="row" style={{ gap: 'var(--sp-4)' }}>
-                {exp.packArt ? (
-                  <div className="stack" style={{ gap: 4 }}>
-                    <span className="label">PACK</span>
-                    <img src={exp.packArt} alt="Pack art" style={{ height: 130, borderRadius: 'var(--r-sm)', border: 'var(--hair) solid var(--line)' }} />
-                  </div>
-                ) : null}
-                {exp.backArt ? (
-                  <div className="stack" style={{ gap: 4 }}>
-                    <span className="label">CARD BACK</span>
-                    <img src={exp.backArt} alt="Card back art" style={{ height: 130, borderRadius: 'var(--r-sm)', border: 'var(--hair) solid var(--line)' }} />
-                  </div>
-                ) : null}
-              </div>
+              {packs.length === 0 ? (
+                <EmptyState code="EMPTY" title="No packs in the library" hint="Add packs in the Packs stage, then pick one here." />
+              ) : (
+                <>
+                  {picker('pack', exp.packId, (id) => set({ packId: id }))}
+                  {picker('back', exp.backId, (id) => set({ backId: id }))}
+                </>
+              )}
             </div>
           </Panel>
 
@@ -230,7 +232,7 @@ export function ExperienceScreen() {
               </div>
             }
           >
-            <MintExperience key={replayKey} config={exp} images={images} />
+            <MintExperience key={replayKey} config={previewExp} images={images} />
           </Panel>
         </>
       )}
