@@ -25,8 +25,41 @@ export function ExperienceScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
+  const [packPath, setPackPath] = useState('packs/conkerco-default.png');
+  const [backPath, setBackPath] = useState('');
+  const [loadingArt, setLoadingArt] = useState<string | null>(null);
 
   const set = (patch: Partial<ExperienceConfig>): void => setExp((e) => resolveExperience({ ...e, ...patch }));
+
+  // Load a finished pack / card-back image from the project into the config as a self-contained
+  // data URL (so it renders identically in this preview and the exported static mint site).
+  const loadImageArt = async (which: 'packArt' | 'backArt', rel: string): Promise<void> => {
+    const fb = bridge();
+    if (!fb) {
+      toast.push('Bridge offline — load in the desktop app', 'danger');
+      return;
+    }
+    const p = rel.trim();
+    if (!p) {
+      toast.push('Enter a project-relative image path', 'danger');
+      return;
+    }
+    setLoadingArt(which);
+    try {
+      const r = await fb.readFileBase64(p);
+      if (r.ok && r.base64) {
+        set({ [which]: `data:${r.mime || 'image/png'};base64,${r.base64}` } as Partial<ExperienceConfig>);
+        toast.push(`${which === 'packArt' ? 'Pack' : 'Card back'} image loaded`, 'ok');
+      } else {
+        toast.push(r.error ?? 'Could not read that image', 'danger');
+      }
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    } finally {
+      setLoadingArt(null);
+    }
+  };
+  const clearArt = (which: 'packArt' | 'backArt'): void => set({ [which]: undefined } as Partial<ExperienceConfig>);
 
   const applyPreset = (name: string): void => {
     const p = EXPERIENCE_PRESETS[name];
@@ -130,6 +163,58 @@ export function ExperienceScreen() {
                   {busy ? 'Loading…' : 'Use live art'}
                 </Button>
                 <span className="label muted">Pulls rendered previews to use as the revealed card art.</span>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel title="Pack & card art">
+            <div className="stack">
+              <span className="label muted">
+                Use your own finished pack art as the sealed pack that rips open (and an optional custom card back).
+                Point to a project-relative image path, then Load — it's embedded into the config so it ships with the
+                mint site.
+              </span>
+              <div className="grid cols-auto">
+                <Field label="Pack image (path)">
+                  <Input value={packPath} onChange={(e) => setPackPath(e.target.value)} placeholder="packs/your-pack.png" aria-label="Pack image path" />
+                </Field>
+                <div className="row" style={{ alignSelf: 'end' }}>
+                  <Button size="sm" onClick={() => loadImageArt('packArt', packPath)} disabled={loadingArt !== null || !isBridged()}>
+                    {loadingArt === 'packArt' ? 'Loading…' : 'Load pack'}
+                  </Button>
+                  {exp.packArt ? (
+                    <Button size="sm" variant="ghost" onClick={() => clearArt('packArt')}>
+                      Clear
+                    </Button>
+                  ) : null}
+                </div>
+                <Field label="Card back (path, optional)">
+                  <Input value={backPath} onChange={(e) => setBackPath(e.target.value)} placeholder="packs/card-back.png" aria-label="Card back path" />
+                </Field>
+                <div className="row" style={{ alignSelf: 'end' }}>
+                  <Button size="sm" onClick={() => loadImageArt('backArt', backPath)} disabled={loadingArt !== null || !isBridged()}>
+                    {loadingArt === 'backArt' ? 'Loading…' : 'Load back'}
+                  </Button>
+                  {exp.backArt ? (
+                    <Button size="sm" variant="ghost" onClick={() => clearArt('backArt')}>
+                      Clear
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="row" style={{ gap: 'var(--sp-4)' }}>
+                {exp.packArt ? (
+                  <div className="stack" style={{ gap: 4 }}>
+                    <span className="label">PACK</span>
+                    <img src={exp.packArt} alt="Pack art" style={{ height: 130, borderRadius: 'var(--r-sm)', border: 'var(--hair) solid var(--line)' }} />
+                  </div>
+                ) : null}
+                {exp.backArt ? (
+                  <div className="stack" style={{ gap: 4 }}>
+                    <span className="label">CARD BACK</span>
+                    <img src={exp.backArt} alt="Card back art" style={{ height: 130, borderRadius: 'var(--r-sm)', border: 'var(--hair) solid var(--line)' }} />
+                  </div>
+                ) : null}
               </div>
             </div>
           </Panel>

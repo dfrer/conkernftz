@@ -80,7 +80,7 @@ function installMock() {
     ],
     rarity: { delimiter: '#', defaultWeight: 1 },
     rules: { maxOccurrences: [{ trait: 'Headwear:Crown', max: 10 }] },
-    mintExperience: { kind: 'cardPack', packCount: 3, label: 'DEMO PACK', shake: true, autoFlip: false },
+    mintExperience: { kind: 'cardPack', packCount: 3, label: 'DEMO PACK', shake: true, autoFlip: false, packArt: 'data:image/png;base64,' + previews[0] },
     export: { outDir: 'build', imageFormat: 'png' },
     storage: { provider: 'pinata' },
     chain: { target: 'evm' },
