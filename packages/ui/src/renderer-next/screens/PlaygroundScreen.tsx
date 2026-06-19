@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Panel, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, useToast } from '../components';
+import { Panel, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, RarityBar, useToast } from '../components';
 
 // In-app component playground — the visual catalog of the design system. Doubles as a
 // manual-QA surface until full visual-regression tooling lands.
@@ -91,6 +91,23 @@ export function PlaygroundScreen() {
         <TabPanel id="three" active={tab}>
           <p className="muted">Only the active panel renders, so heavy sections stay unmounted until shown.</p>
         </TabPanel>
+      </Panel>
+
+      <Panel title="Rarity bar">
+        <div className="stack" style={{ maxWidth: 280 }}>
+          <div className="stack" style={{ gap: 4 }}>
+            <span className="label muted">Balanced (4 traits)</span>
+            <RarityBar rows={[{ value: 'A', probability: 0.25 }, { value: 'B', probability: 0.25 }, { value: 'C', probability: 0.25 }, { value: 'D', probability: 0.25 }]} />
+          </div>
+          <div className="stack" style={{ gap: 4 }}>
+            <span className="label muted">Skewed (one dominant)</span>
+            <RarityBar rows={[{ value: 'Common', probability: 0.8 }, { value: 'Rare', probability: 0.15 }, { value: 'Legendary', probability: 0.05 }]} />
+          </div>
+          <div className="stack" style={{ gap: 4 }}>
+            <span className="label muted">Empty layer</span>
+            <RarityBar rows={[]} />
+          </div>
+        </div>
       </Panel>
 
       <Panel title="Loading + empty">

@@ -711,7 +711,7 @@ button {
 /* ===================== Layers table ===================== */
 .layer-row {
   display: grid;
-  grid-template-columns: 28px 44px minmax(110px, 1.1fr) minmax(140px, 1.5fr) 96px 40px 78px 52px auto;
+  grid-template-columns: 28px 44px minmax(110px, 1.1fr) minmax(140px, 1.5fr) 96px 40px 78px 96px auto;
   gap: var(--sp-2);
   align-items: center;
 }
@@ -763,6 +763,29 @@ button {
 
 .layer-row--active {
   box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ===================== Rarity distribution bar ===================== */
+.rarity-bar {
+  display: flex;
+  width: 100%;
+  height: 7px;
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  border: var(--hair) solid var(--line);
+  background: var(--surface-inset);
+}
+.rarity-bar--empty {
+  opacity: 0.4;
+}
+.rarity-seg {
+  height: 100%;
+  min-width: 1px;
+  background: var(--accent);
+  box-shadow: inset -1px 0 0 var(--surface-inset);
+}
+.rarity-seg:nth-child(even) {
+  background: color-mix(in oklab, var(--accent) 50%, transparent);
 }
 
 /* ===================== Trait browser ===================== */

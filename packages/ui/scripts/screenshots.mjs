@@ -97,7 +97,17 @@ function installMock() {
     readFile: () => ok({ content: '{}' }),
     readFileBase64: () => ok({ base64: thumb, mime: 'image/png' }),
     listImages: () => ok({ count: 8 }),
-    listDir: () => ok({ items: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'] }),
+    // Path-aware so each layer shows a different rarity distribution in the table bars.
+    listDir: (p = '') => {
+      const sets = {
+        background: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'],
+        body: ['Common#80.png', 'Uncommon#15.png', 'Rare#4.png', 'Legendary#1.png'],
+        eyes: ['Open#1.png', 'Closed#1.png', 'Wink#1.png', 'Laser#1.png', 'Glow#1.png'],
+        headwear: ['None#50.png', 'Crown#1.png'],
+      };
+      const key = Object.keys(sets).find((k) => String(p).includes(k));
+      return ok({ items: sets[key] ?? sets.background });
+    },
     renameFiles: () => ok({ renamed: 0 }),
     previewLive: () => ok({ format: 'png', images: previews }),
     previewEffects: () => ok({ format: 'png', b64: thumb }),
@@ -174,7 +184,10 @@ const main = async () => {
   // Exercise key in-screen interactions so new features are captured, not just landing views.
   try {
     await page.locator('.nav-item', { hasText: 'Design' }).first().click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(600);
+    // Close-up of the Layers table so the per-row rarity bars are legible.
+    await page.locator('.panel', { hasText: 'Layers' }).first().screenshot({ path: path.join(outDir, 'design-layers-panel.png') });
+    console.log('captured', 'design-layers-panel');
     // Walk the Design section tabs so each is captured.
     for (const t of ['Basics', 'Assets & rarity', 'Rules']) {
       await page.getByRole('tab', { name: new RegExp(`^${t}`, 'i') }).click();
