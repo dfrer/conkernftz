@@ -663,6 +663,39 @@ button {
   word-break: break-all;
 }
 
+/* Site builder starter templates */
+.template-card {
+  text-align: left;
+  background: var(--surface-2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 220px;
+  transition: border-color var(--dur-1), transform var(--dur-1) var(--ease-snap);
+}
+.template-card:hover {
+  border-color: var(--line-amber);
+  transform: translateY(-2px);
+}
+.template-card:focus-visible {
+  outline: none;
+  box-shadow: var(--accent-glow);
+}
+.template-card__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+.template-card__desc {
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
 /* page-load stagger */
 .stagger > * {
   opacity: 0;

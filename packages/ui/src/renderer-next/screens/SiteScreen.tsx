@@ -30,6 +30,7 @@ import {
   type BlockKind,
   type SiteConfig,
 } from '../lib/site';
+import { SITE_TEMPLATES, type SiteTemplate } from '../lib/siteTemplates';
 
 type Viewport = 'desktop' | 'mobile';
 
@@ -80,6 +81,12 @@ export function SiteScreen() {
     const next = addBlock(site, kind);
     setSite(next);
     setSelectedId(next.blocks[next.blocks.length - 1]!.id);
+  };
+
+  const applyTemplate = (t: SiteTemplate): void => {
+    setSite(t.build());
+    setSelectedId(null);
+    toast.push(`Applied “${t.label}” template`, 'ok');
   };
 
   const onMove = (id: string, x: number, y: number): void =>
@@ -288,6 +295,17 @@ export function SiteScreen() {
         <EmptyState code="NO PROJECT" title="No project loaded" hint="Open a project to build its mint site." />
       ) : (
         <>
+          <Panel title="Templates" actions={<span className="label">START FROM A LAYOUT</span>}>
+            <div className="row wrap">
+              {SITE_TEMPLATES.map((t) => (
+                <button key={t.id} type="button" className="template-card" onClick={() => applyTemplate(t)}>
+                  <span className="template-card__name">{t.label}</span>
+                  <span className="template-card__desc">{t.description}</span>
+                </button>
+              ))}
+            </div>
+          </Panel>
+
           <Panel title="Layout & page">
             <div className="grid cols-auto">
               <Field label="Layout">
