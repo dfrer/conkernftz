@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('foundry', {
   saveJson: (relPath, json) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
   exportSite: (payload) => ipcRenderer.invoke('foundry:exportSite', payload),
   deploySite: (payload) => ipcRenderer.invoke('foundry:deploySite', payload),
+  previewSite: () => ipcRenderer.invoke('foundry:previewSite'),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
 });

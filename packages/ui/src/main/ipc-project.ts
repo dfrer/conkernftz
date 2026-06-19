@@ -2,6 +2,7 @@ import * as electron from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import fssync from 'node:fs';
+import http from 'node:http';
 import { FileManager } from '@conkernftz/storage/file-manager';
 import * as cliRunner from './cli-runner.js';
 import { getEngineClient } from './engine-client.js';
@@ -496,6 +497,69 @@ export function initProjectIpc(): void {
         await fs.writeFile(indexPath, html, 'utf8');
       }
       return { ok: true, outDir };
+    } catch (e) {
+      return { ok: false, error: String((e as Error)?.message ?? e) };
+    }
+  });
+
+  // Local preview: serve <project>/site-export over http://127.0.0.1 and open it. http (not
+  // file://) means the SPA, iframes, and fonts all behave like a real host — no file:// origin
+  // restrictions. Localhost-only, with a path-traversal guard; SPA-fallback to index.html.
+  let previewServer: http.Server | null = null;
+  const MIME: Record<string, string> = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.map': 'application/json',
+  };
+  electron.ipcMain.handle('foundry:previewSite', async () => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      const dir = path.join(projectDir, 'site-export');
+      if (!fssync.existsSync(path.join(dir, 'index.html'))) {
+        return { ok: false, error: 'No generated site found — run “Generate site” first.' };
+      }
+      if (previewServer) {
+        previewServer.close();
+        previewServer = null;
+      }
+      const server = http.createServer((req, res) => {
+        try {
+          const urlPath = decodeURIComponent((req.url || '/').split('?')[0]!);
+          const rel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\/+/, '');
+          let filePath = path.join(dir, rel);
+          if (filePath !== dir && !filePath.startsWith(dir + path.sep)) {
+            res.statusCode = 403;
+            res.end('forbidden');
+            return;
+          }
+          if (!fssync.existsSync(filePath) || fssync.statSync(filePath).isDirectory()) {
+            filePath = path.join(dir, 'index.html');
+          }
+          res.setHeader('Content-Type', MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream');
+          fssync.createReadStream(filePath).pipe(res);
+        } catch {
+          res.statusCode = 500;
+          res.end('error');
+        }
+      });
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(0, '127.0.0.1', () => resolve());
+      });
+      previewServer = server;
+      const addr = server.address();
+      const port = typeof addr === 'object' && addr ? addr.port : 0;
+      const url = `http://127.0.0.1:${port}/`;
+      await electron.shell.openExternal(url);
+      return { ok: true, url };
     } catch (e) {
       return { ok: false, error: String((e as Error)?.message ?? e) };
     }
