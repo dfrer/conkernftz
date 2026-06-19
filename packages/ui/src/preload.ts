@@ -47,6 +47,7 @@ const foundryApi: FoundryApi = {
   exportSite: (payload: { dataJs: string; dataFile: string }) => ipcRenderer.invoke('foundry:exportSite', payload),
   deploySite: (payload: { provider: string; token: string }) => ipcRenderer.invoke('foundry:deploySite', payload),
   previewSite: () => ipcRenderer.invoke('foundry:previewSite'),
+  pickImage: () => ipcRenderer.invoke('foundry:pickImage'),
   packsList: () => ipcRenderer.invoke('foundry:packsList'),
   packsRead: (id: string) => ipcRenderer.invoke('foundry:packsRead', id),
   packsImport: (opts: { name?: string; kind?: 'pack' | 'back' }) => ipcRenderer.invoke('foundry:packsImport', opts || {}),

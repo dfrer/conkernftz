@@ -54,6 +54,8 @@ export interface FoundryBridge {
   deploySite(payload: { provider: string; token: string }): Promise<{ ok: boolean; url?: string; error?: string }>;
   /** Serve the generated site locally over http and open it; returns the localhost URL. */
   previewSite(): Promise<{ ok: boolean; url?: string; error?: string }>;
+  /** Native image picker → a self-contained data URL (site assets). */
+  pickImage(): Promise<{ ok: boolean; dataUrl?: string; name?: string; cancelled?: boolean; error?: string }>;
   /** App-level pack/card-back library (project-independent). */
   packsList(): Promise<{ ok: boolean; packs?: PackEntry[]; error?: string }>;
   packsRead(id: string): Promise<{ ok: boolean; base64?: string; mime?: string; error?: string }>;

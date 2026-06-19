@@ -169,6 +169,7 @@ function installMock(opts) {
     exportSite: () => ok({ outDir: 'C:/demo/collection/site-export' }),
     deploySite: () => ok({ url: 'https://demo.vercel.app' }),
     previewSite: () => ok({ url: 'http://127.0.0.1:5000/' }),
+    pickImage: () => ok({ cancelled: true }),
     packsList: () =>
       ok({
         packs: [
