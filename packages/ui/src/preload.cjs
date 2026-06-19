@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('foundry', {
   exportSite: (payload) => ipcRenderer.invoke('foundry:exportSite', payload),
   deploySite: (payload) => ipcRenderer.invoke('foundry:deploySite', payload),
   previewSite: () => ipcRenderer.invoke('foundry:previewSite'),
+  pickImage: () => ipcRenderer.invoke('foundry:pickImage'),
   auditAssets: (opts) => ipcRenderer.invoke('foundry:auditAssets', opts || {}),
   auditOutputs: (opts) => ipcRenderer.invoke('foundry:auditOutputs', opts || {}),
   packsList: () => ipcRenderer.invoke('foundry:packsList'),

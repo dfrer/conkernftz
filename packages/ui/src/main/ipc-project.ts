@@ -116,6 +116,27 @@ export function initProjectIpc(): void {
     }
   });
 
+  // Pick any image off disk and return it as a self-contained data URL (site assets: the
+  // Image/GIF widget, 88×31 badge, tiled wallpaper). Baked into the config, so the generated
+  // static site stays portable with no external asset fetches.
+  electron.ipcMain.handle('foundry:pickImage', async () => {
+    try {
+      const res = await electron.dialog.showOpenDialog({
+        title: 'Choose an image',
+        properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif', 'apng'] }],
+      });
+      if (res.canceled || res.filePaths.length === 0) return { ok: true, cancelled: true };
+      const p = res.filePaths[0] as string;
+      const buf = await fs.readFile(p);
+      const ext = path.extname(p).toLowerCase().slice(1);
+      const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext || 'png'}`;
+      return { ok: true, dataUrl: `data:${mime};base64,${buf.toString('base64')}`, name: path.basename(p) };
+    } catch (e) {
+      return { ok: false, error: String((e as Error)?.message ?? e) };
+    }
+  });
+
   electron.ipcMain.handle('foundry:readFile', async (_evt, relativePath: string) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };

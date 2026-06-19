@@ -109,6 +109,23 @@ export function SiteScreen() {
     toast.push(`Applied “${t.label}” template`, 'ok');
   };
 
+  // Native image picker → data URL, applied wherever an image URL is accepted (Image widget,
+  // 88×31 badge, tiled wallpaper). Baked into the config so the exported site stays portable.
+  const uploadImage = async (apply: (dataUrl: string) => void): Promise<void> => {
+    const fb = bridge();
+    if (!fb) {
+      toast.push('Image upload needs the desktop app', 'danger');
+      return;
+    }
+    try {
+      const r = await fb.pickImage();
+      if (r.ok && r.dataUrl) apply(r.dataUrl);
+      else if (r.error) toast.push(r.error, 'danger');
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    }
+  };
+
   const onMove = (id: string, x: number, y: number): void =>
     setSite(viewport === 'mobile' ? setBlockMobile(site, id, { x, y }) : setBlockLayout(site, id, { x, y }));
   const onResize = (id: string, w: number, h: number): void =>
@@ -374,8 +391,13 @@ export function SiteScreen() {
                       ))}
                     </Select>
                   </Field>
-                  <Field label="Tile URL">
-                    <Input value={pageBg.tile} onChange={(e) => setSite(setPageBg(site, { tile: e.target.value }))} placeholder="data: or https URL" aria-label="Background tile" />
+                  <Field label="Tile image">
+                    <div className="row">
+                      <Input value={pageBg.tile} onChange={(e) => setSite(setPageBg(site, { tile: e.target.value }))} placeholder="data: or https URL" aria-label="Background tile" style={{ flex: 1 }} />
+                      <Button size="sm" onClick={() => uploadImage((u) => setSite(setPageBg(site, { tile: u })))} disabled={!isBridged()}>
+                        Upload…
+                      </Button>
+                    </div>
                   </Field>
                 </>
               ) : null}
@@ -432,7 +454,7 @@ export function SiteScreen() {
           {selected ? (
             <Panel title={`Edit — ${BLOCK_LABELS[selected.kind]}`}>
               <div className="stack">
-                <BlockFields block={selected} setField={setField} />
+                <BlockFields block={selected} setField={setField} onUpload={uploadImage} />
                 {selected.kind !== 'divider' ? (
                   <>
                     <div className="label">SIZE</div>
@@ -569,7 +591,15 @@ export function SiteScreen() {
   );
 }
 
-function BlockFields({ block, setField }: { block: Block; setField: (patch: Record<string, unknown>) => void }) {
+function BlockFields({
+  block,
+  setField,
+  onUpload,
+}: {
+  block: Block;
+  setField: (patch: Record<string, unknown>) => void;
+  onUpload: (apply: (dataUrl: string) => void) => void;
+}) {
   switch (block.kind) {
     case 'hero':
       return (
@@ -628,8 +658,15 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
       );
     case 'image':
       return (
-        <div className="grid cols-auto">
-          <Field label="Image URL"><Input value={block.src} onChange={(e) => setField({ src: e.target.value })} placeholder="data: or https URL / GIF" aria-label="Image src" /></Field>
+        <div className="stack">
+          <Field label="Image / GIF">
+            <div className="row">
+              <Input value={block.src} onChange={(e) => setField({ src: e.target.value })} placeholder="data: or https URL / GIF" aria-label="Image src" style={{ flex: 1 }} />
+              <Button size="sm" onClick={() => onUpload((u) => setField({ src: u }))} disabled={!isBridged()}>
+                Upload…
+              </Button>
+            </div>
+          </Field>
           <Field label="Alt"><Input value={block.alt} onChange={(e) => setField({ alt: e.target.value })} aria-label="Image alt" /></Field>
         </div>
       );
@@ -666,7 +703,14 @@ function BlockFields({ block, setField }: { block: Block; setField: (patch: Reco
         <div className="grid cols-auto">
           <Field label="Label"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Button label" /></Field>
           <Field label="Link"><Input value={block.href} onChange={(e) => setField({ href: e.target.value })} placeholder="https://" aria-label="Button href" /></Field>
-          <Field label="Badge image URL (88×31)"><Input value={block.src ?? ''} onChange={(e) => setField({ src: e.target.value || undefined })} placeholder="(text label) — or a data:/https 88×31 badge" aria-label="Button badge image" /></Field>
+          <Field label="Badge image (88×31)">
+            <div className="row">
+              <Input value={block.src ?? ''} onChange={(e) => setField({ src: e.target.value || undefined })} placeholder="(text label) — or a data:/https badge" aria-label="Button badge image" style={{ flex: 1 }} />
+              <Button size="sm" onClick={() => onUpload((u) => setField({ src: u }))} disabled={!isBridged()}>
+                Upload…
+              </Button>
+            </div>
+          </Field>
         </div>
       );
     case 'webRing':

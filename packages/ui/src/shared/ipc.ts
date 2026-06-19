@@ -35,6 +35,12 @@ export interface FileBase64Result extends OkResult {
   base64?: string;
   mime?: string;
 }
+export interface PickImageResult extends OkResult {
+  /** The chosen image as a self-contained data URL (or undefined if cancelled). */
+  dataUrl?: string;
+  name?: string;
+  cancelled?: boolean;
+}
 export interface LivePreviewResult extends OkResult {
   format?: string;
   images?: string[];
@@ -128,6 +134,8 @@ export interface FoundryApi {
   deploySite(payload: { provider: string; token: string }): Promise<DeployResult>;
   /** Serve <project>/site-export over http://127.0.0.1 and open it (local preview, no file://). */
   previewSite(): Promise<DeployResult>;
+  /** Open a native file picker for an image and return it as an inline data URL (site assets). */
+  pickImage(): Promise<PickImageResult>;
 
   // App-level pack & card-back library (project-independent; built-ins + userData).
   packsList(): Promise<PacksListResult>;
@@ -180,6 +188,7 @@ export const FOUNDRY_METHODS = [
   'exportSite',
   'deploySite',
   'previewSite',
+  'pickImage',
   'packsList',
   'packsRead',
   'packsImport',
