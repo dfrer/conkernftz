@@ -49,9 +49,15 @@ export async function resolveExperienceArt(exp: ExperienceConfig): Promise<Exper
   if (exp.packId) {
     const url = await readPackDataUrl(exp.packId);
     if (url) out.packArt = url;
-    // Optional torn-open variant (convention: "<packId>-open") drives the full rip animation.
+    // Rip variants (convention, all off the base id). "<packId>-open" = single torn-open
+    // fallback; "<packId>-open-front"/"-open-back" = the pack split at the tear line for the
+    // true cards-inside-the-pack reveal (front covers card bottoms; back sits behind them).
     const open = await readPackDataUrl(`${exp.packId}-open`);
     if (open) out.packOpenArt = open;
+    const front = await readPackDataUrl(`${exp.packId}-open-front`);
+    if (front) out.packOpenFrontArt = front;
+    const back = await readPackDataUrl(`${exp.packId}-open-back`);
+    if (back) out.packOpenBackArt = back;
   }
   if (exp.backId) {
     const url = await readPackDataUrl(exp.backId);

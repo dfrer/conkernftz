@@ -15,11 +15,16 @@ interface UserPack {
   file: string;
 }
 
-// `variant: true` entries are readable (e.g. the torn-open "<pack>-open" image used by the
-// rip animation) but hidden from the listed library so they don't show as standalone cards.
+// `variant: true` entries are readable (the rip-animation images) but hidden from the listed
+// library so they don't show as standalone cards. Rip art conventions, all resolved off the
+// base pack id: "<pack>-open" = single torn-open image (simple fallback); "<pack>-open-front"
+// + "<pack>-open-back" = the pack split at the tear line into a front pocket (covers the card
+// bottoms) and a back wall (behind the cards), giving a true cards-inside-the-pack reveal.
 const BUILTINS: { id: string; name: string; kind: PackKind; file: string; variant?: boolean }[] = [
   { id: 'conkerco-default', name: 'CONKERCO Default', kind: 'pack', file: 'conkerco-default.png' },
   { id: 'conkerco-default-open', name: 'CONKERCO Default (open)', kind: 'pack', file: 'conkerco-default-open.png', variant: true },
+  { id: 'conkerco-default-open-front', name: 'CONKERCO Default (open front)', kind: 'pack', file: 'conkerco-default-open-front.png', variant: true },
+  { id: 'conkerco-default-open-back', name: 'CONKERCO Default (open back)', kind: 'pack', file: 'conkerco-default-open-back.png', variant: true },
   { id: 'conkerco-back-holo', name: 'CONKERCO Holo', kind: 'back', file: 'conkerco-back-holo.png' },
   { id: 'conkerco-back-eye', name: 'All-Seeing Eye', kind: 'back', file: 'conkerco-back-eye.png' },
   { id: 'conkerco-back-chrome', name: 'CONKERCO Chrome', kind: 'back', file: 'conkerco-back-chrome.png' },

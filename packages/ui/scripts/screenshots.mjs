@@ -50,7 +50,10 @@ const server = http.createServer((req, res) => {
 });
 
 // Runs in the page: a mock bridge + canvas-generated PNG art so screens populate.
-function installMock() {
+// `opts.realPacks` (id → base64) carries the actual bundled pack/back PNGs so the Mint FX
+// rip renders the genuine transparent torn-open art (not a flat color stand-in).
+function installMock(opts) {
+  const realPacks = (opts && opts.realPacks) || {};
   const mkPng = (color, w, h) => {
     const c = document.createElement('canvas');
     c.width = w;
@@ -176,7 +179,7 @@ function installMock() {
           { id: 'conkerco-back-chrome', name: 'CONKERCO Chrome', kind: 'back', builtin: true },
         ],
       }),
-    packsRead: (id = '') => ok({ base64: palette[hash(id) % palette.length], mime: 'image/png' }),
+    packsRead: (id = '') => ok(realPacks[id] ? { base64: realPacks[id], mime: 'image/png' } : { base64: palette[hash(id) % palette.length], mime: 'image/png' }),
     packsImport: () => ok({ pack: { id: 'pack-new', name: 'New Pack', kind: 'pack', builtin: false } }),
     packsDelete: () => ok(),
   };
@@ -214,7 +217,17 @@ const main = async () => {
   const url = `http://127.0.0.1:${port}/`;
   const browser = await launchBrowser();
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.addInitScript(installMock);
+  // Load the real bundled pack/back PNGs so Mint FX renders the genuine torn-open art.
+  const packsDir = path.join(distDir, '..', 'assets', 'packs');
+  const realPacks = {};
+  try {
+    for (const f of fs.readdirSync(packsDir)) {
+      if (f.endsWith('.png')) realPacks[f.replace(/\.png$/, '')] = fs.readFileSync(path.join(packsDir, f)).toString('base64');
+    }
+  } catch {
+    /* no bundled packs — mock falls back to color stand-ins */
+  }
+  await page.addInitScript(installMock, { realPacks });
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForSelector('.nav-item', { timeout: 15000 });
   for (const [id, label] of STAGES) {
@@ -319,11 +332,11 @@ const main = async () => {
     await page.waitForTimeout(400);
     const pack = page.getByRole('button', { name: 'Rip open the pack' }).first();
     await pack.click(); // click opens via the fallback (the drag gesture is unit-tested)
-    await page.waitForTimeout(700); // let the tear beat finish → cards stacked in the pack
+    await page.waitForTimeout(1500); // tear beat (~420ms) → cards emerge + settle in the pack
     await page.locator('.exp').first().screenshot({ path: path.join(outDir, 'experience-stacked.png') });
     console.log('captured', 'experience-stacked');
-    await page.locator('.exp-rip-pack').first().click(); // pull the stacked cards out
-    await page.waitForTimeout(1000); // let the spill settle (pack recedes/blurs, cards on top)
+    await page.locator('.exp-rip-front, .exp-rip-pack').first().click(); // pull the stacked cards out
+    await page.waitForTimeout(1100); // let the spill settle (pack recedes/blurs, cards on top)
     await page.locator('.exp').first().screenshot({ path: path.join(outDir, 'experience-rip.png') });
     console.log('captured', 'experience-rip');
   } catch (e) {

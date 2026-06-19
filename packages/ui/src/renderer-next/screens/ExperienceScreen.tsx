@@ -60,7 +60,15 @@ export function ExperienceScreen() {
     let cancelled = false;
     (async () => {
       const r = await resolveExperienceArt(exp);
-      if (!cancelled) setArt({ packArt: r.packArt, backArt: r.backArt, tierBacks: r.tierBacks, packOpenArt: r.packOpenArt });
+      if (!cancelled)
+        setArt({
+          packArt: r.packArt,
+          backArt: r.backArt,
+          tierBacks: r.tierBacks,
+          packOpenArt: r.packOpenArt,
+          packOpenFrontArt: r.packOpenFrontArt,
+          packOpenBackArt: r.packOpenBackArt,
+        });
     })();
     return () => {
       cancelled = true;

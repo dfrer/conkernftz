@@ -24,6 +24,10 @@ export interface ExperienceConfig {
   packArt?: string;
   /** Runtime-only: the torn-open pack image (resolved from the pack's `-open` library variant). */
   packOpenArt?: string;
+  /** Runtime-only: split-rip front piece (the pack face/pocket that covers the card bottoms). */
+  packOpenFrontArt?: string;
+  /** Runtime-only: split-rip back piece (the pack interior wall behind the cards). */
+  packOpenBackArt?: string;
   /** App-level pack-library id (the canonical, lean reference stored in the project config). */
   packId?: string;
   /** App-level card-back-library id (the DEFAULT back for ordinary pulls). */

@@ -5,6 +5,15 @@
 .exp {
   --exp-accent: var(--accent);
   --exp-dur: 600ms;
+  /* Rip tuning (owner-adjustable). --exp-mouth: where the pack's rip opening sits (from the
+   * top); the tear flash + the emerging cards both key off it. --exp-pack-w: rendered pack
+   * width. --exp-peek: how far card tops poke out of the mouth while stacked. --exp-spread:
+   * horizontal fan spread once spilled. */
+  --exp-mouth: 48px; /* px from the pack top to the front-piece torn rim (~18% of ~262px) */
+  --exp-pack-w: 196px;
+  --exp-peek: 52px; /* how far the card tops rise above the front rim while stacked */
+  --exp-spread: 84px; /* horizontal fan spread once spilled */
+  --exp-spill-y: -14px; /* how high the cards rise above the pack top when spilled */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -133,9 +142,10 @@
   }
 }
 
-/* Flip-in when a card turns to its face (cardPack / flip kinds). */
-.exp--cardPack .exp-card--face,
-.exp--flip .exp-card--face {
+/* Flip-in when a flat-grid card turns to its face (cardPack-without-rip / flip kinds).
+ * Rip cards flip on their inner wrapper instead (see below) so the card's fan/position
+ * transform on the button isn't clobbered by the flip's rotateY. */
+.exp-cards .exp-card--face {
   animation: exp-flip var(--exp-dur) var(--ease-out);
 }
 @keyframes exp-flip {
@@ -178,7 +188,7 @@
  * player to the 'stacked' phase, so the React state machine stays in step with the visuals. */
 .exp-tear {
   position: relative;
-  width: 188px;
+  width: var(--exp-pack-w, 196px);
   filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
 }
 .exp-tear-open,
@@ -198,13 +208,16 @@
 }
 .exp-tear-flash {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 36%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--exp-accent), transparent);
-  filter: blur(1px);
+  left: 4%;
+  right: 4%;
+  /* sit on the actual rip line, not the middle of the pack */
+  top: var(--exp-mouth, 15%);
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, transparent, #fff, var(--exp-accent), transparent);
+  filter: blur(1.5px);
   opacity: 0;
+  transform-origin: 50% 50%;
   animation: exp-tear-flash 420ms var(--ease-out);
 }
 @keyframes exp-tear-out {
@@ -223,51 +236,113 @@
   100% { opacity: 0; transform: scaleX(1.05); }
 }
 
-/* ---- Rip scene: cards sit STACKED inside the open pack, then SPILL out on click ----
- * Deterministic & state-driven: positions/blur are CSS transitions keyed off the phase
- * class, so it animates the same every time and reverses cleanly. */
+/* ---- Rip scene: cards sit STACKED inside the pack (poking out the torn mouth), then
+ * SPILL out on click ----
+ * The pack image is the sizing block; the cards are an absolute overlay positioned at the
+ * rip mouth. While stacked the cards are BEHIND the pack body (z below) so the solid lower
+ * pack covers their bottoms and only their tops show through the torn opening; on spill they
+ * jump IN FRONT (z above) and fan wide while the pack recedes + blurs. Positions are CSS
+ * transitions keyed off the phase class — deterministic, identical every Replay. */
 .exp-rip {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  width: var(--exp-pack-w, 196px);
+  margin-top: 72px; /* headroom for the cards that rise above the pack */
 }
-.exp-rip-cards {
+/* Pack art: single fallback `.exp-rip-pack`, or the split `.exp-rip-front` (sizes the box) +
+ * `.exp-rip-back` overlay. The front sits in FRONT of the cards (covers their tucked bottoms);
+ * the back sits BEHIND them (the pocket interior wall). */
+.exp-rip-pack,
+.exp-rip-front {
+  display: block;
+  width: 100%;
   position: relative;
-  z-index: 1; /* behind the pack while stacked */
-  display: flex;
-  justify-content: center;
-  gap: var(--sp-2);
-  max-width: 440px;
-  margin-bottom: -118px; /* stacked: cards are tucked deep inside the pack's torn mouth */
-  transition: margin-bottom var(--exp-dur) var(--ease-out);
-}
-.exp-rip-cards .exp-card {
-  /* stacked: low, small, gently fanned — only the tops peek above the torn rim */
-  transform: translateY(64px) scale(0.78) rotate(calc(var(--exp-rot, 0deg) * 0.35));
-  transition: transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
-  transition-delay: calc(var(--exp-i, 0) * 80ms);
-}
-.exp-rip-pack {
-  position: relative;
-  z-index: 2; /* in front of the stacked cards */
-  width: 188px;
+  z-index: 2;
   cursor: pointer;
   filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
   transition: filter var(--exp-dur) var(--ease-out), transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
 }
-/* spilled: cards rise to a full fan ON TOP; the pack recedes + blurs into the background */
+.exp-rip-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  transition: filter var(--exp-dur) var(--ease-out), transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
+}
+.exp-rip-cards {
+  position: absolute;
+  inset: 0; /* overlay the pack box; cards are positioned within by transform */
+  z-index: 1; /* between the back wall and the front pocket while stacked */
+  pointer-events: none;
+}
+.exp-rip-cards .exp-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 96px;
+  height: 134px;
+  pointer-events: auto;
+  transform-origin: 50% 100%; /* pivot at the card bottom (down inside the pack) */
+  transition: transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
+  transition-delay: calc(var(--exp-i, 0) * 70ms);
+  animation: exp-emerge var(--exp-dur) var(--ease-out) backwards;
+  animation-delay: calc(var(--exp-i, 0) * 70ms);
+}
+/* STACKED, layered: cards tucked behind the front pocket — tops emerge in the window between
+ * the front rim (--exp-mouth) and ~--exp-peek above it; bottoms hidden behind the front. */
+.exp-rip--layered .exp-rip-cards .exp-card {
+  transform: translate(-50%, calc(var(--exp-mouth) - var(--exp-peek))) translateX(calc(var(--exp-off, 0) * 9px))
+    rotate(calc(var(--exp-rot, 0deg) * 0.4)) scale(0.94);
+}
+/* STACKED, single image (no split): cards poke ABOVE the opaque torn-open image. */
+.exp-rip:not(.exp-rip--layered) .exp-rip-cards .exp-card {
+  transform: translate(-50%, calc(-1 * var(--exp-peek))) translateX(calc(var(--exp-off, 0) * 9px))
+    rotate(calc(var(--exp-rot, 0deg) * 0.4)) scale(0.92);
+}
+.exp-card-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+/* Gentle constant float while the cards rest in the pack. */
+.exp-rip--stacked .exp-card-inner {
+  animation: exp-float 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--exp-i, 0) * -0.6s);
+}
+/* SPILLED: cards jump IN FRONT (z3), rise + fan WIDE; the pack pieces recede + blur behind. */
 .exp-rip--spilled .exp-rip-cards {
   z-index: 3;
-  margin-bottom: -40px;
 }
 .exp-rip--spilled .exp-rip-cards .exp-card {
-  transform: translateY(0) scale(1) rotate(var(--exp-rot, 0deg));
+  animation: none; /* settle into the spilled transform via the transition */
+  transform: translate(-50%, var(--exp-spill-y, -8px)) translateX(calc(var(--exp-off, 0) * var(--exp-spread, 82px)))
+    rotate(var(--exp-rot, 0deg)) scale(1.06);
 }
-.exp-rip--spilled .exp-rip-pack {
-  transform: translateY(16px) scale(0.86);
-  filter: blur(7px) brightness(0.6) drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+/* Flip a spilled rip card on its inner wrapper, so the button keeps its fanned position. */
+.exp-rip-cards .exp-card--face .exp-card-inner {
+  animation: exp-flip var(--exp-dur) var(--ease-out);
+}
+.exp-rip--spilled .exp-rip-pack,
+.exp-rip--spilled .exp-rip-front,
+.exp-rip--spilled .exp-rip-back {
+  transform: translateY(6px) scale(0.92);
+  filter: blur(6px) brightness(0.55) drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
   opacity: 0.5;
   cursor: default;
   pointer-events: none;
+}
+/* Entry: cards rise slightly out of the pack as it opens (settles to the stacked transform). */
+@keyframes exp-emerge {
+  from {
+    opacity: 0.15;
+    /* start tucked down in the pack mouth, then rise up to the stacked transform */
+    transform: translate(-50%, calc(var(--exp-mouth) + 16px)) translateX(calc(var(--exp-off, 0) * 4px))
+      rotate(0deg) scale(0.84);
+  }
+}
+@keyframes exp-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(0.5deg); }
 }
