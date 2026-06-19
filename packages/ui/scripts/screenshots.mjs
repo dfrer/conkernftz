@@ -162,7 +162,9 @@ function installMock() {
         packs: [
           { id: 'conkerco-default', name: 'CONKERCO Default', kind: 'pack', builtin: true },
           { id: 'pack-holo', name: 'My Holo Pack', kind: 'pack', builtin: false },
-          { id: 'back-classic', name: 'Classic Back', kind: 'back', builtin: false },
+          { id: 'conkerco-back-holo', name: 'CONKERCO Holo', kind: 'back', builtin: true },
+          { id: 'conkerco-back-eye', name: 'All-Seeing Eye', kind: 'back', builtin: true },
+          { id: 'conkerco-back-chrome', name: 'CONKERCO Chrome', kind: 'back', builtin: true },
         ],
       }),
     packsRead: (id = '') => ok({ base64: palette[hash(id) % palette.length], mime: 'image/png' }),
