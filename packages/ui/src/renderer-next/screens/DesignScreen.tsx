@@ -8,12 +8,15 @@ import { EffectsEditor } from '../components/EffectsEditor';
 import { OverridesEditor } from '../components/OverridesEditor';
 import { RenamerPanel } from '../components/RenamerPanel';
 import { TraitBrowser } from '../components/TraitBrowser';
+import { RarityBar } from '../components/RarityBar';
 import { SpawnEditor } from '../components/SpawnEditor';
 import { RulesEditor, type RulesObj } from '../components/RulesEditor';
 import { Tabs, TabPanel, type TabDef } from '../components/Tabs';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
+import { isImage } from '../lib/rename';
+import { computeTraitTable } from '../lib/traits';
 import { useProject, type LayerCfg, type AssetOverrideCfg } from '../state/project';
 
 function StageHead({ children, actions }: { children?: ReactNode; actions?: ReactNode }) {
@@ -34,6 +37,7 @@ export function DesignScreen() {
   const toast = useToast();
   const [counts, setCounts] = useState<Record<number, number | null>>({});
   const [thumbs, setThumbs] = useState<Record<number, string | null>>({});
+  const [fileNames, setFileNames] = useState<Record<number, string[]>>({});
   const [selected, setSelected] = useState<number | null>(null);
   const [browsing, setBrowsing] = useState<number | null>(null);
   const [tab, setTab] = useState('layers');
@@ -67,25 +71,27 @@ export function DesignScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layersKey]);
 
-  // Load a representative thumbnail (first image) per layer so the table shows the art.
+  // Per layer: list the folder once, then derive a representative thumbnail (first image) and
+  // keep the image filenames (so the row can show a rarity-distribution bar without refetching).
   useEffect(() => {
     const fb = bridge();
     const layers = config?.layers ?? [];
     if (!fb || layers.length === 0) {
       setThumbs({});
+      setFileNames({});
       return;
     }
     let cancelled = false;
     (async () => {
       const next: Record<number, string | null> = {};
+      const names: Record<number, string[]> = {};
       await Promise.all(
         layers.map(async (l, i) => {
           try {
             const dir = await fb.listDir(l.path);
-            const name =
-              dir.ok && Array.isArray(dir.items)
-                ? dir.items.find((n) => !n.endsWith('/') && /\.(png|webp|gif|svg|jpe?g)$/i.test(n))
-                : undefined;
+            const imgs = dir.ok && Array.isArray(dir.items) ? dir.items.filter(isImage) : [];
+            names[i] = imgs;
+            const name = imgs[0];
             if (!name) {
               next[i] = null;
               return;
@@ -95,10 +101,14 @@ export function DesignScreen() {
             next[i] = r.ok && r.base64 ? `data:${r.mime || 'image/png'};base64,${r.base64}` : null;
           } catch {
             next[i] = null;
+            names[i] = [];
           }
         }),
       );
-      if (!cancelled) setThumbs(next);
+      if (!cancelled) {
+        setThumbs(next);
+        setFileNames(names);
+      }
     })();
     return () => {
       cancelled = true;
@@ -279,7 +289,16 @@ export function DesignScreen() {
                   onChange={(e) => setLayer(i, { opacity: e.target.value === '' ? undefined : Number(e.target.value) })}
                   aria-label={`Layer ${i + 1} opacity`}
                 />
-                <span className="mono muted">{counts[i] == null ? '—' : counts[i]}</span>
+                <span className="stack" style={{ gap: 4, minWidth: 0 }}>
+                  <span className="mono muted">{counts[i] == null ? '—' : counts[i]}</span>
+                  <RarityBar
+                    rows={computeTraitTable(fileNames[i] ?? [], {
+                      delimiter,
+                      defaultWeight,
+                      uniform: l.rarity === 'uniform',
+                    }).rows.map((r) => ({ value: r.value, probability: r.probability }))}
+                  />
+                </span>
                 <span className="row">
                   <Button
                     size="sm"
