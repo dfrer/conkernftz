@@ -4,11 +4,14 @@ import { RedactionStamp } from '../components/RedactionStamp';
 import { bridge } from '../lib/bridge';
 
 const STAGES: Array<[string, string]> = [
-  ['Projects', 'Open or create a project — a folder with a foundry.config.json and layer assets.'],
-  ['Design', 'Edit basics, layers, per-layer effects (blend + glow/stroke/shadow/…), and rules.'],
-  ['Preview', 'Render a fresh random set of editions live from the engine.'],
-  ['Build', 'Generate the full collection (images + metadata) with progress and a rarity report.'],
-  ['Publish', 'Upload to irys / pinata / local, then mint on Solana or EVM.'],
+  ['Projects', 'Create a fresh collection (starter config + layer folders) or open an existing project folder.'],
+  ['Design', 'Basics, layers, effects and rules — in tabs. Expand a layer to browse its traits with drop-odds; each row shows a rarity bar.'],
+  ['Preview', 'Render a fresh random set live from the engine. Set a seed to reproduce a set; click a tile to inspect it full-size.'],
+  ['Build', 'Generate the full collection (images + metadata) with progress + pause/stop, a rarity report, and an output gallery of the editions.'],
+  ['Mint FX', 'Design the pack-opening / card-reveal animation collectors see when they mint.'],
+  ['Publish', 'Upload to local / pinata / irys, then mint on Solana or EVM. The readiness strip shows what’s built and uploaded.'],
+  ['Site', 'Build a deployable mint site from blocks (or a starter template); preview locally or deploy to Vercel.'],
+  ['Fal AI', 'Generate art or video with fal.ai models and save results into the project’s fal/ folder.'],
   ['Settings', 'Theme + accent, and the project’s storage and chain configuration.'],
 ];
 
@@ -34,8 +37,9 @@ export function HelpScreen() {
             </div>
           ))}
           <span className="label muted">
-            On-chain writes default to testnet/devnet. The new UI is opt-in via <code>start:next</code>; the classic UI
-            remains the default until cutover.
+            On-chain writes default to testnet/devnet; mainnet stays gated behind explicit CLI flags. Keys and tokens
+            live on this machine (in <code>foundry.config.json</code> or referenced key files) — keep them out of source
+            control.
           </span>
         </div>
       </Panel>

@@ -23,6 +23,7 @@ export function ExperienceScreen() {
   );
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
 
   const set = (patch: Partial<ExperienceConfig>): void => setExp((e) => resolveExperience({ ...e, ...patch }));
 
@@ -132,8 +133,18 @@ export function ExperienceScreen() {
             </div>
           </Panel>
 
-          <Panel title="Preview" actions={<span className="label">{images.length ? `${images.length} CARDS` : 'PLACEHOLDER ART'}</span>}>
-            <MintExperience config={exp} images={images} />
+          <Panel
+            title="Preview"
+            actions={
+              <div className="row">
+                <Button size="sm" variant="ghost" onClick={() => setReplayKey((k) => k + 1)}>
+                  Replay
+                </Button>
+                <span className="label">{images.length ? `${images.length} CARDS` : 'PLACEHOLDER ART'}</span>
+              </div>
+            }
+          >
+            <MintExperience key={replayKey} config={exp} images={images} />
           </Panel>
         </>
       )}
