@@ -46,6 +46,7 @@ const foundryApi: FoundryApi = {
   saveJson: (relPath: string, json: unknown) => ipcRenderer.invoke('foundry:saveJson', relPath, json),
   exportSite: (payload: { dataJs: string; dataFile: string }) => ipcRenderer.invoke('foundry:exportSite', payload),
   deploySite: (payload: { provider: string; token: string }) => ipcRenderer.invoke('foundry:deploySite', payload),
+  previewSite: () => ipcRenderer.invoke('foundry:previewSite'),
 };
 
 contextBridge.exposeInMainWorld('foundry', foundryApi);

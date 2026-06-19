@@ -113,6 +113,8 @@ export interface FoundryApi {
   exportSite(payload: { dataJs: string; dataFile: string }): Promise<OutDirResult>;
   /** Deploy <project>/site-export to a host (currently Vercel via the user's token). */
   deploySite(payload: { provider: string; token: string }): Promise<DeployResult>;
+  /** Serve <project>/site-export over http://127.0.0.1 and open it (local preview, no file://). */
+  previewSite(): Promise<DeployResult>;
 }
 
 /**
@@ -158,6 +160,7 @@ export const FOUNDRY_METHODS = [
   'deleteFile',
   'exportSite',
   'deploySite',
+  'previewSite',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];
