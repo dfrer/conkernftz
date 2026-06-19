@@ -17,6 +17,9 @@ interface UserPack {
 
 const BUILTINS: { id: string; name: string; kind: PackKind; file: string }[] = [
   { id: 'conkerco-default', name: 'CONKERCO Default', kind: 'pack', file: 'conkerco-default.png' },
+  { id: 'conkerco-back-holo', name: 'CONKERCO Holo', kind: 'back', file: 'conkerco-back-holo.png' },
+  { id: 'conkerco-back-eye', name: 'All-Seeing Eye', kind: 'back', file: 'conkerco-back-eye.png' },
+  { id: 'conkerco-back-chrome', name: 'CONKERCO Chrome', kind: 'back', file: 'conkerco-back-chrome.png' },
 ];
 
 const MIME: Record<string, string> = {
