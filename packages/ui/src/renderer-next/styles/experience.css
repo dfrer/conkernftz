@@ -172,44 +172,102 @@
   letter-spacing: var(--tracking-label);
 }
 
-/* ---- Rip stage: cards rise out of the torn-open pack (deterministic) ---- */
+/* ---- Tear beat: the sealed pack visibly rips before settling into the open pack ----
+ * A short shake-and-pop on the sealed art while the torn-open art fades in underneath +
+ * an accent flash across the tear line. onAnimationEnd (of the sealed layer) advances the
+ * player to the 'stacked' phase, so the React state machine stays in step with the visuals. */
+.exp-tear {
+  position: relative;
+  width: 188px;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+}
+.exp-tear-open,
+.exp-tear-sealed {
+  display: block;
+  width: 100%;
+}
+.exp-tear-open {
+  position: absolute;
+  inset: 0;
+  animation: exp-tear-in var(--exp-dur) var(--ease-out) backwards;
+}
+.exp-tear-sealed {
+  position: relative;
+  transform-origin: 50% 38%;
+  animation: exp-tear-out 420ms var(--ease-out) forwards;
+}
+.exp-tear-flash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 36%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--exp-accent), transparent);
+  filter: blur(1px);
+  opacity: 0;
+  animation: exp-tear-flash 420ms var(--ease-out);
+}
+@keyframes exp-tear-out {
+  0% { opacity: 1; transform: scale(1) rotate(0); }
+  28% { transform: scale(1.05) rotate(-2deg); }
+  55% { transform: scale(1.02) rotate(2.5deg); }
+  100% { opacity: 0; transform: scale(1.07) rotate(-1deg) translateY(-10px); }
+}
+@keyframes exp-tear-in {
+  from { opacity: 0.3; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes exp-tear-flash {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.05); }
+}
+
+/* ---- Rip scene: cards sit STACKED inside the open pack, then SPILL out on click ----
+ * Deterministic & state-driven: positions/blur are CSS transitions keyed off the phase
+ * class, so it animates the same every time and reverses cleanly. */
 .exp-rip {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 .exp-rip-cards {
   position: relative;
-  z-index: 1;
+  z-index: 1; /* behind the pack while stacked */
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   gap: var(--sp-2);
   max-width: 440px;
-  margin-bottom: -46px; /* tuck the card bottoms behind the pack's torn mouth */
+  margin-bottom: -118px; /* stacked: cards are tucked deep inside the pack's torn mouth */
+  transition: margin-bottom var(--exp-dur) var(--ease-out);
 }
 .exp-rip-cards .exp-card {
-  transform: rotate(var(--exp-rot, 0deg));
-  animation: exp-rise var(--exp-dur) var(--ease-out) backwards;
-  animation-delay: calc(var(--exp-i, 0) * 110ms);
+  /* stacked: low, small, gently fanned — only the tops peek above the torn rim */
+  transform: translateY(64px) scale(0.78) rotate(calc(var(--exp-rot, 0deg) * 0.35));
+  transition: transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
+  transition-delay: calc(var(--exp-i, 0) * 80ms);
 }
 .exp-rip-pack {
   position: relative;
-  z-index: 2;
+  z-index: 2; /* in front of the stacked cards */
   width: 188px;
+  cursor: pointer;
   filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
-  pointer-events: none;
+  transition: filter var(--exp-dur) var(--ease-out), transform var(--exp-dur) var(--ease-out), opacity var(--exp-dur);
 }
-@keyframes exp-rise {
-  0% {
-    opacity: 0;
-    transform: translateY(190px) scale(0.7) rotate(var(--exp-rot, 0deg));
-  }
-  55% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotate(var(--exp-rot, 0deg));
-  }
+/* spilled: cards rise to a full fan ON TOP; the pack recedes + blurs into the background */
+.exp-rip--spilled .exp-rip-cards {
+  z-index: 3;
+  margin-bottom: -40px;
+}
+.exp-rip--spilled .exp-rip-cards .exp-card {
+  transform: translateY(0) scale(1) rotate(var(--exp-rot, 0deg));
+}
+.exp-rip--spilled .exp-rip-pack {
+  transform: translateY(16px) scale(0.86);
+  filter: blur(7px) brightness(0.6) drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
