@@ -136,11 +136,12 @@ export function MintExperience({
     const off = i - (count - 1) / 2; // centered index (e.g. -1, 0, 1) → fan direction/spread
     const tilt = (jitter(i) - 0.5) * 14; // resting-stack tilt, ~ -7..+7°
     const jx = (jitter(i + 7) - 0.5) * 10; // resting-stack horizontal jitter, ~ -5..+5px
+    const hasImg = isFlipped ? !!art : !!back; // real card image vs. CSS placeholder
     return (
       <button
         key={i}
         type="button"
-        className={cx('exp-card', isFlipped ? 'exp-card--face' : 'exp-card--back')}
+        className={cx('exp-card', isFlipped ? 'exp-card--face' : 'exp-card--back', hasImg && 'exp-card--art')}
         // --exp-off/--exp-rot drive the spilled fan; --exp-tilt/--exp-jx the resting pile.
         style={{ '--exp-i': i, '--exp-off': off, '--exp-rot': `${off * 6}deg`, '--exp-tilt': `${tilt}deg`, '--exp-jx': `${jx}px` } as CSSProperties}
         // In the stacked phase a card click pulls the whole stack out; once spilled, it flips.
@@ -182,7 +183,13 @@ export function MintExperience({
           {hasPack(config) ? (
             <>
               <div
-                className={cx('exp-pack', 'exp-pack--grab', dragging && 'exp-pack--dragging', !dragging && config.shake && 'exp-pack--shake')}
+                className={cx(
+                  'exp-pack',
+                  'exp-pack--grab',
+                  config.packArt && 'exp-pack--art',
+                  dragging && 'exp-pack--dragging',
+                  !dragging && config.shake && 'exp-pack--shake',
+                )}
                 role="button"
                 tabIndex={0}
                 aria-label="Rip open the pack"
