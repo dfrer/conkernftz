@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   BLOCK_KINDS,
   addBlock,
+  blockHasText,
+  clampFontScale,
   defaultSite,
   moveBlock,
   newBlock,
@@ -68,6 +70,30 @@ describe('site model', () => {
 
   it('setTheme merges into the theme', () => {
     expect(setTheme(defaultSite(), { font: 'mono' }).theme.font).toBe('mono');
+  });
+
+  it('per-block fontScale survives updateBlock + resolveSite round-trips', () => {
+    let s = addBlock(emptySite(), 'richText');
+    const id = s.blocks[0]!.id;
+    s = updateBlock(s, id, { fontScale: 1.75 });
+    expect(s.blocks[0]!.fontScale).toBe(1.75);
+    // not stripped by a resolve (save → reload)
+    expect(resolveSite(s).blocks[0]!.fontScale).toBe(1.75);
+  });
+
+  it('clampFontScale bounds + defaults untrusted values', () => {
+    expect(clampFontScale(1.5)).toBe(1.5);
+    expect(clampFontScale(99)).toBe(4); // max
+    expect(clampFontScale(0.1)).toBe(0.5); // min
+    expect(clampFontScale('nope')).toBe(1); // default
+  });
+
+  it('blockHasText covers text widgets but not image/divider/gallery/html/button', () => {
+    expect(blockHasText('richText')).toBe(true);
+    expect(blockHasText('hero')).toBe(true);
+    expect(blockHasText('divider')).toBe(false);
+    expect(blockHasText('image')).toBe(false);
+    expect(blockHasText('button')).toBe(false); // fixed-size badge
   });
 });
 

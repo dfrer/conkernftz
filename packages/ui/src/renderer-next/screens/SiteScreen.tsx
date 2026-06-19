@@ -16,6 +16,8 @@ import {
   BLOCK_KINDS,
   BLOCK_LABELS,
   addBlock,
+  blockHasText,
+  clampFontScale,
   defaultLayout,
   defaultSite,
   moveBlock,
@@ -415,6 +417,32 @@ export function SiteScreen() {
             <Panel title={`Edit — ${BLOCK_LABELS[selected.kind]}`}>
               <div className="stack">
                 <BlockFields block={selected} setField={setField} />
+                {blockHasText(selected.kind) ? (
+                  <Field label="Font size %">
+                    <div className="row">
+                      <input
+                        type="range"
+                        min="50"
+                        max="400"
+                        step="5"
+                        value={Math.round((selected.fontScale ?? 1) * 100)}
+                        onChange={(e) => setField({ fontScale: clampFontScale(Number(e.target.value) / 100) })}
+                        aria-label="Font size percent"
+                        style={{ flex: 1 }}
+                      />
+                      <Input
+                        type="number"
+                        min="50"
+                        max="400"
+                        step="5"
+                        value={Math.round((selected.fontScale ?? 1) * 100)}
+                        onChange={(e) => setField({ fontScale: clampFontScale((Number(e.target.value) || 100) / 100) })}
+                        aria-label="Font size percent value"
+                        style={{ width: 80 }}
+                      />
+                    </div>
+                  </Field>
+                ) : null}
                 {mode === 'canvas' && lay ? (
                   <>
                     <div className="label">POSITION (desktop)</div>

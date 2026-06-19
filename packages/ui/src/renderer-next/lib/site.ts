@@ -38,6 +38,8 @@ export interface BaseBlock {
   kind: BlockKind;
   /** Free-form (canvas) placement. Ignored in 'flow' mode. */
   layout?: BlockLayout;
+  /** Text size multiplier (1 = default). Scales the block's text; resizing the box doesn't. */
+  fontScale?: number;
 }
 export interface HeroBlock extends BaseBlock {
   kind: 'hero';
@@ -187,6 +189,33 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   webRing: 'Web ring',
   underConstruction: 'Under construction',
 };
+
+// Per-block text-size multiplier bounds.
+export const MIN_FONT_SCALE = 0.5;
+export const MAX_FONT_SCALE = 4;
+/** Clamp an untrusted font-size multiplier; defaults to 1 (unscaled). */
+export function clampFontScale(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(MIN_FONT_SCALE, Math.min(MAX_FONT_SCALE, Math.round(n * 100) / 100));
+}
+// Blocks whose text the font-size control applies to. Excludes image/divider/gallery/raw-HTML
+// (no own text) and the 88×31 button (a fixed-dimension retro badge — scaling overflows it).
+export const TEXT_BLOCK_KINDS: ReadonlySet<BlockKind> = new Set<BlockKind>([
+  'hero',
+  'richText',
+  'faq',
+  'mint',
+  'marquee',
+  'blink',
+  'wordArt',
+  'webRing',
+  'underConstruction',
+  'hitCounter',
+]);
+export function blockHasText(kind: BlockKind): boolean {
+  return TEXT_BLOCK_KINDS.has(kind);
+}
 
 const DEFAULT_THEME: SiteTheme = { accent: '#ffb000', background: 'ink', font: 'sans' };
 const DEFAULT_CANVAS = { width: 960, height: 1400 };

@@ -18,10 +18,15 @@
 .site--bg-manila { background: #e8e0cf; color: #1c1812; }
 .site--bg-paper { background: #f6f1e6; color: #211c14; }
 
+/* Per-block text-size scale. The wrapper has no box (display:contents) so it never affects
+ * layout; it only carries --site-fscale, which the text rules below multiply into their size.
+ * Resizing a block's box no longer leaves the font fixed — see SiteScreen "Font size %". */
+.site-block { display: contents; }
+
 .site .site-h2 {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-xl);
+  font-size: calc(var(--text-xl) * var(--site-fscale, 1));
   letter-spacing: -0.01em;
   margin-bottom: var(--sp-3);
   color: var(--site-accent);
@@ -33,13 +38,13 @@
 .site-hero-title {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-3xl);
+  font-size: calc(var(--text-3xl) * var(--site-fscale, 1));
   line-height: 1.05;
 }
-.site-hero-sub { font-size: var(--text-md); opacity: 0.8; margin-top: var(--sp-3); }
+.site-hero-sub { font-size: calc(var(--text-md) * var(--site-fscale, 1)); opacity: 0.8; margin-top: var(--sp-3); }
 
 /* Rich text */
-.site-rich p { line-height: 1.6; margin: 0 0 var(--sp-2); max-width: 64ch; }
+.site-rich p { font-size: calc(1em * var(--site-fscale, 1)); line-height: 1.6; margin: 0 0 var(--sp-2); max-width: 64ch; }
 
 /* Gallery */
 .site-gallery-grid {
@@ -66,12 +71,12 @@
 
 /* Mint */
 .site-mint { text-align: center; }
-.site-mint-price { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--site-accent); }
+.site-mint-price { font-family: var(--font-mono); font-size: calc(var(--text-lg) * var(--site-fscale, 1)); color: var(--site-accent); }
 
 /* FAQ */
 .site-faq-item { padding: var(--sp-3) 0; border-bottom: var(--hair) solid var(--line); }
-.site-faq-item dt { font-weight: 700; margin-bottom: var(--sp-1); }
-.site-faq-item dd { margin: 0; opacity: 0.82; }
+.site-faq-item dt { font-size: calc(1em * var(--site-fscale, 1)); font-weight: 700; margin-bottom: var(--sp-1); }
+.site-faq-item dd { font-size: calc(1em * var(--site-fscale, 1)); margin: 0; opacity: 0.82; }
 
 /* Divider */
 .site-divider { border: none; border-top: var(--hair) solid var(--line-strong); width: 100%; }
@@ -88,6 +93,7 @@
   padding-left: 100%;
   color: var(--site-accent);
   font-family: var(--font-mono);
+  font-size: calc(1em * var(--site-fscale, 1));
   letter-spacing: var(--tracking-wide);
   animation: site-marquee 12s linear infinite;
   will-change: transform;
@@ -115,7 +121,7 @@
 .site-blink {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-xl);
+  font-size: calc(var(--text-xl) * var(--site-fscale, 1));
   animation: site-blink 1s steps(1, end) infinite;
 }
 @keyframes site-blink {
@@ -142,7 +148,7 @@
   align-items: center;
   gap: var(--sp-2);
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: calc(var(--text-sm) * var(--site-fscale, 1));
 }
 .site-hitcounter-num {
   background: #000;
@@ -208,7 +214,7 @@
 .site-wordart {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-3xl);
+  font-size: calc(var(--text-3xl) * var(--site-fscale, 1));
   letter-spacing: 0.02em;
   -webkit-background-clip: text;
   background-clip: text;
@@ -243,7 +249,7 @@
   gap: var(--sp-2);
   align-items: center;
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: calc(var(--text-sm) * var(--site-fscale, 1));
   border: var(--hair) solid var(--site-accent);
   padding: var(--sp-1) var(--sp-3);
 }
@@ -255,6 +261,7 @@
   display: inline-block;
   font-family: var(--font-mono);
   font-weight: 700;
+  font-size: calc(1em * var(--site-fscale, 1));
   letter-spacing: 0.1em;
   padding: var(--sp-2) var(--sp-4);
   color: #1a1400;
