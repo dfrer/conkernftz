@@ -66,4 +66,29 @@ describe('mintExperience', () => {
       expect(resolveExperience(resolveExperience(p))).toEqual(resolveExperience(p));
     }
   });
+
+  it('preserves runtime-resolved art through repeated resolves (site/export pass-through)', () => {
+    // The site/export path runs resolveExperience multiple times; it must NOT strip the
+    // resolved art, or the layered pack rip + rarity backs vanish from the generated site.
+    const resolved: Partial<ExperienceConfig> = {
+      kind: 'cardPack',
+      packId: 'conkerco-default',
+      packArt: 'data:img/pack',
+      packOpenArt: 'data:img/open',
+      packOpenFrontArt: 'data:img/front',
+      packOpenBackArt: 'data:img/back',
+      backArt: 'data:img/cardback',
+      tierBacks: { Rare: 'data:img/rare' },
+    };
+    const once = resolveExperience(resolved);
+    const twice = resolveExperience(once); // simulate buildSiteData → template → renderer
+    for (const r of [once, twice]) {
+      expect(r.packArt).toBe('data:img/pack');
+      expect(r.packOpenArt).toBe('data:img/open');
+      expect(r.packOpenFrontArt).toBe('data:img/front');
+      expect(r.packOpenBackArt).toBe('data:img/back');
+      expect(r.backArt).toBe('data:img/cardback');
+      expect(r.tierBacks).toEqual({ Rare: 'data:img/rare' });
+    }
+  });
 });

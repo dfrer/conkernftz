@@ -77,8 +77,20 @@ export function resolveExperience(partial?: Partial<ExperienceConfig> | null): E
     shake: typeof p.shake === 'boolean' ? p.shake : base.shake,
     autoFlip: typeof p.autoFlip === 'boolean' ? p.autoFlip : base.autoFlip,
   };
+  // Preserve runtime-resolved art (data URLs filled by resolveExperienceArt). resolveExperience
+  // sits on the site/export pass-through path and is called repeatedly, so it MUST NOT drop these
+  // — otherwise the layered pack rip + rarity backs survive only in the Mint FX preview, not the
+  // generated/exported site.
   if (typeof p.backArt === 'string' && p.backArt) out.backArt = p.backArt;
   if (typeof p.packArt === 'string' && p.packArt) out.packArt = p.packArt;
+  if (typeof p.packOpenArt === 'string' && p.packOpenArt) out.packOpenArt = p.packOpenArt;
+  if (typeof p.packOpenFrontArt === 'string' && p.packOpenFrontArt) out.packOpenFrontArt = p.packOpenFrontArt;
+  if (typeof p.packOpenBackArt === 'string' && p.packOpenBackArt) out.packOpenBackArt = p.packOpenBackArt;
+  if (p.tierBacks && typeof p.tierBacks === 'object') {
+    const tb: Record<string, string> = {};
+    for (const [k, v] of Object.entries(p.tierBacks)) if (typeof v === 'string' && v) tb[k] = v;
+    if (Object.keys(tb).length) out.tierBacks = tb;
+  }
   if (typeof p.packId === 'string' && p.packId) out.packId = p.packId;
   if (typeof p.backId === 'string' && p.backId) out.backId = p.backId;
   if (Array.isArray(p.rarityBacks)) {
