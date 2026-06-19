@@ -2,7 +2,7 @@ import { type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import { clampFontScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
+import { clampFontScale, clampScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
 
 const MOBILE_W = 390;
 
@@ -88,14 +88,18 @@ function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desk
 // site.css multiplies sizes by var(--site-fscale). All three are no-ops when unset.
 export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig }) {
   const { block } = props;
-  const scale = clampFontScale(block.fontScale);
+  const fscale = clampFontScale(block.fontScale);
+  const wscale = clampScale(block.scale);
   const align = normalizeAlign(block.align);
   const style: Record<string, string | number> = {};
-  if (scale !== 1) style['--site-fscale'] = scale;
+  if (fscale !== 1) style['--site-fscale'] = fscale;
   if (align) style.textAlign = align;
   if (typeof block.color === 'string' && block.color) style.color = block.color;
+  // Whole-widget scale uses `zoom` (it reflows, reserving the scaled space — unlike
+  // transform:scale). It needs a real box, so a scaled block drops display:contents.
+  if (wscale !== 1) style.zoom = wscale;
   return (
-    <div className="site-block" style={Object.keys(style).length ? (style as CSSProperties) : undefined}>
+    <div className={cx('site-block', wscale !== 1 && 'site-block--scaled')} style={Object.keys(style).length ? (style as CSSProperties) : undefined}>
       <BlockContent {...props} />
     </div>
   );

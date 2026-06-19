@@ -22,6 +22,8 @@
  * layout; it only carries --site-fscale, which the text rules below multiply into their size.
  * Resizing a block's box no longer leaves the font fixed — see SiteScreen "Font size %". */
 .site-block { display: contents; }
+/* A whole-widget scale (zoom) needs a real box, so a scaled block becomes a normal element. */
+.site-block--scaled { display: block; }
 
 .site .site-h2 {
   font-family: var(--font-display);

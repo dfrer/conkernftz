@@ -4,6 +4,7 @@ import {
   addBlock,
   blockHasText,
   clampFontScale,
+  clampScale,
   normalizeAlign,
   defaultSite,
   moveBlock,
@@ -87,6 +88,16 @@ describe('site model', () => {
     expect(clampFontScale(99)).toBe(4); // max
     expect(clampFontScale(0.1)).toBe(0.5); // min
     expect(clampFontScale('nope')).toBe(1); // default
+  });
+
+  it('clampScale (whole-widget) bounds 0.25–4 and round-trips on a block', () => {
+    expect(clampScale(2)).toBe(2);
+    expect(clampScale(99)).toBe(4);
+    expect(clampScale(0.01)).toBe(0.25);
+    expect(clampScale('nope')).toBe(1);
+    let s = addBlock(emptySite(), 'mint');
+    s = updateBlock(s, s.blocks[0]!.id, { scale: 1.75 });
+    expect(resolveSite(s).blocks[0]!.scale).toBe(1.75);
   });
 
   it('blockHasText covers text widgets but not image/divider/gallery/html/button', () => {
