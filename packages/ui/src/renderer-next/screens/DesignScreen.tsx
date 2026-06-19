@@ -10,6 +10,7 @@ import { RenamerPanel } from '../components/RenamerPanel';
 import { TraitBrowser } from '../components/TraitBrowser';
 import { SpawnEditor } from '../components/SpawnEditor';
 import { RulesEditor, type RulesObj } from '../components/RulesEditor';
+import { Tabs, TabPanel, type TabDef } from '../components/Tabs';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
@@ -35,6 +36,7 @@ export function DesignScreen() {
   const [thumbs, setThumbs] = useState<Record<number, string | null>>({});
   const [selected, setSelected] = useState<number | null>(null);
   const [browsing, setBrowsing] = useState<number | null>(null);
+  const [tab, setTab] = useState('layers');
 
   const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
   useEffect(() => {
@@ -182,6 +184,13 @@ export function DesignScreen() {
     toast.push(ok ? 'Config saved' : 'Save failed', ok ? 'ok' : 'danger');
   };
 
+  const tabDefs: TabDef[] = [
+    { id: 'basics', label: 'Basics' },
+    { id: 'layers', label: 'Layers', badge: layers.length || undefined },
+    { id: 'assets', label: 'Assets & rarity' },
+    { id: 'rules', label: 'Rules' },
+  ];
+
   return (
     <div className="stack stagger">
       <StageHead
@@ -195,6 +204,9 @@ export function DesignScreen() {
         }
       />
 
+      <Tabs tabs={tabDefs} active={tab} onChange={setTab} ariaLabel="Design sections" />
+
+      <TabPanel id="basics" active={tab}>
       <Panel title="Basics">
         <div className="grid cols-auto">
           <Field label="Collection name">
@@ -217,7 +229,9 @@ export function DesignScreen() {
           </Field>
         </div>
       </Panel>
+      </TabPanel>
 
+      <TabPanel id="layers" active={tab}>
       <Panel
         title="Layers"
         actions={
@@ -307,19 +321,6 @@ export function DesignScreen() {
         </Panel>
       ) : null}
 
-      {layers.length > 0 ? <RenamerPanel layers={layers} delimiter={delimiter} defaultWeight={defaultWeight} /> : null}
-
-      {layers.length > 0 ? (
-        <SpawnEditor
-          layers={layers}
-          mapPath={spawnMapPath}
-          onMapPathChange={(p) => {
-            const cur = (config.spawn as { mapPath?: string } | undefined)?.mapPath;
-            if (cur !== p) updateConfig((d) => { d.spawn = { ...((d.spawn as object) ?? {}), mapPath: p }; });
-          }}
-        />
-      ) : null}
-
       {selected != null && layers[selected] ? (
         <Panel
           title={`Effects — ${layers[selected]!.name}`}
@@ -354,8 +355,29 @@ export function DesignScreen() {
           </div>
         </Panel>
       ) : null}
+      </TabPanel>
 
-      <RulesEditor value={(config.rules ?? {}) as RulesObj} setRules={(next) => updateConfig((d) => { d.rules = next; })} />
+      <TabPanel id="assets" active={tab}>
+        {layers.length > 0 ? (
+          <div className="stack">
+            <RenamerPanel layers={layers} delimiter={delimiter} defaultWeight={defaultWeight} />
+            <SpawnEditor
+              layers={layers}
+              mapPath={spawnMapPath}
+              onMapPathChange={(p) => {
+                const cur = (config.spawn as { mapPath?: string } | undefined)?.mapPath;
+                if (cur !== p) updateConfig((d) => { d.spawn = { ...((d.spawn as object) ?? {}), mapPath: p }; });
+              }}
+            />
+          </div>
+        ) : (
+          <EmptyState code="NO LAYERS" title="No layers yet" hint="Add a layer in the Layers tab to set rarity weights and spawn maps." />
+        )}
+      </TabPanel>
+
+      <TabPanel id="rules" active={tab}>
+        <RulesEditor value={(config.rules ?? {}) as RulesObj} setRules={(next) => updateConfig((d) => { d.rules = next; })} />
+      </TabPanel>
     </div>
   );
 }

@@ -8,5 +8,7 @@ export { Badge } from './Badge';
 export { EmptyState } from './EmptyState';
 export { Skeleton } from './Skeleton';
 export { Dialog } from './Dialog';
+export { Tabs, TabPanel } from './Tabs';
+export type { TabDef } from './Tabs';
 export { ToastProvider, useToast } from './Toast';
 export { RedactionStamp } from './RedactionStamp';

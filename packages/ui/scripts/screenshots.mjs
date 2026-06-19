@@ -175,6 +175,16 @@ const main = async () => {
   try {
     await page.locator('.nav-item', { hasText: 'Design' }).first().click();
     await page.waitForTimeout(400);
+    // Walk the Design section tabs so each is captured.
+    for (const t of ['Basics', 'Assets & rarity', 'Rules']) {
+      await page.getByRole('tab', { name: new RegExp(`^${t}`, 'i') }).click();
+      await page.waitForTimeout(350);
+      await page.screenshot({ path: path.join(outDir, `design-${t.split(' ')[0].toLowerCase()}.png`), fullPage: true });
+      console.log('captured', `design-${t.split(' ')[0].toLowerCase()}`);
+    }
+    // Back to Layers + expand the trait browser.
+    await page.getByRole('tab', { name: /^Layers/i }).click();
+    await page.waitForTimeout(300);
     await page.getByRole('button', { name: /Browse layer 1 traits/i }).click();
     await page.waitForTimeout(700);
     await page.screenshot({ path: path.join(outDir, 'design-traits.png'), fullPage: true });
@@ -182,7 +192,7 @@ const main = async () => {
     await page.locator('.panel', { hasText: 'Traits —' }).first().screenshot({ path: path.join(outDir, 'design-traits-panel.png') });
     console.log('captured', 'design-traits');
   } catch (e) {
-    console.log('FAILED', 'design-traits', String(e?.message ?? e));
+    console.log('FAILED', 'design-interactions', String(e?.message ?? e));
   }
   await browser.close();
   server.close();

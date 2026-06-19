@@ -203,6 +203,48 @@ button {
   margin-bottom: var(--sp-1);
 }
 
+/* ===================== Tabs (in-screen section nav) ===================== */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: var(--hair) solid var(--line);
+}
+.tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: transparent;
+  border: var(--hair) solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+}
+.tab:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.tab--active {
+  background: var(--accent-soft);
+  border-color: var(--line-amber);
+  color: var(--text);
+}
+.tab__badge {
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+}
+.tab--active .tab__badge {
+  color: var(--accent);
+}
+
 .panel {
   position: relative;
   background: var(--surface);

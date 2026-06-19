@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Panel, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, useToast } from '../components';
+import { Panel, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, useToast } from '../components';
 
 // In-app component playground — the visual catalog of the design system. Doubles as a
 // manual-QA surface until full visual-regression tooling lands.
 export function PlaygroundScreen() {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('one');
   const toast = useToast();
   return (
     <div className="stack stagger">
@@ -68,6 +69,28 @@ export function PlaygroundScreen() {
             Toast error
           </Button>
         </div>
+      </Panel>
+
+      <Panel title="Tabs">
+        <Tabs
+          tabs={[
+            { id: 'one', label: 'Overview' },
+            { id: 'two', label: 'Layers', badge: 4 },
+            { id: 'three', label: 'Rules' },
+          ]}
+          active={tab}
+          onChange={setTab}
+          ariaLabel="Playground tabs"
+        />
+        <TabPanel id="one" active={tab}>
+          <p className="muted">Roving-tabindex tablist — arrow keys, Home/End, and click all select. Used to section dense screens.</p>
+        </TabPanel>
+        <TabPanel id="two" active={tab}>
+          <p className="muted">Tabs accept an optional trailing badge (e.g. a count).</p>
+        </TabPanel>
+        <TabPanel id="three" active={tab}>
+          <p className="muted">Only the active panel renders, so heavy sections stay unmounted until shown.</p>
+        </TabPanel>
       </Panel>
 
       <Panel title="Loading + empty">
