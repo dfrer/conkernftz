@@ -25,6 +25,9 @@ export interface PathResult extends OkResult {
 export interface OutDirResult extends OkResult {
   outDir?: string;
 }
+export interface DeployResult extends OkResult {
+  url?: string;
+}
 export interface ContentResult extends OkResult {
   content?: string;
 }
@@ -108,6 +111,8 @@ export interface FoundryApi {
   deleteFile(relPath: string): Promise<OkResult>;
   /** Generate the deployable static mint site into <project>/site-export. */
   exportSite(payload: { dataJs: string; dataFile: string }): Promise<OutDirResult>;
+  /** Deploy <project>/site-export to a host (currently Vercel via the user's token). */
+  deploySite(payload: { provider: string; token: string }): Promise<DeployResult>;
 }
 
 /**
@@ -152,6 +157,7 @@ export const FOUNDRY_METHODS = [
   'listFiles',
   'deleteFile',
   'exportSite',
+  'deploySite',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

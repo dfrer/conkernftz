@@ -57,6 +57,14 @@ export function SiteScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [deploying, setDeploying] = useState(false);
+  const [vercelToken, setVercelToken] = useState<string>(() => {
+    try {
+      return localStorage.getItem('cnftz:vercelToken') ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [viewport, setViewport] = useState<Viewport>('desktop');
 
   const mode = site.layout ?? 'flow';
@@ -145,6 +153,66 @@ export function SiteScreen() {
       toast.push(String((e as Error)?.message ?? e), 'danger');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const onVercelToken = (v: string): void => {
+    setVercelToken(v);
+    try {
+      localStorage.setItem('cnftz:vercelToken', v);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const deploy = async (): Promise<void> => {
+    const fb = bridge();
+    if (!fb || !config) {
+      toast.push('Open a project first', 'danger');
+      return;
+    }
+    if (!vercelToken.trim()) {
+      toast.push('Add your Vercel token first', 'danger');
+      return;
+    }
+    setDeploying(true);
+    try {
+      // 1) generate a fresh export (with live art)
+      let imgs = images;
+      try {
+        const r = await fb.previewLive(config, 8, `site:${Date.now().toString(36)}`);
+        if (r.ok && Array.isArray(r.images)) {
+          const mime = r.format === 'webp' ? 'image/webp' : 'image/png';
+          imgs = r.images.map((b) => `data:${mime};base64,${b}`);
+          setImages(imgs);
+        }
+      } catch {
+        /* placeholders ok */
+      }
+      const bundle = buildSiteData({
+        name: typeof config.name === 'string' ? config.name : undefined,
+        site,
+        experience,
+        images: imgs,
+      });
+      const ex = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
+      if (!ex.ok) {
+        toast.push(ex.error ?? 'Export failed', 'danger');
+        return;
+      }
+      // 2) deploy it
+      toast.push('Deploying to Vercel… (first run can take a minute)', 'ok');
+      const dep = await fb.deploySite({ provider: 'vercel', token: vercelToken.trim() });
+      if (dep.ok && dep.url) {
+        toast.push(`Live at ${dep.url}`, 'ok');
+        fb.openExternal(dep.url);
+      } else {
+        toast.push(dep.error ?? 'Deploy failed', 'danger');
+      }
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    } finally {
+      setDeploying(false);
     }
   };
 
@@ -312,6 +380,23 @@ export function SiteScreen() {
             ) : (
               <SiteRenderer site={site} images={images} experience={experience} />
             )}
+          </Panel>
+
+          <Panel title="Host (deploy)">
+            <div className="stack">
+              <span className="label muted">
+                Deploy the generated static site to your own Vercel account. Your token stays on this machine.
+              </span>
+              <Field label="Vercel token">
+                <Input type="password" value={vercelToken} onChange={(e) => onVercelToken(e.target.value)} placeholder="Vercel → Account → Settings → Tokens" />
+              </Field>
+              <div className="row">
+                <Button variant="primary" onClick={deploy} disabled={deploying || !isBridged()}>
+                  {deploying ? 'Deploying…' : 'Deploy to Vercel'}
+                </Button>
+                <span className="label muted">Generates the site, then runs <code>npx vercel deploy --prod</code> (needs Node + a token).</span>
+              </div>
+            </div>
           </Panel>
         </>
       )}

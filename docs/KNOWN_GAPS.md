@@ -17,7 +17,8 @@ Legend: **Stub** = placeholder/decorative · **Partial** = works but limited · 
 | Site builder | Canvas ergonomics | Partial | Drag-move + corner-resize only. No multi-select, snapping/guides, group, undo/redo, or rotation. |
 | Mint experience | Pack art | Stub | Packs are CSS/SVG mockups, not the realistic fal-generated Pokémon/MTG booster packs (P1 re-scope). Needs the supervised fal session + blank-base-pack compositing. |
 | Mint experience | Card backs | Pending | The configurable NFT "flip side" (shared / per-rarity / rules) is designed but not built. |
-| Mint site (generated) | Static site template | Partial | P3.0 — the standalone template builds (`dist/site-template`) and renders a `site-data` bundle (shared `SiteRenderer`/`MintExperience`). The in-app "Generate site → folder" export (main-process file write + button) and one-click host are the next step (P3.1 / P4). |
+| Mint site (generated) | Static site template + export | Done (P3.0/P3.1) | Template builds (`dist/site-template`); the Site stage "Generate site" button writes a self-contained deployable folder (`<project>/site-export`). |
+| Mint site (generated) | Host / deploy | Partial | P4 — **Vercel only** (via `npx vercel deploy --prod` + the user's token; needs Node/npx). Netlify, IPFS (could reuse the storage providers), GitHub Pages, and custom-domain wiring are not built yet. First `npx vercel` run is slow (fetches the CLI). |
 | Mint site (generated) | Live minting | Pending | The mint widget in the generated site is preview-only. Live on-chain minting needs P5 (WalletConnect) + the Phase L contract (audit-gated). |
 
 > Tracker memory: [[build-process-and-gaps]]. See also `PLATFORM_MASTER_PLAN.md` for the planned
