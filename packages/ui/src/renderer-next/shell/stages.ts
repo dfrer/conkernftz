@@ -16,6 +16,7 @@ export const PIPELINE: Stage[] = [
 /** System / utility destinations. */
 export const UTILITY: Stage[] = [
   { id: 'ai', label: 'Fal AI' },
+  { id: 'packs', label: 'Packs' },
   { id: 'settings', label: 'Settings' },
   { id: 'help', label: 'Help' },
   { id: 'playground', label: 'Components' },

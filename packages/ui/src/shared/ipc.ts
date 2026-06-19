@@ -62,6 +62,19 @@ export interface AuditResult extends OkResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json?: any;
 }
+export type PackKind = 'pack' | 'back';
+export interface PackEntry {
+  id: string;
+  name: string;
+  kind: PackKind;
+  builtin: boolean;
+}
+export interface PacksListResult extends OkResult {
+  packs?: PackEntry[];
+}
+export interface PackImportResult extends OkResult {
+  pack?: PackEntry;
+}
 
 /**
  * The complete window.foundry surface exposed by the preload bridge. A superset of
@@ -115,6 +128,12 @@ export interface FoundryApi {
   deploySite(payload: { provider: string; token: string }): Promise<DeployResult>;
   /** Serve <project>/site-export over http://127.0.0.1 and open it (local preview, no file://). */
   previewSite(): Promise<DeployResult>;
+
+  // App-level pack & card-back library (project-independent; built-ins + userData).
+  packsList(): Promise<PacksListResult>;
+  packsRead(id: string): Promise<FileBase64Result>;
+  packsImport(opts: { name?: string; kind?: PackKind }): Promise<PackImportResult>;
+  packsDelete(id: string): Promise<OkResult>;
 }
 
 /**
@@ -161,6 +180,10 @@ export const FOUNDRY_METHODS = [
   'exportSite',
   'deploySite',
   'previewSite',
+  'packsList',
+  'packsRead',
+  'packsImport',
+  'packsDelete',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

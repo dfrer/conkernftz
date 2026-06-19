@@ -2,12 +2,14 @@ import * as electron from 'electron';
 import path from 'path';
 import { initProjectIpc } from './main/ipc-project.js';
 import { initStorageIpc } from './main/ipc-storage.js';
+import { initPacksIpc } from './main/ipc-packs.js';
 import { initCliRunner } from './main/cli-runner.js';
 
 const appDir = __dirname;
 
 initProjectIpc();
 initStorageIpc();
+initPacksIpc();
 initCliRunner();
 
 function createWindow(): void {

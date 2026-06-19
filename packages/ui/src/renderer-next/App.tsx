@@ -13,6 +13,7 @@ import { SiteScreen } from './screens/SiteScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { HelpScreen } from './screens/HelpScreen';
 import { FalScreen } from './screens/FalScreen';
+import { PacksScreen } from './screens/PacksScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PlaygroundScreen } from './screens/PlaygroundScreen';
 import { isBridged } from './lib/bridge';
@@ -36,6 +37,7 @@ function Shell() {
   else if (active === 'settings') screen = <SettingsScreen />;
   else if (active === 'help') screen = <HelpScreen />;
   else if (active === 'ai') screen = <FalScreen />;
+  else if (active === 'packs') screen = <PacksScreen />;
   else if (active === 'playground') screen = <PlaygroundScreen />;
   else screen = <PlaceholderScreen stage={active} kicker={FALLBACK.kicker} title={FALLBACK.title} blurb={FALLBACK.blurb} />;
 
