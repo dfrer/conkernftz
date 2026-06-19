@@ -15,7 +15,10 @@ function staticFriendlyHtml() {
     transformIndexHtml(html: string): string {
       return html
         .replace(/\s+crossorigin/g, '')
-        .replace(/<script type="module"/g, '<script')
+        // Classic (non-module) script so it loads from file://, but `defer` so it still runs
+        // AFTER the DOM is parsed (module scripts defer implicitly; classic ones don't —
+        // without this the script runs in <head> before #root exists and nothing mounts).
+        .replace(/<script type="module"/g, '<script defer')
         .replace(/\s*<link[^>]+rel="modulepreload"[^>]*>/g, '');
     },
   };

@@ -17,12 +17,14 @@ import '../renderer-next/styles/ui.css';
 import '../renderer-next/styles/experience.css';
 import '../renderer-next/styles/site.css';
 import { SiteRenderer } from '../renderer-next/components/site/SiteRenderer';
-import { resolveSite } from '../renderer-next/lib/site';
+import { resolveSite, defaultSite } from '../renderer-next/lib/site';
 import { resolveExperience } from '../renderer-next/lib/mintExperience';
 import { SITE_GLOBAL, type SiteData } from '../renderer-next/lib/siteBundle';
 
 const data = (window as unknown as Record<string, SiteData | undefined>)[SITE_GLOBAL];
-const site = resolveSite(data?.site);
+// With a bundle, render exactly what was built; without one (template opened on its own),
+// show a sensible default page rather than an empty canvas.
+const site = data?.site ? resolveSite(data.site) : defaultSite();
 const experience = resolveExperience(data?.experience);
 const images = data?.images ?? [];
 
