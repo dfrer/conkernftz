@@ -76,7 +76,7 @@ export function TraitBrowser({
 
   return (
     <div className="stack">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row spread">
         <span className="label">{table.rows.length} ASSETS · rarest first</span>
         <span className="label muted">{layer.rarity === 'uniform' ? 'uniform weights' : `Σ weight ${table.total}`}</span>
       </div>
@@ -92,7 +92,7 @@ export function TraitBrowser({
               <span className="trait-card__name" title={r.file}>
                 {r.value}
               </span>
-              <span className="row" style={{ justifyContent: 'space-between' }}>
+              <span className="row spread">
                 <Badge tone="accent">{formatPct(r.probability)}</Badge>
                 <span className="mono muted">w{r.weight}</span>
               </span>

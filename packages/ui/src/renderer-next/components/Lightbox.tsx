@@ -47,7 +47,7 @@ export function Lightbox({
       {index != null && images[index] ? (
         <div className="stack">
           <img className="lightbox-img" src={`data:${mime};base64,${images[index]}`} alt={`${labelPrefix} ${index + 1}`} />
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row spread">
             <Button onClick={() => step(-1)} disabled={images.length < 2} aria-label="Previous image">
               ‹ Prev
             </Button>

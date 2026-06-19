@@ -146,7 +146,7 @@ export function SettingsScreen() {
                 </>
               ) : null}
             </div>
-            <span className="label muted" style={{ display: 'block', marginTop: 'var(--sp-3)' }}>
+            <span className="label muted hint">
               Secrets are stored in <code>foundry.config.json</code> / referenced key files — keep them out of source control.
             </span>
           </Panel>
@@ -211,7 +211,7 @@ export function SettingsScreen() {
 
           <Panel title="Project">
             <div className="stack">
-              <span className="mono muted" style={{ wordBreak: 'break-all' }}>
+              <span className="mono muted break-all">
                 {project.dir}
               </span>
               <div className="row">

@@ -121,7 +121,7 @@ export function RenamerPanel({ layers, delimiter, defaultWeight = 1 }: { layers:
           )}
         </div>
 
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row spread">
           <span className="label">{files.length} FILES</span>
           {pairs.length ? <Badge tone="accent">{pairs.length} CHANGES</Badge> : <span className="label muted">no changes</span>}
         </div>
@@ -132,12 +132,12 @@ export function RenamerPanel({ layers, delimiter, defaultWeight = 1 }: { layers:
           <div className="stack" style={{ gap: 4 }}>
             {(pairs.length ? pairs : files.map((f) => ({ from: f, to: f }))).slice(0, 12).map((p, i) => (
               <div key={i} className="histo-row" style={{ gridTemplateColumns: '1fr 16px 1fr' }}>
-                <span className="mono muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="mono muted truncate">
                   {p.from}
                   {pairs.length ? '' : ` · ${traitValueOf(p.from, delimiter)} (w${weightOf(p.from, delimiter, defaultWeight)})`}
                 </span>
                 <span className="mono muted">{p.from === p.to ? '·' : '→'}</span>
-                <span className="mono" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="mono truncate">
                   {p.to}
                 </span>
               </div>
