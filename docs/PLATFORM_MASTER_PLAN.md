@@ -50,6 +50,20 @@ P1 and P2 are deliberately deepened beyond their foundations:
   generation; owner supervises (needs the owner's fal key, so pack-art generation is a
   collaborative session, while the pack/card-back *infrastructure* is built/tested headlessly).
 
+### UX & Pack overhaul (current priority, 2026-06-18 — before Track A / P5)
+The creator-side A→Z loop is verified end-to-end (build → experience → site → preview/host).
+Before the on-chain work (P5 wallet + Phase L contract, **deferred**), a focused quality pass:
+- **Identity:** *refine* the existing "Field Instrument" look (polish — spacing, density, motion,
+  states, consistency), not a new identity.
+- **Order:** **U1 Collection-building UI** (Design/Layers/Rules/Preview/Build) → **U2 global
+  design-system pass** (tokens/components/motion/states everywhere) → **U3 in-depth Pack &
+  reveal experience**.
+- **Pack art:** fal-generated printed pack/foil artwork is wanted **first** for U3 — so U3 opens
+  with a supervised fal session (owner's key); the procedural shine/structure/motion layers
+  around it. U1+U2 are solo-buildable now.
+- UI/UX can't be verified headlessly, so each increment ships green and the owner validates the
+  look; the in-app **Components** playground is the review surface.
+
 ## 3. Architecture & principles
 
 - **Two independent tracks.** The **Platform track** (experience + site builder + host) handles
