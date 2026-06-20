@@ -7,5 +7,8 @@ export default defineConfig({
     // vitest's default exclude covers `dist` but not `dist-cjs`, so without this it would
     // also collect the compiled copies under dist-cjs/__tests__.
     include: ['src/**/*.test.ts'],
+    // Generous timeout so heavy work doesn't flake under parallel `pnpm -w test` CPU contention.
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
 });
