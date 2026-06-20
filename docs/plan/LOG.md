@@ -5,6 +5,23 @@
 
 ---
 
+### 2026-06-20 — V1-0: visual-assessment harness upgraded (gates the V1 design work)
+Kicked off the **V1 program build** on branch `feat/v1-design`. First task **V1-0** — the
+prerequisite tooling so the agent can *see* every screen, not just pass unit tests. Rebuilt
+`packages/ui/scripts/screenshots.mjs` from a flat script into a declarative capture system:
+- **Completeness:** added the **Launch** stage (previously skipped entirely) in both
+  **not-deployed** and **deployed** states (mock now serves `launchStatus`/`launchEstimate`/launch
+  ops); 45 total captures across every pipeline + utility stage and the key in-screen states.
+- **Themes + density:** a full **light-theme** pass (the token layer must hold in both) and a
+  **compact-viewport (1180px)** pass to expose density/overflow.
+- **Reliability:** navigation now waits on the *active* nav state (not blind timeouts); each shot is
+  isolated in try/catch and recorded pass/fail.
+- **Reviewability:** emits `screenshots/manifest.json` + a browsable **`screenshots/index.html`**
+  contact sheet — every shot grouped, with theme/viewport chips and a per-screen **critique note**.
+Verified locally: harness runs **45/45, 0 failed**; UI **typecheck clean**; **199/199 vitest**.
+Status ◐ — pending owner confirmation that the contact sheet is the review surface they want, then
+on to **V1-1** (token foundation). (Screenshots dir is gitignored; only the script is committed.)
+
 ### 2026-06-20 — Scope: "NFT *Art* Foundry" (all art types) + living plan
 Owner clarified the plan is **living** — features and the depth of existing features will keep
 expanding; taken all the way, the platform has *many* more features than listed today. Key

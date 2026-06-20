@@ -1,8 +1,16 @@
-// Screenshot harness: render the built renderer-next in a headless browser with a mocked
-// window.foundry (sample project + canvas-generated art), drive the nav, and capture every
-// stage to packages/ui/screenshots/*.png — so UI changes can be SEEN (open the PNGs), not
-// just trusted. Uses playwright-core driving the system Edge/Chrome (no browser download).
+// Visual-assessment harness (V1-0).
 //
+// Renders the built renderer-next in a headless browser with a mocked window.foundry (sample
+// project + canvas-generated art), drives the nav reliably, and captures every screen + key state
+// to packages/ui/screenshots/*.png — so UI changes can be SEEN, not just trusted. It also emits:
+//   • screenshots/manifest.json  — every shot with its group, theme, viewport, and a critique note.
+//   • screenshots/index.html     — a browsable contact sheet (open it to flip through every screen).
+//
+// Coverage = all pipeline + utility stages (incl. Launch, in both not-deployed and deployed
+// states), the key in-screen interactions, a full LIGHT-theme pass (the token layer must hold in
+// both themes), and a COMPACT-viewport pass (to expose density/overflow at a smaller window).
+//
+// Uses playwright-core driving the system Edge/Chrome (no browser download).
 // Run: pnpm -C packages/ui build:renderer-next && pnpm -C packages/ui screenshots
 import { chromium } from 'playwright-core';
 import http from 'node:http';
@@ -50,10 +58,13 @@ const server = http.createServer((req, res) => {
 });
 
 // Runs in the page: a mock bridge + canvas-generated PNG art so screens populate.
-// `opts.realPacks` (id → base64) carries the actual bundled pack/back PNGs so the Mint FX
-// rip renders the genuine transparent torn-open art (not a flat color stand-in).
+//   opts.realPacks  (id → base64) carries the actual bundled pack/back PNGs so the Mint FX rip
+//                   renders the genuine transparent torn-open art (not a flat color stand-in).
+//   opts.deployed   when true, the Launch screen reports a live deployed contract (so the deployed
+//                   state — sale setup, allowlist, reveal, proceeds — renders instead of "Deploy".
 function installMock(opts) {
   const realPacks = (opts && opts.realPacks) || {};
+  const deployed = !!(opts && opts.deployed);
   const mkPng = (color, w, h) => {
     const c = document.createElement('canvas');
     c.width = w;
@@ -69,6 +80,7 @@ function installMock(opts) {
   const previews = colors.map((c) => mkPng(c, 240, 336));
   const palette = colors.map((c) => mkPng(c, 200, 200));
   const hash = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const ADDR = '0x1F4B2C9a7E3d6A8b0C5d9E2f1A3b4C5d6E7f8A9b';
   const CONFIG = {
     name: 'Demo Collection',
     symbol: 'DEMO',
@@ -95,9 +107,55 @@ function installMock(opts) {
     },
     export: { outDir: 'build', imageFormat: 'png' },
     storage: { provider: 'pinata' },
-    chain: { target: 'evm' },
+    chain: {
+      target: 'evm',
+      evm: {
+        chainId: 84532,
+        rpcUrl: 'https://sepolia.base.org',
+        maxSupply: 1000,
+        royaltyReceiver: ADDR,
+        royaltyBps: 500,
+        launch: { treasury: ADDR, placeholderUri: 'ipfs://bafyhidden/hidden.json' },
+      },
+    },
   };
   const ok = (x) => Promise.resolve(Object.assign({ ok: true }, x || {}));
+  const launchStatus = deployed
+    ? {
+        configured: true,
+        chainId: 84532,
+        testnet: true,
+        contractAddress: ADDR,
+        phase: 'allowlist',
+        configLocked: false,
+        totalMinted: '128',
+        maxSupply: '1000',
+        allowlistPriceEth: '0.005',
+        publicPriceEth: '0.01',
+        publicWalletCap: '5',
+        maxPerTx: '3',
+        revealed: false,
+        metadataFrozen: false,
+        treasury: ADDR,
+        owner: ADDR,
+      }
+    : {
+        configured: false,
+        chainId: 84532,
+        testnet: true,
+        phase: 'closed',
+        configLocked: false,
+        totalMinted: '0',
+        maxSupply: '1000',
+        allowlistPriceEth: '0',
+        publicPriceEth: '0',
+        publicWalletCap: '0',
+        maxPerTx: '0',
+        revealed: false,
+        metadataFrozen: false,
+        treasury: ADDR,
+        owner: ADDR,
+      };
   window.foundry = {
     getProjectDir: () => ok({ projectDir: 'C:/demo/collection' }),
     setProjectDir: () => ok({ projectDir: 'C:/demo/collection' }),
@@ -183,6 +241,18 @@ function installMock(opts) {
     packsRead: (id = '') => ok(realPacks[id] ? { base64: realPacks[id], mime: 'image/png' } : { base64: palette[hash(id) % palette.length], mime: 'image/png' }),
     packsImport: () => ok({ pack: { id: 'pack-new', name: 'New Pack', kind: 'pack', builtin: false } }),
     packsDelete: () => ok(),
+    // --- Phase-L launch (drives the Launch screen's status + sale-management surfaces) ---
+    launchStatus: () => ok({ json: launchStatus }),
+    launchEstimate: () => ok({ json: { deployer: ADDR, balanceEth: '0.4213', costEth: '0.0127', sufficient: true, chainId: 84532, testnet: true } }),
+    launchDeploy: () => ok({ json: { address: ADDR, txHash: '0xabc' } }),
+    launchSetCaps: () => ok({ json: { txHash: '0xabc' } }),
+    launchSetPrices: () => ok({ json: { txHash: '0xabc' } }),
+    launchSetPhase: () => ok({ json: { txHash: '0xabc' } }),
+    launchReveal: () => ok({ json: { txHash: '0xabc' } }),
+    launchFreeze: () => ok({ json: { txHash: '0xabc' } }),
+    launchWithdraw: () => ok({ json: { txHash: '0xabc' } }),
+    launchSetAllowlist: () => ok({ json: { root: '0xroot', count: 3, txHash: '0xabc' } }),
+    launchConsole: () => ok({ url: 'http://127.0.0.1:7777/' }),
   };
 }
 
@@ -197,6 +267,7 @@ async function launchBrowser() {
   return chromium.launch({ headless: true });
 }
 
+// Every nav destination (id → nav label). 'projects' has no pipeline index; the rest do.
 const STAGES = [
   ['projects', 'Projects'],
   ['design', 'Design'],
@@ -205,6 +276,7 @@ const STAGES = [
   ['publish', 'Publish'],
   ['experience', 'Mint FX'],
   ['site', 'Site'],
+  ['launch', 'Launch'],
   ['ai', 'Fal AI'],
   ['packs', 'Packs'],
   ['settings', 'Settings'],
@@ -212,12 +284,37 @@ const STAGES = [
   ['playground', 'Components'],
 ];
 
-const main = async () => {
+// Per-screen critique prompts: what to actually LOOK at on each landing view. These ride along
+// into the manifest + contact sheet so a design pass has a checklist, not just a thumbnail.
+const STAGE_NOTES = {
+  projects: 'Empty-state hierarchy; primary-action prominence; header/toolbar density.',
+  design: 'Densest screen. Layers table legibility; per-row controls; tab bar; rarity bars.',
+  preview: 'Generate affordance; gallery grid rhythm; empty vs populated; card framing.',
+  build: 'Progress affordance; output gallery; counts/feedback; button grouping.',
+  publish: 'Readiness checklist clarity; provider state; URI rewrite messaging.',
+  experience: 'Pack-rip theater framing; pre-rip rest state; controls; rarity backs.',
+  site: 'Template picker; canvas builder chrome; inspector; widget zoo density.',
+  launch: 'Status panel scannability; signing options; deploy CTA; testnet/mainnet cues.',
+  ai: 'Fal catalog layout; generation controls; key-entry state.',
+  packs: 'Library grid; built-in vs imported; card-back vs pack distinction.',
+  settings: 'Theme + accent controls; grouping; form rhythm.',
+  help: 'Reading length/measure; section hierarchy; link affordances.',
+  playground: 'Component primitives + states side-by-side — the design-system source of truth.',
+};
+
+const GROUP = {
+  projects: 'Pipeline · stages', design: 'Pipeline · stages', preview: 'Pipeline · stages',
+  build: 'Pipeline · stages', publish: 'Pipeline · stages', experience: 'Pipeline · stages',
+  site: 'Pipeline · stages', launch: 'Pipeline · stages', ai: 'Utility', packs: 'Utility',
+  settings: 'Utility', help: 'Utility', playground: 'Utility',
+};
+
+async function main() {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
   const url = `http://127.0.0.1:${port}/`;
   const browser = await launchBrowser();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+
   // Load the real bundled pack/back PNGs so Mint FX renders the genuine torn-open art.
   const packsDir = path.join(distDir, '..', 'assets', 'packs');
   const realPacks = {};
@@ -228,125 +325,275 @@ const main = async () => {
   } catch {
     /* no bundled packs — mock falls back to color stand-ins */
   }
-  await page.addInitScript(installMock, { realPacks });
-  await page.goto(url, { waitUntil: 'load' });
-  await page.waitForSelector('.nav-item', { timeout: 15000 });
-  for (const [id, label] of STAGES) {
+
+  /** Manifest of every capture (drives index.html). */
+  const shots = [];
+
+  /** Create a ready page: mocked bridge, chosen theme/viewport, nav rendered. */
+  async function newPage({ theme = 'dark', viewport = { width: 1440, height: 900 }, deployed = false } = {}) {
+    const page = await browser.newPage({ viewport });
+    await page.addInitScript((t) => {
+      try { localStorage.setItem('cnftz:theme', t); } catch { /* ignore */ }
+    }, theme);
+    await page.addInitScript(installMock, { realPacks, deployed });
+    await page.goto(url, { waitUntil: 'load' });
+    await page.waitForSelector('.nav-item', { timeout: 15000 });
+    return page;
+  }
+
+  /** Navigate to a stage reliably: click, wait for it to become the active nav item, settle. */
+  async function gotoStage(page, label) {
+    const item = page.locator('.nav-item', { hasText: label }).first();
+    await item.click();
+    await page.locator('.nav-item.active', { hasText: label }).first().waitFor({ timeout: 8000 });
+    await page.waitForTimeout(450); // let entrance transitions settle
+  }
+
+  /** Capture (full page or a locator) and record a manifest entry; never throws. */
+  async function shot(page, { id, group, note, theme = 'dark', viewport = '1440×900', locator = null, fullPage = true }) {
+    const file = `${id}.png`;
     try {
-      await page.locator('.nav-item', { hasText: label }).first().click();
-      await page.waitForTimeout(900);
-      await page.screenshot({ path: path.join(outDir, `${id}.png`), fullPage: true });
+      if (locator) await locator.screenshot({ path: path.join(outDir, file) });
+      else await page.screenshot({ path: path.join(outDir, file), fullPage });
+      shots.push({ id, group, note: note ?? '', theme, viewport, file, status: 'ok' });
       console.log('captured', id);
     } catch (e) {
+      shots.push({ id, group, note: note ?? '', theme, viewport, file: null, status: 'FAILED', error: String(e?.message ?? e) });
       console.log('FAILED', id, String(e?.message ?? e));
     }
   }
 
-  // Exercise key in-screen interactions so new features are captured, not just landing views.
-  try {
-    await page.locator('.nav-item', { hasText: 'Design' }).first().click();
-    await page.waitForTimeout(600);
-    // Close-up of the Layers table so the per-row rarity bars are legible.
-    await page.locator('.panel', { hasText: 'Layers' }).first().screenshot({ path: path.join(outDir, 'design-layers-panel.png') });
-    console.log('captured', 'design-layers-panel');
-    // Walk the Design section tabs so each is captured.
-    for (const t of ['Basics', 'Assets & rarity', 'Rules']) {
-      await page.getByRole('tab', { name: new RegExp(`^${t}`, 'i') }).click();
-      await page.waitForTimeout(350);
-      await page.screenshot({ path: path.join(outDir, `design-${t.split(' ')[0].toLowerCase()}.png`), fullPage: true });
-      console.log('captured', `design-${t.split(' ')[0].toLowerCase()}`);
+  // ── Pass 1 — dark, 1440×900: every stage landing view ───────────────────────────────────────
+  const dark = await newPage();
+  for (const [id, label] of STAGES) {
+    try {
+      await gotoStage(dark, label);
+      await shot(dark, { id, group: GROUP[id], note: STAGE_NOTES[id] });
+    } catch (e) {
+      shots.push({ id, group: GROUP[id], note: STAGE_NOTES[id], theme: 'dark', viewport: '1440×900', file: null, status: 'FAILED', error: String(e?.message ?? e) });
+      console.log('FAILED', id, String(e?.message ?? e));
     }
-    // Back to Layers + expand the trait browser.
-    await page.getByRole('tab', { name: /^Layers/i }).click();
-    await page.waitForTimeout(300);
-    await page.getByRole('button', { name: /Browse layer 1 traits/i }).click();
-    await page.waitForTimeout(700);
-    await page.screenshot({ path: path.join(outDir, 'design-traits.png'), fullPage: true });
-    // Tight close-up of just the Traits panel so card details (value / % / weight) are legible.
-    await page.locator('.panel', { hasText: 'Traits —' }).first().screenshot({ path: path.join(outDir, 'design-traits-panel.png') });
-    console.log('captured', 'design-traits');
+  }
+
+  // ── Pass 1 — key in-screen interactions (states beyond the landing view) ─────────────────────
+  // Design: tabs, layers close-up, trait browser.
+  try {
+    await gotoStage(dark, 'Design');
+    await shot(dark, { id: 'design-layers-panel', group: 'Design · detail', note: 'Layers table close-up — row controls, rarity bars, alignment.', locator: dark.locator('.panel', { hasText: 'Layers' }).first() });
+    for (const t of ['Basics', 'Assets & rarity', 'Rules']) {
+      await dark.getByRole('tab', { name: new RegExp(`^${t}`, 'i') }).click();
+      await dark.waitForTimeout(350);
+      const id = `design-${t.split(' ')[0].toLowerCase()}`;
+      await shot(dark, { id, group: 'Design · detail', note: `Design “${t}” tab — form rhythm, grouping, field states.` });
+    }
+    await dark.getByRole('tab', { name: /^Layers/i }).click();
+    await dark.waitForTimeout(300);
+    await dark.getByRole('button', { name: /Browse layer 1 traits/i }).click();
+    await dark.waitForTimeout(700);
+    await shot(dark, { id: 'design-traits', group: 'Design · detail', note: 'Trait browser open — card grid, value/%/weight legibility.' });
+    await shot(dark, { id: 'design-traits-panel', group: 'Design · detail', note: 'Traits panel close-up — per-card detail density.', locator: dark.locator('.panel', { hasText: 'Traits —' }).first() });
   } catch (e) {
     console.log('FAILED', 'design-interactions', String(e?.message ?? e));
   }
 
-  // Projects: open the New collection dialog.
+  // Projects: New collection dialog.
   try {
-    await page.locator('.nav-item', { hasText: 'Projects' }).first().click();
-    await page.waitForTimeout(300);
-    await page.getByRole('button', { name: 'New project' }).first().click();
-    await page.waitForTimeout(300);
-    await page.getByLabel('Collection name').fill('Specimens');
-    await page.waitForTimeout(150);
-    await page.screenshot({ path: path.join(outDir, 'projects-new.png'), fullPage: true });
-    console.log('captured', 'projects-new');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(150);
+    await gotoStage(dark, 'Projects');
+    await dark.getByRole('button', { name: 'New project' }).first().click();
+    await dark.waitForTimeout(300);
+    await dark.getByLabel('Collection name').fill('Specimens');
+    await dark.waitForTimeout(150);
+    await shot(dark, { id: 'projects-new', group: 'Projects', note: 'New-project dialog — modal framing, field layout, scaffold options.' });
+    await dark.keyboard.press('Escape');
+    await dark.waitForTimeout(150);
   } catch (e) {
     console.log('FAILED', 'projects-new', String(e?.message ?? e));
   }
 
   // Preview: generate a set, then open the inspection lightbox.
   try {
-    await page.locator('.nav-item', { hasText: 'Preview' }).first().click();
-    await page.waitForTimeout(300);
-    await page.getByRole('button', { name: 'Generate previews' }).first().click();
-    await page.waitForTimeout(700);
-    await page.screenshot({ path: path.join(outDir, 'preview-gallery.png'), fullPage: true });
-    console.log('captured', 'preview-gallery');
-    await page.getByRole('button', { name: /Inspect preview 1/i }).click();
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: path.join(outDir, 'preview-lightbox.png'), fullPage: true });
-    console.log('captured', 'preview-lightbox');
+    await gotoStage(dark, 'Preview');
+    await dark.getByRole('button', { name: 'Generate previews' }).first().click();
+    await dark.waitForTimeout(700);
+    await shot(dark, { id: 'preview-gallery', group: 'Preview', note: 'Populated gallery — grid rhythm, card framing, density.' });
+    await dark.getByRole('button', { name: /Inspect preview 1/i }).click();
+    await dark.waitForTimeout(400);
+    await shot(dark, { id: 'preview-lightbox', group: 'Preview', note: 'Inspection lightbox — backdrop, metadata panel, controls.' });
+    await dark.keyboard.press('Escape');
+    await dark.waitForTimeout(200);
   } catch (e) {
     console.log('FAILED', 'preview-interactions', String(e?.message ?? e));
   }
 
-  // Build: run a build, which populates the output gallery (editions on disk).
+  // Build: run a build → populated output gallery.
   try {
-    await page.keyboard.press('Escape'); // close any open lightbox so the backdrop doesn't block nav
-    await page.waitForTimeout(200);
-    await page.locator('.nav-item', { hasText: 'Build' }).first().click();
-    await page.waitForTimeout(300);
-    await page.getByRole('button', { name: 'Build collection' }).first().click();
-    await page.waitForTimeout(900);
-    await page.screenshot({ path: path.join(outDir, 'build-output.png'), fullPage: true });
-    console.log('captured', 'build-output');
+    await gotoStage(dark, 'Build');
+    await dark.getByRole('button', { name: 'Build collection' }).first().click();
+    await dark.waitForTimeout(900);
+    await shot(dark, { id: 'build-output', group: 'Build', note: 'Post-build output — editions gallery, completion feedback.' });
   } catch (e) {
     console.log('FAILED', 'build-interactions', String(e?.message ?? e));
   }
 
-  // Site: apply a starter template and capture the resulting builder + preview.
+  // Site: apply a starter template → builder + canvas.
   try {
-    await page.locator('.nav-item', { hasText: 'Site' }).first().click();
-    await page.waitForTimeout(300);
-    await page.locator('.template-card', { hasText: 'GeoCities' }).click();
-    await page.waitForTimeout(500);
-    await page.screenshot({ path: path.join(outDir, 'site-geocities.png'), fullPage: true });
-    console.log('captured', 'site-geocities');
+    await gotoStage(dark, 'Site');
+    await dark.locator('.template-card', { hasText: 'GeoCities' }).click();
+    await dark.waitForTimeout(500);
+    await shot(dark, { id: 'site-geocities', group: 'Site', note: 'GeoCities template applied — canvas chrome, widgets, inspector.' });
   } catch (e) {
     console.log('FAILED', 'site-interactions', String(e?.message ?? e));
   }
 
-  // Mint FX: rip the pack (tear beat → cards stacked in the pack), then pull them out.
+  // Mint FX: rip the pack (tear beat → stacked), then pull the cards out.
   try {
-    await page.locator('.nav-item', { hasText: 'Mint FX' }).first().click();
-    await page.waitForTimeout(400);
-    const pack = page.getByRole('button', { name: 'Rip open the pack' }).first();
-    await pack.click(); // click opens via the fallback (the drag gesture is unit-tested)
-    await page.waitForTimeout(1500); // tear beat (~420ms) → cards emerge + settle in the pack
-    await page.locator('.exp').first().screenshot({ path: path.join(outDir, 'experience-stacked.png') });
-    console.log('captured', 'experience-stacked');
-    await page.locator('.exp-rip-front, .exp-rip-pack').first().click(); // pull the stacked cards out
-    await page.waitForTimeout(1100); // let the spill settle (pack recedes/blurs, cards on top)
-    await page.locator('.exp').first().screenshot({ path: path.join(outDir, 'experience-rip.png') });
-    console.log('captured', 'experience-rip');
+    await gotoStage(dark, 'Mint FX');
+    const pack = dark.getByRole('button', { name: 'Rip open the pack' }).first();
+    await pack.click();
+    await dark.waitForTimeout(1500);
+    await shot(dark, { id: 'experience-stacked', group: 'Experience', note: 'Cards emerged + settled in the pack (mid-rip beat).', locator: dark.locator('.exp').first() });
+    await dark.locator('.exp-rip-front, .exp-rip-pack').first().click();
+    await dark.waitForTimeout(1100);
+    await shot(dark, { id: 'experience-rip', group: 'Experience', note: 'Cards spilled out, pack receded — reveal payoff frame.', locator: dark.locator('.exp').first() });
   } catch (e) {
     console.log('FAILED', 'experience-rip', String(e?.message ?? e));
   }
+  await dark.close();
+
+  // ── Pass 1b — Launch in its DEPLOYED state (sale setup / allowlist / reveal / proceeds) ──────
+  try {
+    const deployedPage = await newPage({ deployed: true });
+    await gotoStage(deployedPage, 'Launch');
+    await deployedPage.waitForTimeout(300);
+    await shot(deployedPage, { id: 'launch-deployed', group: 'Pipeline · stages', note: 'Live contract — sale setup, phase, allowlist, reveal, proceeds.' });
+    await deployedPage.close();
+  } catch (e) {
+    console.log('FAILED', 'launch-deployed', String(e?.message ?? e));
+  }
+
+  // ── Pass 2 — LIGHT theme, every stage (the token layer must hold in both themes) ─────────────
+  try {
+    const light = await newPage({ theme: 'light' });
+    for (const [id, label] of STAGES) {
+      try {
+        await gotoStage(light, label);
+        await shot(light, { id: `light-${id}`, group: 'Light theme', note: `Light-mode ${label} — contrast, surfaces, accent legibility.`, theme: 'light' });
+      } catch (e) {
+        console.log('FAILED', `light-${id}`, String(e?.message ?? e));
+      }
+    }
+    await light.close();
+  } catch (e) {
+    console.log('FAILED', 'light-pass', String(e?.message ?? e));
+  }
+
+  // ── Pass 3 — COMPACT viewport (expose density/overflow at a smaller window) ──────────────────
+  try {
+    const compact = await newPage({ viewport: { width: 1180, height: 800 } });
+    for (const label of ['Design', 'Site', 'Mint FX', 'Launch', 'Packs']) {
+      try {
+        await gotoStage(compact, label);
+        const id = `compact-${label.toLowerCase().replace(/\s+/g, '-')}`;
+        await shot(compact, { id, group: 'Compact viewport', note: `${label} at 1180px — wrapping, overflow, density under constraint.`, viewport: '1180×800' });
+      } catch (e) {
+        console.log('FAILED', `compact-${label}`, String(e?.message ?? e));
+      }
+    }
+    await compact.close();
+  } catch (e) {
+    console.log('FAILED', 'compact-pass', String(e?.message ?? e));
+  }
+
   await browser.close();
   server.close();
+
+  writeManifest(shots);
+  writeContactSheet(shots);
+
+  const failed = shots.filter((s) => s.status !== 'ok');
+  console.log(`\n${shots.length} shots, ${failed.length} failed.`);
+  if (failed.length) console.log('FAILED:', failed.map((s) => s.id).join(', '));
   console.log('screenshots →', outDir);
-};
+  console.log('contact sheet →', path.join(outDir, 'index.html'));
+}
+
+function writeManifest(shots) {
+  const manifest = { generatedAt: new Date().toISOString(), count: shots.length, shots };
+  fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+}
+
+// A self-contained, dependency-free contact sheet: open screenshots/index.html to flip through
+// every capture grouped by section, each with its critique note. Click a shot to open it full size.
+function writeContactSheet(shots) {
+  const groups = [];
+  const byGroup = new Map();
+  for (const s of shots) {
+    if (!byGroup.has(s.group)) {
+      byGroup.set(s.group, []);
+      groups.push(s.group);
+    }
+    byGroup.get(s.group).push(s);
+  }
+  const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const card = (s) => {
+    const chips = [s.theme, s.viewport, s.status !== 'ok' ? 'FAILED' : null].filter(Boolean)
+      .map((c) => `<span class="chip${c === 'FAILED' ? ' bad' : ''}">${esc(c)}</span>`).join('');
+    const media = s.file
+      ? `<a href="${esc(s.file)}" target="_blank"><img loading="lazy" src="${esc(s.file)}" alt="${esc(s.id)}"></a>`
+      : `<div class="missing">no capture — ${esc(s.error || 'failed')}</div>`;
+    return `<figure class="card">
+      <div class="frame">${media}</div>
+      <figcaption>
+        <div class="row"><code>${esc(s.id)}</code>${chips}</div>
+        <p>${esc(s.note)}</p>
+      </figcaption>
+    </figure>`;
+  };
+  const sections = groups.map((g) => `
+    <section>
+      <h2>${esc(g)} <span class="count">${byGroup.get(g).length}</span></h2>
+      <div class="grid">${byGroup.get(g).map(card).join('')}</div>
+    </section>`).join('');
+  const failed = shots.filter((s) => s.status !== 'ok').length;
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConkerNFTZ — visual assessment</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0d0f; color: #e7e3d8;
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; padding: 16px 24px;
+    background: rgba(11,13,15,0.92); backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: baseline; gap: 14px; }
+  header h1 { font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; margin: 0; color: #f0b429; }
+  header .meta { color: #8b9097; font-size: 12px; }
+  main { padding: 8px 24px 64px; max-width: 1680px; margin: 0 auto; }
+  section { margin-top: 32px; }
+  h2 { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #9aa0a6;
+    border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; }
+  h2 .count { color: #5d6168; margin-left: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+  .card { margin: 0; background: #141719; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; overflow: hidden; }
+  .frame { background: #000; aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .frame img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .missing { color: #ff6b6b; font-size: 12px; padding: 18px; text-align: center; }
+  figcaption { padding: 10px 12px 12px; }
+  .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  code { font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: #f0b429; }
+  .chip { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #aeb3b8;
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 1px 7px; }
+  .chip.bad { color: #ff6b6b; border-color: rgba(255,107,107,0.5); }
+  figcaption p { margin: 8px 0 0; color: #9aa0a6; font-size: 12.5px; }
+</style></head><body>
+<header>
+  <h1>ConkerNFTZ — Visual Assessment</h1>
+  <span class="meta">${shots.length} captures · ${failed} failed · ${esc(new Date().toLocaleString())}</span>
+</header>
+<main>${sections}</main>
+</body></html>`;
+  fs.writeFileSync(path.join(outDir, 'index.html'), html);
+}
 
 main().catch((e) => {
   console.error(e);

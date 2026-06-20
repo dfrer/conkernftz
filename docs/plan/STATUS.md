@@ -62,10 +62,13 @@ look (instrument-console layout, pipeline nav, status bar).
 - ✅ Local gates green: typecheck, full build (renderer + site + console bundles), vitest (199 UI +
   chain-evm 81 + cli 12 + core/…), preload drift test.
 - ✅ The contract was CI-verified (34/34 forge + Slither) while quota existed — that result stands.
-- 🟡 **Visual assessment is the current weak spot** — there's a screenshot harness
-  (`packages/ui/scripts/screenshots.mjs`, playwright-core → system Chrome/Edge headless against the
-  built renderer with a mocked `window.foundry`), but it needs upgrading for concrete per-screen
-  design critique (the V1 priority). See [PLAN.md](PLAN.md).
+- ✅/🟡 **Visual assessment upgraded (V1-0, ◐ pending owner nod)** — `packages/ui/scripts/screenshots.mjs`
+  (playwright-core → system Chrome/Edge headless, mocked `window.foundry`) now captures **45** shots:
+  every stage incl. **Launch** (not-deployed + deployed), key in-screen states, a full **light-theme**
+  pass, and a **compact-viewport** pass — and emits `screenshots/manifest.json` + a browsable
+  **`screenshots/index.html`** contact sheet with a per-shot critique note. Run:
+  `pnpm -C packages/ui build:renderer-next && pnpm -C packages/ui screenshots`. This is the review
+  surface for the screen-by-screen V1 passes (V1-1…V1-15).
 - 🟡 **No CI budget** (owner) → never rely on CI; local is the signal.
 
 ## Outstanding owner-verification items

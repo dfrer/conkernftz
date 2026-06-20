@@ -25,7 +25,7 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 
 | ID | Task | Status |
 |----|------|--------|
-| **V1-0** | **Upgrade the visual-assessment system** — make the screenshot harness capture every screen/state reliably and render them for concrete per-screen critique. **Prerequisite** for everything below. | ☐ |
+| **V1-0** | **Upgrade the visual-assessment system** — make the screenshot harness capture every screen/state reliably and render them for concrete per-screen critique. **Prerequisite** for everything below. | ◐ |
 | V1-1 | Design-system foundation: reconcile `DESIGN_SYSTEM.md`, lock the **token layer** (color, type scale, spacing, radius, elevation, **motion**, density) and the theming model. | ☐ |
 | V1-2 | Component primitives pass: Button / Panel / Field·Input·Select / Badge / Dialog / Tabs / Toast / Lamp / EmptyState / Skeleton — consistency, all interaction **states**, accessibility. | ☐ |
 | V1-3 | App shell polish: header, pipeline nav, status bar, instrument-console layout, transitions. | ☐ |
@@ -42,6 +42,12 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V1-14 | Screen pass — **Settings / Help** | ☐ |
 | V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ☐ |
 | V1-16 | **Owner ↔ agent local confirmation** gate: walk every surface, confirm look/feel/function. | ☐ |
+
+> **V1-0 (◐):** harness upgraded — `pnpm -C packages/ui screenshots` now captures **45** shots
+> covering every stage (incl. **Launch**, both not-deployed + deployed), the key in-screen states,
+> a full **light-theme** pass, and a **compact-viewport** pass; it emits `screenshots/manifest.json`
+> + a browsable **`screenshots/index.html`** contact sheet (each shot carries a critique note).
+> Remaining for ☑: owner confirms the contact-sheet workflow is the review surface they want.
 
 ---
 
