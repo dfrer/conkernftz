@@ -385,6 +385,24 @@ button {
   width: 32px;
   height: 32px;
 }
+/* Loading: a spinner inheriting the button's own foreground (currentColor), so every variant
+ * is covered without per-variant rules. Confined to its own layer for a cheap perpetual spin. */
+.btn__spin {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.85;
+  animation: btn-spin 0.7s linear infinite;
+  will-change: transform;
+  flex: none;
+}
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ===================== Fields ===================== */
 .field {
@@ -414,6 +432,28 @@ button {
   outline: none;
   border-color: var(--accent);
   box-shadow: var(--accent-glow);
+}
+.input:disabled,
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.input[aria-invalid='true'],
+.select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.input[aria-invalid='true']:focus,
+.select[aria-invalid='true']:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger), 0 0 16px var(--danger-soft);
+}
+/* Inline helper / error caption under a Field control. */
+.field-msg {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.field-msg--error {
+  color: var(--danger);
 }
 
 /* ===================== Lamp / Badge ===================== */
@@ -475,6 +515,21 @@ button {
   color: var(--ok);
   background: var(--ok-soft);
   border-color: color-mix(in oklab, var(--ok) 40%, transparent);
+}
+.badge--danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: color-mix(in oklab, var(--danger) 40%, transparent);
+}
+.badge--info {
+  color: var(--info);
+  background: var(--info-soft);
+  border-color: color-mix(in oklab, var(--info) 40%, transparent);
+}
+.badge--warn {
+  color: var(--warn);
+  background: var(--accent-soft);
+  border-color: var(--line-amber);
 }
 
 /* ===================== Status bar ===================== */

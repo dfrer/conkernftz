@@ -55,9 +55,9 @@ Prefer these over re-hand-rolling inline styles — that consistency *is* the sy
 | --- | --- |
 | `StageHeader` | The one page header for every stage: kicker + title + optional actions. Use it, don't hand-roll `.main-head`. |
 | `Panel` | Titled surface with optional header `actions`. The primary content container. |
-| `Button` | `variant` primary/ghost/danger/(default), `size` sm, `icon`. |
-| `Field` / `Input` / `Select` | Labeled form controls. |
-| `Badge` | Status pill (`tone` accent/ok/danger/default). |
+| `Button` | `variant` primary/ghost/danger/(default), `size` sm, `icon`, `loading` (spinner + `aria-busy` + auto-disable). |
+| `Field` / `Input` / `Select` | Labeled form controls. `Field` takes `hint`/`error` (caption under the control); `Input`/`Select` take `invalid` → `aria-invalid` (danger border). `:disabled` dims. |
+| `Badge` | Status pill (`tone` accent/ok/danger/info/warn/default). |
 | `Lamp` | Indicator LED (on/off/ok/danger, `pulse`). |
 | `Tabs` / `TabPanel` | Accessible tablist (roving tabindex + Arrow/Home/End); `TabPanel` renders only the active section. |
 | `Dialog` | Modal (Escape + click-outside to close). |

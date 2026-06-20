@@ -5,6 +5,21 @@
 
 ---
 
+### 2026-06-20 — V1-2: component primitives — fill the missing states
+Filled the real interaction-state gaps in the primitives and turned the **Components** playground
+into a complete catalog (the owner's live review surface for the system). Additive, non-breaking:
+- **Button** gains `loading` — spinner (inherits `currentColor`, so every variant is covered),
+  `aria-busy`, auto-disable.
+- **Badge** gains `danger` / `info` / `warn` tones (the TS type previously stopped at `ok`, though
+  the doc already promised danger); now maps to the existing status tokens in both themes.
+- **Field** gains `hint` / `error` captions; **Input/Select** gain `invalid` → `aria-invalid` with a
+  danger border, plus proper `:disabled` dimming.
+- **Playground** rewritten to show every primitive × every state (variants, small+icon, disabled,
+  loading, focus note, badge tones, lamp off→alert, field hint/error/disabled, empty with action).
+Verified locally: **typecheck clean · 203/203 vitest** (+4 new: button-busy, badge tone, field
+error/hint) **· renderer build clean · screenshots 45/45** (catalog reads correctly in dark + light).
+`docs/DESIGN_SYSTEM.md` component table updated. ◐ pending owner live-review.
+
 ### 2026-06-20 — V1 cadence locked (owner) + V1-1 token foundation
 **Owner direction** (at the V1-0→V1-1 boundary): (1) **review surface = the live app**, not the
 screenshot contact sheet (keep screenshots for the agent's own assessment; owner judges in the
