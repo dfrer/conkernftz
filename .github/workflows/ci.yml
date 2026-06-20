@@ -46,4 +46,9 @@ jobs:
           CI: true
         run: pnpm -w test
 
+      - name: Coverage (core + ui thresholds)
+        env:
+          CI: true
+        run: pnpm -w test:coverage
+
 
