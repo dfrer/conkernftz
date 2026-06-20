@@ -33,6 +33,8 @@ export interface Rect {
 }
 export interface BlockLayout extends Rect {
   z: number;
+  /** Rotation in degrees (canvas mode). */
+  rot?: number;
   mobile?: Rect;
 }
 

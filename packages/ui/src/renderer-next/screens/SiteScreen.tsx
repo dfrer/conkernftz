@@ -171,6 +171,7 @@ export function SiteScreen() {
     setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { x: grid(x), y: grid(y) }) : setBlockLayout(site, id, { x: grid(x), y: grid(y) }));
   const onResize = (id: string, w: number, h: number): void =>
     setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { w: grid(w), h: grid(h) }) : setBlockLayout(site, id, { w: grid(w), h: grid(h) }));
+  const onRotate = (id: string, deg: number): void => setSiteLive(setBlockLayout(site, id, { rot: deg }));
 
   // Keyboard: Ctrl/Cmd+Z undo, +Shift (or Ctrl+Y) redo, arrow-keys nudge the selected canvas
   // block (Shift = 10px). Ignored while typing in a field.
@@ -638,6 +639,7 @@ export function SiteScreen() {
                       <Field label="W"><Input type="number" value={lay.w} onChange={(e) => setSite(setBlockLayout(site, selected.id, { w: Number(e.target.value) || 1 }))} aria-label="Layout w" /></Field>
                       <Field label="H"><Input type="number" value={lay.h} onChange={(e) => setSite(setBlockLayout(site, selected.id, { h: Number(e.target.value) || 1 }))} aria-label="Layout h" /></Field>
                       <Field label="Z"><Input type="number" value={lay.z} onChange={(e) => setSite(setBlockLayout(site, selected.id, { z: Number(e.target.value) || 1 }))} aria-label="Layout z" /></Field>
+                      <Field label="Rotation°"><Input type="number" value={lay.rot ?? 0} onChange={(e) => setSite(setBlockLayout(site, selected.id, { rot: Number(e.target.value) || 0 }))} aria-label="Layout rotation" /></Field>
                     </div>
                     <div className="label">MOBILE OVERRIDE {lay.mobile ? '' : '(none — drag in mobile viewport or set below)'}</div>
                     <div className="grid cols-auto">
@@ -672,7 +674,7 @@ export function SiteScreen() {
             }
           >
             {mode === 'canvas' ? (
-              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} onInteractStart={beginHistory} />
+              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} onRotate={onRotate} onInteractStart={beginHistory} />
             ) : (
               <SiteRenderer site={site} images={images} experience={previewExp} />
             )}

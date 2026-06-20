@@ -79,8 +79,13 @@ export function SiteRenderer({
           {site.blocks.map((b, i) => {
             const r = rectFor(b.layout, i, viewport);
             const z = b.layout?.z ?? i + 1;
+            const rot = b.layout?.rot;
             return (
-              <div key={b.id} className="site-node" style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z }}>
+              <div
+                key={b.id}
+                className="site-node"
+                style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z, transform: rot ? `rotate(${rot}deg)` : undefined }}
+              >
                 <BlockBody block={b} images={images} experience={experience} />
               </div>
             );
