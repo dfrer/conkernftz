@@ -6,6 +6,15 @@
 
 ---
 
+## 📥 INBOX — un-triaged ideas (lands here first, then sorted)
+
+*Raw ideas/direction drops go here immediately so nothing is lost, then get moved into
+Now/Next/Later/Icebox with an ID. Empty = all caught up.*
+
+- *(nothing pending)*
+
+---
+
 ## ▶ NOW — V1 of the full ConkerNFTZ program
 
 **Goal:** a solid, shippable **V1** of the whole app — a **complete design system applied across

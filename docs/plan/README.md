@@ -18,6 +18,24 @@ next. It supersedes the older scattered planning docs. Read these in order:
 - **One place to look:** start here → the four files above. Nothing authoritative lives only in
   the agent's memory anymore; the agent's memory is a thin pointer to this directory.
 
+## Steering & deepening — this plan is meant to be changed
+
+Nothing here is locked beyond the few guardrails marked "locked" in VISION. Priorities, scope, and
+sequencing are **always re-openable.** The owner steers just by saying so in chat; the agent does
+the bookkeeping:
+
+- **Steer in a new direction** — re-prioritize, add/move/retire whole areas. → Agent: log it,
+  reshape `PLAN.md` (re-order Now/Next/Later, add tasks, retire stale ones), update `VISION.md`/
+  `STATUS.md` if the *what* or *where* changed. A new work area gets a new task-ID prefix.
+- **Flesh out something shallow** — point at any `STATUS.md` item (especially 🟡 *partial*) or a
+  `PLAN.md` task and say "go deep here." → Agent: expand it into concrete sub-tasks in `PLAN.md`,
+  refresh its `STATUS.md` state, log it. **Shallow → deep is a first-class, expected operation.**
+- **Park a raw idea** — drop it anytime; it lands in **PLAN.md → Inbox** immediately so it's never
+  lost, then gets triaged into Now/Next/Later/Icebox.
+
+**Task-ID convention:** `AREA-N` (e.g. `V1-`, `OC-`, `LAUNCH-`, `V2-`). New areas get a new prefix.
+IDs are **stable** — never reused or renumbered, so they're safe to reference across sessions.
+
 ## Deep reference (detail, not planning)
 
 These stay as reference and are linked from the docs above — they are *not* the plan:
