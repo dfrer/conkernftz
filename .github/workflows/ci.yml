@@ -96,11 +96,16 @@ jobs:
       - name: Forge test (unit + fuzz + invariant)
         run: forge test -vvv
 
+      # Force the Foundry framework + reuse the `forge build` artifacts above. Without this,
+      # crytic-compile detects package.json and runs `npm install`, which fails on pnpm's
+      # `workspace:*` protocol. ignore-compile reads the already-built out/ (no in-container forge).
       - name: Slither static analysis
         uses: crytic/slither-action@v0.4.0
         with:
           target: packages/chain-evm/
           slither-config: packages/chain-evm/slither.config.json
           fail-on: high
+          ignore-compile: true
+          slither-args: --compile-force-framework foundry
 
 
