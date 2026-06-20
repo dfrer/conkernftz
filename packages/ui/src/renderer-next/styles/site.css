@@ -205,6 +205,29 @@
   pointer-events: auto;
   z-index: 3;
 }
+.site-node-rotate {
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: grab;
+  pointer-events: auto;
+  z-index: 3;
+}
+.site-node-rotate::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 1px;
+  height: 12px;
+  margin-left: -0.5px;
+  background: var(--accent);
+}
 .site-node-inner {
   width: 100%;
   height: 100%;

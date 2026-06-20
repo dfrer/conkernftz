@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { SiteRenderer } from '../components/site/SiteRenderer';
-import { addBlock, defaultSite, setCursor, setLayoutMode, updateBlock } from '../lib/site';
+import { addBlock, defaultSite, setBlockLayout, setCursor, setLayoutMode, updateBlock } from '../lib/site';
 import { resolveExperience } from '../lib/mintExperience';
 
 afterEach(cleanup);
@@ -35,6 +35,15 @@ describe('SiteRenderer', () => {
     const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
     expect(container.querySelector('[data-mode="canvas"]')).toBeTruthy();
     expect(container.querySelectorAll('.site-node').length).toBe(site.blocks.length);
+  });
+
+  it('applies a canvas block rotation as a CSS transform', () => {
+    let site = setLayoutMode(defaultSite(), 'canvas');
+    const id = site.blocks[0]!.id;
+    site = setBlockLayout(site, id, { rot: 30 });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    const node = container.querySelector('.site-node') as HTMLElement | null;
+    expect(node?.style.transform).toBe('rotate(30deg)');
   });
 
   it('renders the GeoCities widgets (blink + hit counter)', () => {
