@@ -1,8 +1,9 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
+import { MintLive } from './MintLive';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import { clampFontScale, clampScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig, type SiteCursor } from '../../lib/site';
+import { clampFontScale, clampScale, normalizeAlign, type Block, type BlockLayout, type MintConfig, type Rect, type SiteConfig, type SiteCursor } from '../../lib/site';
 
 const MOBILE_W = 390;
 
@@ -86,7 +87,7 @@ export function SiteRenderer({
                 className="site-node"
                 style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z, transform: rot ? `rotate(${rot}deg)` : undefined }}
               >
-                <BlockBody block={b} images={images} experience={experience} />
+                <BlockBody block={b} images={images} experience={experience} mint={site.mint} />
               </div>
             );
           })}
@@ -104,7 +105,7 @@ export function SiteRenderer({
     >
       {site.cursor && site.cursor !== 'none' ? <CursorTrail kind={site.cursor} /> : null}
       {site.blocks.map((b) => (
-        <BlockBody key={b.id} block={b} images={images} experience={experience} />
+        <BlockBody key={b.id} block={b} images={images} experience={experience} mint={site.mint} />
       ))}
     </div>
   );
@@ -125,7 +126,7 @@ function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desk
 // preview + editor + exported site) without affecting layout. font-size, text-align and color
 // are inherited properties, so they cascade through the box-less wrapper to the block's text;
 // site.css multiplies sizes by var(--site-fscale). All three are no-ops when unset.
-export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig }) {
+export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig }) {
   const { block } = props;
   const fscale = clampFontScale(block.fontScale);
   const wscale = clampScale(block.scale);
@@ -144,7 +145,7 @@ export function BlockBody(props: { block: Block; images: string[]; experience?: 
   );
 }
 
-function BlockContent({ block, images, experience }: { block: Block; images: string[]; experience?: ExperienceConfig }) {
+function BlockContent({ block, images, experience, mint }: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig }) {
   switch (block.kind) {
     case 'hero':
       // Alignment comes from the block wrapper's text-align (the general per-block control),
@@ -188,6 +189,7 @@ function BlockContent({ block, images, experience }: { block: Block; images: str
           {block.heading ? <h2 className="site-h2">{block.heading}</h2> : null}
           {block.price ? <p className="site-mint-price">{block.price}</p> : null}
           <MintExperience config={resolveExperience(experience)} images={images} />
+          {mint?.contractAddress ? <MintLive {...mint} /> : null}
         </section>
       );
     case 'faq':

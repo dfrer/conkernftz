@@ -75,6 +75,22 @@
 .site-mint { text-align: center; }
 .site-mint-price { font-family: var(--font-mono); font-size: calc(var(--text-lg) * var(--site-fscale, 1)); color: var(--site-accent); }
 
+/* Live (non-custodial) mint widget — shown under the pack experience when a launch contract is wired. */
+.mint-live { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center; font-family: var(--font-mono); }
+.mint-live--nowallet, .mint-live--busy { opacity: 0.75; font-size: var(--text-sm); }
+.mint-live-status { margin: 0; font-size: var(--text-sm); }
+.mint-live-status strong { color: var(--site-accent); text-transform: capitalize; }
+.mint-live-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.mint-live-qty { display: inline-flex; gap: 6px; align-items: center; font-size: var(--text-sm); }
+.mint-live-qty input { width: 56px; padding: 4px 6px; background: rgba(0,0,0,0.3); color: inherit; border: 1px solid var(--site-accent); border-radius: 6px; font: inherit; }
+.mint-live-max { opacity: 0.6; }
+.mint-live-btn { padding: 8px 18px; background: var(--site-accent); color: #0a0c0b; border: none; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+.mint-live-btn:disabled { opacity: 0.55; cursor: default; }
+.mint-live-reason { margin: 0; font-size: var(--text-sm); opacity: 0.8; }
+.mint-live-error { margin: 0; font-size: var(--text-sm); color: #ff6b6b; }
+.mint-live-link { color: var(--site-accent); }
+.mint-live-tx { font-size: var(--text-xs); word-break: break-all; opacity: 0.8; }
+
 /* FAQ */
 .site-faq-item { padding: var(--sp-3) 0; border-bottom: var(--hair) solid var(--line); }
 .site-faq-item dt { font-size: calc(1em * var(--site-fscale, 1)); font-weight: 700; margin-bottom: var(--sp-1); }
