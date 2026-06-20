@@ -112,13 +112,24 @@ export function SiteScreen() {
   const [exporting, setExporting] = useState(false);
   const [previewingLocal, setPreviewingLocal] = useState(false);
   const [deploying, setDeploying] = useState(false);
-  const [vercelToken, setVercelToken] = useState<string>(() => {
+  const lsGet = (k: string): string => {
     try {
-      return localStorage.getItem('cnftz:vercelToken') ?? '';
+      return localStorage.getItem(k) ?? '';
     } catch {
       return '';
     }
-  });
+  };
+  const lsSet = (k: string, v: string): void => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      /* ignore */
+    }
+  };
+  const [host, setHostRaw] = useState<string>(() => lsGet('cnftz:deployHost') || 'vercel');
+  const [vercelToken, setVercelToken] = useState<string>(() => lsGet('cnftz:vercelToken'));
+  const [netlifyToken, setNetlifyToken] = useState<string>(() => lsGet('cnftz:netlifyToken'));
+  const [netlifySite, setNetlifySite] = useState<string>(() => lsGet('cnftz:netlifySite'));
   const [viewport, setViewport] = useState<Viewport>('desktop');
 
   const mode = site.layout ?? 'flow';
@@ -363,12 +374,21 @@ export function SiteScreen() {
 
   const onVercelToken = (v: string): void => {
     setVercelToken(v);
-    try {
-      localStorage.setItem('cnftz:vercelToken', v);
-    } catch {
-      /* ignore */
-    }
+    lsSet('cnftz:vercelToken', v);
   };
+  const onHost = (v: string): void => {
+    setHostRaw(v);
+    lsSet('cnftz:deployHost', v);
+  };
+  const onNetlifyToken = (v: string): void => {
+    setNetlifyToken(v);
+    lsSet('cnftz:netlifyToken', v);
+  };
+  const onNetlifySite = (v: string): void => {
+    setNetlifySite(v);
+    lsSet('cnftz:netlifySite', v);
+  };
+  const HOST_LABELS: Record<string, string> = { vercel: 'Vercel', netlify: 'Netlify', ipfs: 'IPFS (Pinata)', arweave: 'Arweave (Irys)' };
 
   const deploy = async (): Promise<void> => {
     const fb = bridge();
@@ -376,8 +396,12 @@ export function SiteScreen() {
       toast.push('Open a project first', 'danger');
       return;
     }
-    if (!vercelToken.trim()) {
+    if (host === 'vercel' && !vercelToken.trim()) {
       toast.push('Add your Vercel token first', 'danger');
+      return;
+    }
+    if (host === 'netlify' && (!netlifyToken.trim() || !netlifySite.trim())) {
+      toast.push('Add your Netlify token and site ID first', 'danger');
       return;
     }
     setDeploying(true);
@@ -406,11 +430,20 @@ export function SiteScreen() {
         return;
       }
       // 2) deploy it
-      toast.push('Deploying to Vercel… (first run can take a minute)', 'ok');
-      const dep = await fb.deploySite({ provider: 'vercel', token: vercelToken.trim() });
+      const label = HOST_LABELS[host] ?? host;
+      toast.push(`Deploying to ${label}… (first run can take a minute)`, 'ok');
+      const payload =
+        host === 'vercel'
+          ? { provider: 'vercel', token: vercelToken.trim() }
+          : host === 'netlify'
+            ? { provider: 'netlify', token: netlifyToken.trim(), siteId: netlifySite.trim() }
+            : { provider: host }; // ipfs / arweave use the project's storage credentials
+      const dep = await fb.deploySite(payload);
       if (dep.ok && dep.url) {
         toast.push(`Live at ${dep.url}`, 'ok');
         fb.openExternal(dep.url);
+      } else if (dep.ok) {
+        toast.push(`Deployed to ${label}`, 'ok');
       } else {
         toast.push(dep.error ?? 'Deploy failed', 'danger');
       }
@@ -733,16 +766,45 @@ export function SiteScreen() {
           <Panel title="Host (deploy)">
             <div className="stack">
               <span className="label muted">
-                Deploy the generated static site to your own Vercel account. Your token stays on this machine.
+                Generate + deploy the static mint site to your own host. Credentials stay on this machine; the artist owns the deployment.
               </span>
-              <Field label="Vercel token">
-                <Input type="password" value={vercelToken} onChange={(e) => onVercelToken(e.target.value)} placeholder="Vercel → Account → Settings → Tokens" />
+              <Field label="Host">
+                <Select aria-label="Deploy host" value={host} onChange={(e) => onHost(e.target.value)}>
+                  <option value="vercel">Vercel</option>
+                  <option value="netlify">Netlify</option>
+                  <option value="ipfs">IPFS (Pinata)</option>
+                  <option value="arweave">Arweave (Irys)</option>
+                </Select>
               </Field>
+              {host === 'vercel' ? (
+                <Field label="Vercel token">
+                  <Input type="password" value={vercelToken} onChange={(e) => onVercelToken(e.target.value)} placeholder="Vercel → Account → Settings → Tokens" />
+                </Field>
+              ) : null}
+              {host === 'netlify' ? (
+                <div className="grid cols-auto">
+                  <Field label="Netlify token">
+                    <Input type="password" value={netlifyToken} onChange={(e) => onNetlifyToken(e.target.value)} placeholder="Netlify → User settings → Personal access tokens" />
+                  </Field>
+                  <Field label="Netlify site ID">
+                    <Input value={netlifySite} onChange={(e) => onNetlifySite(e.target.value)} placeholder="create a site first → Site configuration → Site ID" />
+                  </Field>
+                </div>
+              ) : null}
+              {host === 'ipfs' || host === 'arweave' ? (
+                <span className="label muted">
+                  Uses your project storage credentials ({host === 'ipfs' ? 'Pinata JWT' : 'Irys'}) — the same ones the <strong>Publish</strong> stage uses. No extra token needed here.
+                </span>
+              ) : null}
               <div className="row">
                 <Button variant="primary" onClick={deploy} disabled={deploying || !isBridged()}>
-                  {deploying ? 'Deploying…' : 'Deploy to Vercel'}
+                  {deploying ? 'Deploying…' : `Deploy to ${HOST_LABELS[host] ?? host}`}
                 </Button>
-                <span className="label muted">Generates the site, then runs <code>npx vercel deploy --prod</code> (needs Node + a token).</span>
+                <span className="label muted">
+                  {host === 'ipfs' || host === 'arweave'
+                    ? 'Pins the site to decentralized storage and returns a gateway URL.'
+                    : `Generates the site, then runs the ${HOST_LABELS[host] ?? host} CLI (needs Node + a token).`}
+                </span>
               </div>
             </div>
           </Panel>
