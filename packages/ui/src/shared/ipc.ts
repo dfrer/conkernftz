@@ -156,6 +156,14 @@ export interface FoundryApi {
   launchSetCaps(opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }): Promise<JsonResult>;
   launchSetPrices(opts: { allowlistEth: string; publicEth: string; confirm?: string }): Promise<JsonResult>;
   launchSetPhase(opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }): Promise<JsonResult>;
+  /** Set the revealed metadata base URI (token N → `<baseUri>N.json`). */
+  launchReveal(opts: { baseUri: string; confirm?: string }): Promise<JsonResult>;
+  /** Permanently freeze metadata (one-way). */
+  launchFreeze(opts?: { confirm?: string }): Promise<JsonResult>;
+  /** Withdraw proceeds to the treasury. */
+  launchWithdraw(opts?: { confirm?: string }): Promise<JsonResult>;
+  /** Build the allowlist root from CSV/JSON text, set it on-chain, and embed the proofs in the site. */
+  launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<JsonResult>;
 }
 
 /**
@@ -213,6 +221,10 @@ export const FOUNDRY_METHODS = [
   'launchSetCaps',
   'launchSetPrices',
   'launchSetPhase',
+  'launchReveal',
+  'launchFreeze',
+  'launchWithdraw',
+  'launchSetAllowlist',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

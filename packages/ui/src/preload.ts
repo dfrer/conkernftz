@@ -59,6 +59,10 @@ const foundryApi: FoundryApi = {
   launchSetCaps: (opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetCaps', opts),
   launchSetPrices: (opts: { allowlistEth: string; publicEth: string; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetPrices', opts),
   launchSetPhase: (opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetPhase', opts),
+  launchReveal: (opts: { baseUri: string; confirm?: string }) => ipcRenderer.invoke('foundry:launchReveal', opts),
+  launchFreeze: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchFreeze', opts || {}),
+  launchWithdraw: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
+  launchSetAllowlist: (opts: { text: string; format?: 'csv' | 'json'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
 };
 
 contextBridge.exposeInMainWorld('foundry', foundryApi);

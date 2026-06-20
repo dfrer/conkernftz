@@ -54,4 +54,8 @@ contextBridge.exposeInMainWorld('foundry', {
   launchSetCaps: (opts) => ipcRenderer.invoke('foundry:launchSetCaps', opts),
   launchSetPrices: (opts) => ipcRenderer.invoke('foundry:launchSetPrices', opts),
   launchSetPhase: (opts) => ipcRenderer.invoke('foundry:launchSetPhase', opts),
+  launchReveal: (opts) => ipcRenderer.invoke('foundry:launchReveal', opts),
+  launchFreeze: (opts) => ipcRenderer.invoke('foundry:launchFreeze', opts || {}),
+  launchWithdraw: (opts) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
+  launchSetAllowlist: (opts) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
 });

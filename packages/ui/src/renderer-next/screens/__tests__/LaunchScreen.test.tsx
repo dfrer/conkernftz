@@ -53,6 +53,11 @@ describe('LaunchScreen', () => {
     expect(screen.getByText('1 / 100')).toBeTruthy();
     // public phase opened → config is locked
     expect(screen.getByText(/Prices & caps are locked/i)).toBeTruthy();
+    // the full management surface is present (slice 2)
+    expect(screen.getByText('Allowlist')).toBeTruthy();
+    expect(screen.getByText('Reveal & metadata')).toBeTruthy();
+    expect(screen.getByText('Proceeds')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /withdraw/i })).toBeTruthy();
   });
 
   it('shows the deploy panel when no contract is deployed yet', async () => {

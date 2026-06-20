@@ -68,6 +68,10 @@ export interface FoundryBridge {
   launchSetCaps(opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
   launchSetPrices(opts: { allowlistEth: string; publicEth: string; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
   launchSetPhase(opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchReveal(opts: { baseUri: string; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchFreeze(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchWithdraw(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<{ ok: boolean; json?: { root: string; count: number; txHash: string }; error?: string }>;
 }
 
 /** Live sale-state snapshot (bigint fields as decimal strings; prices also pre-formatted in ETH). */

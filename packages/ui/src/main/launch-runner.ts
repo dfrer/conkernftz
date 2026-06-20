@@ -249,4 +249,72 @@ export function initLaunchRunner(): void {
       }
     },
   );
+
+  handle('foundry:launchReveal', async (_evt, opts: { baseUri: string; confirm?: string }) => {
+    try {
+      const { evm, keyPath } = loadConfig();
+      const contract = requireContract(evm);
+      await assertAllowed(evm.chainId, opts?.confirm);
+      const { reveal } = await loadEvm();
+      const txHash = await reveal(writeConfigFor(evm, keyPath, contract), opts.baseUri);
+      return { ok: true, json: { txHash } };
+    } catch (e) {
+      return { ok: false, error: msg(e) };
+    }
+  });
+
+  handle('foundry:launchFreeze', async (_evt, opts: { confirm?: string } = {}) => {
+    try {
+      const { evm, keyPath } = loadConfig();
+      const contract = requireContract(evm);
+      await assertAllowed(evm.chainId, opts?.confirm);
+      const { freezeMetadata } = await loadEvm();
+      const txHash = await freezeMetadata(writeConfigFor(evm, keyPath, contract));
+      return { ok: true, json: { txHash } };
+    } catch (e) {
+      return { ok: false, error: msg(e) };
+    }
+  });
+
+  handle('foundry:launchWithdraw', async (_evt, opts: { confirm?: string } = {}) => {
+    try {
+      const { evm, keyPath } = loadConfig();
+      const contract = requireContract(evm);
+      await assertAllowed(evm.chainId, opts?.confirm);
+      const { withdraw } = await loadEvm();
+      const txHash = await withdraw(writeConfigFor(evm, keyPath, contract));
+      return { ok: true, json: { txHash } };
+    } catch (e) {
+      return { ok: false, error: msg(e) };
+    }
+  });
+
+  handle(
+    'foundry:launchSetAllowlist',
+    async (_evt, opts: { text: string; format?: 'csv' | 'json'; confirm?: string }) => {
+      try {
+        const { evm, keyPath, raw, cfgPath } = loadConfig();
+        const contract = requireContract(evm);
+        await assertAllowed(evm.chainId, opts?.confirm);
+        const { parseAllowlist, dumpAllowlist, setAllowlistRoot } = await loadEvm();
+        const entries = parseAllowlist(opts.text, opts.format ?? 'csv');
+        const dump = dumpAllowlist(entries); // throws on bad/duplicate entries
+        const txHash = await setAllowlistRoot(writeConfigFor(evm, keyPath, contract), dump.root);
+        // Embed the proofs in the site so the mint widget can look up a connected wallet's proof.
+        if (raw.site && typeof raw.site === 'object') {
+          raw.site.mint = {
+            ...(raw.site.mint ?? {}),
+            chainId: evm.chainId,
+            rpcUrl: evm.rpcUrl,
+            contractAddress: contract,
+            allowlist: dump,
+          };
+          fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
+        }
+        return { ok: true, json: { root: dump.root, count: dump.count, txHash } };
+      } catch (e) {
+        return { ok: false, error: msg(e) };
+      }
+    },
+  );
 }

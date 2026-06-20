@@ -5,5 +5,6 @@ export * from './merkle.js';
 export * from './chains.js';
 export * from './sale.js';
 export * from './mintPlan.js';
+export * from './allowlistFile.js';
 export { conkernftzCollectionAbi, conkernftzCollectionBytecode } from './artifact.js';
 export { conkernftzLaunchAbi, conkernftzLaunchBytecode } from './launch-artifact.js';

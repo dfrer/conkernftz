@@ -27,6 +27,8 @@ export function LaunchScreen() {
   const [allowlistEth, setAllowlistEth] = useState('0');
   const [publicEth, setPublicEth] = useState('0.001');
   const [confirmToken, setConfirmToken] = useState('');
+  const [baseUri, setBaseUri] = useState('');
+  const [allowlist, setAllowlist] = useState<{ name: string; text: string; format: 'csv' | 'json' } | null>(null);
 
   const refresh = useCallback(async () => {
     const fb = bridge();
@@ -232,6 +234,88 @@ export function LaunchScreen() {
               </Button>
             ))}
           </div>
+        </Panel>
+      ) : null}
+
+      {/* --- Allowlist --- */}
+      {deployed ? (
+        <Panel title="Allowlist">
+          <p className="muted">
+            Upload a CSV (<code>address,maxQty</code> per line) or JSON. ConkerNFTZ builds the Merkle root,
+            sets it on-chain, and embeds the proofs in your site so allowlisted wallets can mint.
+            {status?.configLocked ? ' The root is locked (public phase opened).' : ''}
+          </p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="file"
+              accept=".csv,.json,.txt"
+              disabled={status?.configLocked}
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const text = await f.text();
+                setAllowlist({ name: f.name, text, format: /\.json$/i.test(f.name) ? 'json' : 'csv' });
+              }}
+            />
+            {allowlist ? <span className="muted">{allowlist.name}</span> : null}
+            <Button
+              disabled={!!busy || !allowlist || status?.configLocked}
+              onClick={() =>
+                allowlist &&
+                void act(
+                  'allowlist',
+                  () => bridge()!.launchSetAllowlist({ text: allowlist.text, format: allowlist.format, confirm }),
+                  'Allowlist root set + proofs embedded',
+                )
+              }
+            >
+              {busy === 'allowlist' ? 'Building…' : 'Build & set root'}
+            </Button>
+          </div>
+        </Panel>
+      ) : null}
+
+      {/* --- Reveal & metadata --- */}
+      {deployed ? (
+        <Panel title="Reveal & metadata">
+          <p className="muted">
+            Before reveal, every token shows the placeholder. Reveal points <code>tokenURI</code> at your
+            uploaded metadata (token N → <code>&lt;baseUri&gt;N.json</code>). Freeze makes it permanent.
+          </p>
+          <div className="grid cols-auto" style={{ gap: 10, alignItems: 'end' }}>
+            <Field label="Revealed base URI">
+              <Input value={baseUri} onChange={(e) => setBaseUri(e.target.value)} placeholder="ipfs://<cid>/" disabled={status?.metadataFrozen} />
+            </Field>
+            <Button
+              disabled={!!busy || !baseUri || status?.metadataFrozen}
+              onClick={() => void act('reveal', () => bridge()!.launchReveal({ baseUri, confirm }), 'Revealed')}
+            >
+              Reveal
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!!busy || status?.metadataFrozen}
+              onClick={() => {
+                if (!window.confirm('Freeze metadata permanently? This can never be undone — no further reveals will be possible.')) return;
+                void act('freeze', () => bridge()!.launchFreeze({ confirm }), 'Metadata frozen');
+              }}
+            >
+              {status?.metadataFrozen ? 'Frozen' : 'Freeze (permanent)'}
+            </Button>
+          </div>
+        </Panel>
+      ) : null}
+
+      {/* --- Proceeds --- */}
+      {deployed ? (
+        <Panel title="Proceeds">
+          <p className="muted">Withdraw the contract balance to the treasury ({status?.treasury}).</p>
+          <Button
+            disabled={!!busy}
+            onClick={() => void act('withdraw', () => bridge()!.launchWithdraw({ confirm }), 'Withdrawn to treasury')}
+          >
+            {busy === 'withdraw' ? 'Withdrawing…' : 'Withdraw'}
+          </Button>
         </Panel>
       ) : null}
     </>
