@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { SiteRenderer } from '../components/site/SiteRenderer';
-import { addBlock, defaultSite, setLayoutMode, updateBlock } from '../lib/site';
+import { addBlock, defaultSite, setCursor, setLayoutMode, updateBlock } from '../lib/site';
 import { resolveExperience } from '../lib/mintExperience';
 
 afterEach(cleanup);
@@ -117,5 +117,27 @@ describe('SiteRenderer', () => {
     const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
     expect((container.querySelector('.site-hitcounter-img') as HTMLImageElement)?.getAttribute('src')).toBe('https://counter.example/c.gif');
     expect(container.querySelector('.site-hitcounter-num')).toBeNull();
+  });
+
+  it('renders the nostalgia-zoo widgets (best-viewed / audio / guestbook)', () => {
+    let site = addBlock(defaultSite(), 'bestViewed');
+    site = addBlock(site, 'audio');
+    site = addBlock(site, 'guestbook');
+    const audioId = site.blocks.find((b) => b.kind === 'audio')!.id;
+    const gbId = site.blocks.find((b) => b.kind === 'guestbook')!.id;
+    site = updateBlock(site, audioId, { src: 'data:audio/midi;base64,xx' });
+    site = updateBlock(site, gbId, { href: 'https://guestbook.example' });
+    const { container } = render(<SiteRenderer site={site} experience={resolveExperience({})} />);
+    expect(container.querySelector('.site-bestviewed')).toBeTruthy();
+    expect((container.querySelector('.site-audio-el') as HTMLAudioElement)?.getAttribute('src')).toBe('data:audio/midi;base64,xx');
+    expect((container.querySelector('.site-guestbook') as HTMLAnchorElement)?.getAttribute('href')).toBe('https://guestbook.example');
+  });
+
+  it('mounts a cursor-trail layer only when site.cursor is set', () => {
+    const r = render(<SiteRenderer site={setCursor(defaultSite(), 'sparkle')} experience={resolveExperience({})} />);
+    expect(r.container.querySelector('.site-cursor-layer')).toBeTruthy();
+    r.unmount();
+    const r2 = render(<SiteRenderer site={setCursor(defaultSite(), 'none')} experience={resolveExperience({})} />);
+    expect(r2.container.querySelector('.site-cursor-layer')).toBeNull();
   });
 });

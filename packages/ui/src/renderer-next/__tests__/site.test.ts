@@ -184,4 +184,17 @@ describe('site model — canvas + widgets', () => {
     expect(newBlock('underConstruction').kind).toBe('underConstruction');
     expect(BLOCK_KINDS).toContain('wordArt');
   });
+
+  it('newBlock supports the nostalgia-zoo additions (best-viewed / audio / guestbook)', () => {
+    expect(newBlock('bestViewed').kind).toBe('bestViewed');
+    expect((newBlock('audio') as { loop: boolean }).loop).toBe(true);
+    expect(newBlock('guestbook').kind).toBe('guestbook');
+    for (const k of ['bestViewed', 'audio', 'guestbook'] as const) expect(BLOCK_KINDS).toContain(k);
+  });
+
+  it('resolveSite validates the page cursor effect', () => {
+    expect(resolveSite({ cursor: 'sparkle', blocks: [] } as unknown as Partial<SiteConfig>).cursor).toBe('sparkle');
+    expect(resolveSite({ cursor: 'bogus', blocks: [] } as unknown as Partial<SiteConfig>).cursor).toBe('none');
+    expect(resolveSite({ blocks: [] }).cursor).toBe('none');
+  });
 });
