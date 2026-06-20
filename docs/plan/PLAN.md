@@ -29,7 +29,7 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V1-1 | Design-system foundation: reconcile `DESIGN_SYSTEM.md`, lock the **token layer** (color, type scale, spacing, radius, elevation, **motion**, density) and the theming model. | ◐ |
 | V1-2 | Component primitives pass: Button / Panel / Field·Input·Select / Badge / Dialog / Tabs / Toast / Lamp / EmptyState / Skeleton — consistency, all interaction **states**, accessibility. | ◐ |
 | V1-3 | App shell polish: header, pipeline nav, status bar, instrument-console layout, transitions. | ◐ |
-| V1-4 | Screen pass — **Projects** | ☐ |
+| V1-4 | Screen pass — **Projects** | ◐ |
 | V1-5 | Screen pass — **Design** (densest; needs the most UX work) | ☐ |
 | V1-6 | Screen pass — **Preview** | ☐ |
 | V1-7 | Screen pass — **Build** | ☐ |

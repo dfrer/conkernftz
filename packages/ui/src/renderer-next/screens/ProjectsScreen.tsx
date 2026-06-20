@@ -74,28 +74,29 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
 
       {error && !newOpen ? <div className="banner-error">{error}</div> : null}
 
-      <Panel title="Recent dossiers" actions={<span className="label">{recents.length} ON FILE</span>}>
-        {recents.length === 0 ? (
-          <EmptyState
-            code="NO RECENTS"
-            title="No projects on file"
-            hint="Start a fresh collection with New project, or open an existing conkernftz project folder."
-            action={
-              <div className="row">
-                <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
-                  New project
-                </Button>
-                <Button onClick={open}>Open project…</Button>
-              </div>
-            }
-          />
-        ) : (
+      {recents.length === 0 ? (
+        // First run: let the empty state be the hero, not a "0 ON FILE" table.
+        <EmptyState
+          code="NO RECENTS"
+          title="Start your first collection"
+          hint="Scaffold a fresh collection with New project, or open an existing conkernftz project folder."
+          action={
+            <div className="row">
+              <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
+                New project
+              </Button>
+              <Button onClick={open}>Open project…</Button>
+            </div>
+          }
+        />
+      ) : (
+        <Panel title="Recent dossiers" actions={<span className="label">{recents.length} ON FILE</span>}>
           <div className="proj-grid">
             {recents.map((p) => (
               <button key={p.dir} type="button" className="proj-card" onClick={() => openRecent(p)}>
                 <span className="label">DOSSIER</span>
                 <span className="proj-name">{p.name}</span>
-                <span className="proj-path">{p.dir}</span>
+                <span className="proj-path" title={p.dir}>{p.dir}</span>
               </button>
             ))}
             <button type="button" className="proj-card proj-card--new" onClick={() => setNewOpen(true)}>
@@ -103,8 +104,8 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
               <span className="label">NEW PROJECT</span>
             </button>
           </div>
-        )}
-      </Panel>
+        </Panel>
+      )}
 
       <Dialog open={newOpen} title="New collection" onClose={() => setNewOpen(false)}>
         <div className="stack">

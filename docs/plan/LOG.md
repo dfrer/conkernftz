@@ -5,6 +5,16 @@
 
 ---
 
+### 2026-06-20 — V1-4: Projects screen pass
+First per-screen pass. Captured the previously-unseen **populated** recents state (seeded the
+harness's `cnftz:recents` localStorage → new `projects-populated` shot) and refined both states:
+- **Empty state is now the page hero** — on first run, the EmptyState renders directly ("Start your
+  first collection") instead of being wrapped in a redundant "Recent dossiers / 0 ON FILE" panel.
+- **Card paths truncate** to a single line with ellipsis (+ `title` tooltip) instead of `break-all`
+  wrapping — cleaner card rhythm.
+Verified: typecheck clean · 203/203 vitest · renderer build clean · screenshots 49/49. ◐ pending
+owner live-review.
+
 ### 2026-06-20 — V1-3: app-shell polish (header + harness shell crops)
 Shell was already solid (instrument-console grid, indexed pipeline nav with lamps, status-bar
 readouts), so this is focused polish — no redesign:

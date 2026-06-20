@@ -329,12 +329,19 @@ async function main() {
   /** Manifest of every capture (drives index.html). */
   const shots = [];
 
-  /** Create a ready page: mocked bridge, chosen theme/viewport, nav rendered. */
-  async function newPage({ theme = 'dark', viewport = { width: 1440, height: 900 }, deployed = false } = {}) {
+  /** Create a ready page: mocked bridge, chosen theme/viewport, nav rendered.
+   *  `recents` seeds the Projects "recent dossiers" list (localStorage) so the populated grid
+   *  — not just the empty state — can be captured. */
+  async function newPage({ theme = 'dark', viewport = { width: 1440, height: 900 }, deployed = false, recents = null } = {}) {
     const page = await browser.newPage({ viewport });
     await page.addInitScript((t) => {
       try { localStorage.setItem('cnftz:theme', t); } catch { /* ignore */ }
     }, theme);
+    if (recents) {
+      await page.addInitScript((r) => {
+        try { localStorage.setItem('cnftz:recents', JSON.stringify(r)); } catch { /* ignore */ }
+      }, recents);
+    }
     await page.addInitScript(installMock, { realPacks, deployed });
     await page.goto(url, { waitUntil: 'load' });
     await page.waitForSelector('.nav-item', { timeout: 15000 });
@@ -469,6 +476,22 @@ async function main() {
     console.log('FAILED', 'experience-rip', String(e?.message ?? e));
   }
   await dark.close();
+
+  // ── Pass 1b — Projects with a populated recents grid (the non-empty state) ───────────────────
+  try {
+    const seeded = await newPage({
+      recents: [
+        { dir: 'C:/work/nasa-crust', name: 'NASA CRUST' },
+        { dir: 'C:/work/specimens', name: 'Specimens' },
+        { dir: 'C:/work/ether-king-set', name: 'Ether King Set' },
+      ],
+    });
+    await gotoStage(seeded, 'Projects');
+    await shot(seeded, { id: 'projects-populated', group: 'Projects', note: 'Recent dossiers grid — card rhythm, name/path hierarchy, "new" affordance.' });
+    await seeded.close();
+  } catch (e) {
+    console.log('FAILED', 'projects-populated', String(e?.message ?? e));
+  }
 
   // ── Pass 1b — Launch in its DEPLOYED state (sale setup / allowlist / reveal / proceeds) ──────
   try {

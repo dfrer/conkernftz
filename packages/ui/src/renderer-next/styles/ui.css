@@ -752,7 +752,10 @@ button {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   color: var(--text-dim);
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Site builder starter templates */
