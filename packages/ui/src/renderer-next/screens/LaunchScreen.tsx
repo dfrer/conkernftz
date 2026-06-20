@@ -224,6 +224,19 @@ export function LaunchScreen() {
     }
   }
 
+  async function onOpenConsole(): Promise<void> {
+    setBusy('console');
+    try {
+      const r = await bridge()!.launchConsole();
+      if (r.ok) toast.push('Opened the signing console in your browser', 'ok');
+      else toast.push(r.error ?? 'Could not open the console', 'danger');
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   // Can a write proceed? Wallet mode needs a session; key-file mainnet needs the confirm token.
   const canWrite = wallet ? !!session : onTestnet || !!confirmToken;
 
@@ -308,10 +321,19 @@ export function LaunchScreen() {
             )}
             <p className="muted" style={{ marginTop: 6, fontSize: 12 }}>
               Non-custodial — your wallet signs every deploy/admin transaction; no key file on disk. Get a free
-              projectId at cloud.reown.com.
+              projectId at cloud.reown.com. The in-app connect uses WalletConnect (scan with a phone wallet).
             </p>
           </div>
         ) : null}
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <p className="muted" style={{ margin: '0 0 6px', fontSize: 12 }}>
+            Using a desktop wallet <strong>extension</strong> (MetaMask in your browser)? It can’t connect to a
+            desktop app directly — open the signing console in your browser instead, where the extension lives.
+          </p>
+          <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void onOpenConsole()}>
+            {busy === 'console' ? 'Opening…' : 'Sign in browser (MetaMask extension) →'}
+          </Button>
+        </div>
       </Panel>
 
       {/* --- Mainnet guard (key-file mode; in wallet mode your wallet is the gate) --- */}

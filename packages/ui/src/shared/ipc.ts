@@ -164,6 +164,8 @@ export interface FoundryApi {
   launchWithdraw(opts?: { confirm?: string }): Promise<JsonResult>;
   /** Build the allowlist root from CSV/JSON text, set it on-chain, and embed the proofs in the site. */
   launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<JsonResult>;
+  /** Serve the browser signing console at localhost and open it (for desktop wallet extensions). */
+  launchConsole(): Promise<DeployResult>;
 }
 
 /**
@@ -225,6 +227,7 @@ export const FOUNDRY_METHODS = [
   'launchFreeze',
   'launchWithdraw',
   'launchSetAllowlist',
+  'launchConsole',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

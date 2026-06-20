@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConkerNFTZ — Launch console</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #0b0e0d; color: #e6e6e6; line-height: 1.5;
+      }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 80px; }
+      h1 { font-size: 20px; margin: 0 0 2px; }
+      .kicker { color: #ffb000; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; }
+      .card { border: 1px solid #233; border-radius: 12px; padding: 16px; margin: 14px 0; background: #0f1413; }
+      .card h2 { font-size: 14px; margin: 0 0 10px; color: #9fb; }
+      .muted { color: #8a9; font-size: 13px; }
+      label { display: block; font-size: 12px; color: #8a9; margin: 8px 0 3px; }
+      input { width: 100%; box-sizing: border-box; padding: 8px 10px; background: #0a0c0b; color: inherit;
+        border: 1px solid #345; border-radius: 8px; font: inherit; }
+      button { padding: 9px 16px; border: none; border-radius: 999px; background: #ffb000; color: #0a0c0b;
+        font: inherit; font-weight: 600; cursor: pointer; margin: 4px 6px 4px 0; }
+      button.ghost { background: transparent; color: #ffb000; border: 1px solid #ffb000; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+      .row > div { flex: 1; min-width: 120px; }
+      code { color: #ffb000; word-break: break-all; }
+      .ok { color: #6ee7a8; } .err { color: #ff6b6b; }
+      a { color: #ffb000; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="app">Loading…</div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

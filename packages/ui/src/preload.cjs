@@ -58,4 +58,5 @@ contextBridge.exposeInMainWorld('foundry', {
   launchFreeze: (opts) => ipcRenderer.invoke('foundry:launchFreeze', opts || {}),
   launchWithdraw: (opts) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
   launchSetAllowlist: (opts) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
+  launchConsole: () => ipcRenderer.invoke('foundry:launchConsole'),
 });

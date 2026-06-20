@@ -63,6 +63,7 @@ const foundryApi: FoundryApi = {
   launchFreeze: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchFreeze', opts || {}),
   launchWithdraw: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
   launchSetAllowlist: (opts: { text: string; format?: 'csv' | 'json'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
+  launchConsole: () => ipcRenderer.invoke('foundry:launchConsole'),
 };
 
 contextBridge.exposeInMainWorld('foundry', foundryApi);

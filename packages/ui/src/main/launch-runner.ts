@@ -1,8 +1,24 @@
 import * as electron from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
+import http from 'node:http';
+import crypto from 'node:crypto';
 import { getProjectDir } from './ipc-project.js';
 import { dynamicImport } from './dynamic-import.js';
+
+const CONSOLE_MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.map': 'application/json',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+};
+
+let consoleServer: http.Server | null = null;
 
 // Phase-L launch contract operations, in-process in the Electron main (so the renderer never
 // touches keys or chain RPCs directly). Every handler reads the project's chain.evm config and
@@ -317,4 +333,145 @@ export function initLaunchRunner(): void {
       }
     },
   );
+
+  // Serve the browser signing console at localhost and open it. Lets desktop wallet extensions
+  // (MetaMask in Chrome) sign deploy/admin — the Electron app can't reach the extension, but a
+  // browser page can. Same-origin API, guarded by a one-time token in the URL.
+  handle('foundry:launchConsole', async () => {
+    try {
+      loadConfig(); // validate the project is EVM-configured before serving
+      const consoleDir = path.resolve(__dirname, '..', 'launch-console');
+      if (!fs.existsSync(path.join(consoleDir, 'index.html'))) {
+        return { ok: false, error: 'Launch console is not built (dist/launch-console). Rebuild the app.' };
+      }
+      if (consoleServer) {
+        consoleServer.close();
+        consoleServer = null;
+      }
+      const token = crypto.randomBytes(16).toString('hex');
+      const server = http.createServer((req, res) => {
+        void handleConsoleRequest(req, res, consoleDir, token);
+      });
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(0, '127.0.0.1', () => resolve());
+      });
+      consoleServer = server;
+      const addr = server.address();
+      const port = typeof addr === 'object' && addr ? addr.port : 0;
+      const url = `http://127.0.0.1:${port}/?token=${token}`;
+      await electron.shell.openExternal(url);
+      return { ok: true, url };
+    } catch (e) {
+      return { ok: false, error: msg(e) };
+    }
+  });
+}
+
+async function handleConsoleRequest(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  consoleDir: string,
+  token: string,
+): Promise<void> {
+  try {
+    const u = new URL(req.url || '/', 'http://127.0.0.1');
+    const authed = u.searchParams.get('token') === token;
+
+    if (u.pathname === '/api/config') {
+      if (!authed) return void send(res, 403, 'text/plain', 'forbidden');
+      return void send(res, 200, 'application/json', JSON.stringify(await buildConsoleConfig()));
+    }
+    if (u.pathname === '/api/save' && req.method === 'POST') {
+      if (!authed) return void send(res, 403, 'text/plain', 'forbidden');
+      const chunks: Buffer[] = [];
+      for await (const ch of req) chunks.push(ch as Buffer);
+      await saveFromConsole(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
+      return void send(res, 200, 'application/json', '{"ok":true}');
+    }
+
+    // Static console files (path-traversal guarded).
+    const rel = u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\/+/, '');
+    let filePath = path.join(consoleDir, rel);
+    if (filePath !== consoleDir && !filePath.startsWith(consoleDir + path.sep)) {
+      return void send(res, 403, 'text/plain', 'forbidden');
+    }
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(consoleDir, 'index.html');
+    }
+    res.setHeader('Content-Type', CONSOLE_MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream');
+    fs.createReadStream(filePath).pipe(res);
+  } catch {
+    send(res, 500, 'text/plain', 'error');
+  }
+}
+
+function send(res: http.ServerResponse, code: number, type: string, body: string): void {
+  res.statusCode = code;
+  res.setHeader('Content-Type', type);
+  res.end(body);
+}
+
+/** The launch config + live status the console needs (no secrets — read-only project data). */
+async function buildConsoleConfig(): Promise<Record<string, unknown>> {
+  const { name, symbol, evm } = loadConfig();
+  const l = evm.launch ?? {};
+  const out: Record<string, unknown> = {
+    name,
+    symbol,
+    chainId: evm.chainId,
+    rpcUrl: evm.rpcUrl,
+    contractAddress: l.contractAddress,
+    maxSupply: evm.maxSupply,
+    placeholderUri: l.placeholderUri ?? '',
+    provenanceHash: l.provenanceHash,
+    treasury: l.treasury,
+    royaltyReceiver: evm.royaltyReceiver,
+    royaltyBps: evm.royaltyBps,
+  };
+  if (l.contractAddress) {
+    try {
+      const { readSaleState, formatEther } = await loadEvm();
+      const s = await readSaleState({ rpcUrl: evm.rpcUrl, chainId: evm.chainId, contractAddress: l.contractAddress });
+      out.status = {
+        phase: s.phase,
+        configLocked: s.configLocked,
+        totalMinted: s.totalMinted.toString(),
+        maxSupply: s.maxSupply.toString(),
+        publicPriceEth: formatEther(s.publicPriceWei),
+        allowlistPriceEth: formatEther(s.allowlistPriceWei),
+        publicWalletCap: s.publicWalletCap.toString(),
+        maxPerTx: s.maxPerTx.toString(),
+        revealed: s.revealed,
+        metadataFrozen: s.metadataFrozen,
+      };
+    } catch {
+      /* status is best-effort */
+    }
+  }
+  return out;
+}
+
+/** Persist results the console produced (a wallet-signed deploy address / allowlist proofs). */
+async function saveFromConsole(data: { contractAddress?: unknown; allowlist?: unknown }): Promise<void> {
+  const { raw, cfgPath, evm } = loadConfig();
+  if (typeof data.contractAddress === 'string' && /^0x[0-9a-fA-F]{40}$/.test(data.contractAddress)) {
+    raw.chain.evm.launch = { ...(raw.chain.evm.launch ?? {}), contractAddress: data.contractAddress };
+    if (raw.site && typeof raw.site === 'object') {
+      raw.site.mint = { chainId: evm.chainId, rpcUrl: evm.rpcUrl, contractAddress: data.contractAddress };
+    }
+  }
+  if (data.allowlist && typeof data.allowlist === 'object') {
+    const contract = raw.chain.evm.launch?.contractAddress;
+    if (raw.site && typeof raw.site === 'object' && contract) {
+      raw.site.mint = {
+        ...(raw.site.mint ?? {}),
+        chainId: evm.chainId,
+        rpcUrl: evm.rpcUrl,
+        contractAddress: contract,
+        allowlist: data.allowlist,
+      };
+    }
+  }
+  fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
 }

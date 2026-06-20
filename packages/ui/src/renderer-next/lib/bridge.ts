@@ -72,6 +72,8 @@ export interface FoundryBridge {
   launchFreeze(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
   launchWithdraw(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
   launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<{ ok: boolean; json?: { root: string; count: number; txHash: string }; error?: string }>;
+  /** Serve + open the browser signing console (for desktop wallet extensions like MetaMask). */
+  launchConsole(): Promise<{ ok: boolean; url?: string; error?: string }>;
 }
 
 /** Live sale-state snapshot (bigint fields as decimal strings; prices also pre-formatted in ETH). */
