@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { ToastProvider } from '../../components/Toast';
 import { LaunchScreen } from '../LaunchScreen';
 import type { LaunchStatus } from '../../lib/bridge';
@@ -45,6 +45,7 @@ describe('LaunchScreen', () => {
   it('renders live status and the sale-setup panel for a deployed contract', async () => {
     (window as unknown as { foundry?: unknown }).foundry = {
       launchStatus: vi.fn().mockResolvedValue({ ok: true, json: deployed }),
+      readConfig: vi.fn().mockResolvedValue({ ok: true, json: { name: 'Crust', chain: { evm: {} } } }),
     };
     renderScreen();
     // status reads asynchronously on mount
@@ -63,9 +64,23 @@ describe('LaunchScreen', () => {
   it('shows the deploy panel when no contract is deployed yet', async () => {
     (window as unknown as { foundry?: unknown }).foundry = {
       launchStatus: vi.fn().mockResolvedValue({ ok: true, json: { configured: false, chainId: 84532, testnet: true } }),
+      readConfig: vi.fn().mockResolvedValue({ ok: true, json: { name: 'Crust', chain: { evm: {} } } }),
     };
     renderScreen();
     expect(await screen.findByText(/not deployed yet/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /deploy contract/i })).toBeTruthy();
+  });
+
+  it('offers a key-file / connect-wallet signer choice, and a projectId field in wallet mode', async () => {
+    (window as unknown as { foundry?: unknown }).foundry = {
+      launchStatus: vi.fn().mockResolvedValue({ ok: true, json: { configured: false, chainId: 84532, testnet: true } }),
+      readConfig: vi.fn().mockResolvedValue({ ok: true, json: { name: 'Crust', chain: { evm: {} } } }),
+    };
+    renderScreen();
+    const walletBtn = await screen.findByRole('button', { name: /connect wallet/i });
+    expect(screen.getByRole('button', { name: /deployer key file/i })).toBeTruthy();
+    fireEvent.click(walletBtn);
+    // wallet mode reveals the WalletConnect projectId field
+    expect(screen.getByPlaceholderText(/cloud\.reown\.com/i)).toBeTruthy();
   });
 });

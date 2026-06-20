@@ -27,6 +27,7 @@
     "@fontsource-variable/archivo": "^5.1.1",
     "@fontsource/ibm-plex-mono": "^5.1.1",
     "@fontsource/ibm-plex-sans": "^5.1.1",
+    "@walletconnect/ethereum-provider": "^2.23.9",
     "execa": "^9.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

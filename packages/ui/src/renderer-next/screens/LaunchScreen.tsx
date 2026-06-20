@@ -7,6 +7,24 @@ import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
 import { useToast } from '../components/Toast';
 import { bridge, isBridged, type LaunchStatus, type LaunchEstimate } from '../lib/bridge';
+import { dumpAllowlist, parseAllowlist } from '@conkernftz/chain-evm';
+import {
+  walletDeploy,
+  walletSend,
+  waitForContractAddress,
+  callSetCaps,
+  callSetPrices,
+  callSetPhase,
+  callReveal,
+  callFreeze,
+  callWithdraw,
+  callSetAllowlistRoot,
+  type DeployInputs,
+  type LaunchPhase,
+} from '../lib/launchSign';
+import { getProjectId, type WalletSession } from '../lib/walletConnect';
+
+type OpResult = { ok: boolean; error?: string; json?: unknown };
 
 /**
  * Launch stage — deploy and operate the on-chain mint contract without touching a terminal.
@@ -30,17 +48,27 @@ export function LaunchScreen() {
   const [baseUri, setBaseUri] = useState('');
   const [allowlist, setAllowlist] = useState<{ name: string; text: string; format: 'csv' | 'json' } | null>(null);
 
+  // Signer: 'keyfile' goes through the IPC handlers (configured deployer key); 'wallet' signs
+  // every tx in the user's own wallet via WalletConnect (non-custodial, no key file).
+  const [signer, setSigner] = useState<'keyfile' | 'wallet'>('keyfile');
+  const [wcProjectId, setWcProjectId] = useState<string>(() => getProjectId());
+  const [session, setSession] = useState<WalletSession | null>(null);
+  // Raw project config (for the wallet path's deploy inputs + persisting the address).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [cfg, setCfg] = useState<any>(null);
+
   const refresh = useCallback(async () => {
     const fb = bridge();
     if (!fb) return;
-    const r = await fb.launchStatus();
-    if (r.ok && r.json) {
-      setStatus(r.json);
+    const [s, c] = await Promise.all([fb.launchStatus(), fb.readConfig()]);
+    if (s.ok && s.json) {
+      setStatus(s.json);
       setStatusErr(null);
     } else {
       setStatus(null);
-      setStatusErr(r.error ?? 'Could not read contract status.');
+      setStatusErr(s.error ?? 'Could not read contract status.');
     }
+    if (c.ok && c.json) setCfg(c.json);
   }, []);
 
   useEffect(() => {
@@ -93,6 +121,112 @@ export function LaunchScreen() {
     }
   };
 
+  // --- wallet (WalletConnect) signing path -----------------------------------------------------
+  const deployInputs = (): DeployInputs => {
+    const evm = cfg.chain.evm;
+    const l = evm.launch ?? {};
+    return {
+      name: cfg.name,
+      symbol: cfg.symbol ?? '',
+      maxSupply: evm.maxSupply,
+      placeholderUri: l.placeholderUri ?? '',
+      provenanceHash: l.provenanceHash,
+      treasury: l.treasury,
+      royaltyReceiver: evm.royaltyReceiver,
+      royaltyBps: evm.royaltyBps,
+    };
+  };
+
+  async function wDeploy(): Promise<OpResult> {
+    if (!session || !cfg) return { ok: false, error: 'Connect your wallet first.' };
+    const evm = cfg.chain.evm;
+    const txHash = await walletDeploy(session.provider, session.address, deployInputs());
+    const address = await waitForContractAddress(evm.rpcUrl, txHash);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = (await bridge()!.readConfig()).json as any;
+    c.chain.evm.launch = { ...(c.chain.evm.launch ?? {}), contractAddress: address };
+    if (c.site && typeof c.site === 'object') {
+      c.site.mint = { chainId: evm.chainId, rpcUrl: evm.rpcUrl, contractAddress: address };
+    }
+    await bridge()!.writeConfig(c);
+    return { ok: true, json: { address } };
+  }
+
+  async function wWrite(data: `0x${string}`, valueWei = 0n): Promise<OpResult> {
+    if (!session) return { ok: false, error: 'Connect your wallet first.' };
+    const contract = status?.contractAddress;
+    if (!contract) return { ok: false, error: 'No contract deployed.' };
+    const txHash = await walletSend(session.provider, session.address, contract, data, valueWei);
+    return { ok: true, json: { txHash } };
+  }
+
+  async function wAllowlist(text: string, format: 'csv' | 'json'): Promise<OpResult> {
+    if (!session || !cfg) return { ok: false, error: 'Connect your wallet first.' };
+    const contract = status?.contractAddress;
+    if (!contract) return { ok: false, error: 'No contract deployed.' };
+    const dump = dumpAllowlist(parseAllowlist(text, format)); // throws on bad/duplicate entries
+    await walletSend(session.provider, session.address, contract, callSetAllowlistRoot(dump.root));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = (await bridge()!.readConfig()).json as any;
+    if (c.site && typeof c.site === 'object') {
+      c.site.mint = {
+        ...(c.site.mint ?? {}),
+        chainId: cfg.chain.evm.chainId,
+        rpcUrl: cfg.chain.evm.rpcUrl,
+        contractAddress: contract,
+        allowlist: dump,
+      };
+      await bridge()!.writeConfig(c);
+    }
+    return { ok: true, json: { root: dump.root, count: dump.count } };
+  }
+
+  const wallet = signer === 'wallet';
+  // The dispatcher: each action routes to the wallet path or the key-file IPC handler.
+  const ops = {
+    deploy: (): Promise<OpResult> => (wallet ? wDeploy() : bridge()!.launchDeploy({ confirm })),
+    caps: (): Promise<OpResult> =>
+      wallet
+        ? wWrite(callSetCaps(Number(walletCap), Number(maxPerTx)))
+        : bridge()!.launchSetCaps({ publicWalletCap: Number(walletCap), maxPerTx: Number(maxPerTx), confirm }),
+    prices: (): Promise<OpResult> =>
+      wallet
+        ? wWrite(callSetPrices(allowlistEth, publicEth))
+        : bridge()!.launchSetPrices({ allowlistEth, publicEth, confirm }),
+    phase: (p: LaunchPhase): Promise<OpResult> =>
+      wallet ? wWrite(callSetPhase(p)) : bridge()!.launchSetPhase({ phase: p, confirm }),
+    reveal: (): Promise<OpResult> =>
+      wallet ? wWrite(callReveal(baseUri)) : bridge()!.launchReveal({ baseUri, confirm }),
+    freeze: (): Promise<OpResult> => (wallet ? wWrite(callFreeze()) : bridge()!.launchFreeze({ confirm })),
+    withdraw: (): Promise<OpResult> => (wallet ? wWrite(callWithdraw()) : bridge()!.launchWithdraw({ confirm })),
+    allowlist: (): Promise<OpResult> =>
+      wallet
+        ? wAllowlist(allowlist!.text, allowlist!.format)
+        : bridge()!.launchSetAllowlist({ text: allowlist!.text, format: allowlist!.format, confirm }),
+  };
+
+  async function onConnectWallet(): Promise<void> {
+    if (!cfg) {
+      toast.push('Project config still loading…', 'danger');
+      return;
+    }
+    setBusy('connect');
+    try {
+      const { connectWallet, setProjectId } = await import('../lib/walletConnect');
+      setProjectId(wcProjectId);
+      const s = await connectWallet(wcProjectId, cfg.chain.evm.chainId, cfg.chain.evm.rpcUrl);
+      setSession(s);
+      toast.push(`Connected ${s.address.slice(0, 6)}…${s.address.slice(-4)}`, 'ok');
+    } catch (e) {
+      toast.push(String((e as Error)?.message ?? e), 'danger');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // Can a write proceed? Wallet mode needs a session; key-file mainnet needs the confirm token.
+  const canWrite = wallet ? !!session : onTestnet || !!confirmToken;
+
   return (
     <>
       <StageHeader
@@ -134,8 +268,54 @@ export function LaunchScreen() {
         )}
       </Panel>
 
-      {/* --- Mainnet guard --- */}
-      {status && !onTestnet ? (
+      {/* --- Signing --- */}
+      <Panel title="Signing">
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="label" style={{ alignSelf: 'center' }}>Sign with:</span>
+          <Button size="sm" variant={!wallet ? 'primary' : 'default'} onClick={() => setSigner('keyfile')}>
+            Deployer key file
+          </Button>
+          <Button size="sm" variant={wallet ? 'primary' : 'default'} onClick={() => setSigner('wallet')}>
+            Connect wallet
+          </Button>
+        </div>
+        {wallet ? (
+          <div style={{ marginTop: 10 }}>
+            {session ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Badge tone="ok">connected</Badge>
+                <code>{session.address}</code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    void session.disconnect();
+                    setSession(null);
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </div>
+            ) : (
+              <div className="grid cols-auto" style={{ gap: 10, alignItems: 'end' }}>
+                <Field label="WalletConnect projectId">
+                  <Input value={wcProjectId} onChange={(e) => setWcProjectId(e.target.value)} placeholder="free at cloud.reown.com" />
+                </Field>
+                <Button disabled={!!busy || !wcProjectId} onClick={() => void onConnectWallet()}>
+                  {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
+                </Button>
+              </div>
+            )}
+            <p className="muted" style={{ marginTop: 6, fontSize: 12 }}>
+              Non-custodial — your wallet signs every deploy/admin transaction; no key file on disk. Get a free
+              projectId at cloud.reown.com.
+            </p>
+          </div>
+        ) : null}
+      </Panel>
+
+      {/* --- Mainnet guard (key-file mode; in wallet mode your wallet is the gate) --- */}
+      {status && !onTestnet && !wallet ? (
         <Panel title="⚠ Mainnet — confirmation required">
           <p className="muted">
             This is a mainnet (real funds). On-chain writes are blocked until you type the chain name
@@ -168,8 +348,8 @@ export function LaunchScreen() {
             </Button>
             <Button
               variant="primary"
-              disabled={!!busy || (!onTestnet && !confirmToken)}
-              onClick={() => void act('deploy', () => bridge()!.launchDeploy({ confirm }), 'Contract deployed')}
+              disabled={!!busy || !canWrite}
+              onClick={() => void act('deploy', ops.deploy, 'Contract deployed')}
             >
               {busy === 'deploy' ? 'Deploying…' : 'Deploy contract'}
             </Button>
@@ -193,8 +373,8 @@ export function LaunchScreen() {
               <Input type="number" min={1} value={maxPerTx} onChange={(e) => setMaxPerTx(e.target.value)} disabled={status?.configLocked} />
             </Field>
             <Button
-              disabled={!!busy || status?.configLocked}
-              onClick={() => void act('caps', () => bridge()!.launchSetCaps({ publicWalletCap: Number(walletCap), maxPerTx: Number(maxPerTx), confirm }), 'Caps set')}
+              disabled={!!busy || status?.configLocked || !canWrite}
+              onClick={() => void act('caps', ops.caps, 'Caps set')}
             >
               Save caps
             </Button>
@@ -208,8 +388,8 @@ export function LaunchScreen() {
               <Input value={publicEth} onChange={(e) => setPublicEth(e.target.value)} disabled={status?.configLocked} />
             </Field>
             <Button
-              disabled={!!busy || status?.configLocked}
-              onClick={() => void act('prices', () => bridge()!.launchSetPrices({ allowlistEth, publicEth, confirm }), 'Prices set')}
+              disabled={!!busy || status?.configLocked || !canWrite}
+              onClick={() => void act('prices', ops.prices, 'Prices set')}
             >
               Save prices
             </Button>
@@ -224,10 +404,10 @@ export function LaunchScreen() {
                 key={p}
                 size="sm"
                 variant={status?.phase === p ? 'primary' : 'default'}
-                disabled={!!busy || status?.phase === p}
+                disabled={!!busy || status?.phase === p || !canWrite}
                 onClick={() => {
                   if (p === 'public' && !window.confirm('Opening the Public phase permanently FREEZES prices, caps, and the allowlist root. Continue?')) return;
-                  void act('phase', () => bridge()!.launchSetPhase({ phase: p, confirm }), `Phase → ${p}`);
+                  void act('phase', () => ops.phase(p), `Phase → ${p}`);
                 }}
               >
                 {p}
@@ -259,15 +439,8 @@ export function LaunchScreen() {
             />
             {allowlist ? <span className="muted">{allowlist.name}</span> : null}
             <Button
-              disabled={!!busy || !allowlist || status?.configLocked}
-              onClick={() =>
-                allowlist &&
-                void act(
-                  'allowlist',
-                  () => bridge()!.launchSetAllowlist({ text: allowlist.text, format: allowlist.format, confirm }),
-                  'Allowlist root set + proofs embedded',
-                )
-              }
+              disabled={!!busy || !allowlist || status?.configLocked || !canWrite}
+              onClick={() => void act('allowlist', ops.allowlist, 'Allowlist root set + proofs embedded')}
             >
               {busy === 'allowlist' ? 'Building…' : 'Build & set root'}
             </Button>
@@ -287,17 +460,17 @@ export function LaunchScreen() {
               <Input value={baseUri} onChange={(e) => setBaseUri(e.target.value)} placeholder="ipfs://<cid>/" disabled={status?.metadataFrozen} />
             </Field>
             <Button
-              disabled={!!busy || !baseUri || status?.metadataFrozen}
-              onClick={() => void act('reveal', () => bridge()!.launchReveal({ baseUri, confirm }), 'Revealed')}
+              disabled={!!busy || !baseUri || status?.metadataFrozen || !canWrite}
+              onClick={() => void act('reveal', ops.reveal, 'Revealed')}
             >
               Reveal
             </Button>
             <Button
               variant="danger"
-              disabled={!!busy || status?.metadataFrozen}
+              disabled={!!busy || status?.metadataFrozen || !canWrite}
               onClick={() => {
                 if (!window.confirm('Freeze metadata permanently? This can never be undone — no further reveals will be possible.')) return;
-                void act('freeze', () => bridge()!.launchFreeze({ confirm }), 'Metadata frozen');
+                void act('freeze', ops.freeze, 'Metadata frozen');
               }}
             >
               {status?.metadataFrozen ? 'Frozen' : 'Freeze (permanent)'}
@@ -311,8 +484,8 @@ export function LaunchScreen() {
         <Panel title="Proceeds">
           <p className="muted">Withdraw the contract balance to the treasury ({status?.treasury}).</p>
           <Button
-            disabled={!!busy}
-            onClick={() => void act('withdraw', () => bridge()!.launchWithdraw({ confirm }), 'Withdrawn to treasury')}
+            disabled={!!busy || !canWrite}
+            onClick={() => void act('withdraw', ops.withdraw, 'Withdrawn to treasury')}
           >
             {busy === 'withdraw' ? 'Withdrawing…' : 'Withdraw'}
           </Button>
