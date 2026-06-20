@@ -10,6 +10,7 @@ import { BuildScreen } from './screens/BuildScreen';
 import { PublishScreen } from './screens/PublishScreen';
 import { ExperienceScreen } from './screens/ExperienceScreen';
 import { SiteScreen } from './screens/SiteScreen';
+import { LaunchScreen } from './screens/LaunchScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { HelpScreen } from './screens/HelpScreen';
 import { FalScreen } from './screens/FalScreen';
@@ -34,6 +35,7 @@ function Shell() {
   else if (active === 'publish') screen = <PublishScreen />;
   else if (active === 'experience') screen = <ExperienceScreen />;
   else if (active === 'site') screen = <SiteScreen />;
+  else if (active === 'launch') screen = <LaunchScreen />;
   else if (active === 'settings') screen = <SettingsScreen />;
   else if (active === 'help') screen = <HelpScreen />;
   else if (active === 'ai') screen = <FalScreen />;

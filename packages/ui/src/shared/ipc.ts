@@ -142,6 +142,30 @@ export interface FoundryApi {
   packsRead(id: string): Promise<FileBase64Result>;
   packsImport(opts: { name?: string; kind?: PackKind }): Promise<PackImportResult>;
   packsDelete(id: string): Promise<OkResult>;
+
+  // Phase-L launch contract — in-app deploy + sale management (no CLI needed). Reads the
+  // project's chain.evm config; writes sign with the configured deployer key (key-file model).
+  // Bigint fields are returned as decimal strings (IPC/JSON-safe). Mainnet writes require a
+  // `confirm` token (the chain name/id) — the same two-gate safeguard as the CLI.
+  /** Read live sale state (phase, prices, caps, minted, etc.). No signing. */
+  launchStatus(): Promise<JsonResult>;
+  /** Dry-run a deploy: gas + balance preflight, no transaction. */
+  launchEstimate(): Promise<JsonResult>;
+  /** Deploy ConkernftzLaunch and save the address into the project config. */
+  launchDeploy(opts?: { confirm?: string }): Promise<JsonResult>;
+  launchSetCaps(opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }): Promise<JsonResult>;
+  launchSetPrices(opts: { allowlistEth: string; publicEth: string; confirm?: string }): Promise<JsonResult>;
+  launchSetPhase(opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }): Promise<JsonResult>;
+  /** Set the revealed metadata base URI (token N → `<baseUri>N.json`). */
+  launchReveal(opts: { baseUri: string; confirm?: string }): Promise<JsonResult>;
+  /** Permanently freeze metadata (one-way). */
+  launchFreeze(opts?: { confirm?: string }): Promise<JsonResult>;
+  /** Withdraw proceeds to the treasury. */
+  launchWithdraw(opts?: { confirm?: string }): Promise<JsonResult>;
+  /** Build the allowlist root from CSV/JSON text, set it on-chain, and embed the proofs in the site. */
+  launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<JsonResult>;
+  /** Serve the browser signing console at localhost and open it (for desktop wallet extensions). */
+  launchConsole(): Promise<DeployResult>;
 }
 
 /**
@@ -193,6 +217,17 @@ export const FOUNDRY_METHODS = [
   'packsRead',
   'packsImport',
   'packsDelete',
+  'launchStatus',
+  'launchEstimate',
+  'launchDeploy',
+  'launchSetCaps',
+  'launchSetPrices',
+  'launchSetPhase',
+  'launchReveal',
+  'launchFreeze',
+  'launchWithdraw',
+  'launchSetAllowlist',
+  'launchConsole',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

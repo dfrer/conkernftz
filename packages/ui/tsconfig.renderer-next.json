@@ -12,5 +12,5 @@
     "declarationMap": false,
     "sourceMap": false
   },
-  "include": ["src/renderer-next/**/*", "src/site-template/**/*"]
+  "include": ["src/renderer-next/**/*", "src/site-template/**/*", "src/launch-console/**/*"]
 }

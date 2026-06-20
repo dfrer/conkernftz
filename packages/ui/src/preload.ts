@@ -53,6 +53,17 @@ const foundryApi: FoundryApi = {
   packsRead: (id: string) => ipcRenderer.invoke('foundry:packsRead', id),
   packsImport: (opts: { name?: string; kind?: 'pack' | 'back' }) => ipcRenderer.invoke('foundry:packsImport', opts || {}),
   packsDelete: (id: string) => ipcRenderer.invoke('foundry:packsDelete', id),
+  launchStatus: () => ipcRenderer.invoke('foundry:launchStatus'),
+  launchEstimate: () => ipcRenderer.invoke('foundry:launchEstimate'),
+  launchDeploy: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchDeploy', opts || {}),
+  launchSetCaps: (opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetCaps', opts),
+  launchSetPrices: (opts: { allowlistEth: string; publicEth: string; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetPrices', opts),
+  launchSetPhase: (opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetPhase', opts),
+  launchReveal: (opts: { baseUri: string; confirm?: string }) => ipcRenderer.invoke('foundry:launchReveal', opts),
+  launchFreeze: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchFreeze', opts || {}),
+  launchWithdraw: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
+  launchSetAllowlist: (opts: { text: string; format?: 'csv' | 'json'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
+  launchConsole: () => ipcRenderer.invoke('foundry:launchConsole'),
 };
 
 contextBridge.exposeInMainWorld('foundry', foundryApi);

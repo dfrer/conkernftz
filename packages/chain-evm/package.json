@@ -4,6 +4,7 @@
   "description": "EVM adapter: ERC-721 metadata builder, contract deploy and mint via viem",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -12,7 +13,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "contracts"],
+  "files": [
+    "dist",
+    "contracts"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -23,10 +27,12 @@
   },
   "dependencies": {
     "@conkernftz/core": "workspace:*",
+    "@openzeppelin/merkle-tree": "^1.0.8",
     "viem": "^2.52.2"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.6.1",
+    "erc721a": "^4.3.0",
     "solc": "^0.8.31"
   }
 }

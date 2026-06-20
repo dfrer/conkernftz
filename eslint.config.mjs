@@ -12,7 +12,9 @@ export default tseslint.config(
       '**/*.d.ts',
       'packages/ui/src/index.html',
       'packages/chain-evm/contracts/**',
+      // Auto-generated contract artifacts (ABI + bytecode) — not hand-edited, not linted.
       'packages/chain-evm/src/artifact.ts',
+      'packages/chain-evm/src/launch-artifact.ts',
     ],
   },
   {

@@ -33,6 +33,7 @@ import {
   setCanvas,
   setCursor,
   setLayoutMode,
+  setMint,
   setPageBg,
   setTheme,
   SITE_CURSORS,
@@ -582,6 +583,44 @@ export function SiteScreen() {
                   <option value="mono">mono</option>
                   <option value="display">display</option>
                 </Select>
+              </Field>
+            </div>
+          </Panel>
+
+          <Panel title="Mint contract">
+            <p className="muted" style={{ margin: '0 0 8px', fontSize: 12 }}>
+              Wire the mint widget to a deployed launch contract (from <code>conkernftz launch deploy</code>).
+              Leave the contract blank to keep the widget preview-only. Use a testnet until audited.
+            </p>
+            <div className="grid cols-auto">
+              <Field label="Chain">
+                <Select
+                  aria-label="Mint chain"
+                  value={String(site.mint?.chainId ?? '')}
+                  onChange={(e) => setSite(setMint(site, { chainId: Number(e.target.value) || 0 }))}
+                >
+                  <option value="">— none —</option>
+                  <option value="84532">Base Sepolia (testnet)</option>
+                  <option value="11155111">Sepolia (testnet)</option>
+                  <option value="8453">Base (mainnet)</option>
+                  <option value="1">Ethereum (mainnet)</option>
+                </Select>
+              </Field>
+              <Field label="RPC URL">
+                <Input
+                  value={site.mint?.rpcUrl ?? ''}
+                  onChange={(e) => setSite(setMint(site, { rpcUrl: e.target.value }))}
+                  placeholder="https://sepolia.base.org"
+                  aria-label="Mint RPC URL"
+                />
+              </Field>
+              <Field label="Contract">
+                <Input
+                  value={site.mint?.contractAddress ?? ''}
+                  onChange={(e) => setSite(setMint(site, { contractAddress: e.target.value.trim() }))}
+                  placeholder="0x… (from launch deploy)"
+                  aria-label="Mint contract address"
+                />
               </Field>
             </div>
           </Panel>

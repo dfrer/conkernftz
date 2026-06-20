@@ -4,6 +4,7 @@
 // layout (desktop + optional mobile override) so the page can be tuned for both. DOM-free
 // and pure so it's unit-tested directly; the React renderer is a thin view, and the SAME
 // config + renderer is emitted as the static mint site by P3 (no drift).
+import type { AllowlistDump } from '@conkernftz/chain-evm';
 
 export type BlockKind =
   | 'hero'
@@ -197,6 +198,20 @@ export interface PageBg {
   /** Tiled wallpaper: a data URL / asset path. */
   tile: string;
 }
+/**
+ * Live-mint wiring for the generated site's mint widget. When present (a deployed launch
+ * contract), the mint block renders a non-custodial connect+mint UI against this contract; when
+ * absent, the mint block stays preview-only. Testnet-first — point this at Base-Sepolia/Sepolia
+ * until the contract is audited.
+ */
+export interface MintConfig {
+  chainId: number;
+  rpcUrl: string;
+  contractAddress: string;
+  /** Embedded allowlist proofs (the dump from `conkernftz launch allowlist`), if any. */
+  allowlist?: AllowlistDump;
+}
+
 export interface SiteConfig {
   theme: SiteTheme;
   layout?: SiteLayoutMode;
@@ -204,6 +219,8 @@ export interface SiteConfig {
   pageBg?: PageBg;
   /** Page-level cursor-trail effect (default none). */
   cursor?: SiteCursor;
+  /** Optional live-mint contract wiring (else the mint widget is preview-only). */
+  mint?: MintConfig;
   blocks: Block[];
 }
 
@@ -387,7 +404,20 @@ export function resolveSite(partial?: Partial<SiteConfig> | null): SiteConfig {
   };
   const cursor: SiteCursor = (SITE_CURSORS as readonly string[]).includes(p.cursor as string) ? (p.cursor as SiteCursor) : 'none';
   const blocks = Array.isArray(p.blocks) ? (p.blocks.filter(isBlock) as Block[]) : [];
-  return { theme, layout, canvas, pageBg, cursor, blocks };
+  const mint = normalizeMint(p.mint);
+  return { theme, layout, canvas, pageBg, cursor, ...(mint ? { mint } : {}), blocks };
+}
+
+/** Validate optional live-mint wiring so it survives resolveSite → export only when complete. */
+function normalizeMint(m: unknown): MintConfig | undefined {
+  if (!m || typeof m !== 'object') return undefined;
+  const o = m as Partial<MintConfig>;
+  if (typeof o.contractAddress !== 'string' || !o.contractAddress) return undefined;
+  if (typeof o.rpcUrl !== 'string' || !o.rpcUrl) return undefined;
+  if (typeof o.chainId !== 'number' || !Number.isInteger(o.chainId)) return undefined;
+  const out: MintConfig = { chainId: o.chainId, rpcUrl: o.rpcUrl, contractAddress: o.contractAddress };
+  if (o.allowlist && typeof o.allowlist === 'object') out.allowlist = o.allowlist as AllowlistDump;
+  return out;
 }
 
 function clampNum(v: unknown, min: number, max: number, fallback: number): number {
@@ -479,4 +509,14 @@ export function setPageBg(site: SiteConfig, patch: Partial<PageBg>): SiteConfig 
 }
 export function setCursor(site: SiteConfig, cursor: SiteCursor): SiteConfig {
   return { ...site, cursor };
+}
+/**
+ * Patch the live-mint wiring (merge). Partial values persist in the builder; the widget only
+ * activates once all three fields are valid — `resolveSite` drops incomplete wiring on export and
+ * `SiteRenderer` only mounts the live widget when `contractAddress` is set, so an empty address
+ * keeps the mint block preview-only without losing the chain/RPC the user already typed.
+ */
+export function setMint(site: SiteConfig, patch: Partial<MintConfig>): SiteConfig {
+  const cur: MintConfig = site.mint ?? { chainId: 0, rpcUrl: '', contractAddress: '' };
+  return { ...site, mint: { ...cur, ...patch } };
 }
