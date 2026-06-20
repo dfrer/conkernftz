@@ -5,6 +5,26 @@
 
 ---
 
+### 2026-06-20 — V1 cadence locked (owner) + V1-1 token foundation
+**Owner direction** (at the V1-0→V1-1 boundary): (1) **review surface = the live app**, not the
+screenshot contact sheet (keep screenshots for the agent's own assessment; owner judges in the
+running Electron app + Components playground); (2) **light + dark are both fully first-class**
+(equal polish); (3) **cadence = proceed in order autonomously V1-1…V1-15, owner jumps in** (don't
+pause for an OK each screen). Saved to `memory/v1-design-working-prefs.md`.
+
+**V1-1 — design-system token foundation.** Reconciled + locked the token layer: `styles/tokens.css`
+and `docs/DESIGN_SYSTEM.md` agree; token **names/scale unchanged** (stable contract for the
+component/screen passes). Made the **light theme first-class** — it was washed (every surface tone
+within ~6% lightness of `--bg`, so panels/buttons/hairlines flattened). Rebuilt light as a
+paper-stack with real value separation (deeper manila desk `--bg`, brighter paper `--surface`,
+widened `--surface-2/3` steps, recessed `--surface-inset`, stronger `--line`/`--line-strong` and a
+more-legible `--text-dim`), using the **same rising-elevation model as dark** so components stay
+theme-agnostic. Tokenized the only genuine app-chrome violations (`LaunchScreen`: off-palette
+`#ff6b6b` → `var(--danger)`; a `rgba(255,255,255,0.08)` border that was **invisible in light** →
+`var(--line)`). Verified locally: **typecheck clean · full build clean (renderer+site+console) ·
+199/199 vitest incl. preload-contract drift · screenshots 45/45**. Dark left untouched (already
+reads well). ◐ pending owner live-review.
+
 ### 2026-06-20 — V1-0: visual-assessment harness upgraded (gates the V1 design work)
 Kicked off the **V1 program build** on branch `feat/v1-design`. First task **V1-0** — the
 prerequisite tooling so the agent can *see* every screen, not just pass unit tests. Rebuilt

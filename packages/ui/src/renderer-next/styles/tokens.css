@@ -96,33 +96,38 @@
   --redaction: #06080700;
 }
 
-/* ---- LIGHT: ink on manila dossier paper ---- */
+/* ---- LIGHT: ink on manila dossier paper ----
+ * Paper-stack hierarchy with the SAME elevation direction as dark (rising = brighter), so
+ * components are theme-agnostic: bg = the manila desk; surface = a paper panel lifting off it;
+ * surface-2 = raised keys/cards/table-heads; surface-3 = brightest (hover); inset = a recessed
+ * well (darker than surface). The previous light set had all tones within ~6% lightness of bg,
+ * which washed panels, buttons, and hairlines flat — these steps are widened for real separation. */
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #e8e0cf;
-  --bg-grain-opacity: 0.045;
-  --bg-glow: radial-gradient(1200px 620px at 12% -10%, rgba(184, 116, 0, 0.08), transparent 60%),
-    radial-gradient(900px 520px at 108% 6%, rgba(31, 122, 128, 0.05), transparent 55%);
+  --bg: #dccfb4;
+  --bg-grain-opacity: 0.05;
+  --bg-glow: radial-gradient(1200px 620px at 12% -10%, rgba(184, 116, 0, 0.1), transparent 60%),
+    radial-gradient(900px 520px at 108% 6%, rgba(31, 122, 128, 0.06), transparent 55%);
 
-  --surface: #f3ecdc;
-  --surface-2: #efe7d4;
-  --surface-3: #e7ddc7;
-  --surface-inset: #f7f1e4;
+  --surface: #ede5d1;
+  --surface-2: #f6f0e1;
+  --surface-3: #fdfaf1;
+  --surface-inset: #e2d8bf;
 
-  --text: #1c1812;
-  --text-muted: #5f574a;
-  --text-dim: #8a8170;
+  --text: #1d1810;
+  --text-muted: #5a5141;
+  --text-dim: #7a7058;
   --text-invert: #f7f1e4;
 
-  --line: rgba(28, 24, 18, 0.16);
-  --line-strong: rgba(28, 24, 18, 0.3);
-  --line-amber: rgba(184, 116, 0, 0.5);
+  --line: rgba(38, 30, 14, 0.2);
+  --line-strong: rgba(38, 30, 14, 0.36);
+  --line-amber: rgba(184, 116, 0, 0.6);
 
   --accent: #b87400;
   --accent-2: #946000;
   --accent-ink: #fff6e2;
-  --accent-soft: rgba(184, 116, 0, 0.14);
-  --accent-glow: 0 0 0 1px rgba(184, 116, 0, 0.45), 0 0 18px rgba(184, 116, 0, 0.14);
+  --accent-soft: rgba(184, 116, 0, 0.16);
+  --accent-glow: 0 0 0 1px rgba(184, 116, 0, 0.5), 0 0 18px rgba(184, 116, 0, 0.16);
 
   --danger: #c0392b;
   --danger-soft: rgba(192, 57, 43, 0.12);
@@ -132,8 +137,8 @@
   --info-soft: rgba(31, 122, 128, 0.12);
   --warn: #b87400;
 
-  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 8px rgba(60, 50, 30, 0.12);
-  --shadow-2: 0 12px 30px rgba(60, 50, 30, 0.18);
+  --shadow-1: 0 1px 0 rgba(255, 253, 247, 0.7), 0 1px 4px rgba(64, 52, 28, 0.14);
+  --shadow-2: 0 16px 36px rgba(64, 52, 28, 0.2);
   --redaction: #1c1812;
 }
 

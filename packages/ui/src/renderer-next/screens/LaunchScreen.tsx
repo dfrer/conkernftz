@@ -254,7 +254,7 @@ export function LaunchScreen() {
 
       {/* --- Status --- */}
       <Panel title="Contract status">
-        {statusErr ? <p className="muted" style={{ color: '#ff6b6b' }}>{statusErr}</p> : null}
+        {statusErr ? <p className="muted" style={{ color: 'var(--danger)' }}>{statusErr}</p> : null}
         {status ? (
           <div className="grid cols-auto" style={{ gap: 10 }}>
             <Stat label="Network">
@@ -325,7 +325,7 @@ export function LaunchScreen() {
             </p>
           </div>
         ) : null}
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
           <p className="muted" style={{ margin: '0 0 6px', fontSize: 12 }}>
             Using a desktop wallet <strong>extension</strong> (MetaMask in your browser)? It can’t connect to a
             desktop app directly — open the signing console in your browser instead, where the extension lives.
@@ -361,7 +361,7 @@ export function LaunchScreen() {
               <Stat label="Deployer"><code>{estimate.deployer}</code></Stat>
               <Stat label="Balance">{estimate.balanceEth} ETH</Stat>
               <Stat label="Est. cost">~{estimate.costEth} ETH</Stat>
-              <Stat label="Funded">{estimate.sufficient ? <Badge tone="ok">yes</Badge> : <span style={{ color: '#ff6b6b' }}>NO</span>}</Stat>
+              <Stat label="Funded">{estimate.sufficient ? <Badge tone="ok">yes</Badge> : <span style={{ color: 'var(--danger)' }}>NO</span>}</Stat>
             </div>
           ) : null}
           <div style={{ display: 'flex', gap: 8 }}>
