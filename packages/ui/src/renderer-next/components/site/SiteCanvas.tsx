@@ -15,9 +15,9 @@ export function SiteCanvas({
   images,
   experience,
   viewport,
-  selectedId,
+  selectedIds,
   onSelect,
-  onMove,
+  onMoveMany,
   onResize,
   onRotate,
   onInteractStart,
@@ -26,16 +26,17 @@ export function SiteCanvas({
   images: string[];
   experience: ExperienceConfig;
   viewport: 'desktop' | 'mobile';
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onMove: (id: string, x: number, y: number) => void;
+  selectedIds: string[];
+  onSelect: (id: string, additive: boolean) => void;
+  onMoveMany: (updates: { id: string; x: number; y: number }[]) => void;
   onResize: (id: string, w: number, h: number) => void;
   onRotate?: (id: string, deg: number) => void;
   /** Called once when a drag/resize/rotate begins (so the parent can snapshot for undo). */
   onInteractStart?: () => void;
 }) {
   const drag = useRef<
-    | { mode: 'move' | 'resize'; id: string; sx: number; sy: number; ox: number; oy: number }
+    | { mode: 'move'; ids: string[]; sx: number; sy: number; starts: Map<string, { x: number; y: number }> }
+    | { mode: 'resize'; id: string; sx: number; sy: number; ox: number; oy: number }
     | { mode: 'rotate'; id: string; cx: number; cy: number }
     | null
   >(null);
@@ -49,16 +50,28 @@ export function SiteCanvas({
     return { x: lay.x, y: lay.y, w: lay.w, h: lay.h };
   };
 
-  const startMove = (e: PointerEvent<HTMLDivElement>, id: string, index: number): void => {
-    onSelect(id);
+  const startMove = (e: PointerEvent<HTMLDivElement>, id: string): void => {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      onSelect(id, true); // toggle into the multi-selection; no drag
+      return;
+    }
+    // Keep an existing multi-selection if this node is part of it (group drag); else select it.
+    const groupDrag = selectedIds.includes(id) && selectedIds.length > 1;
+    if (!groupDrag) onSelect(id, false);
     onInteractStart?.();
-    const r = rectFor(index);
-    drag.current = { mode: 'move', id, sx: e.clientX, sy: e.clientY, ox: r.x, oy: r.y };
+    const ids = groupDrag ? selectedIds : [id];
+    const starts = new Map<string, { x: number; y: number }>();
+    ids.forEach((mid) => {
+      const idx = site.blocks.findIndex((b) => b.id === mid);
+      const r = rectFor(idx);
+      starts.set(mid, { x: r.x, y: r.y });
+    });
+    drag.current = { mode: 'move', ids, sx: e.clientX, sy: e.clientY, starts };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const startResize = (e: PointerEvent<HTMLDivElement>, id: string, index: number): void => {
     e.stopPropagation();
-    onSelect(id);
+    onSelect(id, false);
     onInteractStart?.();
     const r = rectFor(index);
     drag.current = { mode: 'resize', id, sx: e.clientX, sy: e.clientY, ox: r.w, oy: r.h };
@@ -66,7 +79,7 @@ export function SiteCanvas({
   };
   const startRotate = (e: PointerEvent<HTMLDivElement>, id: string): void => {
     e.stopPropagation();
-    onSelect(id);
+    onSelect(id, false);
     onInteractStart?.();
     // Rotation pivots around the node's bounding-box center (== its rotation center).
     const node = (e.currentTarget as HTMLElement).closest('.site-node') as HTMLElement | null;
@@ -88,8 +101,14 @@ export function SiteCanvas({
     }
     const dx = e.clientX - d.sx;
     const dy = e.clientY - d.sy;
-    if (d.mode === 'move') onMove(d.id, Math.max(0, Math.round(d.ox + dx)), Math.max(0, Math.round(d.oy + dy)));
-    else onResize(d.id, Math.max(40, Math.round(d.ox + dx)), Math.max(30, Math.round(d.oy + dy)));
+    if (d.mode === 'move') {
+      onMoveMany(
+        d.ids.map((mid) => {
+          const st = d.starts.get(mid)!;
+          return { id: mid, x: Math.max(0, Math.round(st.x + dx)), y: Math.max(0, Math.round(st.y + dy)) };
+        }),
+      );
+    } else onResize(d.id, Math.max(40, Math.round(d.ox + dx)), Math.max(30, Math.round(d.oy + dy)));
   };
   const endDrag = (): void => {
     drag.current = null;
@@ -102,13 +121,13 @@ export function SiteCanvas({
           const r = rectFor(i);
           const z = b.layout?.z ?? i + 1;
           const rot = b.layout?.rot;
-          const sel = selectedId === b.id;
+          const sel = selectedIds.includes(b.id);
           return (
             <div
               key={b.id}
               className={cx('site-node', 'site-node--edit', sel && 'site-node--sel')}
               style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z, transform: rot ? `rotate(${rot}deg)` : undefined }}
-              onPointerDown={(e) => startMove(e, b.id, i)}
+              onPointerDown={(e) => startMove(e, b.id)}
               role="button"
               tabIndex={0}
               aria-label={`Block ${i + 1}`}

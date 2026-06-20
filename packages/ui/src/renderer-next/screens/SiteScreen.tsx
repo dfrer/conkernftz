@@ -24,6 +24,7 @@ import {
   defaultSite,
   moveBlock,
   removeBlock,
+  removeBlocks,
   resolveSite,
   setBlockLayout,
   setBlockMobile,
@@ -99,7 +100,13 @@ export function SiteScreen() {
   };
   const [snap, setSnap] = useState(true);
   const SNAP_GRID = 20; // matches the editor's 20px background grid
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // The "primary" selection drives the inspector; the full set drives canvas group ops.
+  const selectedId = selectedIds[selectedIds.length - 1] ?? null;
+  const selectOne = (id: string): void => setSelectedIds([id]);
+  // Plain click = select one; Shift/Ctrl = toggle into the multi-selection.
+  const selectToggle = (id: string, additive: boolean): void =>
+    setSelectedIds((prev) => (additive ? (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]) : [id]));
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -139,12 +146,12 @@ export function SiteScreen() {
   const add = (kind: BlockKind): void => {
     const next = addBlock(site, kind);
     setSite(next);
-    setSelectedId(next.blocks[next.blocks.length - 1]!.id);
+    selectOne(next.blocks[next.blocks.length - 1]!.id);
   };
 
   const applyTemplate = (t: SiteTemplate): void => {
     setSite(t.build());
-    setSelectedId(null);
+    setSelectedIds([]);
     toast.push(`Applied “${t.label}” template`, 'ok');
   };
 
@@ -167,11 +174,22 @@ export function SiteScreen() {
 
   const grid = (n: number): number => (snap ? Math.round(n / SNAP_GRID) * SNAP_GRID : n);
   // Drags use the live setter (one history entry per drag, snapshotted at drag start).
-  const onMove = (id: string, x: number, y: number): void =>
-    setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { x: grid(x), y: grid(y) }) : setBlockLayout(site, id, { x: grid(x), y: grid(y) }));
   const onResize = (id: string, w: number, h: number): void =>
     setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { w: grid(w), h: grid(h) }) : setBlockLayout(site, id, { w: grid(w), h: grid(h) }));
   const onRotate = (id: string, deg: number): void => setSiteLive(setBlockLayout(site, id, { rot: deg }));
+  // Group move: apply every block's absolute target in ONE live update (snapped).
+  const onMoveMany = (updates: { id: string; x: number; y: number }[]): void =>
+    setSiteLive(
+      updates.reduce(
+        (s, u) => (viewport === 'mobile' ? setBlockMobile(s, u.id, { x: grid(u.x), y: grid(u.y) }) : setBlockLayout(s, u.id, { x: grid(u.x), y: grid(u.y) })),
+        site,
+      ),
+    );
+  const deleteSelected = (): void => {
+    if (selectedIds.length === 0) return;
+    setSite(removeBlocks(site, selectedIds));
+    setSelectedIds([]);
+  };
 
   // Keyboard: Ctrl/Cmd+Z undo, +Shift (or Ctrl+Y) redo, arrow-keys nudge the selected canvas
   // block (Shift = 10px). Ignored while typing in a field.
@@ -193,6 +211,15 @@ export function SiteScreen() {
         redo();
         return;
       }
+      if (!typing && e.key === 'Escape' && selectedIds.length) {
+        setSelectedIds([]);
+        return;
+      }
+      if (!typing && mode === 'canvas' && selectedIds.length && (e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault();
+        deleteSelected();
+        return;
+      }
       if (!typing && mode === 'canvas' && selectedId && e.key.startsWith('Arrow')) {
         const step = e.shiftKey ? 10 : 1;
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
@@ -212,7 +239,7 @@ export function SiteScreen() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, selectedId, viewport, site]);
+  }, [mode, selectedId, selectedIds, viewport, site]);
 
   const loadArt = async (): Promise<void> => {
     const fb = bridge();
@@ -519,8 +546,21 @@ export function SiteScreen() {
             </div>
           </Panel>
 
-          <Panel title="Blocks" actions={<span className="label">{site.blocks.length} BLOCKS</span>}>
+          <Panel
+            title="Blocks"
+            actions={
+              <div className="row">
+                {selectedIds.length > 1 ? (
+                  <Button size="sm" variant="danger" onClick={deleteSelected}>
+                    Delete {selectedIds.length} selected
+                  </Button>
+                ) : null}
+                <span className="label">{site.blocks.length} BLOCKS</span>
+              </div>
+            }
+          >
             <div className="stack">
+              <span className="label muted">Shift-click to multi-select; drag any selected block to move the group. Del removes them.</span>
               <div className="row" style={{ flexWrap: 'wrap' }}>
                 {BLOCK_KINDS.map((k) => (
                   <Button key={k} size="sm" variant="ghost" onClick={() => add(k)}>
@@ -530,8 +570,8 @@ export function SiteScreen() {
               </div>
               <div className="stack">
                 {site.blocks.map((b, i) => (
-                  <div key={b.id} className={`row block-row${selected?.id === b.id ? ' block-row--sel' : ''}`}>
-                    <button type="button" className="block-row-label" onClick={() => setSelectedId(b.id)} aria-label={`Select block ${i + 1} (${BLOCK_LABELS[b.kind]})`}>
+                  <div key={b.id} className={`row block-row${selectedIds.includes(b.id) ? ' block-row--sel' : ''}`}>
+                    <button type="button" className="block-row-label" onClick={(e) => selectToggle(b.id, e.shiftKey || e.ctrlKey || e.metaKey)} aria-label={`Select block ${i + 1} (${BLOCK_LABELS[b.kind]})`}>
                       <span className="label">{i + 1}. {BLOCK_LABELS[b.kind]}</span>
                     </button>
                     <Button size="sm" variant="ghost" icon onClick={() => setSite(moveBlock(site, b.id, -1))} aria-label={`Move block ${i + 1} up`}>↑</Button>
@@ -674,7 +714,7 @@ export function SiteScreen() {
             }
           >
             {mode === 'canvas' ? (
-              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} onRotate={onRotate} onInteractStart={beginHistory} />
+              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedIds={selectedIds} onSelect={selectToggle} onMoveMany={onMoveMany} onResize={onResize} onRotate={onRotate} onInteractStart={beginHistory} />
             ) : (
               <SiteRenderer site={site} images={images} experience={previewExp} />
             )}
