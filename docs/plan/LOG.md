@@ -5,6 +5,18 @@
 
 ---
 
+### 2026-06-20 — V1-3: app-shell polish (header + harness shell crops)
+Shell was already solid (instrument-console grid, indexed pipeline nav with lamps, status-bar
+readouts), so this is focused polish — no redesign:
+- **Fixed the stale tagline:** header sub "Generative Art Foundry" → **"NFT Art Foundry"** (matches
+  the VISION reframe; the only two refs were the header + its smoke test).
+- **Active-project readout chip:** the loaded project now renders as a bordered instrument chip with
+  a status lamp (`.header-project`) instead of dim body text — clearer top-of-window hierarchy.
+- **Harness:** added legible shell-chrome close-ups (`shell-header` / `shell-nav` / `shell-statusbar`)
+  so the chrome being polished is reviewable at real size (now 48 captures).
+Verified: typecheck clean · 203/203 vitest · renderer build clean · screenshots 48/48. Confirmed via
+the new close-ups that the loaded-state chip shows "● DEMO COLLECTION". ◐ pending owner live-review.
+
 ### 2026-06-20 — V1-2: component primitives — fill the missing states
 Filled the real interaction-state gaps in the primitives and turned the **Components** playground
 into a complete catalog (the owner's live review surface for the system). Additive, non-breaking:

@@ -138,6 +138,24 @@ button {
 .header-spacer {
   flex: 1;
 }
+/* Active-project readout: a small instrument chip so the loaded project reads as live status,
+ * not dim body text. */
+.header-project {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 10px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-inset);
+  max-width: 280px;
+}
+.header-project .label {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .header-tools {
   display: flex;
   align-items: center;

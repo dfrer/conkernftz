@@ -375,6 +375,16 @@ async function main() {
     }
   }
 
+  // ── Pass 1 — shell chrome close-ups (legible header/nav/status crops for the shell pass) ─────
+  try {
+    await gotoStage(dark, 'Projects');
+    await shot(dark, { id: 'shell-header', group: 'Shell · chrome', note: 'Header — wordmark + tagline, active-project readout chip, theme toggle.', locator: dark.locator('.header').first() });
+    await shot(dark, { id: 'shell-nav', group: 'Shell · chrome', note: 'Pipeline nav — index numbers, lamps, section grouping, active state.', locator: dark.locator('.nav').first() });
+    await shot(dark, { id: 'shell-statusbar', group: 'Shell · chrome', note: 'Status bar — project/bridge/theme/version readouts.', locator: dark.locator('.statusbar').first() });
+  } catch (e) {
+    console.log('FAILED', 'shell-chrome', String(e?.message ?? e));
+  }
+
   // ── Pass 1 — key in-screen interactions (states beyond the landing view) ─────────────────────
   // Design: tabs, layers close-up, trait browser.
   try {
