@@ -314,6 +314,25 @@ export const ChainSolanaSchema = z.object({
     .optional(),
 });
 
+/**
+ * Phase-L launch-contract (`ConkernftzLaunch`) config. Optional — only set when using the
+ * launch-grade phased mint rather than the simple owner-mint collection. Prices are wei as
+ * decimal STRINGS (JSON has no bigint); the allowlist cap is per-address in the Merkle proof,
+ * so there is no global allowlist cap here (decision A).
+ */
+export const ChainEvmLaunchSchema = z.object({
+  // Populated after `deploy-launch`.
+  contractAddress: z.string().optional(),
+  treasury: z.string().optional(),
+  placeholderUri: z.string().optional(),
+  provenanceHash: z.string().optional(),
+  allowlistRoot: z.string().optional(),
+  allowlistPriceWei: z.string().optional(),
+  publicPriceWei: z.string().optional(),
+  publicWalletCap: z.number().int().min(0).optional(),
+  maxPerTx: z.number().int().min(1).optional(),
+});
+
 export const ChainEvmSchema = z.object({
   chainId: z.number().int().positive(),
   rpcUrl: z.string(),
@@ -324,6 +343,8 @@ export const ChainEvmSchema = z.object({
   maxSupply: z.number().int().min(0).optional(),
   royaltyReceiver: z.string().optional(),
   royaltyBps: z.number().int().min(0).max(10000).optional(),
+  // Optional phased-launch contract config (separate from the simple collection above).
+  launch: ChainEvmLaunchSchema.optional(),
 });
 
 export const ChainSchema = z.object({

@@ -13,6 +13,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { resolveChain, loadPrivateKey } from './deploy.js';
 import { conkernftzLaunchAbi } from './launch-artifact.js';
 
+// Re-export the wei<->ether helpers so consumers (CLI/UI) need not add viem directly.
+export { parseEther, formatEther } from 'viem';
+
 type LaunchAbi = typeof conkernftzLaunchAbi;
 type LaunchNonpayableFn = ContractFunctionName<LaunchAbi, 'nonpayable'>;
 type LaunchPayableFn = ContractFunctionName<LaunchAbi, 'payable'>;

@@ -90,8 +90,8 @@ jobs:
       - name: Fetch forge-std
         run: git clone --depth 1 https://github.com/foundry-rs/forge-std lib/forge-std
 
-      - name: Forge build (with contract sizes)
-        run: forge build --sizes
+      - name: Forge build (with contract sizes + build-info for Slither)
+        run: forge build --sizes --build-info
 
       - name: Forge test (unit + fuzz + invariant)
         run: forge test -vvv
