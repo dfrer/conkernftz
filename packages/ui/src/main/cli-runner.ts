@@ -134,15 +134,103 @@ async function deployStorage(siteDir: string, projectDir: string, host: 'ipfs' |
   return { ok: true, url };
 }
 
+// --- GitHub Pages (via the Git Data API; the token lives only in the Authorization header,
+// never on a command line) ---
+type GhRes = { ok: boolean; status: number; json: Record<string, unknown> | null; text: string };
+async function ghApi(token: string, method: string, urlPath: string, body?: unknown): Promise<GhRes> {
+  const res = await fetch(`https://api.github.com${urlPath}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+      'User-Agent': 'conkernftz',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+  } catch {
+    /* non-JSON body */
+  }
+  return { ok: res.ok, status: res.status, json, text };
+}
+function walkFiles(root: string): { rel: string; abs: string }[] {
+  const out: { rel: string; abs: string }[] = [];
+  const walk = (dir: string, rel: string): void => {
+    for (const ent of fssync.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, ent.name);
+      const r = rel ? `${rel}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) walk(abs, r);
+      else if (ent.isFile()) out.push({ rel: r, abs });
+    }
+  };
+  walk(root, '');
+  return out;
+}
+async function deployGithubPages(siteDir: string, token: string, repoFull: string, branch: string, domain: string): Promise<DeployResult> {
+  if (!token) return { ok: false, error: 'A GitHub token (repo scope) is required (Settings → Developer settings → Personal access tokens).' };
+  const m = repoFull
+    .trim()
+    .replace(/^https?:\/\/github\.com\//i, '')
+    .replace(/\.git$/i, '')
+    .match(/^([^/\s]+)\/([^/\s]+)$/);
+  if (!m) return { ok: false, error: 'Repository must be in the form owner/repo.' };
+  const owner = m[1] as string;
+  const repo = m[2] as string;
+  const br = branch.trim() || 'gh-pages';
+  const err = (label: string, r: GhRes): DeployResult => ({ ok: false, error: `GitHub ${label}: ${r.status} ${(r.json?.message as string) ?? r.text}` });
+  // Build a fresh tree of blobs (replaces the branch contents with exactly the export).
+  const tree: { path: string; mode: '100644'; type: 'blob'; sha: string }[] = [];
+  const blobs: { rel: string; content: string }[] = walkFiles(siteDir).map((f) => ({ rel: f.rel, content: fssync.readFileSync(f.abs).toString('base64') }));
+  if (!blobs.length) return { ok: false, error: 'No generated site to deploy.' };
+  if (domain.trim()) blobs.push({ rel: 'CNAME', content: Buffer.from(`${domain.trim()}\n`).toString('base64') });
+  for (const b of blobs) {
+    const r = await ghApi(token, 'POST', `/repos/${owner}/${repo}/git/blobs`, { content: b.content, encoding: 'base64' });
+    if (!r.ok) return err(`blob (${b.rel})`, r);
+    tree.push({ path: b.rel, mode: '100644', type: 'blob', sha: r.json?.sha as string });
+  }
+  const treeRes = await ghApi(token, 'POST', `/repos/${owner}/${repo}/git/trees`, { tree });
+  if (!treeRes.ok) return err('tree', treeRes);
+  const ref = await ghApi(token, 'GET', `/repos/${owner}/${repo}/git/ref/heads/${br}`);
+  const parentSha = ref.ok ? ((ref.json?.object as { sha?: string })?.sha ?? null) : null;
+  const commit = await ghApi(token, 'POST', `/repos/${owner}/${repo}/git/commits`, {
+    message: 'Deploy mint site (ConkerNFTZ)',
+    tree: treeRes.json?.sha,
+    parents: parentSha ? [parentSha] : [],
+  });
+  if (!commit.ok) return err('commit', commit);
+  const newSha = commit.json?.sha as string;
+  if (parentSha) {
+    const upd = await ghApi(token, 'PATCH', `/repos/${owner}/${repo}/git/refs/heads/${br}`, { sha: newSha, force: true });
+    if (!upd.ok) return err('ref update', upd);
+  } else {
+    const cre = await ghApi(token, 'POST', `/repos/${owner}/${repo}/git/refs`, { ref: `refs/heads/${br}`, sha: newSha });
+    if (!cre.ok) return err('ref create', cre);
+  }
+  // Best-effort: enable Pages on this branch (ignored if already enabled or token lacks scope).
+  await ghApi(token, 'POST', `/repos/${owner}/${repo}/pages`, { source: { branch: br, path: '/' } }).catch(() => undefined);
+  const url = domain.trim()
+    ? `https://${domain.trim()}/`
+    : repo.toLowerCase() === `${owner.toLowerCase()}.github.io`
+      ? `https://${owner}.github.io/`
+      : `https://${owner}.github.io/${repo}/`;
+  return { ok: true, url };
+}
+
 /**
  * Deploy <project>/site-export to a static host. Vercel/Netlify go through their CLI (token in
- * env, never the command line); IPFS/Arweave reuse the project's storage provider in-process. The
- * artist owns the deployment; ConkerNFTZ never stores or transmits their credentials.
+ * env, never the command line); IPFS/Arweave reuse the project's storage provider in-process;
+ * GitHub Pages pushes via the Git Data API (token in the header only). The artist owns the
+ * deployment; ConkerNFTZ never stores or transmits their credentials.
  */
 function deploySiteHandler(): void {
   electron.ipcMain.handle(
     'foundry:deploySite',
-    async (_evt, payload: { provider?: string; token?: string; siteId?: string }): Promise<DeployResult> => {
+    async (_evt, payload: { provider?: string; token?: string; siteId?: string; repo?: string; branch?: string; domain?: string }): Promise<DeployResult> => {
       try {
         const projectDir = getProjectDir();
         if (!projectDir) return { ok: false, error: 'No project selected' };
@@ -161,6 +249,8 @@ function deploySiteHandler(): void {
           case 'ipfs':
           case 'arweave':
             return await deployStorage(siteDir, projectDir, host);
+          case 'github':
+            return await deployGithubPages(siteDir, token, payload?.repo || '', payload?.branch || 'gh-pages', payload?.domain || '');
           default:
             return { ok: false, error: `Unsupported host: ${host}` };
         }

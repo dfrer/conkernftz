@@ -130,6 +130,9 @@ export function SiteScreen() {
   const [vercelToken, setVercelToken] = useState<string>(() => lsGet('cnftz:vercelToken'));
   const [netlifyToken, setNetlifyToken] = useState<string>(() => lsGet('cnftz:netlifyToken'));
   const [netlifySite, setNetlifySite] = useState<string>(() => lsGet('cnftz:netlifySite'));
+  const [githubToken, setGithubToken] = useState<string>(() => lsGet('cnftz:githubToken'));
+  const [githubRepo, setGithubRepo] = useState<string>(() => lsGet('cnftz:githubRepo'));
+  const [customDomain, setCustomDomain] = useState<string>(() => lsGet('cnftz:customDomain'));
   const [viewport, setViewport] = useState<Viewport>('desktop');
 
   const mode = site.layout ?? 'flow';
@@ -388,7 +391,25 @@ export function SiteScreen() {
     setNetlifySite(v);
     lsSet('cnftz:netlifySite', v);
   };
-  const HOST_LABELS: Record<string, string> = { vercel: 'Vercel', netlify: 'Netlify', ipfs: 'IPFS (Pinata)', arweave: 'Arweave (Irys)' };
+  const onGithubToken = (v: string): void => {
+    setGithubToken(v);
+    lsSet('cnftz:githubToken', v);
+  };
+  const onGithubRepo = (v: string): void => {
+    setGithubRepo(v);
+    lsSet('cnftz:githubRepo', v);
+  };
+  const onCustomDomain = (v: string): void => {
+    setCustomDomain(v);
+    lsSet('cnftz:customDomain', v);
+  };
+  const HOST_LABELS: Record<string, string> = {
+    vercel: 'Vercel',
+    netlify: 'Netlify',
+    ipfs: 'IPFS (Pinata)',
+    arweave: 'Arweave (Irys)',
+    github: 'GitHub Pages',
+  };
 
   const deploy = async (): Promise<void> => {
     const fb = bridge();
@@ -402,6 +423,10 @@ export function SiteScreen() {
     }
     if (host === 'netlify' && (!netlifyToken.trim() || !netlifySite.trim())) {
       toast.push('Add your Netlify token and site ID first', 'danger');
+      return;
+    }
+    if (host === 'github' && (!githubToken.trim() || !githubRepo.trim())) {
+      toast.push('Add your GitHub token and owner/repo first', 'danger');
       return;
     }
     setDeploying(true);
@@ -437,7 +462,9 @@ export function SiteScreen() {
           ? { provider: 'vercel', token: vercelToken.trim() }
           : host === 'netlify'
             ? { provider: 'netlify', token: netlifyToken.trim(), siteId: netlifySite.trim() }
-            : { provider: host }; // ipfs / arweave use the project's storage credentials
+            : host === 'github'
+              ? { provider: 'github', token: githubToken.trim(), repo: githubRepo.trim(), branch: 'gh-pages', domain: customDomain.trim() }
+              : { provider: host }; // ipfs / arweave use the project's storage credentials
       const dep = await fb.deploySite(payload);
       if (dep.ok && dep.url) {
         toast.push(`Live at ${dep.url}`, 'ok');
@@ -772,6 +799,7 @@ export function SiteScreen() {
                 <Select aria-label="Deploy host" value={host} onChange={(e) => onHost(e.target.value)}>
                   <option value="vercel">Vercel</option>
                   <option value="netlify">Netlify</option>
+                  <option value="github">GitHub Pages</option>
                   <option value="ipfs">IPFS (Pinata)</option>
                   <option value="arweave">Arweave (Irys)</option>
                 </Select>
@@ -791,10 +819,31 @@ export function SiteScreen() {
                   </Field>
                 </div>
               ) : null}
+              {host === 'github' ? (
+                <>
+                  <div className="grid cols-auto">
+                    <Field label="GitHub token">
+                      <Input type="password" value={githubToken} onChange={(e) => onGithubToken(e.target.value)} placeholder="Settings → Developer settings → tokens (repo scope)" />
+                    </Field>
+                    <Field label="Repository (owner/repo)">
+                      <Input value={githubRepo} onChange={(e) => onGithubRepo(e.target.value)} placeholder="your-name/your-repo" aria-label="GitHub repository" />
+                    </Field>
+                    <Field label="Custom domain (optional)">
+                      <Input value={customDomain} onChange={(e) => onCustomDomain(e.target.value)} placeholder="mint.example.com — writes a CNAME" aria-label="Custom domain" />
+                    </Field>
+                  </div>
+                  <span className="label muted">
+                    Pushes the site to the <code>gh-pages</code> branch via the GitHub API and enables Pages. Site lives at <code>https://&lt;owner&gt;.github.io/&lt;repo&gt;/</code> (or your custom domain). The repo must exist.
+                  </span>
+                </>
+              ) : null}
               {host === 'ipfs' || host === 'arweave' ? (
                 <span className="label muted">
-                  Uses your project storage credentials ({host === 'ipfs' ? 'Pinata JWT' : 'Irys'}) — the same ones the <strong>Publish</strong> stage uses. No extra token needed here.
+                  Uses your project storage credentials ({host === 'ipfs' ? 'Pinata JWT' : 'Irys'}) — the same ones the <strong>Publish</strong> stage uses. No extra token needed here. Point a custom domain at it via DNSLink.
                 </span>
+              ) : null}
+              {host === 'vercel' || host === 'netlify' ? (
+                <span className="label muted">Add a custom domain in your {HOST_LABELS[host]} dashboard after the first deploy.</span>
               ) : null}
               <div className="row">
                 <Button variant="primary" onClick={deploy} disabled={deploying || !isBridged()}>
@@ -803,7 +852,9 @@ export function SiteScreen() {
                 <span className="label muted">
                   {host === 'ipfs' || host === 'arweave'
                     ? 'Pins the site to decentralized storage and returns a gateway URL.'
-                    : `Generates the site, then runs the ${HOST_LABELS[host] ?? host} CLI (needs Node + a token).`}
+                    : host === 'github'
+                      ? 'Generates the site, then pushes it to GitHub Pages via the API.'
+                      : `Generates the site, then runs the ${HOST_LABELS[host] ?? host} CLI (needs Node + a token).`}
                 </span>
               </div>
             </div>

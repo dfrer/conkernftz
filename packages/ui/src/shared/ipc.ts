@@ -131,7 +131,7 @@ export interface FoundryApi {
   /** Generate the deployable static mint site into <project>/site-export. */
   exportSite(payload: { dataJs: string; dataFile: string }): Promise<OutDirResult>;
   /** Deploy <project>/site-export to a host (currently Vercel via the user's token). */
-  deploySite(payload: { provider: string; token?: string; siteId?: string }): Promise<DeployResult>;
+  deploySite(payload: { provider: string; token?: string; siteId?: string; repo?: string; branch?: string; domain?: string }): Promise<DeployResult>;
   /** Serve <project>/site-export over http://127.0.0.1 and open it (local preview, no file://). */
   previewSite(): Promise<DeployResult>;
   /** Open a native file picker for an image and return it as an inline data URL (site assets). */
