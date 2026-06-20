@@ -20,7 +20,10 @@ export type BlockKind =
   | 'wordArt'
   | 'button'
   | 'webRing'
-  | 'underConstruction';
+  | 'underConstruction'
+  | 'bestViewed'
+  | 'audio'
+  | 'guestbook';
 
 export interface Rect {
   x: number;
@@ -132,6 +135,25 @@ export interface UnderConstructionBlock extends BaseBlock {
   kind: 'underConstruction';
   text: string;
 }
+export interface BestViewedBlock extends BaseBlock {
+  kind: 'bestViewed';
+  text: string;
+}
+export interface AudioBlock extends BaseBlock {
+  kind: 'audio';
+  /** MIDI/MP3/OGG URL or data URL. */
+  src: string;
+  label: string;
+  loop: boolean;
+  /** Browsers block un-muted autoplay until interaction; we render controls regardless. */
+  autoplay: boolean;
+}
+export interface GuestbookBlock extends BaseBlock {
+  kind: 'guestbook';
+  label: string;
+  /** A static site can't store entries — link to an external guestbook service. */
+  href: string;
+}
 
 export type Block =
   | HeroBlock
@@ -148,9 +170,15 @@ export type Block =
   | WordArtBlock
   | ButtonBlock
   | WebRingBlock
-  | UnderConstructionBlock;
+  | UnderConstructionBlock
+  | BestViewedBlock
+  | AudioBlock
+  | GuestbookBlock;
 
 export type SiteLayoutMode = 'flow' | 'canvas';
+/** Page-level retro cursor effect (a sparkle/comet trail that follows the pointer). */
+export type SiteCursor = 'none' | 'sparkle' | 'comet';
+export const SITE_CURSORS: readonly SiteCursor[] = ['none', 'sparkle', 'comet'];
 export type SiteBackground = 'ink' | 'manila' | 'void' | 'paper';
 export type SiteFont = 'mono' | 'sans' | 'display';
 export type SiteBgKind = 'theme' | 'color' | 'tile';
@@ -172,6 +200,8 @@ export interface SiteConfig {
   layout?: SiteLayoutMode;
   canvas?: { width: number; height: number };
   pageBg?: PageBg;
+  /** Page-level cursor-trail effect (default none). */
+  cursor?: SiteCursor;
   blocks: Block[];
 }
 
@@ -191,6 +221,9 @@ export const BLOCK_KINDS: BlockKind[] = [
   'button',
   'webRing',
   'underConstruction',
+  'bestViewed',
+  'audio',
+  'guestbook',
 ];
 export const BLOCK_LABELS: Record<BlockKind, string> = {
   hero: 'Hero',
@@ -208,6 +241,9 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   button: '88×31 button',
   webRing: 'Web ring',
   underConstruction: 'Under construction',
+  bestViewed: 'Best viewed in…',
+  audio: 'Music / MIDI',
+  guestbook: 'Guestbook',
 };
 
 export const SITE_ALIGNS: readonly SiteAlign[] = ['left', 'center', 'right'];
@@ -247,6 +283,8 @@ export const TEXT_BLOCK_KINDS: ReadonlySet<BlockKind> = new Set<BlockKind>([
   'webRing',
   'underConstruction',
   'hitCounter',
+  'bestViewed',
+  'guestbook',
 ]);
 export function blockHasText(kind: BlockKind): boolean {
   return TEXT_BLOCK_KINDS.has(kind);
@@ -294,6 +332,12 @@ export function newBlock(kind: BlockKind, id: string = blockId(kind)): Block {
       return { id, kind, name: 'The NFT Web Ring' };
     case 'underConstruction':
       return { id, kind, text: 'UNDER CONSTRUCTION' };
+    case 'bestViewed':
+      return { id, kind, text: 'Best viewed in Netscape Navigator at 800×600' };
+    case 'audio':
+      return { id, kind, src: '', label: '♪ now playing', loop: true, autoplay: false };
+    case 'guestbook':
+      return { id, kind, label: '✍ Sign my guestbook', href: '' };
   }
 }
 
@@ -339,8 +383,9 @@ export function resolveSite(partial?: Partial<SiteConfig> | null): SiteConfig {
     color: typeof bg.color === 'string' && bg.color ? bg.color : DEFAULT_PAGE_BG.color,
     tile: typeof bg.tile === 'string' ? bg.tile : '',
   };
+  const cursor: SiteCursor = (SITE_CURSORS as readonly string[]).includes(p.cursor as string) ? (p.cursor as SiteCursor) : 'none';
   const blocks = Array.isArray(p.blocks) ? (p.blocks.filter(isBlock) as Block[]) : [];
-  return { theme, layout, canvas, pageBg, blocks };
+  return { theme, layout, canvas, pageBg, cursor, blocks };
 }
 
 function clampNum(v: unknown, min: number, max: number, fallback: number): number {
@@ -425,4 +470,7 @@ export function setCanvas(site: SiteConfig, patch: Partial<{ width: number; heig
 export function setPageBg(site: SiteConfig, patch: Partial<PageBg>): SiteConfig {
   const cur = site.pageBg ?? DEFAULT_PAGE_BG;
   return { ...site, pageBg: { ...cur, ...patch } };
+}
+export function setCursor(site: SiteConfig, cursor: SiteCursor): SiteConfig {
+  return { ...site, cursor };
 }

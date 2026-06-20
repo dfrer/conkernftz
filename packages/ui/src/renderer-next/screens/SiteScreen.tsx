@@ -28,9 +28,11 @@ import {
   setBlockLayout,
   setBlockMobile,
   setCanvas,
+  setCursor,
   setLayoutMode,
   setPageBg,
   setTheme,
+  SITE_CURSORS,
   updateBlock,
   type Block,
   type BlockKind,
@@ -372,6 +374,15 @@ export function SiteScreen() {
                   <option value="theme">theme</option>
                   <option value="color">solid color</option>
                   <option value="tile">tiled image</option>
+                </Select>
+              </Field>
+              <Field label="Cursor trail">
+                <Select aria-label="Cursor trail" value={site.cursor ?? 'none'} onChange={(e) => setSite(setCursor(site, e.target.value as (typeof SITE_CURSORS)[number]))}>
+                  {SITE_CURSORS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               {pageBg.kind === 'color' ? (
@@ -728,6 +739,25 @@ function BlockFields({
       );
     case 'underConstruction':
       return <Field label="Banner text"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Construction text" /></Field>;
+    case 'bestViewed':
+      return <Field label="Badge text"><Input value={block.text} onChange={(e) => setField({ text: e.target.value })} aria-label="Best viewed text" /></Field>;
+    case 'audio':
+      return (
+        <div className="stack">
+          <Field label="Audio URL (MIDI / MP3)"><Input value={block.src} onChange={(e) => setField({ src: e.target.value })} placeholder="data: or https URL" aria-label="Audio src" /></Field>
+          <Field label="Label"><Input value={block.label} onChange={(e) => setField({ label: e.target.value })} aria-label="Audio label" /></Field>
+          <label className="row"><input type="checkbox" checked={block.loop} onChange={(e) => setField({ loop: e.target.checked })} aria-label="Loop" /><span className="label">Loop</span></label>
+          <label className="row"><input type="checkbox" checked={block.autoplay} onChange={(e) => setField({ autoplay: e.target.checked })} aria-label="Autoplay" /><span className="label">Autoplay (browsers may block until interaction)</span></label>
+        </div>
+      );
+    case 'guestbook':
+      return (
+        <div className="grid cols-auto">
+          <Field label="Label"><Input value={block.label} onChange={(e) => setField({ label: e.target.value })} aria-label="Guestbook label" /></Field>
+          <Field label="Service URL"><Input value={block.href} onChange={(e) => setField({ href: e.target.value })} placeholder="https:// (external guestbook)" aria-label="Guestbook href" /></Field>
+          <span className="label muted">Static sites can't store entries — link to an external guestbook service.</span>
+        </div>
+      );
     case 'divider':
       return <span className="label muted">A horizontal rule. No options.</span>;
   }

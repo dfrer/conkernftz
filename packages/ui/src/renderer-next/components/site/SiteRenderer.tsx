@@ -1,10 +1,42 @@
-import { type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { resolveExperience, type ExperienceConfig } from '../../lib/mintExperience';
-import { clampFontScale, clampScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig } from '../../lib/site';
+import { clampFontScale, clampScale, normalizeAlign, type Block, type BlockLayout, type Rect, type SiteConfig, type SiteCursor } from '../../lib/site';
 
 const MOBILE_W = 390;
+
+// Page-level retro cursor trail: spawns fading sparkle/comet glyphs in the site as the pointer
+// moves. Scoped to the .site container (not document), throttled, and disabled for
+// prefers-reduced-motion. Runs in the in-app preview and the exported static site alike.
+function CursorTrail({ kind }: { kind: SiteCursor }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (kind === 'none') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const host = ref.current;
+    const parent = host?.parentElement;
+    if (!host || !parent) return;
+    let last = 0;
+    const onMove = (e: MouseEvent): void => {
+      const now = performance.now();
+      if (now - last < 45) return; // throttle the spawn rate
+      last = now;
+      const rect = parent.getBoundingClientRect();
+      const bit = document.createElement('span');
+      bit.className = `site-cursor-bit site-cursor-bit--${kind}`;
+      bit.style.left = `${e.clientX - rect.left}px`;
+      bit.style.top = `${e.clientY - rect.top}px`;
+      bit.textContent = kind === 'comet' ? '☄' : '✦';
+      host.appendChild(bit);
+      window.setTimeout(() => bit.remove(), 720);
+    };
+    parent.addEventListener('mousemove', onMove);
+    return () => parent.removeEventListener('mousemove', onMove);
+  }, [kind]);
+  if (kind === 'none') return null;
+  return <div ref={ref} className="site-cursor-layer" aria-hidden />;
+}
 
 // Renders a SiteConfig to React, in 'flow' (stacked) or 'canvas' (free-form, absolute)
 // mode, at a desktop or mobile viewport. Shared by the in-app builder preview and (P3) the
@@ -42,6 +74,7 @@ export function SiteRenderer({
         data-testid="site-render"
         data-mode="canvas"
       >
+        {site.cursor && site.cursor !== 'none' ? <CursorTrail kind={site.cursor} /> : null}
         <div className="site-canvas" style={{ width: w, height: canvas.height }}>
           {site.blocks.map((b, i) => {
             const r = rectFor(b.layout, i, viewport);
@@ -64,6 +97,7 @@ export function SiteRenderer({
       data-testid="site-render"
       data-mode="flow"
     >
+      {site.cursor && site.cursor !== 'none' ? <CursorTrail kind={site.cursor} /> : null}
       {site.blocks.map((b) => (
         <BlockBody key={b.id} block={b} images={images} experience={experience} />
       ))}
@@ -242,6 +276,26 @@ function BlockContent({ block, images, experience }: { block: Block; images: str
         <div className="site-construction" aria-label="under construction">
           <span aria-hidden>🚧</span> {block.text} <span aria-hidden>🚧</span>
         </div>
+      );
+    case 'bestViewed':
+      return <div className="site-bestviewed">{block.text}</div>;
+    case 'audio':
+      return (
+        <div className="site-audio">
+          {block.label ? <span className="site-audio-label">{block.label}</span> : null}
+          {block.src ? (
+            // eslint-disable-next-line jsx-a11y/media-has-caption
+            <audio className="site-audio-el" src={block.src} controls loop={block.loop} autoPlay={block.autoplay} />
+          ) : (
+            <span className="site-audio-ph">add a MIDI/MP3 URL</span>
+          )}
+        </div>
+      );
+    case 'guestbook':
+      return (
+        <a className="site-guestbook" href={block.href || undefined} target="_blank" rel="noreferrer">
+          {block.label}
+        </a>
       );
   }
 }

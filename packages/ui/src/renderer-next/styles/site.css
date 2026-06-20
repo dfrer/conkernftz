@@ -3,6 +3,7 @@
 
 .site {
   --site-accent: #ffb000;
+  position: relative; /* anchor the cursor-trail layer */
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
@@ -294,4 +295,75 @@
   background: repeating-linear-gradient(45deg, #ffd000 0 14px, #1a1400 14px 28px);
   -webkit-text-stroke: 0.5px #1a1400;
   border: 2px solid #1a1400;
+}
+
+/* ---- Nostalgia zoo: best-viewed badge, music player, guestbook ---- */
+.site-bestviewed {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-sm) * var(--site-fscale, 1));
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--hair) solid var(--site-accent);
+  border-radius: var(--r-sm);
+  opacity: 0.85;
+}
+.site-audio {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-sm) * var(--site-fscale, 1));
+}
+.site-audio-label {
+  color: var(--site-accent);
+}
+.site-audio-el {
+  height: 32px;
+}
+.site-audio-ph {
+  opacity: 0.6;
+}
+.site-guestbook {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-sm) * var(--site-fscale, 1));
+  text-decoration: none;
+  color: #fff;
+  padding: var(--sp-2) var(--sp-4);
+  background: linear-gradient(180deg, #b14dff, #6a1aa0);
+  border: 2px outset #c98bff;
+  text-shadow: 1px 1px 0 #000;
+}
+.site-guestbook:hover {
+  filter: brightness(1.1);
+}
+
+/* ---- Cursor trail (page-level retro effect) ---- */
+.site-cursor-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
+}
+.site-cursor-bit {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  line-height: 1;
+  will-change: transform, opacity;
+  animation: site-cursor-fade 720ms ease-out forwards;
+}
+.site-cursor-bit--sparkle {
+  color: #fff;
+  text-shadow: 0 0 6px var(--site-accent);
+}
+.site-cursor-bit--comet {
+  color: var(--site-accent);
+  text-shadow: 0 0 8px var(--site-accent);
+}
+@keyframes site-cursor-fade {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% + 18px)) scale(0.5); }
 }
