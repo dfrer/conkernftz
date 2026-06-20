@@ -467,7 +467,8 @@ export function SiteScreen() {
               : { provider: host }; // ipfs / arweave use the project's storage credentials
       const dep = await fb.deploySite(payload);
       if (dep.ok && dep.url) {
-        toast.push(`Live at ${dep.url}`, 'ok');
+        // GitHub Pages builds asynchronously — the URL can 404 for ~a minute after the push.
+        toast.push(host === 'github' ? `Pushed — GitHub Pages may take a minute to go live: ${dep.url}` : `Live at ${dep.url}`, 'ok');
         fb.openExternal(dep.url);
       } else if (dep.ok) {
         toast.push(`Deployed to ${label}`, 'ok');

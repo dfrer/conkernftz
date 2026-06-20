@@ -81,6 +81,9 @@ async function deployVercel(siteDir: string, token: string): Promise<DeployResul
 async function deployNetlify(siteDir: string, token: string, siteId: string): Promise<DeployResult> {
   if (!token) return { ok: false, error: 'A Netlify access token is required (Netlify → User settings → Applications → Personal access tokens).' };
   if (!siteId) return { ok: false, error: 'A Netlify site ID is required (create a site, then Site configuration → Site ID). Deploy is non-interactive, so the site must exist first.' };
+  // siteId is the only user value passed to a shell-spawned CLI (shell:true is needed for npx on
+  // Windows) — constrain it to a safe charset so a stray metacharacter can't be interpreted.
+  if (!/^[A-Za-z0-9._-]+$/.test(siteId)) return { ok: false, error: 'Netlify site ID looks invalid (expected letters, numbers, dots and dashes).' };
   const env = { ...process.env, NETLIFY_AUTH_TOKEN: token } as NodeJS.ProcessEnv;
   const out = await spawnCapture('npx', ['--yes', 'netlify', 'deploy', '--prod', '--dir=.', '--site', siteId, '--json'], { cwd: siteDir, env });
   let url: string | undefined;
