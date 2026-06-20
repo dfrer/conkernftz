@@ -10,6 +10,7 @@ import {
   moveBlock,
   newBlock,
   removeBlock,
+  removeBlocks,
   resolveSite,
   setBlockLayout,
   setBlockMobile,
@@ -55,6 +56,16 @@ describe('site model', () => {
     expect((updated.blocks[0] as { title?: string }).title).toBe('Hello');
 
     expect(removeBlock(s, galleryId).blocks.map((b) => b.kind)).toEqual(['hero']);
+  });
+
+  it('removeBlocks drops every id in the set (group delete)', () => {
+    let s = emptySite();
+    s = addBlock(s, 'hero');
+    s = addBlock(s, 'gallery');
+    s = addBlock(s, 'mint');
+    const [a, , c] = s.blocks.map((b) => b.id);
+    const out = removeBlocks(s, [a!, c!]);
+    expect(out.blocks.map((b) => b.kind)).toEqual(['gallery']);
   });
 
   it('moveBlock restacks in canvas mode: z follows position so reordering changes stacking', () => {

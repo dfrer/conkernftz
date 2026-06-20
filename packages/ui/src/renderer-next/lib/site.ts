@@ -406,6 +406,10 @@ export function addBlock(site: SiteConfig, kind: BlockKind): SiteConfig {
 export function removeBlock(site: SiteConfig, id: string): SiteConfig {
   return { ...site, blocks: site.blocks.filter((b) => b.id !== id) };
 }
+export function removeBlocks(site: SiteConfig, ids: readonly string[]): SiteConfig {
+  const drop = new Set(ids);
+  return { ...site, blocks: site.blocks.filter((b) => !drop.has(b.id)) };
+}
 export function moveBlock(site: SiteConfig, id: string, dir: -1 | 1): SiteConfig {
   const i = site.blocks.findIndex((b) => b.id === id);
   const j = i + dir;
