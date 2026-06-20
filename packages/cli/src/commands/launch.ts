@@ -171,6 +171,36 @@ export function launchCmd(): Command {
       console.log(`Owner:       ${s.owner}`);
     });
 
+  // --- prices ---
+  guard(cmd.command('prices'))
+    .description('Set the allowlist + public mint prices (in ETH)')
+    .argument('<allowlistEth>', 'allowlist price in ETH, e.g. 0.01 (use 0 for free)')
+    .argument('<publicEth>', 'public price in ETH, e.g. 0.02')
+    .option('--contract <addr>', 'contract address (else from config)')
+    .action(async (allowlistEth: string, publicEth: string, opts: MainnetGuardOpts & { contract?: string }) => {
+      const { evm } = await loadEvm();
+      const contract = requireContract(evm, opts.contract);
+      assertChainAllowed(evm.chainId, opts);
+      const { setPrices, parseEther } = await import('@conkernftz/chain-evm');
+      const tx = await setPrices(writeCfgFor(evm, contract), parseEther(allowlistEth), parseEther(publicEth));
+      console.log(`setPrices(allowlist=${allowlistEth}, public=${publicEth} ETH) tx: ${tx}`);
+    });
+
+  // --- caps ---
+  guard(cmd.command('caps'))
+    .description('Set the public per-wallet cap and the per-transaction max (required before minting)')
+    .argument('<publicWalletCap>', 'max tokens any one wallet may mint in the public phase')
+    .argument('<maxPerTx>', 'max tokens per transaction (both phases; must be >= 1)')
+    .option('--contract <addr>', 'contract address (else from config)')
+    .action(async (publicWalletCap: string, maxPerTx: string, opts: MainnetGuardOpts & { contract?: string }) => {
+      const { evm } = await loadEvm();
+      const contract = requireContract(evm, opts.contract);
+      assertChainAllowed(evm.chainId, opts);
+      const { setCaps } = await import('@conkernftz/chain-evm');
+      const tx = await setCaps(writeCfgFor(evm, contract), BigInt(publicWalletCap), Number(maxPerTx));
+      console.log(`setCaps(publicWalletCap=${publicWalletCap}, maxPerTx=${maxPerTx}) tx: ${tx}`);
+    });
+
   // --- phase ---
   guard(cmd.command('phase'))
     .description('Advance the sale phase')
