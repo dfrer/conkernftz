@@ -1,5 +1,9 @@
 # Known gaps — intentionally-incomplete features
 
+> **⚠ SUPERSEDED (2026-06-20) by [`docs/plan/STATUS.md`](plan/STATUS.md)** — current state lives in
+> the planning system now. Kept as history.
+
+
 A running ledger of features that shipped **deliberately partial** during the vision-first
 build phase. These are *fine for now* (per the agreed process: build the full A→Z vision →
 owner verifies the whole workflow → then a dedicated polish pass). This list keeps that polish

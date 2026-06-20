@@ -1,5 +1,9 @@
 # ConkerNFTZ — Platform Master Plan (A → Z creator platform)
 
+> **⚠ SUPERSEDED (2026-06-20) by [`docs/plan/`](plan/README.md)** — the planning/source-of-truth is
+> now `docs/plan/` (VISION · STATUS · PLAN · LOG). This file is kept as history and for the §9
+> Vision II detail referenced by `plan/VISION.md`. Don't plan from here.
+
 > **Status: APPROVED DIRECTION (2026-06-18).** Expands ConkerNFTZ from a generative-art
 > foundry into a complete, artist-controlled NFT platform: create → deploy → build a mint
 > site → host it → run a designed minting experience, all from one tool, no dev skills or
