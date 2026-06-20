@@ -51,7 +51,7 @@ export interface FoundryBridge {
   /** Generate the deployable static mint site; returns the output folder. */
   exportSite(payload: { dataJs: string; dataFile: string }): Promise<{ ok: boolean; outDir?: string; error?: string }>;
   /** Deploy the generated site to a host (Vercel); returns the live URL. */
-  deploySite(payload: { provider: string; token?: string; siteId?: string }): Promise<{ ok: boolean; url?: string; error?: string }>;
+  deploySite(payload: { provider: string; token?: string; siteId?: string; repo?: string; branch?: string; domain?: string }): Promise<{ ok: boolean; url?: string; error?: string }>;
   /** Serve the generated site locally over http and open it; returns the localhost URL. */
   previewSite(): Promise<{ ok: boolean; url?: string; error?: string }>;
   /** Native image picker → a self-contained data URL (site assets). */
