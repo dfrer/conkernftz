@@ -20,8 +20,15 @@
 >   + Slither) — Foundry is not run on the dev's machine; CI is the on-chain verification gate.
 > - **Artifacts:** `src/launch-artifact.ts` (ABI + bytecode) is committed for the viem runtime;
 >   regenerate with `pnpm --filter @conkernftz/chain-evm compile-contract`.
-> - **Not yet built (next units):** the off-chain adapter (`deployLaunch`, `sale.ts`), CLI sale
->   commands, and the WalletConnect v2 UI actions (§7) — these come after the contract is settled.
+> - **Off-chain adapter (DONE):** `deployLaunch` + `estimateLaunchDeploy` (gas/balance preflight),
+>   `sale.ts` (phase/prices/caps/root/treasury admin, reveal, one-way freeze, pull withdraw,
+>   pause, test mints, `readSaleState`), and `chains.ts` presets (Base/Base-Sepolia/Eth/Sepolia +
+>   `isTestnet`).
+> - **CLI (DONE):** `conkernftz launch <deploy|allowlist|status|phase|reveal|withdraw|freeze>` with
+>   the **mainnet safeguard** (testnets free; mainnet needs `--mainnet` **and** a typed
+>   `--confirm <chain>`) and `--dry-run`. Config: `chain.evm.launch` block added to the core schema.
+> - **Not yet built (next unit):** WalletConnect v2 UI actions (§7) wiring the exported mint widget
+>   to the (testnet) contract — **P5**, the last piece before testnet e2e.
 
 ## 1. Scope
 
