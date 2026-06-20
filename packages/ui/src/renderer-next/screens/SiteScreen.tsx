@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
@@ -57,11 +57,48 @@ const WALLPAPERS: Record<string, string> = {
 export function SiteScreen() {
   const { project, config, updateConfig, save } = useProject();
   const toast = useToast();
-  const [site, setSite] = useState<SiteConfig>(() => {
+  const [site, setSiteRaw] = useState<SiteConfig>(() => {
     const existing = config?.site as Partial<SiteConfig> | undefined;
     const r = existing ? resolveSite(existing) : defaultSite();
     return r.blocks.length ? r : defaultSite();
   });
+  // Undo/redo history. Discrete edits go through setSite (snapshots the prior state); drags use
+  // setSiteLive (no per-frame entries) after beginHistory() snapshots once at drag start.
+  const past = useRef<SiteConfig[]>([]);
+  const future = useRef<SiteConfig[]>([]);
+  const [, bumpHist] = useState(0);
+  const HISTORY_MAX = 100;
+  const pushPast = (snapshot: SiteConfig): void => {
+    past.current.push(snapshot);
+    if (past.current.length > HISTORY_MAX) past.current.shift();
+    future.current = [];
+  };
+  const setSite = (next: SiteConfig): void => {
+    pushPast(site);
+    setSiteRaw(next);
+    bumpHist((v) => v + 1);
+  };
+  const setSiteLive = (next: SiteConfig): void => setSiteRaw(next); // transient (drag) — no history
+  const beginHistory = (): void => {
+    pushPast(site);
+    bumpHist((v) => v + 1);
+  };
+  const undo = (): void => {
+    const prev = past.current.pop();
+    if (!prev) return;
+    future.current.push(site);
+    setSiteRaw(prev);
+    bumpHist((v) => v + 1);
+  };
+  const redo = (): void => {
+    const nxt = future.current.pop();
+    if (!nxt) return;
+    past.current.push(site);
+    setSiteRaw(nxt);
+    bumpHist((v) => v + 1);
+  };
+  const [snap, setSnap] = useState(true);
+  const SNAP_GRID = 20; // matches the editor's 20px background grid
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -128,10 +165,53 @@ export function SiteScreen() {
     }
   };
 
+  const grid = (n: number): number => (snap ? Math.round(n / SNAP_GRID) * SNAP_GRID : n);
+  // Drags use the live setter (one history entry per drag, snapshotted at drag start).
   const onMove = (id: string, x: number, y: number): void =>
-    setSite(viewport === 'mobile' ? setBlockMobile(site, id, { x, y }) : setBlockLayout(site, id, { x, y }));
+    setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { x: grid(x), y: grid(y) }) : setBlockLayout(site, id, { x: grid(x), y: grid(y) }));
   const onResize = (id: string, w: number, h: number): void =>
-    setSite(viewport === 'mobile' ? setBlockMobile(site, id, { w, h }) : setBlockLayout(site, id, { w, h }));
+    setSiteLive(viewport === 'mobile' ? setBlockMobile(site, id, { w: grid(w), h: grid(h) }) : setBlockLayout(site, id, { w: grid(w), h: grid(h) }));
+
+  // Keyboard: Ctrl/Cmd+Z undo, +Shift (or Ctrl+Y) redo, arrow-keys nudge the selected canvas
+  // block (Shift = 10px). Ignored while typing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+      const meta = e.ctrlKey || e.metaKey;
+      if (meta && (e.key === 'z' || e.key === 'Z')) {
+        if (typing) return;
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (meta && (e.key === 'y' || e.key === 'Y')) {
+        if (typing) return;
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (!typing && mode === 'canvas' && selectedId && e.key.startsWith('Arrow')) {
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+        if (dx === 0 && dy === 0) return;
+        e.preventDefault();
+        const b = site.blocks.find((x) => x.id === selectedId);
+        const base = b?.layout ?? defaultLayout(0);
+        if (viewport === 'mobile') {
+          const m = base.mobile ?? { x: base.x, y: base.y, w: base.w, h: base.h };
+          setSite(setBlockMobile(site, selectedId, { x: Math.max(0, m.x + dx), y: Math.max(0, m.y + dy) }));
+        } else {
+          setSite(setBlockLayout(site, selectedId, { x: Math.max(0, base.x + dx), y: Math.max(0, base.y + dy) }));
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, selectedId, viewport, site]);
 
   const loadArt = async (): Promise<void> => {
     const fb = bridge();
@@ -572,9 +652,27 @@ export function SiteScreen() {
             </Panel>
           ) : null}
 
-          <Panel title={mode === 'canvas' ? `Canvas — ${viewport}` : 'Preview'}>
+          <Panel
+            title={mode === 'canvas' ? `Canvas — ${viewport}` : 'Preview'}
+            actions={
+              <div className="row">
+                <Button size="sm" variant="ghost" onClick={undo} disabled={past.current.length === 0} aria-label="Undo">
+                  ↶ Undo
+                </Button>
+                <Button size="sm" variant="ghost" onClick={redo} disabled={future.current.length === 0} aria-label="Redo">
+                  ↷ Redo
+                </Button>
+                {mode === 'canvas' ? (
+                  <label className="row" style={{ gap: 4 }}>
+                    <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} aria-label="Snap to grid" />
+                    <span className="label">Snap</span>
+                  </label>
+                ) : null}
+              </div>
+            }
+          >
             {mode === 'canvas' ? (
-              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} />
+              <SiteCanvas site={site} images={images} experience={previewExp} viewport={viewport} selectedId={selected?.id ?? null} onSelect={setSelectedId} onMove={onMove} onResize={onResize} onInteractStart={beginHistory} />
             ) : (
               <SiteRenderer site={site} images={images} experience={previewExp} />
             )}

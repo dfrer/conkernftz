@@ -19,6 +19,7 @@ export function SiteCanvas({
   onSelect,
   onMove,
   onResize,
+  onInteractStart,
 }: {
   site: SiteConfig;
   images: string[];
@@ -28,6 +29,8 @@ export function SiteCanvas({
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
   onResize: (id: string, w: number, h: number) => void;
+  /** Called once when a drag/resize begins (so the parent can snapshot for undo). */
+  onInteractStart?: () => void;
 }) {
   const drag = useRef<{ mode: 'move' | 'resize'; id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
   const canvas = site.canvas ?? { width: 960, height: 1400 };
@@ -42,6 +45,7 @@ export function SiteCanvas({
 
   const startMove = (e: PointerEvent<HTMLDivElement>, id: string, index: number): void => {
     onSelect(id);
+    onInteractStart?.();
     const r = rectFor(index);
     drag.current = { mode: 'move', id, sx: e.clientX, sy: e.clientY, ox: r.x, oy: r.y };
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -49,6 +53,7 @@ export function SiteCanvas({
   const startResize = (e: PointerEvent<HTMLDivElement>, id: string, index: number): void => {
     e.stopPropagation();
     onSelect(id);
+    onInteractStart?.();
     const r = rectFor(index);
     drag.current = { mode: 'resize', id, sx: e.clientX, sy: e.clientY, ox: r.w, oy: r.h };
     e.currentTarget.setPointerCapture?.(e.pointerId);
