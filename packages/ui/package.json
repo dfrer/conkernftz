@@ -16,7 +16,8 @@
     "start": "node scripts/start.cjs",
     "screenshots": "node scripts/screenshots.mjs",
     "clean": "rimraf dist",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@conkernftz/chain-solana": "workspace:*",
