@@ -142,6 +142,20 @@ export interface FoundryApi {
   packsRead(id: string): Promise<FileBase64Result>;
   packsImport(opts: { name?: string; kind?: PackKind }): Promise<PackImportResult>;
   packsDelete(id: string): Promise<OkResult>;
+
+  // Phase-L launch contract — in-app deploy + sale management (no CLI needed). Reads the
+  // project's chain.evm config; writes sign with the configured deployer key (key-file model).
+  // Bigint fields are returned as decimal strings (IPC/JSON-safe). Mainnet writes require a
+  // `confirm` token (the chain name/id) — the same two-gate safeguard as the CLI.
+  /** Read live sale state (phase, prices, caps, minted, etc.). No signing. */
+  launchStatus(): Promise<JsonResult>;
+  /** Dry-run a deploy: gas + balance preflight, no transaction. */
+  launchEstimate(): Promise<JsonResult>;
+  /** Deploy ConkernftzLaunch and save the address into the project config. */
+  launchDeploy(opts?: { confirm?: string }): Promise<JsonResult>;
+  launchSetCaps(opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }): Promise<JsonResult>;
+  launchSetPrices(opts: { allowlistEth: string; publicEth: string; confirm?: string }): Promise<JsonResult>;
+  launchSetPhase(opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }): Promise<JsonResult>;
 }
 
 /**
@@ -193,6 +207,12 @@ export const FOUNDRY_METHODS = [
   'packsRead',
   'packsImport',
   'packsDelete',
+  'launchStatus',
+  'launchEstimate',
+  'launchDeploy',
+  'launchSetCaps',
+  'launchSetPrices',
+  'launchSetPhase',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

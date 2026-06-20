@@ -61,6 +61,42 @@ export interface FoundryBridge {
   packsRead(id: string): Promise<{ ok: boolean; base64?: string; mime?: string; error?: string }>;
   packsImport(opts: { name?: string; kind?: PackKind }): Promise<{ ok: boolean; pack?: PackEntry; error?: string }>;
   packsDelete(id: string): Promise<OkResult>;
+  /** Phase-L launch contract — in-app deploy + sale management (bigints returned as strings). */
+  launchStatus(): Promise<{ ok: boolean; json?: LaunchStatus; error?: string }>;
+  launchEstimate(): Promise<{ ok: boolean; json?: LaunchEstimate; error?: string }>;
+  launchDeploy(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { address: string; txHash: string }; error?: string }>;
+  launchSetCaps(opts: { publicWalletCap: number; maxPerTx: number; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchSetPrices(opts: { allowlistEth: string; publicEth: string; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+  launchSetPhase(opts: { phase: 'closed' | 'allowlist' | 'public'; confirm?: string }): Promise<{ ok: boolean; json?: { txHash: string }; error?: string }>;
+}
+
+/** Live sale-state snapshot (bigint fields as decimal strings; prices also pre-formatted in ETH). */
+export interface LaunchStatus {
+  configured: boolean;
+  chainId: number;
+  testnet: boolean;
+  contractAddress?: string;
+  phase: 'closed' | 'allowlist' | 'public';
+  configLocked: boolean;
+  totalMinted: string;
+  maxSupply: string;
+  allowlistPriceEth: string;
+  publicPriceEth: string;
+  publicWalletCap: string;
+  maxPerTx: string;
+  revealed: boolean;
+  metadataFrozen: boolean;
+  treasury: string;
+  owner: string;
+}
+
+export interface LaunchEstimate {
+  deployer: string;
+  balanceEth: string;
+  costEth: string;
+  sufficient: boolean;
+  chainId: number;
+  testnet: boolean;
 }
 
 export type PackKind = 'pack' | 'back';

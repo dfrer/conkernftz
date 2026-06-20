@@ -4,6 +4,7 @@ import { initProjectIpc } from './main/ipc-project.js';
 import { initStorageIpc } from './main/ipc-storage.js';
 import { initPacksIpc } from './main/ipc-packs.js';
 import { initCliRunner } from './main/cli-runner.js';
+import { initLaunchRunner } from './main/launch-runner.js';
 
 const appDir = __dirname;
 
@@ -11,6 +12,7 @@ initProjectIpc();
 initStorageIpc();
 initPacksIpc();
 initCliRunner();
+initLaunchRunner();
 
 function createWindow(): void {
   const win = new electron.BrowserWindow({

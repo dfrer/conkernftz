@@ -48,4 +48,10 @@ contextBridge.exposeInMainWorld('foundry', {
   packsRead: (id) => ipcRenderer.invoke('foundry:packsRead', id),
   packsImport: (opts) => ipcRenderer.invoke('foundry:packsImport', opts || {}),
   packsDelete: (id) => ipcRenderer.invoke('foundry:packsDelete', id),
+  launchStatus: () => ipcRenderer.invoke('foundry:launchStatus'),
+  launchEstimate: () => ipcRenderer.invoke('foundry:launchEstimate'),
+  launchDeploy: (opts) => ipcRenderer.invoke('foundry:launchDeploy', opts || {}),
+  launchSetCaps: (opts) => ipcRenderer.invoke('foundry:launchSetCaps', opts),
+  launchSetPrices: (opts) => ipcRenderer.invoke('foundry:launchSetPrices', opts),
+  launchSetPhase: (opts) => ipcRenderer.invoke('foundry:launchSetPhase', opts),
 });
