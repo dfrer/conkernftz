@@ -23,9 +23,6 @@ packages/storage/src/**/*.map
 .idea/
 .vscode/
 
-# Rust (tauri)
-target/
-
 # Local keys and secrets
 keys/
 .env
@@ -34,3 +31,9 @@ keys/
 
 # UI screenshot harness output (dev artifact)
 packages/ui/screenshots/
+
+# Stale nested duplicate working copy (a leftover second checkout at <root>/conkernftz/,
+# ~623 MB incl. its own node_modules — never tracked). Ignoring it keeps it out of git and
+# stops Glob/Grep tooling from descending into the duplicate. Safe to delete on disk:
+#   rm -rf conkernftz
+/conkernftz/
