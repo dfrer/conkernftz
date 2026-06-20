@@ -15,6 +15,14 @@
 1. An **open-source platform** any creator can use to build, launch, and operate an NFT collection.
 2. The **engine the owner uses** to launch their own collections (NASA CRUST first).
 
+It is an **NFT *Art* Foundry** — *not* a "generative art foundry." The long-term vision serves
+**all kinds of art**, not only generative trait-based collections (see [Art types](#art-types--an-nft-art-foundry)).
+
+> **This is a living plan.** The feature set will keep growing — the owner will continually add
+> features and deepen existing ones. If taken all the way, the platform has **many** more features
+> and functions than are listed today. The `docs/plan/` system is built to absorb that (PLAN grows;
+> LOG records every addition).
+
 ## 2. Audiences — the full, locked vision
 
 Three roles. All three are part of the *complete* vision (the third arrives last — see roadmap):
@@ -26,11 +34,32 @@ Three roles. All three are part of the *complete* vision (the third arrives last
    same builder + experience engine serves them. This is the "Vision II" surface — **definitely
    happening**, after NASA CRUST is launched, verified, and others are using the platform.
 
+## Art types — an NFT *Art* Foundry
+
+The platform's launch + contract + site-building pipeline is meant to serve **any artist selling
+any kind of art**, not just one style. Sequencing:
+
+- **Today (built, and being deepened):** **generative, trait-based** collections (the "hashlips"
+  style — layers/rules/rarity/dedupe). The **depth, customizability, and breadth of these
+  trait-based features will be massively expanded** over time — this is an ongoing, owner-driven
+  track, not a finished area.
+- **Vision II (broadening — committed, sequenced after CRUST):** support **all art types** so any
+  artist can launch + sell through ConkerNFTZ:
+  - **1/1s** (one-of-one pieces),
+  - **code-based generative art** (p5.js, fxHash-style on-chain/long-form generative, etc.),
+  - and more art forms beyond these.
+- **Also Vision II:** **more chains** beyond Solana/Base/Ethereum L1.
+
+The point: the launch contracts, the mint experience, and the site builder generalize so that a
+1/1 artist, a long-form generative coder, or a trait-based collection creator all use the same A→Z
+tool.
+
 ## 3. The A→Z lifecycle (one tool, no dev skills required)
 
 A creator goes end-to-end without leaving ConkerNFTZ:
 
-1. **Create** — generative foundry: layers, rules, rarity, effects, palettes, dedupe, build.
+1. **Create** — the art foundry. Today: generative trait-based (layers, rules, rarity, effects,
+   palettes, dedupe, build) — being deepened; broadening to 1/1s + code-based generative + more (Vision II).
 2. **Store & deploy** — assets + metadata to IPFS/Arweave; contract to chain (multi-chain).
 3. **Design the mint experience** — interactive reveal "theater": pack appears → rip → cards fan
    → flip → reveal. Declarative, previewable, reusable by the shipped site.
@@ -95,8 +124,12 @@ The thin A→Z slice is proven (owner minted NASA CRUST token #1 on Base-Sepolia
 2. **On-chain infra to parity + audit-ready** — all chains to first-class Launch parity; harden.
 3. **External audit** + final hardening.
 4. **Launch V1 with NASA CRUST** — real, mainnet, owner's multisig.
-5. **Vision II** — collectors/curators, multi-page sites, non-custodial trading — after CRUST is
-   launched, verified good, and others have started using the platform.
+5. **Vision II** — collectors/curators, **all art types** (1/1s, code-based generative — p5.js,
+   fxHash-style — and more), **more chains**, multi-page sites, non-custodial trading — after CRUST
+   is launched, verified good, and others have started using the platform.
+
+> Note: deepening the **trait-based generative** features (more depth/customizability) is an
+> **ongoing** track that runs alongside, not gated to Vision II.
 
 > Vision II detail (collector flows, multi-page routing on static hosts, cloud/phone runtime,
 > trading mechanism + regulatory posture) is captured in

@@ -5,6 +5,18 @@
 
 ---
 
+### 2026-06-20 — Scope: "NFT *Art* Foundry" (all art types) + living plan
+Owner clarified the plan is **living** — features and the depth of existing features will keep
+expanding; taken all the way, the platform has *many* more features than listed today. Key
+reframe: **not "Generative Art Foundry" → "NFT Art Foundry."** The final vision serves **all art
+types**, not just trait-based generative:
+- **Today (deepening):** trait-based generative ("hashlips"-style) — depth/customizability to be
+  massively expanded (ongoing track).
+- **Vision II (committed):** broaden to **1/1s**, **code-based generative** (p5.js, fxHash-style),
+  and more — so any artist can launch + sell via ConkerNFTZ; plus **more chains**.
+Folded into VISION (identity + new "Art types" section), PLAN (V2-5 art types, V2-6 more chains,
+ongoing-themes note), STATUS (core forward note).
+
 ### 2026-06-20 — Establish the `docs/plan/` planning system
 Owner: "completely rewrite/rebase the planning and spec… a managed planning system… centralized
 source of truth about where we are, what tasks, and what I'm requesting." Created `docs/plan/`

@@ -16,7 +16,7 @@ merged to `main`. **The next phase is the full V1 program build — design syste
 
 | Package | State | Notes |
 |---------|-------|-------|
-| `core` | ✅ | Generative engine: layers, rules, rarity, effects, palette recolor, SVG layers, constraint targets, worker-pool + incremental builds, dedupe. Project-config schema (`ProjectConfigSchema`, incl. `chain.evm.launch`). ~12 test files. |
+| `core` | ✅ | **Trait-based generative** engine: layers, rules, rarity, effects, palette recolor, SVG layers, constraint targets, worker-pool + incremental builds, dedupe. Project-config schema (`ProjectConfigSchema`, incl. `chain.evm.launch`). ~12 test files. *(Forward: depth to be massively expanded; broadening to all art types — 1/1s, code-based generative — is Vision II, V2-5.)* |
 | `storage` | ✅ | Providers: Pinata (IPFS), Irys (Arweave), local; `uploadDirectory → {baseUri,cid,files}`. ~3 test files. |
 | `cli` | ✅ | `conkernftz` commands: init/validate/preview/build/dupes/audit/upload/mint/deploy/candy + **`launch <deploy\|allowlist\|status\|prices\|caps\|phase\|reveal\|withdraw\|freeze>`** with the mainnet safeguard. ~3 test files. |
 | `chain-evm` | ✅ | viem-based. `ConkernftzCollection.sol` + **`ConkernftzLaunch.sol`** (ERC-721A phased mint, CI-verified earlier: 34/34 forge + Slither). `merkle.ts`, `mintPlan.ts`, `deploy/sale/chains`, `allowlistFile.ts`. 81 tests. |

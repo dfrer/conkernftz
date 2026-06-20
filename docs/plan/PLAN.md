@@ -67,6 +67,15 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V2-2 | Single mint page → full **multi-page sites** (nav/routing on static hosts). | 🧊 |
 | V2-3 | **Cloud/managed tier** (the open-core paid layer): hosted deploy, accounts, domains, phone-capable. *(Locked-in, non-negotiable — set aside until self-host is fully fleshed out.)* | 🧊 |
 | V2-4 | Non-custodial **trading** between users (furthest-out, most security-sensitive; audit + regulatory posture). | 🧊 |
+| V2-5 | **All art types** — generalize launch/contract/site so any artist can sell: **1/1s**, **code-based generative** (p5.js, fxHash-style long-form/on-chain), and more, beyond trait-based. (The "NFT *Art* Foundry" reframe — see VISION.) | 🧊 |
+| V2-6 | **More chains** beyond Solana / Base / Ethereum L1. | 🧊 |
+
+## Ongoing expansion themes (owner-driven, not date-gated)
+
+- **Deepen the trait-based generative foundry** — massively expand depth, customizability, and
+  breadth of the existing layers/rules/rarity/effects system. Runs alongside other tracks.
+- **The feature set keeps growing** — expect this board to expand substantially as the owner adds
+  features and deepens existing ones (logged in LOG, slotted into Now/Next/Later/Icebox).
 
 ---
 
