@@ -241,10 +241,10 @@ export function SiteScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, selectedId, selectedIds, viewport, site]);
 
-  const loadArt = async (): Promise<void> => {
+  const loadArt = async (silent = false): Promise<void> => {
     const fb = bridge();
     if (!fb || !config) {
-      toast.push('Open a project to load live art', 'danger');
+      if (!silent) toast.push('Open a project to load live art', 'danger');
       return;
     }
     setBusy(true);
@@ -253,16 +253,26 @@ export function SiteScreen() {
       if (r.ok && Array.isArray(r.images)) {
         const mime = r.format === 'webp' ? 'image/webp' : 'image/png';
         setImages(r.images.map((b) => `data:${mime};base64,${b}`));
-        toast.push(`Loaded ${r.images.length} preview images`, 'ok');
-      } else {
+        if (!silent) toast.push(`Loaded ${r.images.length} preview images`, 'ok');
+      } else if (!silent) {
         toast.push(r.error ?? 'Preview failed', 'danger');
       }
     } catch (e) {
-      toast.push(String((e as Error)?.message ?? e), 'danger');
+      if (!silent) toast.push(String((e as Error)?.message ?? e), 'danger');
     } finally {
       setBusy(false);
     }
   };
+
+  // Auto-load rendered art on first mount so the gallery + mint reveal show REAL card art
+  // (not number/placeholder tiles). Silent + once; "Use live art" re-pulls on demand.
+  const autoLoaded = useRef(false);
+  useEffect(() => {
+    if (autoLoaded.current || !project || !isBridged() || images.length) return;
+    autoLoaded.current = true;
+    void loadArt(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project]);
 
   const onSave = async (): Promise<void> => {
     updateConfig((d) => {
@@ -422,7 +432,7 @@ export function SiteScreen() {
         title="Site builder"
         actions={
           <div className="row">
-            <Button size="sm" onClick={loadArt} disabled={busy || !isBridged()}>
+            <Button size="sm" onClick={() => loadArt()} disabled={busy || !isBridged()}>
               {busy ? 'Loading…' : 'Use live art'}
             </Button>
             <Button size="sm" onClick={generateSite} disabled={exporting || !isBridged()}>

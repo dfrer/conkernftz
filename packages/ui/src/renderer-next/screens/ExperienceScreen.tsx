@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
@@ -80,10 +80,10 @@ export function ExperienceScreen() {
     if (p) setExp(resolveExperience(p));
   };
 
-  const loadArt = async (): Promise<void> => {
+  const loadArt = async (silent = false): Promise<void> => {
     const fb = bridge();
     if (!fb || !config) {
-      toast.push('Open a project to load live art', 'danger');
+      if (!silent) toast.push('Open a project to load live art', 'danger');
       return;
     }
     setBusy(true);
@@ -92,16 +92,26 @@ export function ExperienceScreen() {
       if (r.ok && Array.isArray(r.images)) {
         const mime = r.format === 'webp' ? 'image/webp' : 'image/png';
         setImages(r.images.map((b) => `data:${mime};base64,${b}`));
-        toast.push(`Loaded ${r.images.length} preview cards`, 'ok');
-      } else {
+        if (!silent) toast.push(`Loaded ${r.images.length} preview cards`, 'ok');
+      } else if (!silent) {
         toast.push(r.error ?? 'Preview failed', 'danger');
       }
     } catch (e) {
-      toast.push(String((e as Error)?.message ?? e), 'danger');
+      if (!silent) toast.push(String((e as Error)?.message ?? e), 'danger');
     } finally {
       setBusy(false);
     }
   };
+
+  // Auto-load a few rendered cards on first mount so the reveal shows REAL card faces, not
+  // number placeholders. Silent + once; the "Use live art" button re-pulls on demand.
+  const autoLoaded = useRef(false);
+  useEffect(() => {
+    if (autoLoaded.current || !project || !isBridged() || images.length) return;
+    autoLoaded.current = true;
+    void loadArt(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project]);
 
   const onSave = async (): Promise<void> => {
     updateConfig((d) => {
@@ -222,7 +232,7 @@ export function ExperienceScreen() {
                 <span className="label">Auto-flip cards</span>
               </label>
               <div className="row">
-                <Button size="sm" onClick={loadArt} disabled={busy || !isBridged()}>
+                <Button size="sm" onClick={() => loadArt()} disabled={busy || !isBridged()}>
                   {busy ? 'Loading…' : 'Use live art'}
                 </Button>
                 <span className="label muted">Pulls rendered previews to use as the revealed card art.</span>
