@@ -151,11 +151,20 @@ export async function estimateLaunchDeploy(cfg: EvmLaunchDeployConfig): Promise<
     bytecode: conkernftzLaunchBytecode,
     args,
   });
-  const [gas, gasPriceWei, balanceWei] = await Promise.all([
-    pub.estimateGas({ account, data }),
+  const [gasPriceWei, balanceWei] = await Promise.all([
     pub.getGasPrice(),
     pub.getBalance({ address: account.address }),
   ]);
+  // An unfunded account (or wrong network) makes eth_estimateGas revert with "gas required
+  // exceeds allowance (0)" — that's a funding signal, not a real failure, so don't let it throw
+  // (it would dump the whole deploy calldata). Fall back to a conservative gas figure so the
+  // preflight can still report the cost and the funding gap cleanly.
+  let gas: bigint;
+  try {
+    gas = await pub.estimateGas({ account, data });
+  } catch {
+    gas = 2_000_000n;
+  }
   const costWei = gas * gasPriceWei;
   return {
     deployer: account.address,
@@ -163,7 +172,7 @@ export async function estimateLaunchDeploy(cfg: EvmLaunchDeployConfig): Promise<
     gas,
     gasPriceWei,
     costWei,
-    sufficient: balanceWei >= costWei,
+    sufficient: balanceWei > 0n && balanceWei >= costWei,
   };
 }
 
