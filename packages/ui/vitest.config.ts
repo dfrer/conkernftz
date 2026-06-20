@@ -10,5 +10,8 @@ export default defineConfig({
     environmentMatchGlobs: [['src/renderer-next/**', 'happy-dom']],
     setupFiles: ['./vitest.setup.ts'],
     passWithNoTests: true,
+    // Generous timeout so heavier suites don't flake under parallel `pnpm -w test` CPU contention.
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
 });
