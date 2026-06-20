@@ -1,10 +1,27 @@
 # Phase L — EVM Launch Contract: Specification & Threat Model
 
-> **Status: DRAFT FOR REVIEW.** This is a design + threat-model document, written *before*
-> any contract code, for the owner and an external auditor / experienced web3 dev to review
-> and sign off. **No mainnet deploy may happen until a professional audit + economic review
-> of the implemented contract is complete.** This document is the contract; the code follows
-> it. Sections marked **[OPEN]** are decisions that should be settled before implementation.
+> **Status: IMPLEMENTED — testnet-first, audit-gated.** The contract
+> (`packages/chain-evm/contracts/ConkernftzLaunch.sol`) and its test suite now exist and match
+> this document. **No mainnet deploy may happen until a professional audit + economic review of
+> the implemented contract is complete.** This document remains the source of truth; the code
+> follows it. Sections marked **[OPEN]** are still owner/auditor decisions (defaults are noted
+> and the code ships the defaults).
+>
+> ### Implementation status (2026-06-19)
+> - **Contract:** `ConkernftzLaunch.sol` — ERC-721A + ERC-2981 + Ownable2Step + ReentrancyGuard +
+>   Pausable. Compiles cleanly under solc 0.8.31 (~11.9 KB, within EIP-170). 1-indexed token ids
+>   to match `ConkernftzCollection` + the metadata pipeline.
+> - **Merkle boundary:** `src/merkle.ts` — shared OZ `StandardMerkleTree` helper (allowlist root,
+>   per-address proofs, off-chain verify). 16 unit tests incl. a viem↔tree leaf-hash cross-check
+>   (threat T13). Decision A: `(address, maxQty)` leaf; cap travels in the proof.
+> - **Tests:** Foundry `test/ConkernftzLaunch.t.sol` (unit + fuzz, incl. a JS-generated proof
+>   fed to the on-chain verifier) and `test/ConkernftzLaunch.invariant.t.sol` (handler-based
+>   invariants from §4). **These run in CI** (`contracts` job: foundry-toolchain + `forge test`
+>   + Slither) — Foundry is not run on the dev's machine; CI is the on-chain verification gate.
+> - **Artifacts:** `src/launch-artifact.ts` (ABI + bytecode) is committed for the viem runtime;
+>   regenerate with `pnpm --filter @conkernftz/chain-evm compile-contract`.
+> - **Not yet built (next units):** the off-chain adapter (`deployLaunch`, `sale.ts`), CLI sale
+>   commands, and the WalletConnect v2 UI actions (§7) — these come after the contract is settled.
 
 ## 1. Scope
 

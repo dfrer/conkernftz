@@ -51,4 +51,56 @@ jobs:
           CI: true
         run: pnpm -w test:coverage
 
+  # Solidity contracts — Foundry test suite (unit + fuzz + invariant) and Slither static
+  # analysis. This is the on-chain verification gate (EVM_LAUNCH_SPEC.md §8): it must be green
+  # before testnet, and the suite + Slither output feed the external audit. solc-js compiles the
+  # committed artifacts for the JS runtime; Foundry is the test/audit toolchain only.
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/chain-evm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
+        working-directory: .
+
+      - name: Prepare PNPM
+        run: corepack prepare pnpm@9.1.0 --activate
+        working-directory: .
+
+      # Provides @openzeppelin/contracts + erc721a in node_modules for the remappings.
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: .
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      # forge-std (test framework). Cloned rather than `forge install`ed to avoid submodule
+      # semantics in the pnpm monorepo; pin a tag here for fully reproducible runs if desired.
+      - name: Fetch forge-std
+        run: git clone --depth 1 https://github.com/foundry-rs/forge-std lib/forge-std
+
+      - name: Forge build (with contract sizes)
+        run: forge build --sizes
+
+      - name: Forge test (unit + fuzz + invariant)
+        run: forge test -vvv
+
+      - name: Slither static analysis
+        uses: crytic/slither-action@v0.4.0
+        with:
+          target: packages/chain-evm/
+          slither-config: packages/chain-evm/slither.config.json
+          fail-on: high
+
 
