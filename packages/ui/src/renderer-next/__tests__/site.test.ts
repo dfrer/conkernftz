@@ -16,6 +16,7 @@ import {
   setBlockMobile,
   setCanvas,
   setLayoutMode,
+  setMint,
   setPageBg,
   setTheme,
   updateBlock,
@@ -212,6 +213,13 @@ describe('site model — canvas + widgets', () => {
   it('resolveSite carries complete mint wiring through (so it survives export)', () => {
     const mint = { chainId: 84532, rpcUrl: 'https://sepolia.base.org', contractAddress: '0xabc' };
     expect(resolveSite({ mint, blocks: [] } as unknown as Partial<SiteConfig>).mint).toEqual(mint);
+  });
+
+  it('setMint merges and persists partial wiring (chain/RPC before the address)', () => {
+    const s1 = setMint(resolveSite({ blocks: [] }), { chainId: 84532 });
+    expect(s1.mint).toEqual({ chainId: 84532, rpcUrl: '', contractAddress: '' });
+    const s2 = setMint(s1, { rpcUrl: 'https://x', contractAddress: '0xabc' });
+    expect(s2.mint).toEqual({ chainId: 84532, rpcUrl: 'https://x', contractAddress: '0xabc' });
   });
 
   it('resolveSite drops incomplete/invalid mint wiring', () => {

@@ -510,3 +510,13 @@ export function setPageBg(site: SiteConfig, patch: Partial<PageBg>): SiteConfig 
 export function setCursor(site: SiteConfig, cursor: SiteCursor): SiteConfig {
   return { ...site, cursor };
 }
+/**
+ * Patch the live-mint wiring (merge). Partial values persist in the builder; the widget only
+ * activates once all three fields are valid — `resolveSite` drops incomplete wiring on export and
+ * `SiteRenderer` only mounts the live widget when `contractAddress` is set, so an empty address
+ * keeps the mint block preview-only without losing the chain/RPC the user already typed.
+ */
+export function setMint(site: SiteConfig, patch: Partial<MintConfig>): SiteConfig {
+  const cur: MintConfig = site.mint ?? { chainId: 0, rpcUrl: '', contractAddress: '' };
+  return { ...site, mint: { ...cur, ...patch } };
+}
