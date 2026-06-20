@@ -89,3 +89,30 @@ export function explorerTxUrl(chainId: number, txHash: string): string | undefin
   const preset = Object.values(CHAIN_PRESETS).find((p) => p.chainId === chainId);
   return preset ? `${preset.explorer}/tx/${txHash}` : undefined;
 }
+
+/** EIP-3085 `wallet_addEthereumChain` params, for prompting a browser wallet to add/switch chain. */
+export interface AddEthereumChainParams {
+  /** 0x-prefixed hex chain id. */
+  chainId: string;
+  chainName: string;
+  nativeCurrency: { name: string; symbol: string; decimals: number };
+  rpcUrls: string[];
+  blockExplorerUrls: string[];
+}
+
+/**
+ * Build EIP-3085 params so the non-custodial mint widget can ask the wallet to switch to (or add)
+ * the launch chain. Only the four launch presets are supported (Base/Eth + testnets), all with an
+ * ETH native currency; throws for an unrecognized chain id.
+ */
+export function toAddEthereumChainParams(chainId: number, rpcUrl?: string): AddEthereumChainParams {
+  const preset = Object.values(CHAIN_PRESETS).find((p) => p.chainId === chainId);
+  if (!preset) throw new Error(`No preset for chain ${chainId}; cannot build wallet chain params`);
+  return {
+    chainId: `0x${chainId.toString(16)}`,
+    chainName: preset.name,
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [rpcUrl || preset.defaultRpcUrl],
+    blockExplorerUrls: [preset.explorer],
+  };
+}

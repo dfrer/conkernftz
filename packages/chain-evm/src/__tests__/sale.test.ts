@@ -6,6 +6,7 @@ import {
   isMainnet,
   explorerAddressUrl,
   explorerTxUrl,
+  toAddEthereumChainParams,
 } from '../chains.js';
 import { LAUNCH_PHASES, phaseToEnum, phaseFromEnum } from '../sale.js';
 import { launchConstructorArgs, ZERO_HASH, type EvmLaunchDeployConfig } from '../deploy.js';
@@ -45,6 +46,15 @@ describe('chain presets', () => {
     for (const p of Object.values(CHAIN_PRESETS)) {
       expect(isTestnet(p.chainId)).toBe(p.testnet);
     }
+  });
+
+  it('builds EIP-3085 wallet chain params with a 0x-hex chain id', () => {
+    const p = toAddEthereumChainParams(84532, 'https://my.rpc/');
+    expect(p.chainId).toBe('0x14a34'); // 84532
+    expect(p.nativeCurrency.symbol).toBe('ETH');
+    expect(p.rpcUrls).toEqual(['https://my.rpc/']);
+    expect(p.blockExplorerUrls[0]).toContain('basescan');
+    expect(() => toAddEthereumChainParams(999999)).toThrow(/No preset/);
   });
 });
 
