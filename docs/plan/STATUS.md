@@ -18,14 +18,18 @@ polish; **per-screen passes for all stages**; a flow-coherence pass (one consist
 numbered stage-kickers, "NFT Art Foundry" naming); and a Design Layers-table density deepen. The owner
 walked the build and signed off; V1-16 (the explicit gate) is passed.
 
-**▶ Active focus now: app-wide QA hardening sweep** (branch `fix/app-wide-qa`). QA-0 tooling landed —
-an interaction+verification driver (`pnpm -C packages/ui qa`) that drives every control, waits for
-completion, captures console/page/network errors per surface, asserts outcomes, and injects mock
-failures for unhappy paths. **Baseline: 0 findings** across all stages + happy/unhappy flows (V1 is
-clean). QA-1+ deepens control-by-control; coverage tracked in [QA-COVERAGE.md](QA-COVERAGE.md). After
-that → the NEXT board (OC-1 Solana Launch parity). Owner-accepted V1 follow-ups still open (not
-blockers): the **Site builder** widget/inspector UX live session, and the **Mint FX reveal motion** +
-**light-theme palette** taste items.
+**✅ App-wide QA sweep complete + merged to `main`** (2026-06-20, owner-authorized). Built a standing
+**interaction+verification driver** (`pnpm -C packages/ui qa`) and drove **every drivable surface ×
+function to 0 findings** (all stages + all Design editors + Site canvas + Launch flows + light/compact
++ keyboard-a11y + reduced-motion + unhappy paths); verified the **real engine/CLI** end-to-end (8-edition
+build + metadata + DNA + rarity, dupes, audit). **2 real bugs fixed:** `validate` wallet hard-error →
+WARN; `Dialog` missing focus-trap → added. Reports: [QA-SUMMARY.md](QA-SUMMARY.md) ·
+[QA-COVERAGE.md](QA-COVERAGE.md) · owner real-env checklist [QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md).
+
+**▶ Active focus now: the NEXT board — on-chain infra to parity (OC-1 Solana Launch parity first).**
+Owner-side QA remainder (not blockers): run the real-env checklist; drag/visual + Mint-FX motion +
+light-theme palette are owner-judged. Owner-accepted V1 follow-up: the **Site builder** widget/inspector
+UX live session.
 
 ## Packages (engine & libraries)
 

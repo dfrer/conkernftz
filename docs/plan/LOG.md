@@ -35,6 +35,15 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — ✅ QA sweep merged to `main` (owner-authorized)
+Owner: "push and merge." Merged `fix/app-wide-qa` → `main` (`1e80e30`, 8 commits): the
+interaction+verification driver + shared harness, full per-surface coverage (0 driver findings),
+real engine/CLI verification, and the 2 fixes (validate wallet hard-error → WARN; Dialog focus trap).
+Pushed branch + `main`. Gates green at merge: typecheck · full build · 368/368 workspace tests ·
+driver 0 findings. (CI ❌ = billing.) `pnpm -C packages/ui qa` is now a standing regression gate.
+**Active focus → NEXT board (OC-1 Solana Launch parity).** Owner-side QA remainder = the real-env
+checklist + drag/visual/motion judgment.
+
 ### 2026-06-20 — QA-2: real engine/CLI end-to-end + fix `validate` wallet hard-error
 Drove the **real** pipeline (not the mock) on a throwaway temp project: `conkernftz init` →
 `validate` → `build --count 8 --seed 42` → `dupes` → `audit`. Generated real 256² layer PNGs via
