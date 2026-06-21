@@ -70,7 +70,7 @@ async function main() {
   /** Create a ready page: mocked bridge, chosen theme/viewport, nav rendered.
    *  `recents` seeds the Projects "recent dossiers" list (localStorage) so the populated grid
    *  — not just the empty state — can be captured. */
-  async function newPage({ theme = 'dark', viewport = { width: 1440, height: 900 }, deployed = false, recents = null } = {}) {
+  async function newPage({ theme = 'dark', viewport = { width: 1440, height: 900 }, deployed = false, recents = null, solana = false, solanaCreated = false } = {}) {
     const page = await browser.newPage({ viewport });
     await page.addInitScript((t) => {
       try { localStorage.setItem('cnftz:theme', t); } catch { /* ignore */ }
@@ -80,7 +80,7 @@ async function main() {
         try { localStorage.setItem('cnftz:recents', JSON.stringify(r)); } catch { /* ignore */ }
       }, recents);
     }
-    await page.addInitScript(installMock, { realPacks, deployed });
+    await page.addInitScript(installMock, { realPacks, deployed, solana, solanaCreated });
     await page.goto(url, { waitUntil: 'load' });
     await page.waitForSelector('.nav-item', { timeout: 15000 });
     return page;
@@ -240,6 +240,22 @@ async function main() {
     await deployedPage.close();
   } catch (e) {
     console.log('FAILED', 'launch-deployed', String(e?.message ?? e));
+  }
+
+  // ── Pass 1b — Launch (Solana / Candy Machine) — not-created + created states ─────────────────
+  try {
+    const solNew = await newPage({ solana: true });
+    await gotoStage(solNew, 'Launch');
+    await solNew.waitForTimeout(300);
+    await shot(solNew, { id: 'launch-solana', group: 'Pipeline · stages', note: 'Solana Launch — Candy Machine status + Create panel (chain-equal to EVM).' });
+    await solNew.close();
+    const solMade = await newPage({ solana: true, solanaCreated: true });
+    await gotoStage(solMade, 'Launch');
+    await solMade.waitForTimeout(300);
+    await shot(solMade, { id: 'launch-solana-created', group: 'Pipeline · stages', note: 'Solana Launch — created CM: items minted/loaded, Insert items.' });
+    await solMade.close();
+  } catch (e) {
+    console.log('FAILED', 'launch-solana', String(e?.message ?? e));
   }
 
   // ── Pass 2 — LIGHT theme, every stage (the token layer must hold in both themes) ─────────────

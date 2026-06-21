@@ -35,6 +35,25 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-1: Solana Launch parity — slices 1+2 (status + create + insert, key-file)
+Owner: "continue onto OC-1." Branch `feat/oc1-solana-launch`. Owner scoped the first slice to the
+**core deploy path** (status + create + insert + UI), **key-file signer first** + Phantom
+wallet-adapter to follow (slice 3).
+- **Slice 1 (chain-solana):** `readCandyMachineState()` — the Solana analog of EVM's `readSaleState`
+  — with a pure, unit-tested `mapCandyMachineAccount()` (items available/loaded/redeemed →
+  fullyLoaded/soldOut). Schema: `chain.solana.candyMachine.{address,collectionAddress}` (populated
+  after create, mirroring `chain.evm.launch.contractAddress`). 17 chain-solana tests (+5).
+- **Slice 2 (in-app):** `launch-runner-solana.ts` IPC handlers (`solanaLaunchStatus`/`solanaCreate`/
+  `solanaInsertItems`) mirroring the CLI `candy` flow (read `_metadata.json` count + `.upload-manifest`
+  URIs; persist to config + `candy-machine.json`; **mainnet-beta confirm-token gate**, key-file
+  signer). Wired into `main.ts`; added to the IPC contract (`FoundryApi`+`FOUNDRY_METHODS`), both
+  preloads, and the renderer bridge. **`LaunchScreen` now dispatches by `chain.target`** — new
+  `LaunchSolana` screen (status / signing / create / insert) for Solana, EVM unchanged.
+Verified locally: UI typecheck clean · **full build clean · 203/203 UI tests incl. preload drift** ·
+screenshots 51/51 (new `launch-solana` + `launch-solana-created`, both render chain-equal) · QA
+driver **0 findings** (new Solana Launch step). Chain ops are devnet-unverified by the agent → owner
+runs the [real-env checklist](QA-REAL-ENV-CHECKLIST.md) (Solana create/upload/mint on devnet).
+
 ### 2026-06-20 — ✅ QA sweep merged to `main` (owner-authorized)
 Owner: "push and merge." Merged `fix/app-wide-qa` → `main` (`1e80e30`, 8 commits): the
 interaction+verification driver + shared harness, full per-surface coverage (0 driver findings),

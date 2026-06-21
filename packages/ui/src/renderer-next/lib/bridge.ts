@@ -74,6 +74,25 @@ export interface FoundryBridge {
   launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<{ ok: boolean; json?: { root: string; count: number; txHash: string }; error?: string }>;
   /** Serve + open the browser signing console (for desktop wallet extensions like MetaMask). */
   launchConsole(): Promise<{ ok: boolean; url?: string; error?: string }>;
+  /** Solana Launch parity (Core Candy Machine). Cluster mainnet-beta writes need a confirm token. */
+  solanaLaunchStatus(): Promise<{ ok: boolean; json?: SolanaLaunchStatus; error?: string }>;
+  solanaCreate(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { candyMachine: string; collection: string; itemsAvailable: number }; error?: string }>;
+  solanaInsertItems(opts?: { confirm?: string }): Promise<{ ok: boolean; json?: { inserted: number; candyMachine: string }; error?: string }>;
+}
+
+/** Live Candy Machine status (the Solana analog of LaunchStatus). */
+export interface SolanaLaunchStatus {
+  configured: boolean;
+  cluster: 'devnet' | 'testnet' | 'mainnet-beta';
+  mainnet: boolean;
+  candyMachine?: string;
+  collection?: string;
+  authority?: string;
+  itemsAvailable?: number;
+  itemsLoaded?: number;
+  itemsRedeemed?: number;
+  fullyLoaded?: boolean;
+  soldOut?: boolean;
 }
 
 /** Live sale-state snapshot (bigint fields as decimal strings; prices also pre-formatted in ETH). */

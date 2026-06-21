@@ -85,7 +85,7 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 
 | ID | Task | Status |
 |----|------|--------|
-| OC-1 | **Solana Launch-stage parity** — bring Solana to the same in-app deploy/manage experience as EVM (chains all equal). | ☐ |
+| OC-1 | **Solana Launch-stage parity** — bring Solana to the same in-app deploy/manage experience as EVM (chains all equal). | ◐ |
 | OC-2 | Reveal flow UX — full upload-metadata → reveal → freeze path, in-app. | ☐ |
 | OC-3 | Rarity → live token-tier mapping in the mint widget (real mint data). | ☐ |
 | OC-4 | **Audit handoff package** — assemble the contract + spec + threat model + test suite + gas notes + assumptions for an external auditor to start cold. | ☐ |

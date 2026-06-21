@@ -59,4 +59,7 @@ contextBridge.exposeInMainWorld('foundry', {
   launchWithdraw: (opts) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
   launchSetAllowlist: (opts) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
   launchConsole: () => ipcRenderer.invoke('foundry:launchConsole'),
+  solanaLaunchStatus: () => ipcRenderer.invoke('foundry:solanaLaunchStatus'),
+  solanaCreate: (opts) => ipcRenderer.invoke('foundry:solanaCreate', opts || {}),
+  solanaInsertItems: (opts) => ipcRenderer.invoke('foundry:solanaInsertItems', opts || {}),
 });

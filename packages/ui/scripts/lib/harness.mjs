@@ -110,6 +110,33 @@ export function installMock(opts) {
   const palette = colors.map((c) => mkPng(c, 200, 200));
   const hash = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
   const ADDR = '0x1F4B2C9a7E3d6A8b0C5d9E2f1A3b4C5d6E7f8A9b';
+  const SOL_CM = 'CM9xQveYv1y3Nf2aTt7p8e3Wd4r5tY6uH7jK8lZ1mN0';
+  const SOL_COLL = 'COLL7yk2pQ9wX8vR4tS6uH3jK1lZ0mN5b6c7d8e9f0g';
+  const solana = !!(opts && opts.solana);
+  const solanaCreated = !!(opts && opts.solanaCreated);
+  const chain = solana
+    ? {
+        target: 'solana',
+        solana: {
+          cluster: 'devnet',
+          walletKeypairPath: './keys/solana.json',
+          sellerFeeBasisPoints: 500,
+          creators: [{ address: ADDR, share: 100 }],
+          collection: { mint: null },
+          candyMachine: solanaCreated ? { address: SOL_CM, collectionAddress: SOL_COLL } : {},
+        },
+      }
+    : {
+        target: 'evm',
+        evm: {
+          chainId: 84532,
+          rpcUrl: 'https://sepolia.base.org',
+          maxSupply: 1000,
+          royaltyReceiver: ADDR,
+          royaltyBps: 500,
+          launch: { treasury: ADDR, placeholderUri: 'ipfs://bafyhidden/hidden.json' },
+        },
+      };
   const CONFIG = {
     name: 'Demo Collection',
     symbol: 'DEMO',
@@ -136,17 +163,7 @@ export function installMock(opts) {
     },
     export: { outDir: 'build', imageFormat: 'png' },
     storage: { provider: 'pinata' },
-    chain: {
-      target: 'evm',
-      evm: {
-        chainId: 84532,
-        rpcUrl: 'https://sepolia.base.org',
-        maxSupply: 1000,
-        royaltyReceiver: ADDR,
-        royaltyBps: 500,
-        launch: { treasury: ADDR, placeholderUri: 'ipfs://bafyhidden/hidden.json' },
-      },
-    },
+    chain,
   };
   const ok = (x) => Promise.resolve(Object.assign({ ok: true }, x || {}));
   // Action methods route through `res(name, okValue)`: returns an error result when the method is
@@ -282,5 +299,14 @@ export function installMock(opts) {
     launchWithdraw: () => res('launchWithdraw', { json: { txHash: '0xabc' } }),
     launchSetAllowlist: () => res('launchSetAllowlist', { json: { root: '0xroot', count: 3, txHash: '0xabc' } }),
     launchConsole: () => res('launchConsole', { url: 'http://127.0.0.1:7777/' }),
+    // --- Solana Launch (Candy Machine) ---
+    solanaLaunchStatus: () =>
+      ok({
+        json: solanaCreated
+          ? { configured: true, cluster: 'devnet', mainnet: false, candyMachine: SOL_CM, collection: SOL_COLL, authority: ADDR, itemsAvailable: 1000, itemsLoaded: 1000, itemsRedeemed: 128, fullyLoaded: true, soldOut: false }
+          : { configured: false, cluster: 'devnet', mainnet: false },
+      }),
+    solanaCreate: () => res('solanaCreate', { json: { candyMachine: SOL_CM, collection: SOL_COLL, itemsAvailable: 1000 } }),
+    solanaInsertItems: () => res('solanaInsertItems', { json: { inserted: 1000, candyMachine: SOL_CM } }),
   };
 }

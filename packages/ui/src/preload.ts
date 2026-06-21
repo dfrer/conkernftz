@@ -64,6 +64,9 @@ const foundryApi: FoundryApi = {
   launchWithdraw: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:launchWithdraw', opts || {}),
   launchSetAllowlist: (opts: { text: string; format?: 'csv' | 'json'; confirm?: string }) => ipcRenderer.invoke('foundry:launchSetAllowlist', opts),
   launchConsole: () => ipcRenderer.invoke('foundry:launchConsole'),
+  solanaLaunchStatus: () => ipcRenderer.invoke('foundry:solanaLaunchStatus'),
+  solanaCreate: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:solanaCreate', opts || {}),
+  solanaInsertItems: (opts?: { confirm?: string }) => ipcRenderer.invoke('foundry:solanaInsertItems', opts || {}),
 };
 
 contextBridge.exposeInMainWorld('foundry', foundryApi);
