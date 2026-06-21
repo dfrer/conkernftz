@@ -500,6 +500,13 @@ export function LaunchScreen() {
             Before reveal, every token shows the placeholder. Reveal points <code>tokenURI</code> at your
             uploaded metadata (token N → <code>&lt;baseUri&gt;N.json</code>). Freeze makes it permanent.
           </p>
+          <div className="reveal-steps" role="list" aria-label="Reveal progress">
+            <RevealStep n={1} label="Upload metadata" done={!!manifest?.baseUri} active={!manifest?.baseUri} />
+            <span className="reveal-steps-arrow" aria-hidden>→</span>
+            <RevealStep n={2} label="Reveal" done={!!status?.revealed} active={!!manifest?.baseUri && !status?.revealed} />
+            <span className="reveal-steps-arrow" aria-hidden>→</span>
+            <RevealStep n={3} label="Freeze" done={!!status?.metadataFrozen} active={!!status?.revealed && !status?.metadataFrozen} optional />
+          </div>
           {status?.revealed ? (
             <p className="muted">
               <Badge tone="ok">revealed</Badge> Tokens now resolve to the live metadata.
@@ -567,5 +574,16 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
       <div className="label" style={{ opacity: 0.7 }}>{label}</div>
       <div>{children}</div>
     </div>
+  );
+}
+
+/** One node in the reveal upload→reveal→freeze progress indicator. */
+function RevealStep({ n, label, done, active, optional }: { n: number; label: string; done?: boolean; active?: boolean; optional?: boolean }) {
+  const cls = ['rstep', done ? 'rstep--done' : '', active && !done ? 'rstep--active' : ''].filter(Boolean).join(' ');
+  return (
+    <span className={cls} role="listitem">
+      <span className="rstep-dot" aria-hidden>{done ? '✓' : n}</span>
+      <span className="rstep-label">{label}{optional ? ' · optional' : ''}</span>
+    </span>
   );
 }

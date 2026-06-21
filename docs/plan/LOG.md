@@ -45,6 +45,10 @@ manifest never breaks `refresh` (fixed a console error the LaunchScreen test sur
 read). Verified: typecheck · full build · 203/203 UI tests (clean, no console error) · screenshots
 52/52 (new `launch-reveal-panel`) · QA driver **0 findings** (+ asserts the baseURI auto-fills).
 On-chain reveal itself stays owner/devnet-verified.
+**+ Guided stepper:** added an **upload → reveal → freeze** progress indicator above the controls that
+reflects live state (✓ done / amber active / pending; "Freeze · optional"), so the operator sees the
+whole flow at a glance. Verified: typecheck · 203/203 UI tests · full build · screenshots · QA driver
+**0 findings** (asserts the stepper marks the upload step done). On branch `feat/oc2-reveal-ux`.
 
 ### 2026-06-20 — OC-1: Solana Launch parity — slices 1+2 (status + create + insert, key-file)
 Owner: "continue onto OC-1." Branch `feat/oc1-solana-launch`. Owner scoped the first slice to the

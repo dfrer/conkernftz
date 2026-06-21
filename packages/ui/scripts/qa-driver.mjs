@@ -384,6 +384,8 @@ async function main() {
     if (await baseUri.isVisible().catch(() => false)) {
       // OC-2: the reveal baseURI should auto-fill from the upload manifest (no hand-copying).
       assert((await baseUri.inputValue()).startsWith('ipfs://'), 'Reveal baseURI did not auto-fill from the upload manifest');
+      // OC-2: the upload→reveal→freeze stepper should mark the upload step done.
+      assert((await lp.locator('.rstep--done').count()) >= 1, 'Reveal stepper did not mark the upload step done');
       await baseUri.fill('ipfs://bafyrevealed/');
       await lp.getByRole('button', { name: 'Reveal', exact: true }).click();
       await lp.waitForTimeout(400);
