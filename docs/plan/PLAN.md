@@ -15,7 +15,7 @@ Now/Next/Later/Icebox with an ID. Empty = all caught up.*
 
 ---
 
-## ▶ NOW — V1 of the full ConkerNFTZ program
+## ✅ DONE — V1 of the full ConkerNFTZ program *(owner-confirmed 2026-06-20; merged to `main`)*
 
 **Goal:** a solid, shippable **V1** of the whole app — a **complete design system applied across
 every surface and role**, refined until it looks great, works great, and functions exactly how the
@@ -23,42 +23,38 @@ owner wants. **Driven by concrete visual assessment** (the agent must *see* the 
 pass unit tests). **Gate:** owner + agent **confirm locally**, screen by screen. Executed as a
 self-running goal/loop. *(Owner: "by far the most important.")*
 
+> **✅ V1 COMPLETE.** Owner walked the build and signed off ("everything looks good to go for V1-16")
+> on 2026-06-20; the `feat/v1-design` branch (17 commits — harness, token/light-theme foundation,
+> primitive states + catalog, shell, all 12 screen passes, flow-coherence + Design-density deepen)
+> merged to `main`. **▶ The active focus now moves to the NEXT board — on-chain infra to parity.**
+> Carried follow-ups (not V1 blockers, owner-accepted): the **Site builder** widget/inspector UX
+> deserves a focused live session, and the **Mint FX reveal motion** + **light-theme palette** are
+> owner-taste items to revisit anytime.
+
 | ID | Task | Status |
 |----|------|--------|
-| **V1-0** | **Upgrade the visual-assessment system** — make the screenshot harness capture every screen/state reliably and render them for concrete per-screen critique. **Prerequisite** for everything below. | ◐ |
-| V1-1 | Design-system foundation: reconcile `DESIGN_SYSTEM.md`, lock the **token layer** (color, type scale, spacing, radius, elevation, **motion**, density) and the theming model. | ◐ |
-| V1-2 | Component primitives pass: Button / Panel / Field·Input·Select / Badge / Dialog / Tabs / Toast / Lamp / EmptyState / Skeleton — consistency, all interaction **states**, accessibility. | ◐ |
-| V1-3 | App shell polish: header, pipeline nav, status bar, instrument-console layout, transitions. | ◐ |
-| V1-4 | Screen pass — **Projects** | ◐ |
-| V1-5 | Screen pass — **Design** (densest; needs the most UX work) | ◐ |
-| V1-6 | Screen pass — **Preview** | ◐ |
-| V1-7 | Screen pass — **Build** | ◐ |
-| V1-8 | Screen pass — **Publish** | ◐ |
-| V1-9 | Screen pass — **Mint FX (Experience)** | ◐ |
-| V1-10 | Screen pass — **Site builder** (widgets + inspector UX) | ◐ |
-| V1-11 | Screen pass — **Launch** | ◐ |
-| V1-12 | Screen pass — **Packs** | ◐ |
-| V1-13 | Screen pass — **Fal AI** | ◐ |
-| V1-14 | Screen pass — **Settings / Help** | ◐ |
-| V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ◐ |
-| V1-16 | **Owner ↔ agent local confirmation** gate: walk every surface, confirm look/feel/function. | ☐ |
+| **V1-0** | **Upgrade the visual-assessment system** — make the screenshot harness capture every screen/state reliably and render them for concrete per-screen critique. **Prerequisite** for everything below. | ☑ |
+| V1-1 | Design-system foundation: reconcile `DESIGN_SYSTEM.md`, lock the **token layer** (color, type scale, spacing, radius, elevation, **motion**, density) and the theming model. | ☑ |
+| V1-2 | Component primitives pass: Button / Panel / Field·Input·Select / Badge / Dialog / Tabs / Toast / Lamp / EmptyState / Skeleton — consistency, all interaction **states**, accessibility. | ☑ |
+| V1-3 | App shell polish: header, pipeline nav, status bar, instrument-console layout, transitions. | ☑ |
+| V1-4 | Screen pass — **Projects** | ☑ |
+| V1-5 | Screen pass — **Design** (densest; needs the most UX work) | ☑ |
+| V1-6 | Screen pass — **Preview** | ☑ |
+| V1-7 | Screen pass — **Build** | ☑ |
+| V1-8 | Screen pass — **Publish** | ☑ |
+| V1-9 | Screen pass — **Mint FX (Experience)** | ☑ |
+| V1-10 | Screen pass — **Site builder** (widgets + inspector UX) | ☑ |
+| V1-11 | Screen pass — **Launch** | ☑ |
+| V1-12 | Screen pass — **Packs** | ☑ |
+| V1-13 | Screen pass — **Fal AI** | ☑ |
+| V1-14 | Screen pass — **Settings / Help** | ☑ |
+| V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ☑ |
+| V1-16 | **Owner ↔ agent local confirmation** gate: walk every surface, confirm look/feel/function. | ☑ |
 
-> **Status convention here:** ◐ = work landed + locally verified (typecheck/build/vitest/screenshots),
-> awaiting the **owner's live-app review** — the owner reviews in the running app, not the contact
-> sheet (their call), and V1-16 is the holistic confirm gate. ☑ = owner-confirmed.
->
-> **V1-0 (◐):** harness upgraded — `pnpm -C packages/ui screenshots` now captures **45** shots
-> covering every stage (incl. **Launch**, both not-deployed + deployed), the key in-screen states,
-> a full **light-theme** pass, and a **compact-viewport** pass; it emits `screenshots/manifest.json`
-> + a browsable **`screenshots/index.html`** contact sheet (each shot carries a critique note). Used
-> for *my own* assessment; the owner's review surface is the live app.
->
-> **V1-1 (◐):** token layer reconciled + locked (`styles/tokens.css` ↔ `docs/DESIGN_SYSTEM.md` agree;
-> names/scale unchanged = stable contract). **Light theme made first-class** — was washed (all tones
-> within ~6% lightness of `--bg`); rebuilt as a paper-stack with real separation (deeper manila desk,
-> brighter paper panels, widened surface steps, stronger hairlines + dim-text), same rising-elevation
-> model as dark so components stay theme-agnostic. Tokenized the only real app-chrome violations
-> (`LaunchScreen` off-palette `#ff6b6b` → `var(--danger)`, invisible-in-light white border → `var(--line)`).
+> All ☑ = owner-confirmed (2026-06-20) and merged to `main`. Full per-task detail is in
+> [LOG.md](LOG.md) (newest-first, V1-0 → V1-16). The visual-assessment harness
+> (`pnpm -C packages/ui screenshots` → `screenshots/index.html`) stays the standing tool for any
+> future design work.
 
 ---
 

@@ -11,14 +11,15 @@ track (contract + adapter + CLI + in-app Launch with 3 signer modes) is function
 merged to `main`. **No CI budget** → everything is verified **locally** (typecheck / build / vitest /
 preload drift); a red ❌ on GitHub is billing, not code.
 
-**▶ V1 design build in progress on `feat/v1-design`.** V1-0…V1-15 are **landed + locally verified**
-(14 commits): visual-assessment harness rebuilt; token layer locked + **light theme made
-first-class**; primitive interaction states filled + full Components catalog; app-shell polish;
-**per-screen passes for all stages**; and a flow-coherence pass (one consistent loading language,
-numbered stage-kickers, "NFT Art Foundry" naming). Marked **◐ = landed + locally verified, awaiting
-the owner's live-app review**. **V1-16 (the explicit owner+agent walkthrough gate) is the only open
-V1 task** — it requires the owner. Top remaining deep item: the **Site builder** widget/inspector UX
-(V1-10), to be done in a live owner+agent session.
+**✅ V1 design build COMPLETE — owner-confirmed (2026-06-20) and merged to `main`.** V1-0…V1-16 done
+(17 commits via `feat/v1-design`): visual-assessment harness rebuilt; token layer locked + **light
+theme made first-class**; primitive interaction states filled + full Components catalog; app-shell
+polish; **per-screen passes for all stages**; a flow-coherence pass (one consistent loading language,
+numbered stage-kickers, "NFT Art Foundry" naming); and a Design Layers-table density deepen. The owner
+walked the build and signed off; V1-16 (the explicit gate) is passed. **▶ Active focus now: the NEXT
+board — on-chain infra to parity (OC-1 Solana Launch parity first).** Owner-accepted follow-ups (not
+blockers): a focused live session on the **Site builder** widget/inspector UX, and revisiting the
+**Mint FX reveal motion** + **light-theme palette** as taste items.
 
 ## Packages (engine & libraries)
 

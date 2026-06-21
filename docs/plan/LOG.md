@@ -5,6 +5,17 @@
 
 ---
 
+### 2026-06-20 — ✅ V1-16: owner confirmed — V1 COMPLETE, merged to `main`
+Owner reviewed the build and signed off: **"Everything looks good to go for the V1-16, you can
+commit/push/merge."** That closes the V1 gate. Flipped V1-0…V1-16 to ☑ in PLAN, marked STATUS
+complete, and **merged `feat/v1-design` → `main`** (17 commits: visual-assessment harness; token +
+first-class-light foundation; primitive states + Components catalog; app-shell polish; all 12 screen
+passes; flow-coherence; Design-density deepen). Pushed branch + `main`. (CI will show red ❌ —
+**billing, not code**; all gates were verified locally: typecheck · full build · 203/203 vitest ·
+preload-contract drift · screenshots 49/49.) **Next focus → the NEXT board (OC-1: Solana Launch
+parity).** Owner-accepted follow-ups carried, not blockers: a live **Site builder** widget/inspector
+UX session; revisit **Mint FX reveal motion** + **light-theme palette** as taste items.
+
 ### 2026-06-20 — V1-5 deepen: Design Layers-table density/legibility
 Went back to the screen flagged as needing the most UX work. The 9-column Layers rows had **no
 inter-row separation, padding, or hover** — only the fx-selected row got a thin inset bar — so
