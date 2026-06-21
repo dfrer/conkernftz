@@ -5,6 +5,16 @@
 
 ---
 
+### 2026-06-20 — V1-10: Site builder pass (loading adoption; deep UX flagged)
+Adopted Button `loading` on the Site action buttons (Use live art · Generate site · Preview locally ·
+Deploy to <host>). **Deferred the deep work:** the Site builder is the most complex screen (~860 lines:
+free-form canvas, drag/resize/rotate widgets, the widget zoo, the inspector, multi-host deploy). STATUS
+flags "tighten widgets + inspector UX" — that's genuinely interactive design work that needs the owner
+**live** (can't safely restructure the canvas builder from static frames), so it's carried as the top
+remaining design item, to be done as a focused owner+agent session rather than blind edits. Verified:
+typecheck clean · 203/203 vitest · renderer build clean. ◐ — loading done; widget/inspector UX pending
+a live session.
+
 ### 2026-06-20 — V1-9: Mint FX (Experience) pass + stage-kicker consistency
 Experience screen (preset/kind/cards/duration/label/accent, shake/auto-flip, pack+back pickers with
 real art thumbnails, rarity-back rules, live reveal preview with Replay) is rich and well-organized;

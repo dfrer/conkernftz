@@ -463,14 +463,14 @@ export function SiteScreen() {
         title="Site builder"
         actions={
           <div className="row">
-            <Button size="sm" onClick={() => loadArt()} disabled={busy || !isBridged()}>
-              {busy ? 'Loading…' : 'Use live art'}
+            <Button size="sm" onClick={() => loadArt()} loading={busy} disabled={!isBridged()}>
+              Use live art
             </Button>
-            <Button size="sm" onClick={generateSite} disabled={exporting || !isBridged()}>
-              {exporting ? 'Generating…' : 'Generate site'}
+            <Button size="sm" onClick={generateSite} loading={exporting} disabled={!isBridged()}>
+              Generate site
             </Button>
-            <Button size="sm" onClick={previewLocal} disabled={previewingLocal || !isBridged()}>
-              {previewingLocal ? 'Opening…' : 'Preview locally'}
+            <Button size="sm" onClick={previewLocal} loading={previewingLocal} disabled={!isBridged()}>
+              Preview locally
             </Button>
             <Button onClick={onSave} variant="primary" disabled={!project}>
               Save
@@ -855,8 +855,8 @@ export function SiteScreen() {
                 <span className="label muted">Add a custom domain in your {HOST_LABELS[host]} dashboard after the first deploy.</span>
               ) : null}
               <div className="row">
-                <Button variant="primary" onClick={deploy} disabled={deploying || !isBridged()}>
-                  {deploying ? 'Deploying…' : `Deploy to ${HOST_LABELS[host] ?? host}`}
+                <Button variant="primary" onClick={deploy} loading={deploying} disabled={!isBridged()}>
+                  Deploy to {HOST_LABELS[host] ?? host}
                 </Button>
                 <span className="label muted">
                   {host === 'ipfs' || host === 'arweave'
