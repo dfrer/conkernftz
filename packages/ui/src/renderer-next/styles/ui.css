@@ -473,6 +473,26 @@ button {
 .field-msg--error {
   color: var(--danger);
 }
+/* Themed checkbox/radio — tint the native control with the instrument accent (both themes)
+ * instead of the OS default blue, and give it the same focus ring as other controls. */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: none;
+  border-radius: var(--r-xs);
+  box-shadow: var(--accent-glow);
+}
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 
 /* ===================== Lamp / Badge ===================== */
 .lamp {

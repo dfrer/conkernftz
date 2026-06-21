@@ -77,6 +77,23 @@ export function PlaygroundScreen() {
             <Input defaultValue="0.01" disabled />
           </Field>
         </div>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-4)', gap: 'var(--sp-4)' }}>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" defaultChecked /> Required
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" /> Optional
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" disabled /> Disabled
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="radio" name="pg-radio" defaultChecked /> Choice A
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="radio" name="pg-radio" /> Choice B
+          </label>
+        </div>
       </Panel>
 
       <Panel title="Status — badges">

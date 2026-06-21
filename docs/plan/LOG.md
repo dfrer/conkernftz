@@ -5,6 +5,17 @@
 
 ---
 
+### 2026-06-20 — V1-5: Design screen pass (start) — themed form controls
+First pass on the densest screen. The 9-column Layers table is dense-but-functional and holds up
+even at the compact viewport (checked via `compact-design`), so no structural overhaul — the
+clearest, highest-leverage fix was a **system-wide consistency** one: the **REQ checkbox rendered as
+the raw OS-default blue**, clashing with the amber instrument theme (and checkboxes recur in Rules /
+Overrides / Effects). Added global themed `input[type=checkbox|radio]` styling (`accent-color:
+var(--accent)` in both themes, instrument focus ring, disabled dimming) and a checkbox/radio row in
+the **Components** catalog so the control is part of the source of truth. Verified: typecheck clean ·
+203/203 vitest · renderer build clean · screenshots 49/49; confirmed the Layers checkboxes now read
+amber. ◐ — Design may warrant further density passes later, but the jarring inconsistency is gone.
+
 ### 2026-06-20 — V1-4: Projects screen pass
 First per-screen pass. Captured the previously-unseen **populated** recents state (seeded the
 harness's `cnftz:recents` localStorage → new `projects-populated` shot) and refined both states:
