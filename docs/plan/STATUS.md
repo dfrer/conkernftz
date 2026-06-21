@@ -8,9 +8,17 @@
 The **thin A→Z slice is proven end-to-end**: generate → site → deploy contract → mint, with the
 owner having minted **NASA CRUST token #1 on Base-Sepolia** through the real widget. The on-chain
 track (contract + adapter + CLI + in-app Launch with 3 signer modes) is functionally complete and
-merged to `main`. **The next phase is the full V1 program build — design system + all UI/UX** (see
-[PLAN.md](PLAN.md)). **No CI budget** → everything below is verified **locally** (typecheck / build
-/ vitest / preload drift); a red ❌ on GitHub is billing, not code.
+merged to `main`. **No CI budget** → everything is verified **locally** (typecheck / build / vitest /
+preload drift); a red ❌ on GitHub is billing, not code.
+
+**▶ V1 design build in progress on `feat/v1-design`.** V1-0…V1-15 are **landed + locally verified**
+(14 commits): visual-assessment harness rebuilt; token layer locked + **light theme made
+first-class**; primitive interaction states filled + full Components catalog; app-shell polish;
+**per-screen passes for all stages**; and a flow-coherence pass (one consistent loading language,
+numbered stage-kickers, "NFT Art Foundry" naming). Marked **◐ = landed + locally verified, awaiting
+the owner's live-app review**. **V1-16 (the explicit owner+agent walkthrough gate) is the only open
+V1 task** — it requires the owner. Top remaining deep item: the **Site builder** widget/inspector UX
+(V1-10), to be done in a live owner+agent session.
 
 ## Packages (engine & libraries)
 
@@ -31,18 +39,18 @@ look (instrument-console layout, pipeline nav, status bar).
 
 | Screen | Function | V1 design polish |
 |--------|----------|------------------|
-| Projects | ✅ open/scaffold/select a project | ⏳ design pass |
-| Design | ✅ layers, rules, rarity, image, patterns | ⏳ (dense; needs the most UX love) |
-| Preview | ✅ live random previews | ⏳ design pass |
-| Build | ✅ images + local JSON, progress | ⏳ design pass |
-| Publish | ✅ upload assets, rewrite URIs | ⏳ design pass |
-| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces | 🟡 strong; refine states/motion |
-| Site | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | 🟡 deep; tighten widgets + inspector UX |
-| Launch | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console) | ⏳ functional, needs design pass |
-| Packs | ✅ app-level pack/card-back library (built-in CONKERCO + imported) | ⏳ design pass |
-| Fal AI | 🟡 fal catalog/generation (owner's key) | ⏳ |
-| Settings / Help | ✅ | ⏳ |
-| Components | ✅ in-app design-system playground (review surface) | — (this is the tool we use) |
+| Projects | ✅ open/scaffold/select a project | ◐ V1-4: empty-state hero + card-path truncation |
+| Design | ✅ layers, rules, rarity, image, patterns | ◐ V1-5: themed form controls; **deeper table-density work still open** |
+| Preview | ✅ live random previews | ◐ V1-6: loading affordance (already strong) |
+| Build | ✅ images + local JSON, progress | ◐ V1-7: loading affordance (already strong) |
+| Publish | ✅ upload assets, rewrite URIs | ◐ V1-8: per-action loading |
+| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces | ◐ V1-9: loading + kicker; **reveal motion needs live review** |
+| Site | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | ◐ V1-10: loading + kicker; **widget/inspector UX deferred to a live session** |
+| Launch | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console) | ◐ V1-11: kicker + tokenized danger + per-action loading |
+| Packs | ✅ app-level pack/card-back library (built-in CONKERCO + imported) | ◐ V1-12: per-section loading (already clean) |
+| Fal AI | 🟡 fal catalog/generation (owner's key) | ◐ V1-13: loading affordance |
+| Settings / Help | ✅ | ◐ V1-14: Help manual reorder + Launch/Packs added + "NFT Art Foundry" copy; Settings clean |
+| Components | ✅ in-app design-system playground (review surface) | ✅ V1-2: full primitive×state catalog (the review surface) |
 
 ## On-chain (Phase L)
 
