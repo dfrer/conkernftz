@@ -5,6 +5,16 @@
 
 ---
 
+### 2026-06-20 — V1-11: Launch screen pass
+Launch (status readout · signing modes — key-file / WalletConnect / browser console · deploy ·
+sale setup · allowlist · reveal · proceeds) is functional; this pass tightened consistency. The
+kicker (→ `STAGE 07 // DEPLOYMENT`) and the off-palette danger color landed in earlier commits; now
+adopted Button `loading` **per on-chain action** (Connect wallet, Sign-in-browser console, Preflight,
+Deploy, Build & set root, Withdraw) so the in-flight transaction shows a spinner — important when an
+on-chain write is pending and you need to know which op is running. Verified: typecheck clean ·
+203/203 vitest (incl. the 4 LaunchScreen tests) · renderer build clean · screenshots 49/49. ◐ pending
+owner live-review.
+
 ### 2026-06-20 — V1-10: Site builder pass (loading adoption; deep UX flagged)
 Adopted Button `loading` on the Site action buttons (Use live art · Generate site · Preview locally ·
 Deploy to <host>). **Deferred the deep work:** the Site builder is the most complex screen (~860 lines:

@@ -314,8 +314,8 @@ export function LaunchScreen() {
                 <Field label="WalletConnect projectId">
                   <Input value={wcProjectId} onChange={(e) => setWcProjectId(e.target.value)} placeholder="free at cloud.reown.com" />
                 </Field>
-                <Button disabled={!!busy || !wcProjectId} onClick={() => void onConnectWallet()}>
-                  {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
+                <Button loading={busy === 'connect'} disabled={!!busy || !wcProjectId} onClick={() => void onConnectWallet()}>
+                  Connect wallet
                 </Button>
               </div>
             )}
@@ -330,8 +330,8 @@ export function LaunchScreen() {
             Using a desktop wallet <strong>extension</strong> (MetaMask in your browser)? It can’t connect to a
             desktop app directly — open the signing console in your browser instead, where the extension lives.
           </p>
-          <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void onOpenConsole()}>
-            {busy === 'console' ? 'Opening…' : 'Sign in browser (MetaMask extension) →'}
+          <Button size="sm" variant="ghost" loading={busy === 'console'} disabled={!!busy} onClick={() => void onOpenConsole()}>
+            Sign in browser (MetaMask extension) →
           </Button>
         </div>
       </Panel>
@@ -365,15 +365,16 @@ export function LaunchScreen() {
             </div>
           ) : null}
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button onClick={() => void onPreflight()} disabled={!!busy}>
-              {busy === 'preflight' ? 'Checking…' : 'Preflight (dry-run)'}
+            <Button loading={busy === 'preflight'} onClick={() => void onPreflight()} disabled={!!busy}>
+              Preflight (dry-run)
             </Button>
             <Button
               variant="primary"
+              loading={busy === 'deploy'}
               disabled={!!busy || !canWrite}
               onClick={() => void act('deploy', ops.deploy, 'Contract deployed')}
             >
-              {busy === 'deploy' ? 'Deploying…' : 'Deploy contract'}
+              Deploy contract
             </Button>
           </div>
         </Panel>
@@ -461,10 +462,11 @@ export function LaunchScreen() {
             />
             {allowlist ? <span className="muted">{allowlist.name}</span> : null}
             <Button
+              loading={busy === 'allowlist'}
               disabled={!!busy || !allowlist || status?.configLocked || !canWrite}
               onClick={() => void act('allowlist', ops.allowlist, 'Allowlist root set + proofs embedded')}
             >
-              {busy === 'allowlist' ? 'Building…' : 'Build & set root'}
+              Build &amp; set root
             </Button>
           </div>
         </Panel>
@@ -506,10 +508,11 @@ export function LaunchScreen() {
         <Panel title="Proceeds">
           <p className="muted">Withdraw the contract balance to the treasury ({status?.treasury}).</p>
           <Button
+            loading={busy === 'withdraw'}
             disabled={!!busy || !canWrite}
             onClick={() => void act('withdraw', ops.withdraw, 'Withdrawn to treasury')}
           >
-            {busy === 'withdraw' ? 'Withdrawing…' : 'Withdraw'}
+            Withdraw
           </Button>
         </Panel>
       ) : null}
