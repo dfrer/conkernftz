@@ -4,14 +4,17 @@ import { Button } from '../components/Button';
 import { RedactionStamp } from '../components/RedactionStamp';
 import { bridge } from '../lib/bridge';
 
+// Ordered to match the pipeline nav (Projects → Design → … → Launch), then the utility stages.
 const STAGES: Array<[string, string]> = [
   ['Projects', 'Create a fresh collection (starter config + layer folders) or open an existing project folder.'],
   ['Design', 'Basics, layers, effects and rules — in tabs. Expand a layer to browse its traits with drop-odds; each row shows a rarity bar.'],
   ['Preview', 'Render a fresh random set live from the engine. Set a seed to reproduce a set; click a tile to inspect it full-size.'],
   ['Build', 'Generate the full collection (images + metadata) with progress + pause/stop, a rarity report, and an output gallery of the editions.'],
-  ['Mint FX', 'Design the pack-opening / card-reveal animation collectors see when they mint.'],
   ['Publish', 'Upload to local / pinata / irys, then mint on Solana or EVM. The readiness strip shows what’s built and uploaded.'],
-  ['Site', 'Build a deployable mint site from blocks (or a starter template); preview locally or deploy to Vercel.'],
+  ['Mint FX', 'Design the pack-opening / card-reveal animation collectors see when they mint.'],
+  ['Site', 'Build a deployable mint site from blocks (or a starter template); preview locally or deploy to your own host.'],
+  ['Launch', 'Deploy and operate the on-chain mint contract without a terminal — status, signing (key file / WalletConnect / browser console), sale setup, allowlist, reveal and withdraw.'],
+  ['Packs', 'App-level library of pack & card-back art, shared across every project and used by Mint FX.'],
   ['Fal AI', 'Generate art or video with fal.ai models and save results into the project’s fal/ folder.'],
   ['Settings', 'Theme + accent, and the project’s storage and chain configuration.'],
 ];
@@ -43,8 +46,9 @@ export function HelpScreen() {
       <Panel title="About">
         <div className="stack">
           <p style={{ margin: 0 }}>
-            <strong>CONKERNFTZ</strong> is a creator toolkit for layer-based generative art and NFT collections —
-            compose layers, enforce rules, preview, build editions with metadata, and publish on-chain.
+            <strong>CONKERNFTZ</strong> is an NFT art foundry for building and launching collections — compose
+            layer-based generative art, enforce rules, preview, build editions with metadata, design the mint
+            experience, and deploy on-chain.
           </p>
           <p className="muted" style={{ margin: 0 }}>
             Built and designed by <strong>Conker</strong>.

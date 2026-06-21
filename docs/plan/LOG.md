@@ -5,6 +5,21 @@
 
 ---
 
+### 2026-06-20 — V1-12/13/14: utility screens (Packs · Fal AI · Settings/Help)
+The utility screens were mostly solid; focused passes:
+- **Packs (V1-12):** made the import busy-state **per-section** (`busy: PackKind`) so only the section
+  being added shows the spinner (was a shared boolean that greyed both). Library grid + built-in/custom
+  badges + delete were already clean.
+- **Fal AI (V1-13):** adopted Button `loading` on Generate (already had skeleton output loading).
+- **Settings (V1-14):** already clean (Appearance theme/accent, provider-aware Storage, target-aware
+  Chain, Project folder shortcuts) — no change.
+- **Help (V1-14):** real **content** fixes — the field manual was missing the **Launch** stage entirely,
+  had Publish/Mint FX out of pipeline order, and omitted **Packs**; reordered to match the nav and added
+  both. Aligned the About copy from the old "creator toolkit for layer-based generative art" to
+  "**an NFT art foundry** for building and launching collections" (matches the VISION reframe + the
+  header tagline). Verified: typecheck clean · 203/203 vitest (incl. help tests) · renderer build clean ·
+  screenshots 49/49. ◐ pending owner live-review.
+
 ### 2026-06-20 — V1-11: Launch screen pass
 Launch (status readout · signing modes — key-file / WalletConnect / browser console · deploy ·
 sale setup · allowlist · reveal · proceeds) is functional; this pass tightened consistency. The

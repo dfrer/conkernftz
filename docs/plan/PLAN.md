@@ -37,9 +37,9 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V1-9 | Screen pass — **Mint FX (Experience)** | ◐ |
 | V1-10 | Screen pass — **Site builder** (widgets + inspector UX) | ◐ |
 | V1-11 | Screen pass — **Launch** | ◐ |
-| V1-12 | Screen pass — **Packs** | ☐ |
-| V1-13 | Screen pass — **Fal AI** | ☐ |
-| V1-14 | Screen pass — **Settings / Help** | ☐ |
+| V1-12 | Screen pass — **Packs** | ◐ |
+| V1-13 | Screen pass — **Fal AI** | ◐ |
+| V1-14 | Screen pass — **Settings / Help** | ◐ |
 | V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ☐ |
 | V1-16 | **Owner ↔ agent local confirmation** gate: walk every surface, confirm look/feel/function. | ☐ |
 

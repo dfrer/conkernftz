@@ -13,7 +13,7 @@ export function PacksScreen() {
   const [packs, setPacks] = useState<PackEntry[]>([]);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<PackKind | null>(null);
 
   const refresh = async (): Promise<void> => {
     setLoading(true);
@@ -40,7 +40,7 @@ export function PacksScreen() {
       toast.push('Pack library runs in the desktop app', 'danger');
       return;
     }
-    setBusy(true);
+    setBusy(kind);
     try {
       const p = await importPack(kind);
       if (p) {
@@ -48,7 +48,7 @@ export function PacksScreen() {
         await refresh();
       }
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
@@ -67,7 +67,7 @@ export function PacksScreen() {
       <Panel
         title={title}
         actions={
-          <Button size="sm" onClick={() => add(kind)} disabled={busy || !isBridged()}>
+          <Button size="sm" onClick={() => add(kind)} loading={busy === kind} disabled={!!busy || !isBridged()}>
             + {addLabel}
           </Button>
         }
