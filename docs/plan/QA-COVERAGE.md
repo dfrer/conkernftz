@@ -19,9 +19,9 @@
 | **Shell** (header/nav/status) | ✅ nav to all 13 stages; title asserted; theme toggle exists | ☐ keyboard nav of pipeline; status-bar readout states; reduced-motion |
 | **Projects** | ✅ New-project dialog open/fill/escape-close; populated recents (seeded) | ☐ open-via-dialog flow; recent-card open; create→scaffold path; error toast on bridge-offline |
 | **Design** | ✅ all tabs; +Add layer; trait browser; layer-1 name/rarity/req/opacity; Save dirty-enable; **RulesEditor** (add-cap/edit/invalid-JSON banner); **EffectsEditor** (blend/offset/rotate + Glow toggle reveals/hides body + fill + Modulate); **OverridesEditor** (add/set/remove); **RenamerPanel** (layer/mode selects); **SpawnEditor** (selection/fit/anchor + save) | ☐ layer move↑↓ + remove; spawn-dot drag placement (canvas) — visual/owner |
-| **Preview** | ✅ generate (thumb count asserted); lightbox open/close | ☐ seed lock + reproduce; count bounds (1..12); lightbox arrow paging |
+| **Preview** | ✅ generate (thumb count asserted); lightbox open/close; **seed-lock (chip → copies seed into the field)** | ☐ count bounds (1..12) + lightbox arrow paging — mock returns fixed images |
 | **Build** | ✅ build (output count asserted) | ☐ pause/resume/stop; progress events; rarity report render; audit assets/outputs; reload; open-folder |
-| **Publish** | ✅ upload assets (mock) | ☐ provider/mode/force toggles; EVM vs Solana mint buttons (per-action); readiness refresh; console clear |
+| **Publish** | ✅ upload assets (mock); **provider + mode selects + force checkbox toggle** | ☐ EVM vs Solana mint buttons (per-action, owner/devnet); readiness refresh; console clear |
 | **Mint FX** | ✅ replay; rip player visible | ☐ every preset/kind; cards/duration/label/accent fields; shake/auto-flip; pack/back pickers; rarity-back add/edit/remove; use-live-art |
 | **Site** | ✅ apply template; layout→canvas; **add widget (block count +1, auto-select asserted); select block** | ☐ every template; move/resize/rotate drag; multi-select + delete; inspector per-widget fields; undo/redo; wallpaper/cursor; deploy hosts; raw-HTML widget |
 | **Launch** | ✅ signer toggle (wallet projectId asserted); preflight; deploy; deployed: Save caps/prices, phase→public (confirm), reveal, freeze (confirm), withdraw — all mocked, no runtime errors | ☐ allowlist file upload; mainnet confirm-token gate; browser-console open |

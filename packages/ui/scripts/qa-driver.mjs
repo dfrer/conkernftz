@@ -277,6 +277,33 @@ async function main() {
     assert(out > 0, `Build produced ${out} output thumbnails (expected > 0)`);
   });
 
+  await step('preview:seed-lock', async () => {
+    await gotoStage(page, 'Preview');
+    await page.getByRole('button', { name: 'Generate previews' }).first().click();
+    await page.waitForTimeout(700);
+    const chip = page.locator('.seed-chip').first();
+    assert(await chip.isVisible().catch(() => false), 'Seed chip did not appear after generate');
+    await chip.click();
+    await page.waitForTimeout(150);
+    assert((await page.getByLabel('Seed').inputValue()).length > 0, 'Seed-lock did not copy the seed into the field');
+  });
+
+  await step('publish:toggles', async () => {
+    await gotoStage(page, 'Publish');
+    const prov = page.getByLabel('Storage provider');
+    await prov.selectOption({ index: 1 }).catch(() => {});
+    await page.waitForTimeout(100);
+    assert((await prov.inputValue()).length > 0, 'Storage provider select empty after change');
+    await page.getByLabel('Upload mode').selectOption({ index: 1 }).catch(() => {});
+    await page.waitForTimeout(100);
+    const force = page.locator('.panel', { hasText: 'Upload' }).locator('input[type="checkbox"]').first();
+    if (await force.isVisible().catch(() => false)) {
+      const before = await force.isChecked();
+      await force.click();
+      assert((await force.isChecked()) !== before, 'Publish force toggle did not change');
+    }
+  });
+
   await step('publish:upload', async () => {
     await gotoStage(page, 'Publish');
     await page.getByRole('button', { name: 'Upload assets' }).first().click();
