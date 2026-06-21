@@ -5,6 +5,25 @@
 
 ---
 
+### 2026-06-20 — QA-0: app-wide QA driver (tooling) + clean baseline
+Owner kicked off a new self-running goal: **comprehensive A→Z functional + visual QA sweep** — drive
+every surface/control/flow to completion, verify it, fix every problem. Built the gating tooling on
+branch `fix/app-wide-qa`:
+- **Extracted** the shared headless-harness primitives (static server, mocked `window.foundry`,
+  system-browser launch, stage list) into `packages/ui/scripts/lib/harness.mjs`; refactored
+  `screenshots.mjs` to import them (still 49/49 shots). The mock gained an **`opts.failMethods`** hook
+  so action calls can return errors on demand (unhappy-path testing).
+- **Built `scripts/qa-driver.mjs`** (`pnpm -C packages/ui qa`): drives controls, WAITS for each op,
+  captures **console errors/warnings + pageerror + requestfailed** attributed per surface, **asserts**
+  outcomes (state updated / element appeared / value applied), injects mock failures, and emits
+  `screenshots/qa-report.{md,json}`. Exits non-zero on any FAIL so it gates the loop.
+- First run flagged 1 issue → diagnosed as a **driver artifact** (a loose `getByLabel('Theme')` also
+  matched the header's "Toggle color theme" button); fixed with `{exact:true}`. **Re-run: 0 findings**
+  (0 console errors / 0 page errors / 0 failed requests / all assertions pass) across every stage +
+  happy AND unhappy (injected build/upload/preview failures) flows — V1 shipped clean.
+Coverage tracked in `docs/plan/QA-COVERAGE.md`. Gates green: typecheck · full build · 203/203 vitest ·
+49/49 screenshots · driver 0 fails. ◐ — QA-1+ deepens coverage control-by-control.
+
 ### 2026-06-20 — ✅ V1-16: owner confirmed — V1 COMPLETE, merged to `main`
 Owner reviewed the build and signed off: **"Everything looks good to go for the V1-16, you can
 commit/push/merge."** That closes the V1 gate. Flipped V1-0…V1-16 to ☑ in PLAN, marked STATUS

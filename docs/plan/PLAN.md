@@ -58,6 +58,26 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 
 ---
 
+## ▶ NOW — App-wide QA hardening sweep
+
+**Goal:** drive every surface, control, and flow to completion; verify each did what it should + looks
+right; FIX every problem. Nothing is "tested" until triggered, waited-out, and verified. Coverage is
+tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa-report.md` (gitignored).
+
+| ID | Task | Status |
+|----|------|--------|
+| **QA-0** | **Interaction+verification driver** (`scripts/qa-driver.mjs`, `pnpm -C packages/ui qa`): drives controls, WAITS for completion, captures console/page/network errors per surface, asserts outcomes, injects mock failures for unhappy paths, emits `qa-report.{md,json}`. Shared harness extracted to `scripts/lib/harness.mjs`. | ◐ |
+| QA-1 | Deep per-surface sweep — every control (button/field/select/checkbox/dialog/tab/drag/keyboard), both themes, focus + a11y. Drive, assert, fix. | ☐ |
+| QA-2 | Real-engine pass — drive `@conkernftz/core` (build/dedupe/rarity) + the `conkernftz` CLI on a throwaway temp project; verify ACTUAL outputs. | ☐ |
+| QA-3 | Fix every problem found; re-verify; keep gates green + driver at 0 fails. | ☐ |
+| QA-FINAL | Real-environment checklist handed to the owner (live wallet/chain/fal/uploads/host deploys). | ☐ |
+
+> **QA-0 baseline:** the full driver run is **0 findings** (0 console errors, 0 page errors, 0 failed
+> requests, all assertions pass) across all stages + happy/unhappy flows — V1 shipped clean. QA-1+
+> deepens coverage control-by-control.
+
+---
+
 ## NEXT — On-chain infra to parity + audit-ready
 
 | ID | Task | Status |

@@ -16,6 +16,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer-next.json --noEmit",
     "start": "node scripts/start.cjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "qa": "node scripts/qa-driver.mjs",
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage"

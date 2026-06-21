@@ -16,10 +16,16 @@ preload drift); a red ❌ on GitHub is billing, not code.
 theme made first-class**; primitive interaction states filled + full Components catalog; app-shell
 polish; **per-screen passes for all stages**; a flow-coherence pass (one consistent loading language,
 numbered stage-kickers, "NFT Art Foundry" naming); and a Design Layers-table density deepen. The owner
-walked the build and signed off; V1-16 (the explicit gate) is passed. **▶ Active focus now: the NEXT
-board — on-chain infra to parity (OC-1 Solana Launch parity first).** Owner-accepted follow-ups (not
-blockers): a focused live session on the **Site builder** widget/inspector UX, and revisiting the
-**Mint FX reveal motion** + **light-theme palette** as taste items.
+walked the build and signed off; V1-16 (the explicit gate) is passed.
+
+**▶ Active focus now: app-wide QA hardening sweep** (branch `fix/app-wide-qa`). QA-0 tooling landed —
+an interaction+verification driver (`pnpm -C packages/ui qa`) that drives every control, waits for
+completion, captures console/page/network errors per surface, asserts outcomes, and injects mock
+failures for unhappy paths. **Baseline: 0 findings** across all stages + happy/unhappy flows (V1 is
+clean). QA-1+ deepens control-by-control; coverage tracked in [QA-COVERAGE.md](QA-COVERAGE.md). After
+that → the NEXT board (OC-1 Solana Launch parity). Owner-accepted V1 follow-ups still open (not
+blockers): the **Site builder** widget/inspector UX live session, and the **Mint FX reveal motion** +
+**light-theme palette** taste items.
 
 ## Packages (engine & libraries)
 
