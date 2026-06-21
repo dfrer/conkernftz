@@ -21,7 +21,8 @@ pnpm -C packages/ui start
 - [ ] **Browser MetaMask console** — Launch → "Sign in browser (MetaMask extension)"; confirm the console opens and a tx signs via the extension.
 - [ ] **Sale ops** — set caps/prices, open allowlist phase (upload an allowlist CSV → Merkle root set + proofs embedded), advance to public, reveal (point `tokenURI` at uploaded metadata), freeze, withdraw to treasury.
 - [ ] **Owner mint** — Publish → Owner mint a few editions; confirm tokens appear.
-- [ ] **Solana** — Candy Machine create/upload/mint on devnet (Publish → Candy: …).
+- [ ] **Solana in-app Launch (OC-1, devnet)** — for a `chain.target: solana` project, Launch now shows the Candy Machine flow: **status read → Create Candy Machine → Insert items** (key-file signer). Confirm: status reads the live CM; create makes the collection + CM sized to your built editions and saves the address to config; insert loads the uploaded config lines. (Mainnet-beta is gated behind typing `mainnet-beta`.)
+- [ ] **Solana CLI parity** — the same via `conkernftz candy create` / `candy upload` / `candy mint` on devnet.
 
 ## Mint experience + site (real output)
 - [ ] **Mint FX reveal motion** — watch the pack-rip reveal play in real time (timing/easing only judgeable live); confirm it feels right with your hero art.

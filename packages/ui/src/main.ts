@@ -5,6 +5,7 @@ import { initStorageIpc } from './main/ipc-storage.js';
 import { initPacksIpc } from './main/ipc-packs.js';
 import { initCliRunner } from './main/cli-runner.js';
 import { initLaunchRunner } from './main/launch-runner.js';
+import { initSolanaLaunchRunner } from './main/launch-runner-solana.js';
 
 const appDir = __dirname;
 
@@ -13,6 +14,7 @@ initStorageIpc();
 initPacksIpc();
 initCliRunner();
 initLaunchRunner();
+initSolanaLaunchRunner();
 
 function createWindow(): void {
   const win = new electron.BrowserWindow({

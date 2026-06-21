@@ -310,6 +310,10 @@ export const ChainSolanaSchema = z.object({
           allowList: z.object({ path: z.string() }).optional(),
         })
         .optional(),
+      // Populated after the in-app/CLI Candy-Machine create (the on-chain CM + its collection),
+      // mirroring EVM's chain.evm.launch.contractAddress. Used by the Launch status read.
+      address: z.string().optional(),
+      collectionAddress: z.string().optional(),
     })
     .optional(),
 });

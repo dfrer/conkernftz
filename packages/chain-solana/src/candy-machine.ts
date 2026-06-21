@@ -31,11 +31,21 @@ interface UmiHelpers {
   keypairIdentity(signer: unknown): unknown;
   createSignerFromKeypair(umi: unknown, kp: unknown): unknown;
 }
+/** Minimal shape of an on-chain Candy Machine account (only the fields the status read uses). */
+interface CmAccount {
+  itemsRedeemed: bigint | number;
+  itemsLoaded: bigint | number;
+  authority: { toString(): string } | string;
+  mintAuthority?: { toString(): string } | string;
+  collectionMint?: { toString(): string } | string;
+  data: { itemsAvailable: bigint | number };
+}
 interface CmSdk {
   mplCandyMachine(): unknown;
   create(umi: unknown, input: unknown): Confirmable;
   addConfigLines(umi: unknown, input: unknown): Confirmable;
   mintV1(umi: unknown, input: unknown): Confirmable;
+  fetchCandyMachine(umi: unknown, publicKey: unknown): Promise<CmAccount>;
   getMerkleRoot(addresses: string[]): Uint8Array;
   getMerkleProof(addresses: string[], address: string): Uint8Array[];
 }
@@ -60,6 +70,39 @@ export function buildConfigLines(items: CandyItem[]): CandyItem[] {
     if (!it.uri) throw new Error(`Config line ${i} is missing a uri`);
     return { name: it.name, uri: it.uri };
   });
+}
+
+/** Live status of an on-chain Candy Machine — the Solana analog of EVM's readSaleState. */
+export interface CandyMachineState {
+  candyMachine: string;
+  collection?: string;
+  authority: string;
+  itemsAvailable: number;
+  /** Config lines inserted so far. */
+  itemsLoaded: number;
+  /** Items minted so far. */
+  itemsRedeemed: number;
+  /** Every config line is inserted (ready to open minting). */
+  fullyLoaded: boolean;
+  /** Every available item has been minted. */
+  soldOut: boolean;
+}
+
+/** Map a fetched Candy Machine account to the IPC/JSON-safe status shape. Pure + unit-tested. */
+export function mapCandyMachineAccount(candyMachine: string, acc: CmAccount): CandyMachineState {
+  const itemsAvailable = Number(acc.data.itemsAvailable);
+  const itemsLoaded = Number(acc.itemsLoaded);
+  const itemsRedeemed = Number(acc.itemsRedeemed);
+  return {
+    candyMachine,
+    collection: acc.collectionMint != null ? String(acc.collectionMint) : undefined,
+    authority: String(acc.authority),
+    itemsAvailable,
+    itemsLoaded,
+    itemsRedeemed,
+    fullyLoaded: itemsAvailable > 0 && itemsLoaded >= itemsAvailable,
+    soldOut: itemsAvailable > 0 && itemsRedeemed >= itemsAvailable,
+  };
 }
 
 export interface GuardsConfig {
@@ -217,6 +260,20 @@ export async function createCandyMachine(params: CreateCandyMachineParams): Prom
   ).sendAndConfirm(umi);
 
   return { candyMachine: candyMachineSigner.publicKey.toString(), collection: collectionSigner.publicKey.toString() };
+}
+
+/**
+ * Read a Candy Machine's live status (read-only — no wallet/keypair required, just an RPC).
+ * Network op: validate on devnet. The pure mapping is covered by `mapCandyMachineAccount`.
+ */
+export async function readCandyMachineState(cfg: { candyMachine: string; rpcUrl?: string }): Promise<CandyMachineState> {
+  const bundle = (await import(UMI_BUNDLE)) as UmiBundleSdk;
+  const umiMod = (await import(UMI)) as UmiHelpers;
+  const cm = (await import(MPL_CORE_CM)) as CmSdk;
+  const endpoint = cfg.rpcUrl || process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+  const umi = bundle.createUmi(endpoint).use(cm.mplCandyMachine());
+  const acc = await cm.fetchCandyMachine(umi, umiMod.publicKey(cfg.candyMachine));
+  return mapCandyMachineAccount(cfg.candyMachine, acc);
 }
 
 export interface InsertItemsParams extends CmWalletConfig {

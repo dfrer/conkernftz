@@ -166,6 +166,16 @@ export interface FoundryApi {
   launchSetAllowlist(opts: { text: string; format?: 'csv' | 'json'; confirm?: string }): Promise<JsonResult>;
   /** Serve the browser signing console at localhost and open it (for desktop wallet extensions). */
   launchConsole(): Promise<DeployResult>;
+
+  // Solana Launch parity (Core Candy Machine). Reads chain.solana config; the key-file path signs
+  // with the configured wallet keypair (same model as the CLI `candy` command). Cluster
+  // `mainnet-beta` requires a `confirm` token — the same safeguard as the EVM mainnet gate.
+  /** Read live Candy Machine status (items available/loaded/redeemed). No signing. */
+  solanaLaunchStatus(): Promise<JsonResult>;
+  /** Create the collection + Candy Machine from the built/uploaded items; saves the address. */
+  solanaCreate(opts?: { confirm?: string }): Promise<JsonResult>;
+  /** Insert the uploaded token config lines (name + metadata URI) into the Candy Machine. */
+  solanaInsertItems(opts?: { confirm?: string }): Promise<JsonResult>;
 }
 
 /**
@@ -228,6 +238,9 @@ export const FOUNDRY_METHODS = [
   'launchWithdraw',
   'launchSetAllowlist',
   'launchConsole',
+  'solanaLaunchStatus',
+  'solanaCreate',
+  'solanaInsertItems',
 ] as const;
 
 export type FoundryMethod = (typeof FOUNDRY_METHODS)[number];

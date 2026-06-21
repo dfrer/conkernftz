@@ -11,6 +11,7 @@ import { PublishScreen } from './screens/PublishScreen';
 import { ExperienceScreen } from './screens/ExperienceScreen';
 import { SiteScreen } from './screens/SiteScreen';
 import { LaunchScreen } from './screens/LaunchScreen';
+import { LaunchSolana } from './screens/LaunchSolana';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { HelpScreen } from './screens/HelpScreen';
 import { FalScreen } from './screens/FalScreen';
@@ -25,7 +26,9 @@ const FALLBACK = { kicker: 'SYSTEM', title: 'Coming soon', blurb: 'This area is 
 
 function Shell() {
   const [active, setActive] = useState('projects');
-  const { project } = useProject();
+  const { project, config } = useProject();
+  // Launch is chain-aware: Solana projects get the Candy Machine flow, EVM the contract flow.
+  const solana = (config as { chain?: { target?: string } } | null)?.chain?.target === 'solana';
 
   let screen;
   if (active === 'projects') screen = <ProjectsScreen onOpened={() => setActive('design')} />;
@@ -35,7 +38,7 @@ function Shell() {
   else if (active === 'publish') screen = <PublishScreen />;
   else if (active === 'experience') screen = <ExperienceScreen />;
   else if (active === 'site') screen = <SiteScreen />;
-  else if (active === 'launch') screen = <LaunchScreen />;
+  else if (active === 'launch') screen = solana ? <LaunchSolana /> : <LaunchScreen />;
   else if (active === 'settings') screen = <SettingsScreen />;
   else if (active === 'help') screen = <HelpScreen />;
   else if (active === 'ai') screen = <FalScreen />;

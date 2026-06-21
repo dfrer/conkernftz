@@ -64,7 +64,7 @@ async function newPage(browser, realPacks, opts = {}) {
   attach(page);
   if (opts.theme) await page.addInitScript((t) => { try { localStorage.setItem('cnftz:theme', t); } catch { /* */ } }, opts.theme);
   if (opts.recents) await page.addInitScript((r) => { try { localStorage.setItem('cnftz:recents', JSON.stringify(r)); } catch { /* */ } }, opts.recents);
-  await page.addInitScript(installMock, { realPacks, deployed: opts.deployed, failMethods: opts.failMethods });
+  await page.addInitScript(installMock, { realPacks, deployed: opts.deployed, failMethods: opts.failMethods, solana: opts.solana, solanaCreated: opts.solanaCreated });
   await page.goto(url(), { waitUntil: 'load' });
   await page.waitForSelector('.nav-item', { timeout: 15000 });
   return page;
@@ -391,6 +391,24 @@ async function main() {
     const withdraw = lp.getByRole('button', { name: 'Withdraw', exact: true }).first();
     if (await withdraw.isVisible().catch(() => false)) { await withdraw.click(); await lp.waitForTimeout(400); }
     await lp.close();
+  });
+
+  // Launch (Solana / Candy Machine) — status renders + create/insert flows drive without errors.
+  await step('launch:solana', async () => {
+    const sp = await newPage(browser, realPacks, { solana: true });
+    await gotoStage(sp, 'Launch');
+    await sp.waitForTimeout(300);
+    assert(await sp.getByText('Candy Machine status').first().isVisible(), 'Solana Launch status panel did not render');
+    const createBtn = sp.getByRole('button', { name: 'Create Candy Machine' }).first();
+    assert(await createBtn.isVisible().catch(() => false), 'Solana Launch Create panel did not render (not-created state)');
+    await createBtn.click();
+    await sp.waitForTimeout(400);
+    await sp.close();
+    const sc = await newPage(browser, realPacks, { solana: true, solanaCreated: true });
+    await gotoStage(sc, 'Launch');
+    await sc.waitForTimeout(300);
+    assert(await sc.getByText('Insert items').first().isVisible(), 'Solana created-CM Insert panel did not render');
+    await sc.close();
   });
 
   // Unhappy path — make the primary actions FAIL and confirm error handling fires (toast / no crash).
