@@ -41,9 +41,10 @@
 | Concern | Status |
 |---------|--------|
 | Dark theme | ✅ driven (default) |
-| Light theme | ☐ run the full driver pass in light too |
-| Compact viewport | ☐ drive interactions at 1180px |
-| Keyboard nav / focus rings | ☐ tab order, :focus-visible, dialog focus trap, tablist arrows |
+| Light theme | ✅ driver walks stages + generate-preview in light (no runtime errors) |
+| Compact viewport | ✅ driver walks key stages at 1180px |
+| Keyboard nav / focus | ✅ tablist ArrowRight moves selection; **dialog focus trap fixed + asserted** (Tab stays inside, Escape closes) |
+| Focus rings (:focus-visible) | ☐ visual — owner judges via screenshots |
 | Reduced-motion | ☐ assert animations collapse |
 | Unhappy paths | ◐ build/upload/preview failure injected; expand to every action |
 

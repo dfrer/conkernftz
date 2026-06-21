@@ -5,6 +5,22 @@
 
 ---
 
+### 2026-06-20 — QA-1b: cross-cutting (light/compact) + a11y; fix Dialog focus trap
+Added driver passes for **light theme** + **compact viewport** (walk stages + a key interaction; no
+runtime errors) and a **keyboard/a11y** pass (tablist arrow nav; dialog focus trap; Escape-close).
+Two findings:
+- *Tablist ArrowRight "didn't move selection"* → **driver artifact**: the `Tabs` use automatic
+  activation, but the test focused the first tab while a different tab was selected; fixed to focus
+  the selected tab.
+- *Dialog doesn't trap focus* → **real a11y bug**, fixed. The `Dialog` had `role=dialog` +
+  `aria-modal` + Escape but **no focus management** — focus never entered the modal and Tab escaped to
+  the background. Added a proper trap: on open, remember the trigger + move focus into the dialog;
+  wrap Tab/Shift+Tab at the boundaries; restore focus to the trigger on close. (onClose read via a ref
+  so the trap sets up once per open, not per render.) Affects every dialog (Projects "New collection",
+  Components, …). The driver now asserts the trap every run.
+Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
+open" still passes) · renderer build clean.
+
 ### 2026-06-20 — QA-2: real engine/CLI end-to-end + fix `validate` wallet hard-error
 Drove the **real** pipeline (not the mock) on a throwaway temp project: `conkernftz init` →
 `validate` → `build --count 8 --seed 42` → `dupes` → `audit`. Generated real 256² layer PNGs via

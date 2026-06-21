@@ -299,6 +299,54 @@ async function main() {
     await fp.close();
   });
 
+  // Cross-cutting — light theme + compact viewport must drive without runtime errors.
+  await step('crosscut:light-theme', async () => {
+    const lt = await newPage(browser, realPacks, { theme: 'light' });
+    for (const label of ['Projects', 'Design', 'Preview', 'Build', 'Site', 'Launch', 'Components']) {
+      await gotoStage(lt, label);
+    }
+    await gotoStage(lt, 'Preview');
+    await lt.getByRole('button', { name: 'Generate previews' }).first().click();
+    await lt.waitForTimeout(600);
+    assert((await lt.locator('.thumb').count()) > 0, 'Light: preview generate produced no thumbnails');
+    await lt.close();
+  });
+  await step('crosscut:compact-viewport', async () => {
+    const cv = await newPage(browser, realPacks, { viewport: { width: 1180, height: 800 } });
+    for (const label of ['Design', 'Site', 'Mint FX', 'Launch', 'Packs']) await gotoStage(cv, label);
+    await cv.close();
+  });
+
+  // Accessibility — keyboard: dialog focus trap, tablist arrow navigation, focusable shell.
+  await step('a11y:keyboard', async () => {
+    const kp = await newPage(browser, realPacks);
+    // Tablist (automatic activation): focus the SELECTED tab, ArrowRight moves selection.
+    await gotoStage(kp, 'Design');
+    const selectedTab = kp.locator('[role="tab"][aria-selected="true"]').first();
+    const selBefore = await selectedTab.textContent();
+    await selectedTab.focus();
+    await kp.keyboard.press('ArrowRight');
+    await kp.waitForTimeout(150);
+    const selAfter = await kp.locator('[role="tab"][aria-selected="true"]').textContent();
+    assert(selBefore !== selAfter, `Tablist ArrowRight did not move selection (stayed "${selBefore}")`);
+    // Dialog focus trap: open the Components dialog, Tab around, focus must stay inside it.
+    await gotoStage(kp, 'Components');
+    await kp.getByRole('button', { name: 'Open dialog' }).first().click();
+    await kp.waitForTimeout(250);
+    let trapped = true;
+    for (let i = 0; i < 6; i++) {
+      await kp.keyboard.press('Tab');
+      await kp.waitForTimeout(40);
+      const inside = await kp.evaluate(() => !!document.activeElement?.closest('[role="dialog"], .backdrop'));
+      if (!inside) { trapped = false; break; }
+    }
+    assert(trapped, 'Dialog does not trap focus (Tab escaped the modal)');
+    await kp.keyboard.press('Escape');
+    await kp.waitForTimeout(150);
+    assert(!(await kp.getByRole('dialog').isVisible().catch(() => false)), 'Dialog did not close on Escape (keyboard)');
+    await kp.close();
+  });
+
   await browser.close();
   server.close();
 
