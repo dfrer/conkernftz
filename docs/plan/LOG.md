@@ -35,6 +35,19 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-3 (core) + agent-facing-work sweep
+Owner: "do all the agent-facing work that can be done right now" (goal). Started with **OC-3** —
+rarity → tier mapping — picking a sensible **configurable default** rather than asking (per the goal):
+`lib/rarityTier.ts` `tierForRank()` maps a token's rank (1=rarest) to a tier by rarest-first
+cumulative **shares** (default 5%/tier, common remainder), + `buildTierMap()` for site embedding; 9
+unit tests. `RarityBack` gains optional `share` (schema `.passthrough()` carries it); the Mint FX
+rarity rule gets a no-code **Share %** input; the **preview now showcases each real tier** via the
+same mapping (was a hardcoded "one rare card" sim). Verified: typecheck · 210 UI tests (+7) · driver
+0 findings. **The live widget half is OC-3b (devnet-gated):** `MintLive` has no minted token id
+without a real mint receipt to parse — same constraint STATUS already flagged ("waits on mint data").
+branch `feat/oc3-rarity-tiers`. Continuing to the remaining fully-verifiable agent work (QA-1 editor
+coverage).
+
 ### 2026-06-20 — OC-4: audit handoff package assembled
 Continuing the NEXT board autonomously. Skipped **OC-3** for now — it embeds a genuine
 rarity-tiering **product decision** (how a token's rank maps to "Rare"/"Legendary") that's the
