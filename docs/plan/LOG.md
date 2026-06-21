@@ -5,6 +5,72 @@
 
 ---
 
+### 2026-06-20 — QA-1c/1d/1e: finish the per-surface sweep (every editor driven)
+Drove the remaining controls to completion, all returning **0 findings**:
+- **RulesEditor** (QA-1c): add-cap + edit + **invalid-JSON → error banner** (unhappy path).
+- **Site canvas** (QA-1d): apply template, add widget (block count +1 + auto-select asserted), select.
+- **EffectsEditor** (QA-1e): blend/offset/rotate; Glow group toggle reveals/hides its body + color fill;
+  Modulate toggle. **OverridesEditor**: add/set/remove. **RenamerPanel** + **SpawnEditor** selects +
+  save. **Fal AI** form (key/model/prompt — never Generate; that's a real fal.run call). **Reduced
+  motion**: `emulateMedia` + asserted the nav-item transition collapses to ~0.
+Three more **driver-selector artifacts** found + fixed along the way (not app bugs): an fx-editor
+toggle left open by a prior step (force a remount), and two loose `getByLabel` matches (`Theme`,
+`Model`) → `{exact:true}`. Net: every drivable surface×function is exercised; the only un-driven bits
+are drag-placement (spawn dots, canvas move/resize) and the owner-only real-env items —
+[QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md). Driver 0 findings; gates green.
+
+### 2026-06-20 — QA-1b: cross-cutting (light/compact) + a11y; fix Dialog focus trap
+Added driver passes for **light theme** + **compact viewport** (walk stages + a key interaction; no
+runtime errors) and a **keyboard/a11y** pass (tablist arrow nav; dialog focus trap; Escape-close).
+Two findings:
+- *Tablist ArrowRight "didn't move selection"* → **driver artifact**: the `Tabs` use automatic
+  activation, but the test focused the first tab while a different tab was selected; fixed to focus
+  the selected tab.
+- *Dialog doesn't trap focus* → **real a11y bug**, fixed. The `Dialog` had `role=dialog` +
+  `aria-modal` + Escape but **no focus management** — focus never entered the modal and Tab escaped to
+  the background. Added a proper trap: on open, remember the trigger + move focus into the dialog;
+  wrap Tab/Shift+Tab at the boundaries; restore focus to the trigger on close. (onClose read via a ref
+  so the trap sets up once per open, not per render.) Affects every dialog (Projects "New collection",
+  Components, …). The driver now asserts the trap every run.
+Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
+open" still passes) · renderer build clean.
+
+### 2026-06-20 — QA-2: real engine/CLI end-to-end + fix `validate` wallet hard-error
+Drove the **real** pipeline (not the mock) on a throwaway temp project: `conkernftz init` →
+`validate` → `build --count 8 --seed 42` → `dupes` → `audit`. Generated real 256² layer PNGs via
+`sharp` (10 traits across 4 layers). Results: build produced **8 correct editions** — images +
+per-edition metadata (attributes, **sha256 DNA**, rarity score+rank) + `rarity.json` /
+`rarity-ranks.json` / `_metadata.json`; **`dupes`** found none; **`audit`** correctly flagged the
+fully-transparent layer as near-empty. The full-workspace suite is green (**368 tests**: core 47,
+chain-evm 81, chain-solana 12, cli 12, storage 13, ui 203).
+
+**Bug found + fixed:** `conkernftz validate` (whose job is "config + assets presence", and which
+`init` literally tells you to run next) **hard-ERRORed (exit 1) on a missing Solana wallet keypair**
+— a mint-time-only credential — blocking a no-code creator from validating their art before any
+wallet setup. Downgraded the wallet checks to **WARN** (`validate.ts`); a fresh `init` now validates
+to `Config OK` (exit 0) with a heads-up. Verified: cli typecheck clean · 12/12 cli tests. (Windows
+path-interop note for future runs: Git Bash `/tmp` ≠ Node `/tmp`; use a shared path like
+`C:/Users/<u>/… ↔ /c/Users/<u>/…`.)
+
+### 2026-06-20 — QA-0: app-wide QA driver (tooling) + clean baseline
+Owner kicked off a new self-running goal: **comprehensive A→Z functional + visual QA sweep** — drive
+every surface/control/flow to completion, verify it, fix every problem. Built the gating tooling on
+branch `fix/app-wide-qa`:
+- **Extracted** the shared headless-harness primitives (static server, mocked `window.foundry`,
+  system-browser launch, stage list) into `packages/ui/scripts/lib/harness.mjs`; refactored
+  `screenshots.mjs` to import them (still 49/49 shots). The mock gained an **`opts.failMethods`** hook
+  so action calls can return errors on demand (unhappy-path testing).
+- **Built `scripts/qa-driver.mjs`** (`pnpm -C packages/ui qa`): drives controls, WAITS for each op,
+  captures **console errors/warnings + pageerror + requestfailed** attributed per surface, **asserts**
+  outcomes (state updated / element appeared / value applied), injects mock failures, and emits
+  `screenshots/qa-report.{md,json}`. Exits non-zero on any FAIL so it gates the loop.
+- First run flagged 1 issue → diagnosed as a **driver artifact** (a loose `getByLabel('Theme')` also
+  matched the header's "Toggle color theme" button); fixed with `{exact:true}`. **Re-run: 0 findings**
+  (0 console errors / 0 page errors / 0 failed requests / all assertions pass) across every stage +
+  happy AND unhappy (injected build/upload/preview failures) flows — V1 shipped clean.
+Coverage tracked in `docs/plan/QA-COVERAGE.md`. Gates green: typecheck · full build · 203/203 vitest ·
+49/49 screenshots · driver 0 fails. ◐ — QA-1+ deepens coverage control-by-control.
+
 ### 2026-06-20 — ✅ V1-16: owner confirmed — V1 COMPLETE, merged to `main`
 Owner reviewed the build and signed off: **"Everything looks good to go for the V1-16, you can
 commit/push/merge."** That closes the V1 gate. Flipped V1-0…V1-16 to ☑ in PLAN, marked STATUS
