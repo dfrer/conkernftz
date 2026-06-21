@@ -5,6 +5,23 @@
 
 ---
 
+### 2026-06-20 — QA-2: real engine/CLI end-to-end + fix `validate` wallet hard-error
+Drove the **real** pipeline (not the mock) on a throwaway temp project: `conkernftz init` →
+`validate` → `build --count 8 --seed 42` → `dupes` → `audit`. Generated real 256² layer PNGs via
+`sharp` (10 traits across 4 layers). Results: build produced **8 correct editions** — images +
+per-edition metadata (attributes, **sha256 DNA**, rarity score+rank) + `rarity.json` /
+`rarity-ranks.json` / `_metadata.json`; **`dupes`** found none; **`audit`** correctly flagged the
+fully-transparent layer as near-empty. The full-workspace suite is green (**368 tests**: core 47,
+chain-evm 81, chain-solana 12, cli 12, storage 13, ui 203).
+
+**Bug found + fixed:** `conkernftz validate` (whose job is "config + assets presence", and which
+`init` literally tells you to run next) **hard-ERRORed (exit 1) on a missing Solana wallet keypair**
+— a mint-time-only credential — blocking a no-code creator from validating their art before any
+wallet setup. Downgraded the wallet checks to **WARN** (`validate.ts`); a fresh `init` now validates
+to `Config OK` (exit 0) with a heads-up. Verified: cli typecheck clean · 12/12 cli tests. (Windows
+path-interop note for future runs: Git Bash `/tmp` ≠ Node `/tmp`; use a shared path like
+`C:/Users/<u>/… ↔ /c/Users/<u>/…`.)
+
 ### 2026-06-20 — QA-0: app-wide QA driver (tooling) + clean baseline
 Owner kicked off a new self-running goal: **comprehensive A→Z functional + visual QA sweep** — drive
 every surface/control/flow to completion, verify it, fix every problem. Built the gating tooling on

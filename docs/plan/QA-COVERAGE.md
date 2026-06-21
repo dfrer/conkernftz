@@ -51,8 +51,11 @@
 
 | Item | Status |
 |------|--------|
-| `@conkernftz/core` build/dedupe/rarity on a temp project | ☐ drive headless; verify real images/metadata/rarity |
-| `conkernftz` CLI (init/validate/preview/build/audit) | ☐ run on temp project; verify outputs |
+| `@conkernftz/core` build (real sharp composition) | ✅ built 8 editions on a temp project; verified 8 PNGs + per-edition metadata (attributes, sha256 DNA, rarity score+rank) + `rarity.json`/`rarity-ranks.json`/`_metadata.json` |
+| dedupe (`dupes`) | ✅ "No duplicates found" on a real build |
+| asset audit (`audit`) | ✅ correctly flagged a fully-transparent layer as near-empty + dimensions summary |
+| `validate` | ✅ run on fresh `init` — **fixed**: was a hard ERROR on a missing Solana wallet keypair (a mint-time credential); now WARN + `Config OK` (exit 0) so art can be validated before wallet setup |
+| `conkernftz init` | ✅ scaffolds config + layer folders |
 
 ## Owner-only (real environment — QA-FINAL checklist)
 

@@ -53,13 +53,16 @@ Examples:
         const sum = cfg.chain.solana.creators.reduce((acc: number, c: any) => acc + Number(c?.share || 0), 0);
         if (sum !== 100) issues.push(`ERROR: creators share must sum to 100 (got ${sum})`);
       }
-      // Wallet keypair exists (Solana)
+      // Wallet keypair (Solana) — a mint/deploy-time credential, NOT a config/asset problem.
+      // `validate`'s job is config + asset presence, so a missing wallet is a WARN, not a hard
+      // ERROR: a creator should be able to validate (and then preview/build) their art before
+      // ever setting up a chain wallet. The wallet is enforced where it's actually needed (mint).
       if (cfg.chain?.target === 'solana') {
         const walletPath = cfg.chain.solana?.walletKeypairPath;
-        if (!walletPath) issues.push('ERROR: chain.solana.walletKeypairPath is required');
+        if (!walletPath) issues.push('WARN: chain.solana.walletKeypairPath is not set (needed only to mint/deploy)');
         else {
           const p = path.isAbsolute(walletPath) ? walletPath : path.join(process.cwd(), walletPath);
-          try { await fs.access(p); } catch { issues.push(`ERROR: Wallet keypair not found at ${p}`); }
+          try { await fs.access(p); } catch { issues.push(`WARN: Wallet keypair not found at ${p} (needed only to mint/deploy)`); }
         }
       }
       // Forbid GIF output (not supported end-to-end)
