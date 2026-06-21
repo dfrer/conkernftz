@@ -277,6 +277,22 @@ async function main() {
     assert(out > 0, `Build produced ${out} output thumbnails (expected > 0)`);
   });
 
+  await step('build:rarity-audit', async () => {
+    await gotoStage(page, 'Build');
+    await page.getByRole('button', { name: 'Build collection' }).first().click();
+    await page.waitForTimeout(900);
+    await page.getByRole('button', { name: 'Audit assets' }).first().click();
+    await page.waitForTimeout(250);
+    assert(await page.locator('.audit-out').first().isVisible().catch(() => false), 'Audit assets did not render output');
+    await page.getByRole('button', { name: 'Audit outputs' }).first().click();
+    await page.waitForTimeout(250);
+    const rarityReload = page.locator('.panel', { hasText: 'Rarity report' }).getByRole('button', { name: 'Reload' }).first();
+    if (await rarityReload.isVisible().catch(() => false)) {
+      await rarityReload.click();
+      await page.waitForTimeout(250);
+    }
+  });
+
   await step('preview:seed-lock', async () => {
     await gotoStage(page, 'Preview');
     await page.getByRole('button', { name: 'Generate previews' }).first().click();
