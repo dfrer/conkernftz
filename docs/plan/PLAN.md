@@ -85,7 +85,8 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 
 | ID | Task | Status |
 |----|------|--------|
-| OC-1 | **Solana Launch-stage parity** — bring Solana to the same in-app deploy/manage experience as EVM (chains all equal). | ◐ |
+| OC-1 | **Solana Launch-stage parity** — in-app Candy Machine status + create + insert (key-file), chain-equal to EVM. **Merged.** Owner verifies on devnet. | ◐ |
+| OC-1b | **Phantom (browser) signing** for Solana Launch — non-custodial create/insert via the desktop extension (browser console) or WalletConnect/mobile. Deferred until OC-1 key-file is devnet-proven (Electron can't reach the extension; CM-create is multi-tx). | ☐ |
 | OC-2 | Reveal flow UX — full upload-metadata → reveal → freeze path, in-app. | ☐ |
 | OC-3 | Rarity → live token-tier mapping in the mint widget (real mint data). | ☐ |
 | OC-4 | **Audit handoff package** — assemble the contract + spec + threat model + test suite + gas notes + assumptions for an external auditor to start cold. | ☐ |

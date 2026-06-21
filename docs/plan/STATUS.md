@@ -26,10 +26,14 @@ build + metadata + DNA + rarity, dupes, audit). **2 real bugs fixed:** `validate
 WARN; `Dialog` missing focus-trap → added. Reports: [QA-SUMMARY.md](QA-SUMMARY.md) ·
 [QA-COVERAGE.md](QA-COVERAGE.md) · owner real-env checklist [QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md).
 
-**▶ Active focus now: the NEXT board — on-chain infra to parity (OC-1 Solana Launch parity first).**
-Owner-side QA remainder (not blockers): run the real-env checklist; drag/visual + Mint-FX motion +
-light-theme palette are owner-judged. Owner-accepted V1 follow-up: the **Site builder** widget/inspector
-UX live session.
+**▶ On-chain parity in progress.** **OC-1 (Solana Launch parity) slices 1+2 merged to `main`:** in-app
+Candy Machine **status → create → insert** (key-file signer), chain-equal to the EVM Launch screen
+(`LaunchScreen` now dispatches by `chain.target`). Built + locally verified (typecheck/build/203 UI
+tests/preload-drift/screenshots/QA-driver 0 findings); **chain ops are devnet-unverified by the agent
+→ owner runs the [real-env checklist](QA-REAL-ENV-CHECKLIST.md).** **Phantom (browser) signing
+deferred to OC-1b** (Electron can't reach the desktop extension; CM-create is multi-tx) until the
+key-file path is devnet-proven. Owner-side QA remainder + V1 taste follow-ups (Site UX session, Mint-FX
+motion, light palette) still open.
 
 ## Packages (engine & libraries)
 
