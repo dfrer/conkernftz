@@ -17,6 +17,7 @@ import {
   type ExperienceConfig,
   type ExperienceKind,
 } from '../lib/mintExperience';
+import { tierForRank, DEFAULT_TIER_SHARE } from '../lib/rarityTier';
 
 export function ExperienceScreen() {
   const { project, config, updateConfig, save } = useProject();
@@ -135,13 +136,27 @@ export function ExperienceScreen() {
     }
     set({ rarityBacks: [...rules, { tier: `Tier ${rules.length + 1}`, backId: first.id }] });
   };
-  const updateRule = (i: number, patch: Partial<{ tier: string; backId: string }>): void =>
+  const updateRule = (i: number, patch: Partial<{ tier: string; backId: string; share: number }>): void =>
     set({ rarityBacks: rules.map((r, j) => (j === i ? { ...r, ...patch } : r)) });
   const removeRule = (i: number): void => set({ rarityBacks: rules.filter((_, j) => j !== i) });
 
-  // Preview simulation: make the last card use the first rarity tier so the rare back shows.
-  const previewTiers =
-    rules.length > 0 ? Array.from({ length: exp.packCount }, (_, i) => (i === exp.packCount - 1 ? rules[0]!.tier : '')) : [];
+  // Preview: showcase each configured tier with the SAME rank→tier mapping the live mint widget uses
+  // (a mid-band sample rank per tier), then fill the rest as common (default back) — not a one-off
+  // simulation. editionCount comes from the project; tiny collections still show at least one per tier.
+  const editionCount = Math.max(rules.length * 2, Number(config?.editionSize) || 100);
+  const previewTiers: string[] = (() => {
+    if (rules.length === 0) return [];
+    const cards: string[] = [];
+    let cumulative = 0;
+    for (const r of rules) {
+      const share = typeof r.share === 'number' && r.share > 0 ? r.share : DEFAULT_TIER_SHARE;
+      const band = Math.max(1, Math.round(share * editionCount));
+      cards.push(tierForRank(cumulative + Math.ceil(band / 2), editionCount, rules));
+      cumulative += band;
+    }
+    while (cards.length < exp.packCount) cards.push('');
+    return cards.slice(0, exp.packCount);
+  })();
 
   const picker = (kind: 'pack' | 'back', selectedId: string | undefined, onPick: (id: string | undefined) => void) => {
     const items = packs.filter((p) => p.kind === kind);
@@ -260,8 +275,9 @@ export function ExperienceScreen() {
                       </Button>
                     </div>
                     <span className="label muted">
-                      Cards of a tier flip to a designated back instead of the default. Live mint maps a card's tier from
-                      its rarity rank; the preview simulates one rare card.
+                      Cards of a tier flip to a designated back instead of the default. A token's tier maps from its
+                      rarity rank by share — rarest-first (e.g. top {Math.round(DEFAULT_TIER_SHARE * 100)}%); the preview
+                      showcases each tier, the live mint uses the same mapping on the minted token.
                     </span>
                     {rules.map((r, i) => (
                       <div className="grid cols-auto" key={i}>
@@ -276,6 +292,17 @@ export function ExperienceScreen() {
                               </option>
                             ))}
                           </Select>
+                        </Field>
+                        <Field label="Share %" hint={`rarest ${Math.round((typeof r.share === 'number' && r.share > 0 ? r.share : DEFAULT_TIER_SHARE) * editionCount)} of ${editionCount}`}>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            value={Math.round((typeof r.share === 'number' && r.share > 0 ? r.share : DEFAULT_TIER_SHARE) * 100)}
+                            onChange={(e) => updateRule(i, { share: Math.max(0, Math.min(100, Number(e.target.value) || 0)) / 100 })}
+                            aria-label={`Rarity share ${i + 1}`}
+                          />
                         </Field>
                         <div style={{ alignSelf: 'end' }}>
                           <Button size="sm" variant="danger" icon onClick={() => removeRule(i)} aria-label={`Remove rarity rule ${i + 1}`}>

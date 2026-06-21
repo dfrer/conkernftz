@@ -285,6 +285,13 @@ async function main() {
 
   await step('mintfx:preset+replay+rip', async () => {
     await gotoStage(page, 'Mint FX');
+    // OC-3: a rarity rule exposes a Share % input that drives the rank→tier mapping.
+    const share = page.getByLabel('Rarity share 1');
+    if (await share.isVisible().catch(() => false)) {
+      await share.fill('10');
+      await page.waitForTimeout(100);
+      assert((await share.inputValue()) === '10', 'Rarity share input did not accept a value');
+    }
     await page.getByRole('button', { name: /^Replay/i }).first().click();
     await page.waitForTimeout(400);
     const pack = page.getByRole('button', { name: 'Rip open the pack' }).first();

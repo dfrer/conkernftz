@@ -45,6 +45,8 @@ export interface RarityBack {
   tier: string;
   /** App-level card-back-library id used for cards of this tier. */
   backId: string;
+  /** Fraction of the collection (0–1) the rarest tokens this tier covers; default 5% (see rarityTier). */
+  share?: number;
 }
 
 export const EXPERIENCE_KINDS: ExperienceKind[] = ['cardPack', 'flip', 'fade'];
@@ -97,7 +99,12 @@ export function resolveExperience(partial?: Partial<ExperienceConfig> | null): E
     const rules = p.rarityBacks.filter(
       (r): r is RarityBack => !!r && typeof r.tier === 'string' && !!r.tier.trim() && typeof r.backId === 'string' && !!r.backId,
     );
-    if (rules.length) out.rarityBacks = rules.map((r) => ({ tier: r.tier, backId: r.backId }));
+    if (rules.length)
+      out.rarityBacks = rules.map((r) => ({
+        tier: r.tier,
+        backId: r.backId,
+        ...(typeof r.share === 'number' && r.share > 0 && r.share <= 1 ? { share: r.share } : {}),
+      }));
   }
   if (typeof p.accent === 'string' && p.accent) out.accent = p.accent;
   return out;

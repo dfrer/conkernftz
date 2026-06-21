@@ -38,7 +38,14 @@ key-file path is devnet-proven.
 the upload manifest, shows a guided **upload → reveal → freeze** stepper with live state, and offers a
 **"Go to Publish"** action — the no-code reveal loop is clickable end-to-end (on-chain reveal/freeze =
 owner's devnet check). **Solana reveal split to OC-2b** (deferred, devnet-unverifiable like OC-1b).
-Owner-side QA remainder + V1 taste follow-ups (Site UX session, Mint-FX motion, light palette) still open.
+
+**OC-4 audit handoff package** ([`docs/AUDIT_HANDOFF.md`](../AUDIT_HANDOFF.md)) and **OC-3 rarity→tier
+core** are merged to `main`. OC-3 core: deterministic `tierForRank` (configurable per-tier shares,
+5% default) + the Mint FX preview now showcasing real tiers + a no-code Share % input. **The
+agent-completable on-chain + QA work is now done**; what remains is **owner/devnet-gated** — OC-1b
+(Phantom), OC-2b (Solana reveal), **OC-3b** (live token-tier in the widget — needs a real mint
+receipt), OC-5 (owner-run forge/Slither + freeze), the real-env checklist, and the V1 taste
+follow-ups (Site UX session, Mint-FX motion, light palette). Full suite green: **380 tests**.
 
 ## Packages (engine & libraries)
 
