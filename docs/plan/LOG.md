@@ -5,6 +5,13 @@
 
 ---
 
+### 2026-06-20 — V1-7: Build screen pass
+Build was already strong (progress bar with pause/resume/stop, output-edition gallery + lightbox,
+rarity-report histogram, asset/output audit, idle/no-project/done states with badges). Light pass:
+adopted the Button `loading` prop on **Build collection** and **Reload** (spinner + auto-disable),
+dropping the ad-hoc "Building…/Loading…" text swaps. Verified: typecheck clean · 203/203 vitest ·
+renderer build clean. ◐ pending owner live-review.
+
 ### 2026-06-20 — V1-6: Preview screen pass
 Preview was already strong (skeleton loading, idle/no-project empty states, seed chip, inspection
 lightbox, clean thumb grid in both themes), so a light, honest pass: adopted the new Button

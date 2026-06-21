@@ -146,8 +146,8 @@ export function BuildScreen() {
             <Field label="Count">
               <Input type="number" min="1" value={count} onChange={(e) => setCount(Number(e.target.value) || 1)} style={{ width: 90 }} disabled={building} />
             </Field>
-            <Button variant="primary" onClick={build} disabled={building || !isBridged()}>
-              {building ? 'Building…' : 'Build collection'}
+            <Button variant="primary" onClick={build} loading={building} disabled={!isBridged()}>
+              Build collection
             </Button>
           </div>
         }
@@ -210,8 +210,8 @@ export function BuildScreen() {
         actions={
           <div className="row">
             <span className="label">{outCount} EDITIONS</span>
-            <Button size="sm" onClick={loadOutputs} disabled={!isBridged() || loadingOut}>
-              {loadingOut ? 'Loading…' : 'Reload'}
+            <Button size="sm" onClick={loadOutputs} loading={loadingOut} disabled={!isBridged()}>
+              Reload
             </Button>
             <Button size="sm" onClick={() => bridge()?.openInExplorer(`${outDir}/images`)} disabled={!isBridged()}>
               Open folder
