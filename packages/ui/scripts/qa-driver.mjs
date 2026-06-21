@@ -382,6 +382,8 @@ async function main() {
     if (await pub.isVisible().catch(() => false)) { await pub.click(); await lp.waitForTimeout(400); }
     const baseUri = lp.getByLabel('Revealed base URI');
     if (await baseUri.isVisible().catch(() => false)) {
+      // OC-2: the reveal baseURI should auto-fill from the upload manifest (no hand-copying).
+      assert((await baseUri.inputValue()).startsWith('ipfs://'), 'Reveal baseURI did not auto-fill from the upload manifest');
       await baseUri.fill('ipfs://bafyrevealed/');
       await lp.getByRole('button', { name: 'Reveal', exact: true }).click();
       await lp.waitForTimeout(400);

@@ -237,6 +237,7 @@ async function main() {
     await gotoStage(deployedPage, 'Launch');
     await deployedPage.waitForTimeout(300);
     await shot(deployedPage, { id: 'launch-deployed', group: 'Pipeline · stages', note: 'Live contract — sale setup, phase, allowlist, reveal, proceeds.' });
+    await shot(deployedPage, { id: 'launch-reveal-panel', group: 'Launch · detail', note: 'Reveal panel — baseURI auto-filled from the upload manifest + upload/reveal status.', locator: deployedPage.locator('.panel', { hasText: 'Reveal & metadata' }).first() });
     await deployedPage.close();
   } catch (e) {
     console.log('FAILED', 'launch-deployed', String(e?.message ?? e));

@@ -47,6 +47,9 @@ export function LaunchScreen() {
   const [confirmToken, setConfirmToken] = useState('');
   const [baseUri, setBaseUri] = useState('');
   const [allowlist, setAllowlist] = useState<{ name: string; text: string; format: 'csv' | 'json' } | null>(null);
+  // Upload manifest (.upload-manifest.json) — its baseURI auto-fills the reveal field so the
+  // operator never has to hand-copy a CID from Publish.
+  const [manifest, setManifest] = useState<{ baseUri?: string } | null>(null);
 
   // Signer: 'keyfile' goes through the IPC handlers (configured deployer key); 'wallet' signs
   // every tx in the user's own wallet via WalletConnect (non-custodial, no key file).
@@ -68,12 +71,30 @@ export function LaunchScreen() {
       setStatus(null);
       setStatusErr(s.error ?? 'Could not read contract status.');
     }
-    if (c.ok && c.json) setCfg(c.json);
+    if (c.ok && c.json) {
+      setCfg(c.json);
+      // Read the upload manifest so the reveal step can offer the uploaded metadata baseURI.
+      // Best-effort: a missing/unreadable manifest just means no pre-fill (never breaks refresh).
+      try {
+        const outDir = (c.json as { export?: { outDir?: string } })?.export?.outDir ?? 'build';
+        const m = await fb.readFile(`${outDir}/.upload-manifest.json`);
+        setManifest(m?.ok && m.content ? JSON.parse(m.content) : null);
+      } catch {
+        setManifest(null);
+      }
+    }
   }, []);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Once the manifest is known, pre-fill the (still-empty) reveal base URI from it. The operator
+  // can still edit it; we never overwrite a value they've typed or an already-revealed contract.
+  useEffect(() => {
+    if (manifest?.baseUri && !baseUri && !status?.revealed) setBaseUri(manifest.baseUri);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manifest]);
 
   if (!isBridged()) {
     return (
@@ -479,10 +500,30 @@ export function LaunchScreen() {
             Before reveal, every token shows the placeholder. Reveal points <code>tokenURI</code> at your
             uploaded metadata (token N → <code>&lt;baseUri&gt;N.json</code>). Freeze makes it permanent.
           </p>
+          {status?.revealed ? (
+            <p className="muted">
+              <Badge tone="ok">revealed</Badge> Tokens now resolve to the live metadata.
+              {status?.metadataFrozen ? ' Metadata is frozen — permanent.' : ' You can re-reveal until you freeze.'}
+            </p>
+          ) : manifest?.baseUri ? (
+            <p className="muted">
+              Uploaded metadata detected — baseURI pre-filled below: <code className="break-all">{manifest.baseUri}</code>
+            </p>
+          ) : (
+            <p className="muted">
+              No upload found yet. Run <strong>Publish</strong> (dir mode) to upload your revealed metadata first —
+              its baseURI will appear here automatically.
+            </p>
+          )}
           <div className="grid cols-auto" style={{ gap: 10, alignItems: 'end' }}>
             <Field label="Revealed base URI">
               <Input value={baseUri} onChange={(e) => setBaseUri(e.target.value)} placeholder="ipfs://<cid>/" disabled={status?.metadataFrozen} />
             </Field>
+            {manifest?.baseUri && manifest.baseUri !== baseUri && !status?.metadataFrozen ? (
+              <Button variant="ghost" onClick={() => setBaseUri(manifest.baseUri!)}>
+                Use uploaded baseURI
+              </Button>
+            ) : null}
             <Button
               disabled={!!busy || !baseUri || status?.metadataFrozen || !canWrite}
               onClick={() => void act('reveal', ops.reveal, 'Revealed')}
