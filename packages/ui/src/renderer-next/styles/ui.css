@@ -473,6 +473,59 @@ button {
 .field-msg--error {
   color: var(--danger);
 }
+
+/* Reveal progress (upload → reveal → freeze) — a compact pill stepper on the Launch screen. */
+.reveal-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+.reveal-steps-arrow {
+  color: var(--text-dim);
+}
+.rstep {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 5px;
+  border: var(--hair) solid var(--line);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.rstep-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-inset);
+  border: var(--hair) solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+}
+.rstep--done {
+  color: var(--text);
+  border-color: color-mix(in oklab, var(--ok) 45%, transparent);
+}
+.rstep--done .rstep-dot {
+  background: var(--ok-soft);
+  border-color: color-mix(in oklab, var(--ok) 45%, transparent);
+  color: var(--ok);
+}
+.rstep--active {
+  color: var(--text);
+  border-color: var(--line-amber);
+}
+.rstep--active .rstep-dot {
+  background: var(--accent-soft);
+  border-color: var(--line-amber);
+  color: var(--accent);
+}
 /* Themed checkbox/radio — tint the native control with the instrument accent (both themes)
  * instead of the OS default blue, and give it the same focus ring as other controls. */
 input[type='checkbox'],

@@ -32,8 +32,13 @@ Candy Machine **status → create → insert** (key-file signer), chain-equal to
 tests/preload-drift/screenshots/QA-driver 0 findings); **chain ops are devnet-unverified by the agent
 → owner runs the [real-env checklist](QA-REAL-ENV-CHECKLIST.md).** **Phantom (browser) signing
 deferred to OC-1b** (Electron can't reach the desktop extension; CM-create is multi-tx) until the
-key-file path is devnet-proven. Owner-side QA remainder + V1 taste follow-ups (Site UX session, Mint-FX
-motion, light palette) still open.
+key-file path is devnet-proven.
+
+**OC-2 (EVM reveal UX) done + merged to `main`:** the Launch reveal panel auto-fills the baseURI from
+the upload manifest, shows a guided **upload → reveal → freeze** stepper with live state, and offers a
+**"Go to Publish"** action — the no-code reveal loop is clickable end-to-end (on-chain reveal/freeze =
+owner's devnet check). **Solana reveal split to OC-2b** (deferred, devnet-unverifiable like OC-1b).
+Owner-side QA remainder + V1 taste follow-ups (Site UX session, Mint-FX motion, light palette) still open.
 
 ## Packages (engine & libraries)
 

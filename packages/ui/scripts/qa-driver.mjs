@@ -382,6 +382,10 @@ async function main() {
     if (await pub.isVisible().catch(() => false)) { await pub.click(); await lp.waitForTimeout(400); }
     const baseUri = lp.getByLabel('Revealed base URI');
     if (await baseUri.isVisible().catch(() => false)) {
+      // OC-2: the reveal baseURI should auto-fill from the upload manifest (no hand-copying).
+      assert((await baseUri.inputValue()).startsWith('ipfs://'), 'Reveal baseURI did not auto-fill from the upload manifest');
+      // OC-2: the upload→reveal→freeze stepper should mark the upload step done.
+      assert((await lp.locator('.rstep--done').count()) >= 1, 'Reveal stepper did not mark the upload step done');
       await baseUri.fill('ipfs://bafyrevealed/');
       await lp.getByRole('button', { name: 'Reveal', exact: true }).click();
       await lp.waitForTimeout(400);
@@ -391,6 +395,20 @@ async function main() {
     const withdraw = lp.getByRole('button', { name: 'Withdraw', exact: true }).first();
     if (await withdraw.isVisible().catch(() => false)) { await withdraw.click(); await lp.waitForTimeout(400); }
     await lp.close();
+  });
+
+  // Launch reveal — no-upload state: the stepper's "Go to Publish" affordance must navigate there.
+  await step('launch:reveal-no-upload', async () => {
+    const np = await newPage(browser, realPacks, { deployed: true, failMethods: ['readFile'] });
+    await gotoStage(np, 'Launch');
+    await np.waitForTimeout(300);
+    const goPublish = np.getByRole('button', { name: 'Go to Publish →' }).first();
+    assert(await goPublish.isVisible().catch(() => false), 'Reveal: "Go to Publish" affordance missing when no metadata uploaded');
+    await goPublish.click();
+    await np.waitForTimeout(400);
+    const heading = (await np.locator('.main-title').first().textContent()) ?? '';
+    assert(heading.trim() === 'Publish', `Reveal "Go to Publish" did not navigate (got "${heading.trim()}")`);
+    await np.close();
   });
 
   // Launch (Solana / Candy Machine) — status renders + create/insert flows drive without errors.

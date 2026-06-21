@@ -87,7 +87,8 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 |----|------|--------|
 | OC-1 | **Solana Launch-stage parity** — in-app Candy Machine status + create + insert (key-file), chain-equal to EVM. **Merged.** Owner verifies on devnet. | ◐ |
 | OC-1b | **Phantom (browser) signing** for Solana Launch — non-custodial create/insert via the desktop extension (browser console) or WalletConnect/mobile. Deferred until OC-1 key-file is devnet-proven (Electron can't reach the extension; CM-create is multi-tx). | ☐ |
-| OC-2 | Reveal flow UX — full upload-metadata → reveal → freeze path, in-app. | ☐ |
+| OC-2 | **Reveal flow UX (EVM) — done + merged.** Auto-fills the baseURI from the upload manifest, a guided **upload → reveal → freeze stepper** with live state, and a **"Go to Publish"** action closing the no-code loop. On-chain reveal/freeze = owner's devnet check. | ☑ |
+| OC-2b | **Solana reveal** (Candy Machine hidden-settings) — deferred (same devnet-unverifiable-by-agent constraint as OC-1b; sequence after Solana create/insert is devnet-proven). | ☐ |
 | OC-3 | Rarity → live token-tier mapping in the mint widget (real mint data). | ☐ |
 | OC-4 | **Audit handoff package** — assemble the contract + spec + threat model + test suite + gas notes + assumptions for an external auditor to start cold. | ☐ |
 | OC-5 | Re-run the Foundry suite + Slither when CI/forge is available again (owner-run); freeze the contract for audit. | ☐ |

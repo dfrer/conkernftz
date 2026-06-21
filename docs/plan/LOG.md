@@ -35,6 +35,32 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-2 (EVM) finished + merged: reveal UX (auto-fill + stepper + Go-to-Publish)
+Closed out the EVM reveal flow and merged `feat/oc2-reveal-ux` → `main`. Final finishing touch:
+when the reveal step has no uploaded metadata, the panel now offers a **"Go to Publish →"** button
+(navigation threaded into `LaunchScreen` via `onNavigate`), so the guided upload→reveal→freeze flow
+is clickable end-to-end. The harness mock's `readFile` honors `failMethods` so the no-upload state is
+drivable; the QA driver asserts the affordance appears and navigates to Publish. Full pre-merge gate:
+typecheck · full build · UI 203/203 · workspace tests (chain-solana merkle test flaked under the
+concurrent run — passes 17/17 in isolation, pre-existing, not OC-2) · screenshots · QA driver 0
+findings. **Solana reveal (hidden-settings) split out as OC-2b** — deferred for the same
+devnet-unverifiable reason as OC-1b. So **OC-2's verifiable EVM scope is complete.**
+
+### 2026-06-20 — OC-2 (start): EVM reveal UX — auto-fill baseURI from the upload manifest
+Owner skipped OC-1b (Phantom unverifiable-by-agent) → took OC-2 (next in-order, fully driver-
+verifiable). The EVM Launch "Reveal & metadata" panel made you hand-paste the revealed baseURI;
+now `LaunchScreen` reads `${outDir}/.upload-manifest.json` and **auto-fills the baseURI** (+ a "Use
+uploaded baseURI" button), with clear status: *revealed* / *uploaded metadata detected — pre-filled* /
+*no upload yet → Publish first*. Manifest read is best-effort (try/catch) so a missing/unreadable
+manifest never breaks `refresh` (fixed a console error the LaunchScreen test surfaced from the new
+read). Verified: typecheck · full build · 203/203 UI tests (clean, no console error) · screenshots
+52/52 (new `launch-reveal-panel`) · QA driver **0 findings** (+ asserts the baseURI auto-fills).
+On-chain reveal itself stays owner/devnet-verified.
+**+ Guided stepper:** added an **upload → reveal → freeze** progress indicator above the controls that
+reflects live state (✓ done / amber active / pending; "Freeze · optional"), so the operator sees the
+whole flow at a glance. Verified: typecheck · 203/203 UI tests · full build · screenshots · QA driver
+**0 findings** (asserts the stepper marks the upload step done). On branch `feat/oc2-reveal-ux`.
+
 ### 2026-06-20 — OC-1: Solana Launch parity — slices 1+2 (status + create + insert, key-file)
 Owner: "continue onto OC-1." Branch `feat/oc1-solana-launch`. Owner scoped the first slice to the
 **core deploy path** (status + create + insert + UI), **key-file signer first** + Phantom
