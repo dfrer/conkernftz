@@ -35,6 +35,17 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-2 (EVM) finished + merged: reveal UX (auto-fill + stepper + Go-to-Publish)
+Closed out the EVM reveal flow and merged `feat/oc2-reveal-ux` → `main`. Final finishing touch:
+when the reveal step has no uploaded metadata, the panel now offers a **"Go to Publish →"** button
+(navigation threaded into `LaunchScreen` via `onNavigate`), so the guided upload→reveal→freeze flow
+is clickable end-to-end. The harness mock's `readFile` honors `failMethods` so the no-upload state is
+drivable; the QA driver asserts the affordance appears and navigates to Publish. Full pre-merge gate:
+typecheck · full build · UI 203/203 · workspace tests (chain-solana merkle test flaked under the
+concurrent run — passes 17/17 in isolation, pre-existing, not OC-2) · screenshots · QA driver 0
+findings. **Solana reveal (hidden-settings) split out as OC-2b** — deferred for the same
+devnet-unverifiable reason as OC-1b. So **OC-2's verifiable EVM scope is complete.**
+
 ### 2026-06-20 — OC-2 (start): EVM reveal UX — auto-fill baseURI from the upload manifest
 Owner skipped OC-1b (Phantom unverifiable-by-agent) → took OC-2 (next in-order, fully driver-
 verifiable). The EVM Launch "Reveal & metadata" panel made you hand-paste the revealed baseURI;
