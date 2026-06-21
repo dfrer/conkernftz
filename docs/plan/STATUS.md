@@ -8,9 +8,18 @@
 The **thin A→Z slice is proven end-to-end**: generate → site → deploy contract → mint, with the
 owner having minted **NASA CRUST token #1 on Base-Sepolia** through the real widget. The on-chain
 track (contract + adapter + CLI + in-app Launch with 3 signer modes) is functionally complete and
-merged to `main`. **The next phase is the full V1 program build — design system + all UI/UX** (see
-[PLAN.md](PLAN.md)). **No CI budget** → everything below is verified **locally** (typecheck / build
-/ vitest / preload drift); a red ❌ on GitHub is billing, not code.
+merged to `main`. **No CI budget** → everything is verified **locally** (typecheck / build / vitest /
+preload drift); a red ❌ on GitHub is billing, not code.
+
+**✅ V1 design build COMPLETE — owner-confirmed (2026-06-20) and merged to `main`.** V1-0…V1-16 done
+(17 commits via `feat/v1-design`): visual-assessment harness rebuilt; token layer locked + **light
+theme made first-class**; primitive interaction states filled + full Components catalog; app-shell
+polish; **per-screen passes for all stages**; a flow-coherence pass (one consistent loading language,
+numbered stage-kickers, "NFT Art Foundry" naming); and a Design Layers-table density deepen. The owner
+walked the build and signed off; V1-16 (the explicit gate) is passed. **▶ Active focus now: the NEXT
+board — on-chain infra to parity (OC-1 Solana Launch parity first).** Owner-accepted follow-ups (not
+blockers): a focused live session on the **Site builder** widget/inspector UX, and revisiting the
+**Mint FX reveal motion** + **light-theme palette** as taste items.
 
 ## Packages (engine & libraries)
 
@@ -31,18 +40,18 @@ look (instrument-console layout, pipeline nav, status bar).
 
 | Screen | Function | V1 design polish |
 |--------|----------|------------------|
-| Projects | ✅ open/scaffold/select a project | ⏳ design pass |
-| Design | ✅ layers, rules, rarity, image, patterns | ⏳ (dense; needs the most UX love) |
-| Preview | ✅ live random previews | ⏳ design pass |
-| Build | ✅ images + local JSON, progress | ⏳ design pass |
-| Publish | ✅ upload assets, rewrite URIs | ⏳ design pass |
-| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces | 🟡 strong; refine states/motion |
-| Site | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | 🟡 deep; tighten widgets + inspector UX |
-| Launch | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console) | ⏳ functional, needs design pass |
-| Packs | ✅ app-level pack/card-back library (built-in CONKERCO + imported) | ⏳ design pass |
-| Fal AI | 🟡 fal catalog/generation (owner's key) | ⏳ |
-| Settings / Help | ✅ | ⏳ |
-| Components | ✅ in-app design-system playground (review surface) | — (this is the tool we use) |
+| Projects | ✅ open/scaffold/select a project | ◐ V1-4: empty-state hero + card-path truncation |
+| Design | ✅ layers, rules, rarity, image, patterns | ◐ V1-5: themed form controls; **deeper table-density work still open** |
+| Preview | ✅ live random previews | ◐ V1-6: loading affordance (already strong) |
+| Build | ✅ images + local JSON, progress | ◐ V1-7: loading affordance (already strong) |
+| Publish | ✅ upload assets, rewrite URIs | ◐ V1-8: per-action loading |
+| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces | ◐ V1-9: loading + kicker; **reveal motion needs live review** |
+| Site | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | ◐ V1-10: loading + kicker; **widget/inspector UX deferred to a live session** |
+| Launch | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console) | ◐ V1-11: kicker + tokenized danger + per-action loading |
+| Packs | ✅ app-level pack/card-back library (built-in CONKERCO + imported) | ◐ V1-12: per-section loading (already clean) |
+| Fal AI | 🟡 fal catalog/generation (owner's key) | ◐ V1-13: loading affordance |
+| Settings / Help | ✅ | ◐ V1-14: Help manual reorder + Launch/Packs added + "NFT Art Foundry" copy; Settings clean |
+| Components | ✅ in-app design-system playground (review surface) | ✅ V1-2: full primitive×state catalog (the review surface) |
 
 ## On-chain (Phase L)
 
@@ -62,10 +71,13 @@ look (instrument-console layout, pipeline nav, status bar).
 - ✅ Local gates green: typecheck, full build (renderer + site + console bundles), vitest (199 UI +
   chain-evm 81 + cli 12 + core/…), preload drift test.
 - ✅ The contract was CI-verified (34/34 forge + Slither) while quota existed — that result stands.
-- 🟡 **Visual assessment is the current weak spot** — there's a screenshot harness
-  (`packages/ui/scripts/screenshots.mjs`, playwright-core → system Chrome/Edge headless against the
-  built renderer with a mocked `window.foundry`), but it needs upgrading for concrete per-screen
-  design critique (the V1 priority). See [PLAN.md](PLAN.md).
+- ✅/🟡 **Visual assessment upgraded (V1-0, ◐ pending owner nod)** — `packages/ui/scripts/screenshots.mjs`
+  (playwright-core → system Chrome/Edge headless, mocked `window.foundry`) now captures **45** shots:
+  every stage incl. **Launch** (not-deployed + deployed), key in-screen states, a full **light-theme**
+  pass, and a **compact-viewport** pass — and emits `screenshots/manifest.json` + a browsable
+  **`screenshots/index.html`** contact sheet with a per-shot critique note. Run:
+  `pnpm -C packages/ui build:renderer-next && pnpm -C packages/ui screenshots`. This is the review
+  surface for the screen-by-screen V1 passes (V1-1…V1-15).
 - 🟡 **No CI budget** (owner) → never rely on CI; local is the signal.
 
 ## Outstanding owner-verification items

@@ -268,8 +268,8 @@ export function FalScreen() {
             <textarea className="textarea" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Describe the output…" aria-label="Prompt" />
           </Field>
           <div className="row">
-            <Button variant="primary" onClick={generate} disabled={busy}>
-              {busy ? 'Generating…' : 'Generate'}
+            <Button variant="primary" onClick={generate} loading={busy}>
+              Generate
             </Button>
             <span className="label muted">Requests go directly to fal.run with your key.</span>
           </div>

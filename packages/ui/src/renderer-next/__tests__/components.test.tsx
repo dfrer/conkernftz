@@ -6,6 +6,8 @@ import { Button } from '../components/Button';
 // unmount between tests so accumulated DOM doesn't break role/text queries.
 afterEach(cleanup);
 import { Dialog } from '../components/Dialog';
+import { Badge } from '../components/Badge';
+import { Field, Input } from '../components/Field';
 import { RedactionStamp } from '../components/RedactionStamp';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -21,6 +23,49 @@ describe('Button', () => {
     expect(btn.className).toContain('btn--primary');
     fireEvent.click(btn);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks itself busy and disabled while loading', () => {
+    const onClick = vi.fn();
+    const { getByRole } = render(
+      <Button loading onClick={onClick}>
+        Save
+      </Button>,
+    );
+    const btn = getByRole('button', { name: 'Save' }) as HTMLButtonElement;
+    expect(btn.getAttribute('aria-busy')).toBe('true');
+    expect(btn.disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+});
+
+describe('Badge', () => {
+  it('applies the tone class for status tones', () => {
+    const { getByText } = render(<Badge tone="danger">err</Badge>);
+    expect(getByText('err').className).toContain('badge--danger');
+  });
+});
+
+describe('Field / Input', () => {
+  it('shows error text and marks the control invalid', () => {
+    const { getByText, getByRole } = render(
+      <Field label="Address" error="Bad address">
+        <Input invalid defaultValue="x" />
+      </Field>,
+    );
+    expect(getByText('Bad address')).toBeTruthy();
+    expect(getByRole('textbox').getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('renders hint text when there is no error', () => {
+    const { getByText, queryByRole } = render(
+      <Field label="Name" hint="Public label">
+        <Input />
+      </Field>,
+    );
+    expect(getByText('Public label')).toBeTruthy();
+    expect(queryByRole('textbox')!.getAttribute('aria-invalid')).toBeNull();
   });
 });
 

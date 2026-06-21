@@ -1,32 +1,66 @@
 import { useState } from 'react';
 import { Panel, StageHeader, Button, Field, Input, Select, Badge, Lamp, Skeleton, Dialog, EmptyState, Tabs, TabPanel, RarityBar, useToast } from '../components';
 
-// In-app component playground — the visual catalog of the design system. Doubles as a
-// manual-QA surface until full visual-regression tooling lands.
+// In-app component playground — the living catalog of the design system and the owner's review
+// surface for it. Shows every primitive across every interaction state (variant, size, disabled,
+// loading, focus, error, empty) so consistency is checkable at a glance, in both themes.
 export function PlaygroundScreen() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('one');
+  const [loading, setLoading] = useState(false);
   const toast = useToast();
+
+  // Fire a transient loading state so the spinner/busy treatment is reviewable live.
+  const demoLoad = () => {
+    setLoading(true);
+    setTimeout(() => setLoading(false), 1600);
+  };
+
   return (
     <div className="stack stagger">
       <StageHeader kicker="SYSTEM // DESIGN LIBRARY" title="Components" />
 
       <Panel title="Buttons">
-        <div className="row wrap">
-          <Button variant="primary">Primary</Button>
-          <Button>Default</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="danger">Danger</Button>
-          <Button variant="primary" disabled>
-            Disabled
-          </Button>
-          <Button size="sm">Small</Button>
+        <div className="stack" style={{ gap: 'var(--sp-4)' }}>
+          <div className="stack" style={{ gap: 6 }}>
+            <span className="label muted">Variants</span>
+            <div className="row wrap">
+              <Button variant="primary">Primary</Button>
+              <Button>Default</Button>
+              <Button variant="ghost">Ghost</Button>
+              <Button variant="danger">Danger</Button>
+            </div>
+          </div>
+          <div className="stack" style={{ gap: 6 }}>
+            <span className="label muted">Small + icon</span>
+            <div className="row wrap">
+              <Button variant="primary" size="sm">Primary</Button>
+              <Button size="sm">Default</Button>
+              <Button variant="ghost" size="sm">Ghost</Button>
+              <Button variant="danger" size="sm">Danger</Button>
+              <Button icon aria-label="Settings">⚙</Button>
+            </div>
+          </div>
+          <div className="stack" style={{ gap: 6 }}>
+            <span className="label muted">Disabled · loading</span>
+            <div className="row wrap">
+              <Button variant="primary" disabled>Disabled</Button>
+              <Button disabled>Disabled</Button>
+              <Button variant="danger" disabled>Disabled</Button>
+              <Button variant="primary" loading={loading} onClick={demoLoad}>
+                {loading ? 'Working…' : 'Run task'}
+              </Button>
+            </div>
+          </div>
+          <p className="hint label muted" style={{ margin: 0 }}>
+            Keyboard-focus any button to see the amber <code>:focus-visible</code> ring (tokens drive it in both themes).
+          </p>
         </div>
       </Panel>
 
       <Panel title="Fields">
         <div className="grid cols-auto">
-          <Field label="Collection name">
+          <Field label="Collection name" hint="Shown to collectors on the mint site.">
             <Input placeholder="e.g. Specimens" />
           </Field>
           <Field label="Image format">
@@ -36,23 +70,50 @@ export function PlaygroundScreen() {
               <option value="gif">gif</option>
             </Select>
           </Field>
+          <Field label="Treasury address" error="Not a valid 0x address.">
+            <Input defaultValue="0xnope" invalid />
+          </Field>
+          <Field label="Locked (public phase opened)">
+            <Input defaultValue="0.01" disabled />
+          </Field>
+        </div>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-4)', gap: 'var(--sp-4)' }}>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" defaultChecked /> Required
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" /> Optional
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" disabled /> Disabled
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="radio" name="pg-radio" defaultChecked /> Choice A
+          </label>
+          <label className="row" style={{ gap: 6 }}>
+            <input type="radio" name="pg-radio" /> Choice B
+          </label>
         </div>
       </Panel>
 
-      <Panel title="Status indicators">
+      <Panel title="Status — badges">
         <div className="row wrap">
           <Badge>default</Badge>
           <Badge tone="accent">accent</Badge>
           <Badge tone="ok">ok</Badge>
-          <span className="row">
-            <Lamp state="on" /> on
-          </span>
-          <span className="row">
-            <Lamp state="ok" /> ok
-          </span>
-          <span className="row">
-            <Lamp state="danger" pulse /> alert
-          </span>
+          <Badge tone="danger">danger</Badge>
+          <Badge tone="info">info</Badge>
+          <Badge tone="warn">warn</Badge>
+        </div>
+      </Panel>
+
+      <Panel title="Status — lamps">
+        <div className="row wrap">
+          <span className="row"><Lamp state="off" /> off</span>
+          <span className="row"><Lamp state="on" /> on</span>
+          <span className="row"><Lamp state="ok" /> ok</span>
+          <span className="row"><Lamp state="danger" /> danger</span>
+          <span className="row"><Lamp state="danger" pulse /> alert (pulse)</span>
         </div>
       </Panel>
 
@@ -105,12 +166,23 @@ export function PlaygroundScreen() {
         </div>
       </Panel>
 
-      <Panel title="Loading + empty">
+      <Panel title="Loading — skeletons">
         <div className="stack">
           <Skeleton w={260} />
           <Skeleton w={190} />
           <Skeleton w={320} />
+        </div>
+      </Panel>
+
+      <Panel title="Empty states">
+        <div className="grid cols-auto">
           <EmptyState title="Nothing here yet" hint="Empty states always tell the operator what to do next." />
+          <EmptyState
+            code="NO PROJECT"
+            title="Open a collection"
+            hint="With an action, the next step is one click away."
+            action={<Button variant="primary" size="sm" onClick={() => toast.push('Demo action', 'ok')}>New project</Button>}
+          />
         </div>
       </Panel>
 

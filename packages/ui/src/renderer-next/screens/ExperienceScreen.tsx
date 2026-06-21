@@ -173,7 +173,7 @@ export function ExperienceScreen() {
   return (
     <div className="stack stagger">
       <StageHeader
-        kicker="STAGE // MINT FX"
+        kicker="STAGE 05 // REVEAL"
         title="Mint experience"
         actions={
           <div className="row">
@@ -232,8 +232,8 @@ export function ExperienceScreen() {
                 <span className="label">Auto-flip cards</span>
               </label>
               <div className="row">
-                <Button size="sm" onClick={() => loadArt()} disabled={busy || !isBridged()}>
-                  {busy ? 'Loading…' : 'Use live art'}
+                <Button size="sm" onClick={() => loadArt()} loading={busy} disabled={!isBridged()}>
+                  Use live art
                 </Button>
                 <span className="label muted">Pulls rendered previews to use as the revealed card art.</span>
               </div>

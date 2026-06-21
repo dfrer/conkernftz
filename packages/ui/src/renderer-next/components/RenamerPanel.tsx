@@ -76,8 +76,8 @@ export function RenamerPanel({ layers, delimiter, defaultWeight = 1 }: { layers:
     <Panel
       title="Assets & rarity (renamer)"
       actions={
-        <Button size="sm" variant="primary" onClick={apply} disabled={busy || !pairs.length}>
-          {busy ? 'Renaming…' : `Apply (${pairs.length})`}
+        <Button size="sm" variant="primary" onClick={apply} loading={busy} disabled={!pairs.length}>
+          Apply ({pairs.length})
         </Button>
       }
     >
