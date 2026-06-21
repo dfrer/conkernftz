@@ -10,6 +10,7 @@ import {
   getAllowlistProof,
   bytesToHex,
   hexToBytes,
+  mapCandyMachineAccount,
 } from '../candy-machine.js';
 
 describe('buildConfigLines', () => {
@@ -54,6 +55,37 @@ describe('loadAllowlist', () => {
   });
   it('parses a comma/newline file', async () => {
     expect(await loadAllowlist(dir, 'a.csv')).toEqual(['Addr1', 'Addr2', 'Addr3']);
+  });
+});
+
+describe('mapCandyMachineAccount', () => {
+  const acc = (over = {}) => ({
+    itemsRedeemed: 0n,
+    itemsLoaded: 0,
+    authority: { toString: () => 'AUTH' },
+    collectionMint: { toString: () => 'COLL' },
+    data: { itemsAvailable: 10n },
+    ...over,
+  });
+  it('maps bigint + number fields to a JSON-safe status', () => {
+    const s = mapCandyMachineAccount('CM', acc({ itemsRedeemed: 3n, itemsLoaded: 10 }));
+    expect(s).toMatchObject({ candyMachine: 'CM', collection: 'COLL', authority: 'AUTH', itemsAvailable: 10, itemsLoaded: 10, itemsRedeemed: 3 });
+  });
+  it('reports fullyLoaded once every config line is inserted', () => {
+    expect(mapCandyMachineAccount('CM', acc({ itemsLoaded: 9 })).fullyLoaded).toBe(false);
+    expect(mapCandyMachineAccount('CM', acc({ itemsLoaded: 10 })).fullyLoaded).toBe(true);
+  });
+  it('reports soldOut once every item is minted', () => {
+    expect(mapCandyMachineAccount('CM', acc({ itemsRedeemed: 9n })).soldOut).toBe(false);
+    expect(mapCandyMachineAccount('CM', acc({ itemsRedeemed: 10n })).soldOut).toBe(true);
+  });
+  it('treats an empty (0-item) machine as neither loaded nor sold out', () => {
+    const s = mapCandyMachineAccount('CM', acc({ data: { itemsAvailable: 0n } }));
+    expect(s.fullyLoaded).toBe(false);
+    expect(s.soldOut).toBe(false);
+  });
+  it('omits collection when absent', () => {
+    expect(mapCandyMachineAccount('CM', acc({ collectionMint: undefined })).collection).toBeUndefined();
   });
 });
 
