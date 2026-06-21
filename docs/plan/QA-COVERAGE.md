@@ -18,13 +18,13 @@
 |---------|-----------|--------------------|
 | **Shell** (header/nav/status) | ✅ nav to all 13 stages; title asserted; theme toggle exists | ☐ keyboard nav of pipeline; status-bar readout states; reduced-motion |
 | **Projects** | ✅ New-project dialog open/fill/escape-close; populated recents (seeded) | ☐ open-via-dialog flow; recent-card open; create→scaffold path; error toast on bridge-offline |
-| **Design** | ✅ all tabs; +Add layer (row count asserted); trait browser opens | ☐ per-row controls (name/path/rarity/req/opacity/move/remove); EffectsEditor every control; OverridesEditor; RulesEditor; RenamerPanel apply; SpawnEditor save |
+| **Design** | ✅ all tabs; +Add layer (row count asserted); trait browser opens; **layer-1 name/rarity/req/opacity edits asserted; fx editor opens; Save-config dirty-enable asserted** | ☐ move up/down + remove; EffectsEditor every control; OverridesEditor; RulesEditor; RenamerPanel apply; SpawnEditor save |
 | **Preview** | ✅ generate (thumb count asserted); lightbox open/close | ☐ seed lock + reproduce; count bounds (1..12); lightbox arrow paging |
 | **Build** | ✅ build (output count asserted) | ☐ pause/resume/stop; progress events; rarity report render; audit assets/outputs; reload; open-folder |
 | **Publish** | ✅ upload assets (mock) | ☐ provider/mode/force toggles; EVM vs Solana mint buttons (per-action); readiness refresh; console clear |
 | **Mint FX** | ✅ replay; rip player visible | ☐ every preset/kind; cards/duration/label/accent fields; shake/auto-flip; pack/back pickers; rarity-back add/edit/remove; use-live-art |
 | **Site** | ◐ apply template; layout→canvas | ☐ every template; canvas widget add/move/resize/rotate/select; inspector; undo/redo; theme controls; wallpaper/cursor; deploy hosts; local preview; raw-HTML widget |
-| **Launch** | ✅ deployed: Save caps/prices (mock) | ☐ signer-mode toggle (key/wallet/console); preflight; deploy; phase buttons + confirm; allowlist file; reveal/freeze confirms; withdraw; mainnet confirm-token gate |
+| **Launch** | ✅ signer toggle (wallet projectId asserted); preflight; deploy; deployed: Save caps/prices, phase→public (confirm), reveal, freeze (confirm), withdraw — all mocked, no runtime errors | ☐ allowlist file upload; mainnet confirm-token gate; browser-console open |
 
 ## Utility surfaces
 

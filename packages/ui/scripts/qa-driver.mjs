@@ -35,7 +35,8 @@ const FAIL_KINDS = new Set(['pageerror', 'requestfailed', 'assert']);
 const record = (kind, level, text) => findings.push({ surface, kind, level, text: String(text ?? '').replace(/\s+/g, ' ').slice(0, 300) });
 const isFail = (f) => FAIL_KINDS.has(f.kind) || (f.kind === 'console' && f.level === 'error');
 
-/** Wire console/page/network listeners so every runtime problem is captured + attributed. */
+/** Wire console/page/network listeners so every runtime problem is captured + attributed.
+ *  Also auto-accept window.confirm/alert so confirm-gated actions (Launch phase/freeze) proceed. */
 function attach(page) {
   page.on('console', (msg) => {
     const t = msg.type();
@@ -48,6 +49,7 @@ function attach(page) {
     if (/favicon/i.test(url) || /ERR_ABORTED/.test(err)) return; // ignore favicon + cancelled navs
     record('requestfailed', 'error', `${url} — ${err}`);
   });
+  page.on('dialog', (d) => d.accept().catch(() => {}));
 }
 
 function assert(cond, msg) {
@@ -118,6 +120,35 @@ async function main() {
     await page.getByRole('button', { name: /Browse layer 1 traits/i }).click();
     await page.waitForTimeout(500);
     assert(await page.locator('.panel', { hasText: 'Traits —' }).first().isVisible(), 'Trait browser did not open');
+  });
+
+  await step('design:layer-row-controls', async () => {
+    await gotoStage(page, 'Design');
+    await page.getByRole('tab', { name: /^Layers/i }).click();
+    await page.waitForTimeout(200);
+    const nameInput = page.getByLabel('Layer 1 name');
+    await nameInput.fill('Backdrop');
+    await page.waitForTimeout(100);
+    assert((await nameInput.inputValue()) === 'Backdrop', 'Layer name edit did not stick');
+    await page.getByLabel('Layer 1 rarity').selectOption('uniform');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Layer 1 rarity').inputValue()) === 'uniform', 'Layer rarity select did not apply');
+    const req = page.getByLabel('Layer 1 required');
+    const before = await req.isChecked();
+    await req.click();
+    await page.waitForTimeout(100);
+    assert((await req.isChecked()) !== before, 'Required checkbox did not toggle');
+    await page.getByLabel('Layer 1 opacity').fill('0.5');
+    await page.waitForTimeout(100);
+    // Open the effects editor for layer 1 and confirm its panel mounts.
+    await page.getByRole('button', { name: /Edit layer 1 effects/i }).click();
+    await page.waitForTimeout(300);
+    assert(await page.locator('.panel', { hasText: 'Effects —' }).first().isVisible(), 'Effects editor did not open');
+    // "Save config" should now be enabled (config is dirty after edits).
+    const save = page.getByRole('button', { name: 'Save config' }).first();
+    assert(!(await save.isDisabled()), 'Save config stayed disabled after edits (dirty state not tracked)');
+    await save.click();
+    await page.waitForTimeout(200);
   });
 
   await step('projects:new-dialog', async () => {
@@ -210,18 +241,46 @@ async function main() {
 
   await page.close();
 
-  // Launch (deployed) — drive the sale-management writes (mocked) and confirm no runtime errors.
+  // Launch (not-deployed) — signer toggle + preflight + deploy.
+  await step('launch:deploy-flow', async () => {
+    const np = await newPage(browser, realPacks);
+    await gotoStage(np, 'Launch');
+    await np.waitForTimeout(300);
+    // Toggle to the wallet signer and confirm the WalletConnect projectId field appears.
+    await np.getByRole('button', { name: 'Connect wallet' }).first().click();
+    await np.waitForTimeout(250);
+    assert(await np.getByLabel('WalletConnect projectId').isVisible().catch(() => false), 'Wallet signer UI (projectId) did not appear');
+    await np.getByRole('button', { name: 'Deployer key file' }).first().click();
+    await np.waitForTimeout(200);
+    await np.getByRole('button', { name: /Preflight/i }).click();
+    await np.waitForTimeout(400);
+    await np.getByRole('button', { name: 'Deploy contract' }).click();
+    await np.waitForTimeout(500);
+    await np.close();
+  });
+
+  // Launch (deployed) — drive sale writes + the confirm-gated phase/reveal/freeze/withdraw paths.
   await step('launch:deployed-actions', async () => {
     const lp = await newPage(browser, realPacks, { deployed: true });
     await gotoStage(lp, 'Launch');
     await lp.waitForTimeout(300);
     for (const name of ['Save caps', 'Save prices']) {
       const b = lp.getByRole('button', { name }).first();
-      if (await b.isVisible().catch(() => false)) {
-        await b.click();
-        await lp.waitForTimeout(400);
-      }
+      if (await b.isVisible().catch(() => false)) { await b.click(); await lp.waitForTimeout(300); }
     }
+    // Phase → public (window.confirm auto-accepted), then reveal, freeze, withdraw.
+    const pub = lp.getByRole('button', { name: 'public', exact: true }).first();
+    if (await pub.isVisible().catch(() => false)) { await pub.click(); await lp.waitForTimeout(400); }
+    const baseUri = lp.getByLabel('Revealed base URI');
+    if (await baseUri.isVisible().catch(() => false)) {
+      await baseUri.fill('ipfs://bafyrevealed/');
+      await lp.getByRole('button', { name: 'Reveal', exact: true }).click();
+      await lp.waitForTimeout(400);
+    }
+    const freeze = lp.getByRole('button', { name: /Freeze \(permanent\)/i }).first();
+    if (await freeze.isVisible().catch(() => false)) { await freeze.click(); await lp.waitForTimeout(400); }
+    const withdraw = lp.getByRole('button', { name: 'Withdraw', exact: true }).first();
+    if (await withdraw.isVisible().catch(() => false)) { await withdraw.click(); await lp.waitForTimeout(400); }
     await lp.close();
   });
 
