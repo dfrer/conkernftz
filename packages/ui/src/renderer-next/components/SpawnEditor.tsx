@@ -113,8 +113,8 @@ export function SpawnEditor({ layers, mapPath, onMapPathChange }: { layers: Laye
         <div className="row">
           <Badge>{map.dots.length} DOTS</Badge>
           {dirty ? <Badge tone="accent">UNSAVED</Badge> : null}
-          <Button size="sm" variant="primary" onClick={save} disabled={busy}>
-            {busy ? 'Saving…' : 'Save spawn map'}
+          <Button size="sm" variant="primary" onClick={save} loading={busy}>
+            Save spawn map
           </Button>
         </div>
       }

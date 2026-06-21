@@ -40,7 +40,7 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V1-12 | Screen pass — **Packs** | ◐ |
 | V1-13 | Screen pass — **Fal AI** | ◐ |
 | V1-14 | Screen pass — **Settings / Help** | ◐ |
-| V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ☐ |
+| V1-15 | End-to-end **flow coherence**: the A→Z journey feels like one product (empty states, loading, errors, hand-offs between stages). | ◐ |
 | V1-16 | **Owner ↔ agent local confirmation** gate: walk every surface, confirm look/feel/function. | ☐ |
 
 > **Status convention here:** ◐ = work landed + locally verified (typecheck/build/vitest/screenshots),

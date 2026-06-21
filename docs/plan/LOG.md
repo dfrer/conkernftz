@@ -5,6 +5,18 @@
 
 ---
 
+### 2026-06-20 — V1-15: flow coherence (loading affordance unified)
+Coherence has been accruing across the whole effort (token layer, themed checkboxes, the numbered
+stage-kicker series, the "NFT Art Foundry" naming fixes). This pass closed the **loading affordance**:
+adopted the Button `loading` prop on the last ad-hoc text-swap buttons — Projects "Choose folder &
+create", the Renamer "Apply (N)", and the Spawn-map save. Audited the whole renderer: **every button
+busy-state now uses the `loading` primitive** (spinner + `aria-busy` + auto-disable); the only
+remaining inline "Loading…" is a Design empty-state *hint*, which is correct (not a button). Net: one
+consistent loading language A→Z. Other coherence checks held — every screen uses StageHeader + Panel +
+`stack/stagger`, every empty/idle view uses EmptyState, both themes are first-class. Verified: typecheck
+clean · 203/203 vitest · renderer build clean. ◐ pending owner live-review; remaining deep item is the
+Site builder widget/inspector UX (V1-10), to be done live.
+
 ### 2026-06-20 — V1-12/13/14: utility screens (Packs · Fal AI · Settings/Help)
 The utility screens were mostly solid; focused passes:
 - **Packs (V1-12):** made the import busy-state **per-section** (`busy: PackKind`) so only the section

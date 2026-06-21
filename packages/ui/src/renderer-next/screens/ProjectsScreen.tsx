@@ -151,8 +151,8 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
             <Button variant="ghost" onClick={() => setNewOpen(false)} disabled={creating}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={create} disabled={creating || !name.trim()}>
-              {creating ? 'Creating…' : 'Choose folder & create'}
+            <Button variant="primary" onClick={create} loading={creating} disabled={!name.trim()}>
+              Choose folder &amp; create
             </Button>
           </div>
         </div>
