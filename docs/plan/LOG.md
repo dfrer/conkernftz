@@ -5,6 +5,17 @@
 
 ---
 
+### 2026-06-20 — V1-5 deepen: Design Layers-table density/legibility
+Went back to the screen flagged as needing the most UX work. The 9-column Layers rows had **no
+inter-row separation, padding, or hover** — only the fx-selected row got a thin inset bar — so
+tracking one layer across all 9 columns was hard. Added per-row padding (breathing room), a quiet
+**hover highlight** (`surface-2` + hairline) so the row under the cursor is trackable, and made the
+**active (fx-selected) row** clearly highlighted (`accent-soft` + amber border + the inset bar) so it
+visibly ties to the "Effects — <layer>" panel below. Header row keeps its underline + column
+alignment. Verified via the `design-layers-panel` close-up (rows now breathe) · typecheck clean ·
+203/203 vitest · renderer build clean · screenshots 49/49. Still pending owner live-review; deeper
+Design ideas (e.g. action-column grouping) remain candidates for the V1-16 walkthrough.
+
 ### 2026-06-20 — V1-15: flow coherence (loading affordance unified)
 Coherence has been accruing across the whole effort (token layer, themed checkboxes, the numbered
 stage-kicker series, the "NFT Art Foundry" naming fixes). This pass closed the **loading affordance**:

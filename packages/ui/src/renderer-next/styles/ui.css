@@ -862,6 +862,15 @@ input[type='radio']:disabled {
   grid-template-columns: 28px 44px minmax(110px, 1.1fr) minmax(140px, 1.5fr) 96px 40px 78px 96px auto;
   gap: var(--sp-2);
   align-items: center;
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
+  border: var(--hair) solid transparent;
+  transition: background var(--dur-1), border-color var(--dur-1);
+}
+/* Row hover: a quiet highlight so a single layer is trackable across all 9 columns. */
+.layer-row:not(.layer-row--head):hover {
+  background: var(--surface-2);
+  border-color: var(--line);
 }
 .layer-thumb {
   width: 38px;
@@ -876,7 +885,8 @@ input[type='radio']:disabled {
   background: repeating-linear-gradient(45deg, var(--surface-2) 0 6px, var(--surface-inset) 6px 12px);
 }
 .layer-row--head {
-  padding-bottom: var(--sp-2);
+  padding: 0 var(--sp-2) var(--sp-2);
+  border-radius: 0;
   border-bottom: var(--hair) solid var(--line);
 }
 .layer-row .input,
@@ -956,6 +966,8 @@ input[type='radio']:disabled {
 
 .layer-row--active {
   box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--line-amber);
 }
 
 /* ===================== Rarity distribution bar ===================== */
