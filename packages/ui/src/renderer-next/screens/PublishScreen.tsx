@@ -176,8 +176,8 @@ export function PublishScreen() {
             <span className="label">Force re-upload</span>
           </label>
           <div style={{ alignSelf: 'end' }}>
-            <Button variant="primary" onClick={upload} disabled={!!busy || !isBridged()}>
-              {busy === 'Upload' ? 'Uploading…' : 'Upload assets'}
+            <Button variant="primary" onClick={upload} loading={busy === 'Upload'} disabled={!!busy || !isBridged()}>
+              Upload assets
             </Button>
           </div>
         </div>
@@ -199,12 +199,13 @@ export function PublishScreen() {
         <div className="row wrap" style={{ marginTop: 'var(--sp-4)' }}>
           {chainTarget === 'evm' ? (
             <>
-              <Button onClick={() => runCli('Deploy', ['deploy'])} disabled={!!busy || !isBridged()}>
+              <Button onClick={() => runCli('Deploy', ['deploy'])} loading={busy === 'Deploy'} disabled={!!busy || !isBridged()}>
                 Deploy contract
               </Button>
               <Button
                 variant="primary"
                 onClick={() => runCli('Owner mint', ['mint', '--from', String(from), '--count', String(count)])}
+                loading={busy === 'Owner mint'}
                 disabled={!!busy || !isBridged()}
               >
                 Owner mint
@@ -215,17 +216,18 @@ export function PublishScreen() {
               <Button
                 variant="primary"
                 onClick={() => runCli('Mint', ['mint', '--from', String(from), '--count', String(count)])}
+                loading={busy === 'Mint'}
                 disabled={!!busy || !isBridged()}
               >
                 Mint (direct)
               </Button>
-              <Button onClick={() => runCli('Candy create', ['candy', 'create'])} disabled={!!busy || !isBridged()}>
+              <Button onClick={() => runCli('Candy create', ['candy', 'create'])} loading={busy === 'Candy create'} disabled={!!busy || !isBridged()}>
                 Candy: create
               </Button>
-              <Button onClick={() => runCli('Candy upload', ['candy', 'upload'])} disabled={!!busy || !isBridged()}>
+              <Button onClick={() => runCli('Candy upload', ['candy', 'upload'])} loading={busy === 'Candy upload'} disabled={!!busy || !isBridged()}>
                 Candy: upload
               </Button>
-              <Button onClick={() => runCli('Candy mint', ['candy', 'mint'])} disabled={!!busy || !isBridged()}>
+              <Button onClick={() => runCli('Candy mint', ['candy', 'mint'])} loading={busy === 'Candy mint'} disabled={!!busy || !isBridged()}>
                 Candy: mint
               </Button>
             </>

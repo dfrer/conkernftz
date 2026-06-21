@@ -5,6 +5,14 @@
 
 ---
 
+### 2026-06-20 — V1-8: Publish screen pass
+Publish was already well-structured (readiness badge strip = build/metadata/uploaded state,
+provider/mode upload, chain-aware mint panel — EVM deploy+owner-mint vs Solana direct/candy —, CLI
+console). Pass: adopted the Button `loading` prop **per-action** (Upload, Deploy, Owner mint, Mint,
+Candy create/upload/mint) so the *running* action shows a spinner — previously all buttons just
+greyed out together with no indication of which was executing. Real clarity win on a multi-action
+panel. Verified: typecheck clean · 203/203 vitest · renderer build clean. ◐ pending owner live-review.
+
 ### 2026-06-20 — V1-7: Build screen pass
 Build was already strong (progress bar with pause/resume/stop, output-edition gallery + lightbox,
 rarity-report histogram, asset/output audit, idle/no-project/done states with badges). Light pass:
