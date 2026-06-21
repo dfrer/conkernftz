@@ -38,7 +38,7 @@ function Shell() {
   else if (active === 'publish') screen = <PublishScreen />;
   else if (active === 'experience') screen = <ExperienceScreen />;
   else if (active === 'site') screen = <SiteScreen />;
-  else if (active === 'launch') screen = solana ? <LaunchSolana /> : <LaunchScreen />;
+  else if (active === 'launch') screen = solana ? <LaunchSolana /> : <LaunchScreen onNavigate={setActive} />;
   else if (active === 'settings') screen = <SettingsScreen />;
   else if (active === 'help') screen = <HelpScreen />;
   else if (active === 'ai') screen = <FalScreen />;

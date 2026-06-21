@@ -33,7 +33,7 @@ type OpResult = { ok: boolean; error?: string; json?: unknown };
  * token; testnets are free. This is slice 1: status + deploy + caps/prices/phase (the path to a
  * mintable contract). Reveal / withdraw / allowlist land next.
  */
-export function LaunchScreen() {
+export function LaunchScreen({ onNavigate }: { onNavigate?: (stage: string) => void }) {
   const toast = useToast();
   const [status, setStatus] = useState<LaunchStatus | null>(null);
   const [statusErr, setStatusErr] = useState<string | null>(null);
@@ -517,10 +517,16 @@ export function LaunchScreen() {
               Uploaded metadata detected — baseURI pre-filled below: <code className="break-all">{manifest.baseUri}</code>
             </p>
           ) : (
-            <p className="muted">
-              No upload found yet. Run <strong>Publish</strong> (dir mode) to upload your revealed metadata first —
-              its baseURI will appear here automatically.
-            </p>
+            <div className="row" style={{ alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <p className="muted" style={{ margin: 0 }}>
+                No upload found yet. Upload your revealed metadata first — its baseURI will appear here automatically.
+              </p>
+              {onNavigate ? (
+                <Button size="sm" onClick={() => onNavigate('publish')}>
+                  Go to Publish →
+                </Button>
+              ) : null}
+            </div>
           )}
           <div className="grid cols-auto" style={{ gap: 10, alignItems: 'end' }}>
             <Field label="Revealed base URI">

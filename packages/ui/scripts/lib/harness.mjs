@@ -216,6 +216,7 @@ export function installMock(opts) {
     saveBase64: () => res('saveBase64'),
     readFile: (rel = '') => {
       const s = String(rel);
+      if (failSet.has('readFile')) return Promise.resolve({ ok: false, error: 'Simulated readFile failure (QA)' });
       if (s.includes('upload-manifest')) {
         return ok({ content: JSON.stringify({ provider: 'pinata', mode: 'dir', baseUri: 'ipfs://bafybeigdyrexamplecid/', files: Array.from({ length: 12 }) }) });
       }
