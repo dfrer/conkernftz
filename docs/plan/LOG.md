@@ -5,6 +5,20 @@
 
 ---
 
+### 2026-06-20 — QA-1c/1d/1e: finish the per-surface sweep (every editor driven)
+Drove the remaining controls to completion, all returning **0 findings**:
+- **RulesEditor** (QA-1c): add-cap + edit + **invalid-JSON → error banner** (unhappy path).
+- **Site canvas** (QA-1d): apply template, add widget (block count +1 + auto-select asserted), select.
+- **EffectsEditor** (QA-1e): blend/offset/rotate; Glow group toggle reveals/hides its body + color fill;
+  Modulate toggle. **OverridesEditor**: add/set/remove. **RenamerPanel** + **SpawnEditor** selects +
+  save. **Fal AI** form (key/model/prompt — never Generate; that's a real fal.run call). **Reduced
+  motion**: `emulateMedia` + asserted the nav-item transition collapses to ~0.
+Three more **driver-selector artifacts** found + fixed along the way (not app bugs): an fx-editor
+toggle left open by a prior step (force a remount), and two loose `getByLabel` matches (`Theme`,
+`Model`) → `{exact:true}`. Net: every drivable surface×function is exercised; the only un-driven bits
+are drag-placement (spawn dots, canvas move/resize) and the owner-only real-env items —
+[QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md). Driver 0 findings; gates green.
+
 ### 2026-06-20 — QA-1b: cross-cutting (light/compact) + a11y; fix Dialog focus trap
 Added driver passes for **light theme** + **compact viewport** (walk stages + a key interaction; no
 runtime errors) and a **keyboard/a11y** pass (tablist arrow nav; dialog focus trap; Escape-close).

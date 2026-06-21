@@ -18,7 +18,7 @@
 |---------|-----------|--------------------|
 | **Shell** (header/nav/status) | ✅ nav to all 13 stages; title asserted; theme toggle exists | ☐ keyboard nav of pipeline; status-bar readout states; reduced-motion |
 | **Projects** | ✅ New-project dialog open/fill/escape-close; populated recents (seeded) | ☐ open-via-dialog flow; recent-card open; create→scaffold path; error toast on bridge-offline |
-| **Design** | ✅ all tabs; +Add layer (asserted); trait browser; layer-1 name/rarity/req/opacity edits; fx editor opens; Save dirty-enable; **RulesEditor add-cap + edit + invalid-JSON error banner (unhappy path)** | ☐ move up/down + remove; EffectsEditor every control; OverridesEditor; RenamerPanel apply; SpawnEditor save |
+| **Design** | ✅ all tabs; +Add layer; trait browser; layer-1 name/rarity/req/opacity; Save dirty-enable; **RulesEditor** (add-cap/edit/invalid-JSON banner); **EffectsEditor** (blend/offset/rotate + Glow toggle reveals/hides body + fill + Modulate); **OverridesEditor** (add/set/remove); **RenamerPanel** (layer/mode selects); **SpawnEditor** (selection/fit/anchor + save) | ☐ layer move↑↓ + remove; spawn-dot drag placement (canvas) — visual/owner |
 | **Preview** | ✅ generate (thumb count asserted); lightbox open/close | ☐ seed lock + reproduce; count bounds (1..12); lightbox arrow paging |
 | **Build** | ✅ build (output count asserted) | ☐ pause/resume/stop; progress events; rarity report render; audit assets/outputs; reload; open-folder |
 | **Publish** | ✅ upload assets (mock) | ☐ provider/mode/force toggles; EVM vs Solana mint buttons (per-action); readiness refresh; console clear |
@@ -31,7 +31,7 @@
 | Surface | Driven now | TODO (QA-1 deepen) |
 |---------|-----------|--------------------|
 | **Packs** | ✅ renders (built-in + custom) | ☐ import pack/back (per-section busy); delete custom; refresh |
-| **Fal AI** | ✅ renders | ☐ key field; model/custom select; param fields; prompt; generate (mock) — never burn the real key |
+| **Fal AI** | ✅ renders; **key field, model select, prompt driven** (form only — Generate is owner-only, real fal.run call) | ☐ per-model param fields; custom-endpoint; import-models JSON |
 | **Settings** | ✅ theme (light asserted) + accent change | ☐ provider-specific storage fields; chain target fields; open project/build folder |
 | **Help** | ✅ renders | ☐ external-link buttons (openExternal mock); redaction stamp |
 | **Components** | ✅ dialog open/close; toast | ☐ every primitive state visible; loading button; checkbox/radio; tabs keyboard |
@@ -45,7 +45,7 @@
 | Compact viewport | ✅ driver walks key stages at 1180px |
 | Keyboard nav / focus | ✅ tablist ArrowRight moves selection; **dialog focus trap fixed + asserted** (Tab stays inside, Escape closes) |
 | Focus rings (:focus-visible) | ☐ visual — owner judges via screenshots |
-| Reduced-motion | ☐ assert animations collapse |
+| Reduced-motion | ✅ `emulateMedia({reducedMotion:'reduce'})` — drives clean + nav-item transition collapses to ~0 |
 | Unhappy paths | ◐ build/upload/preview failure injected; expand to every action |
 
 ## Real engine / CLI (QA-2)

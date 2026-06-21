@@ -151,6 +151,81 @@ async function main() {
     await page.waitForTimeout(200);
   });
 
+  await step('design:effects-editor', async () => {
+    // Force a clean DesignScreen remount so the fx-editor toggle state is deterministic
+    // (a prior step may have left it open; re-clicking the fx button would toggle it closed).
+    await gotoStage(page, 'Build');
+    await gotoStage(page, 'Design');
+    await page.getByRole('tab', { name: /^Layers/i }).click();
+    await page.waitForTimeout(200);
+    const fxPanel = page.locator('.panel', { hasText: 'Effects —' }).first();
+    if (!(await fxPanel.isVisible().catch(() => false))) {
+      await page.getByRole('button', { name: /Edit layer 1 effects/i }).click();
+      await page.waitForTimeout(300);
+    }
+    assert(await fxPanel.isVisible(), 'Effects panel did not open');
+    // Top-grid transforms (Shadow off, so these labels are unique).
+    await page.getByLabel('Blend mode').selectOption({ index: 1 });
+    await page.getByLabel('Offset X').fill('12');
+    await page.getByLabel('Rotate °').fill('15');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Offset X').inputValue()) === '12', 'Effects: Offset X did not stick');
+    // Toggle the Glow effect group: enabling reveals its body, disabling hides it.
+    const bodiesBefore = await page.locator('.effect-group-body').count();
+    await page.getByLabel('Glow', { exact: true }).check();
+    await page.waitForTimeout(150);
+    assert((await page.locator('.effect-group-body').count()) === bodiesBefore + 1, 'Effects: enabling Glow did not reveal its controls');
+    const glowBody = page.locator('.effect-group', { has: page.getByLabel('Glow', { exact: true }) }).locator('.effect-group-body');
+    await glowBody.locator('input[type="text"], input:not([type])').first().fill('#00eaff');
+    await page.waitForTimeout(100);
+    await page.getByLabel('Glow', { exact: true }).uncheck();
+    await page.waitForTimeout(150);
+    assert((await page.locator('.effect-group-body').count()) === bodiesBefore, 'Effects: disabling Glow did not hide its controls');
+    // A numeric group too (Modulate).
+    await page.getByLabel('Modulate', { exact: true }).check();
+    await page.waitForTimeout(150);
+    assert(await page.getByLabel('Modulate', { exact: true }).isChecked(), 'Effects: Modulate toggle did not enable');
+    // OverridesEditor (same panel) — add a per-asset override, set it, then remove it.
+    await page.getByRole('button', { name: '+ Add override' }).first().click();
+    await page.waitForTimeout(150);
+    await page.getByLabel('Override match 1').fill('Gold');
+    await page.getByLabel('Override target 1').selectOption('filename');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Override match 1').inputValue()) === 'Gold', 'Overrides: match did not stick');
+    await page.getByRole('button', { name: 'Remove override 1' }).click();
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Override match 1').count()) === 0, 'Overrides: remove did not delete the row');
+  });
+
+  await step('design:renamer+spawn', async () => {
+    await gotoStage(page, 'Design');
+    await page.getByRole('tab', { name: /Assets & rarity/i }).click();
+    await page.waitForTimeout(250);
+    // Renamer selects.
+    await page.getByLabel('Renamer layer').selectOption({ index: 1 });
+    await page.getByLabel('Rename mode').selectOption('sequence');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Rename mode').inputValue()) === 'sequence', 'Renamer: mode select did not apply');
+    // Spawn rule selects + save.
+    await page.getByLabel('Selection policy').selectOption('sequential');
+    await page.getByLabel('Fit mode').selectOption('cover');
+    await page.getByLabel('Anchor').selectOption('top-left');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Fit mode').inputValue()) === 'cover', 'Spawn: fit-mode select did not apply');
+    await page.getByRole('button', { name: 'Save spawn map' }).first().click();
+    await page.waitForTimeout(300);
+  });
+
+  await step('fal:form-controls', async () => {
+    await gotoStage(page, 'Fal AI');
+    // Drive the form only — never click Generate (real network call to fal.run with the owner's key).
+    await page.getByPlaceholder('fal key (stored locally)').fill('fal-qa-fake-key');
+    await page.getByLabel('Model', { exact: true }).selectOption({ index: 1 });
+    await page.getByLabel('Prompt').fill('a chrome conker, studio light');
+    await page.waitForTimeout(150);
+    assert((await page.getByLabel('Prompt').inputValue()).length > 0, 'Fal: prompt did not accept input');
+  });
+
   await step('design:rules-editor', async () => {
     await gotoStage(page, 'Design');
     await page.getByRole('tab', { name: /^Rules/i }).click();
@@ -349,6 +424,22 @@ async function main() {
     const cv = await newPage(browser, realPacks, { viewport: { width: 1180, height: 800 } });
     for (const label of ['Design', 'Site', 'Mint FX', 'Launch', 'Packs']) await gotoStage(cv, label);
     await cv.close();
+  });
+
+  // Reduced motion — the app must drive cleanly with prefers-reduced-motion, and the global rule
+  // should collapse transition durations to ~0.
+  await step('crosscut:reduced-motion', async () => {
+    const rm = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    attach(rm);
+    await rm.emulateMedia({ reducedMotion: 'reduce' });
+    await rm.addInitScript(installMock, { realPacks });
+    await rm.goto(url(), { waitUntil: 'load' });
+    await rm.waitForSelector('.nav-item', { timeout: 15000 });
+    for (const label of ['Design', 'Preview', 'Mint FX']) await gotoStage(rm, label);
+    // A transition-bearing element should have a collapsed duration under reduced motion.
+    const dur = await rm.locator('.nav-item').first().evaluate((el) => getComputedStyle(el).transitionDuration);
+    assert(/^0s|0\.00/.test(dur) || parseFloat(dur) < 0.01, `Reduced-motion: nav-item transition not collapsed (got ${dur})`);
+    await rm.close();
   });
 
   // Accessibility — keyboard: dialog focus trap, tablist arrow navigation, focusable shell.
