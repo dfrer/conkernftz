@@ -5,6 +5,16 @@
 
 ---
 
+### 2026-06-20 — V1-6: Preview screen pass
+Preview was already strong (skeleton loading, idle/no-project empty states, seed chip, inspection
+lightbox, clean thumb grid in both themes), so a light, honest pass: adopted the new Button
+`loading` prop on **Generate previews** (spinner + auto-disable) instead of the ad-hoc
+`busy ? 'Generating…'` text swap — the first real adoption of the V1-2 loading primitive in a screen.
+Noted ~20 other ad-hoc busy-text buttons across screens; rather than one cross-cutting commit, each
+will adopt `loading` in context during its own V1 pass (keeping the informative label, e.g.
+"Deploying…"). Verified: typecheck clean · 203/203 vitest · renderer build clean. ◐ pending owner
+live-review.
+
 ### 2026-06-20 — V1-5: Design screen pass (start) — themed form controls
 First pass on the densest screen. The 9-column Layers table is dense-but-functional and holds up
 even at the compact viewport (checked via `compact-design`), so no structural overhaul — the

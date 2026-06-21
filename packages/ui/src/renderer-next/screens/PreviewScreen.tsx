@@ -89,8 +89,8 @@ export function PreviewScreen() {
                 style={{ width: 168 }}
               />
             </Field>
-            <Button variant="primary" onClick={generate} disabled={busy || !isBridged()}>
-              {busy ? 'Generating…' : 'Generate previews'}
+            <Button variant="primary" onClick={generate} loading={busy} disabled={!isBridged()}>
+              Generate previews
             </Button>
           </div>
         }
