@@ -23,7 +23,7 @@
 | **Build** | ✅ build (output count asserted) | ☐ pause/resume/stop; progress events; rarity report render; audit assets/outputs; reload; open-folder |
 | **Publish** | ✅ upload assets (mock) | ☐ provider/mode/force toggles; EVM vs Solana mint buttons (per-action); readiness refresh; console clear |
 | **Mint FX** | ✅ replay; rip player visible | ☐ every preset/kind; cards/duration/label/accent fields; shake/auto-flip; pack/back pickers; rarity-back add/edit/remove; use-live-art |
-| **Site** | ◐ apply template; layout→canvas | ☐ every template; canvas widget add/move/resize/rotate/select; inspector; undo/redo; theme controls; wallpaper/cursor; deploy hosts; local preview; raw-HTML widget |
+| **Site** | ✅ apply template; layout→canvas; **add widget (block count +1, auto-select asserted); select block** | ☐ every template; move/resize/rotate drag; multi-select + delete; inspector per-widget fields; undo/redo; wallpaper/cursor; deploy hosts; raw-HTML widget |
 | **Launch** | ✅ signer toggle (wallet projectId asserted); preflight; deploy; deployed: Save caps/prices, phase→public (confirm), reveal, freeze (confirm), withdraw — all mocked, no runtime errors | ☐ allowlist file upload; mainnet confirm-token gate; browser-console open |
 
 ## Utility surfaces

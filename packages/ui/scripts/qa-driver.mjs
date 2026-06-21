@@ -232,6 +232,23 @@ async function main() {
     }
   });
 
+  await step('site:canvas-widgets', async () => {
+    await gotoStage(page, 'Site');
+    await page.locator('.template-card', { hasText: 'GeoCities' }).first().click();
+    await page.waitForTimeout(400);
+    const before = await page.locator('.block-row').count();
+    // The widget palette is a row of "+ <widget>" buttons; click the first to add a block.
+    await page.getByRole('button', { name: /^\+ / }).first().click();
+    await page.waitForTimeout(250);
+    const after = await page.locator('.block-row').count();
+    assert(after === before + 1, `Site: adding a widget changed blocks ${before} → ${after} (expected +1)`);
+    assert((await page.locator('.block-row--sel').count()) >= 1, 'Site: newly-added widget was not auto-selected (inspector target)');
+    // Re-select an existing block and confirm selection tracks.
+    await page.locator('.block-row-label').first().click();
+    await page.waitForTimeout(200);
+    assert((await page.locator('.block-row--sel').count()) >= 1, 'Site: clicking a block-row did not select it');
+  });
+
   await step('settings:theme+accent', async () => {
     await gotoStage(page, 'Settings');
     // exact:true — a loose "Theme" also matches the header's "Toggle color theme" button.

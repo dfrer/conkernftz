@@ -67,14 +67,17 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 | ID | Task | Status |
 |----|------|--------|
 | **QA-0** | **Interaction+verification driver** (`scripts/qa-driver.mjs`, `pnpm -C packages/ui qa`): drives controls, WAITS for completion, captures console/page/network errors per surface, asserts outcomes, injects mock failures for unhappy paths, emits `qa-report.{md,json}`. Shared harness extracted to `scripts/lib/harness.mjs`. | ◐ |
-| QA-1 | Deep per-surface sweep — every control (button/field/select/checkbox/dialog/tab/drag/keyboard), both themes, focus + a11y. Drive, assert, fix. | ☐ |
-| QA-2 | Real-engine pass — drive `@conkernftz/core` (build/dedupe/rarity) + the `conkernftz` CLI on a throwaway temp project; verify ACTUAL outputs. | ◐ |
-| QA-3 | Fix every problem found; re-verify; keep gates green + driver at 0 fails. | ☐ |
-| QA-FINAL | Real-environment checklist handed to the owner (live wallet/chain/fal/uploads/host deploys). | ☐ |
+| QA-1 | Deep per-surface sweep — every control, both themes, focus + a11y. Drive, assert, fix. | ◐ |
+| QA-2 | Real-engine pass — `@conkernftz/core` build/dedupe/rarity + the `conkernftz` CLI on a temp project; verify ACTUAL outputs. | ◐ |
+| QA-3 | Fix every problem found; re-verify; gates green + driver at 0 fails. | ◐ |
+| QA-FINAL | Real-environment checklist for the owner ([QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md)). | ◐ |
 
-> **QA-0 baseline:** the full driver run is **0 findings** (0 console errors, 0 page errors, 0 failed
-> requests, all assertions pass) across all stages + happy/unhappy flows — V1 shipped clean. QA-1+
-> deepens coverage control-by-control.
+> **Status:** driver run is **0 findings** across all stages + Design (tabs/row-controls/rules+invalid-JSON)
+> + Projects/Preview/Build/Publish/Mint-FX + Site (template/canvas widgets) + Launch (deploy/sale/
+> confirm-gated) + light + compact + keyboard-a11y + injected unhappy paths. Real engine/CLI verified
+> (8-edition build, dupes, audit). **2 real bugs found + fixed:** `validate` wallet hard-error → WARN;
+> `Dialog` missing focus-trap → added. Remaining QA-1 TODO (driver-untested, coming back clean as
+> driven): EffectsEditor/Overrides/Spawn/Renamer controls, Site drag/inspector/undo-redo, Fal params.
 
 ---
 
