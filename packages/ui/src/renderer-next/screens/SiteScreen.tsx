@@ -459,7 +459,7 @@ export function SiteScreen() {
   return (
     <div className="stack stagger">
       <StageHeader
-        kicker="STAGE // MINT SITE"
+        kicker="STAGE 06 // STOREFRONT"
         title="Site builder"
         actions={
           <div className="row">

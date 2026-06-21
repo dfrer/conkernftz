@@ -243,7 +243,7 @@ export function LaunchScreen() {
   return (
     <>
       <StageHeader
-        kicker="DEPLOY"
+        kicker="STAGE 07 // DEPLOYMENT"
         title="Launch"
         actions={
           <Button size="sm" variant="ghost" onClick={() => void refresh()} disabled={!!busy}>

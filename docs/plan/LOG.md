@@ -5,6 +5,19 @@
 
 ---
 
+### 2026-06-20 — V1-9: Mint FX (Experience) pass + stage-kicker consistency
+Experience screen (preset/kind/cards/duration/label/accent, shake/auto-flip, pack+back pickers with
+real art thumbnails, rarity-back rules, live reveal preview with Replay) is rich and well-organized;
+its reveal **motion** lives in the `MintExperience` player and can only be judged live (static frames
+can't show timing/easing) — flagged for owner review. Static pass: adopted Button `loading` on "Use
+live art".
+**Plus a cross-screen consistency fix:** the StageHeader kickers were a numbered ops series
+(`STAGE 00 // INTAKE` … `04 // DISPATCH`) but three pipeline screens broke it — Experience
+(`STAGE // MINT FX`), Site (`STAGE // MINT SITE`), Launch (`DEPLOY`). Renumbered them into the series:
+**05 // REVEAL · 06 // STOREFRONT · 07 // DEPLOYMENT** (Site/Launch get their own deeper passes at
+V1-10/V1-11; this just closes the kicker gap now). Verified: typecheck clean · 203/203 vitest ·
+renderer build clean · screenshots 49/49. ◐ pending owner live-review (esp. the reveal motion).
+
 ### 2026-06-20 — V1-8: Publish screen pass
 Publish was already well-structured (readiness badge strip = build/metadata/uploaded state,
 provider/mode upload, chain-aware mint panel — EVM deploy+owner-mint vs Solana direct/candy —, CLI

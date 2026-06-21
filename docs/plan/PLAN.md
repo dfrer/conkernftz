@@ -34,7 +34,7 @@ self-running goal/loop. *(Owner: "by far the most important.")*
 | V1-6 | Screen pass — **Preview** | ◐ |
 | V1-7 | Screen pass — **Build** | ◐ |
 | V1-8 | Screen pass — **Publish** | ◐ |
-| V1-9 | Screen pass — **Mint FX (Experience)** | ☐ |
+| V1-9 | Screen pass — **Mint FX (Experience)** | ◐ |
 | V1-10 | Screen pass — **Site builder** (widgets + inspector UX) | ☐ |
 | V1-11 | Screen pass — **Launch** | ☐ |
 | V1-12 | Screen pass — **Packs** | ☐ |
