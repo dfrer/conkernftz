@@ -66,11 +66,11 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 
 | ID | Task | Status |
 |----|------|--------|
-| **QA-0** | **Interaction+verification driver** (`scripts/qa-driver.mjs`, `pnpm -C packages/ui qa`): drives controls, WAITS for completion, captures console/page/network errors per surface, asserts outcomes, injects mock failures for unhappy paths, emits `qa-report.{md,json}`. Shared harness extracted to `scripts/lib/harness.mjs`. | ◐ |
-| QA-1 | Deep per-surface sweep — every control, both themes, focus + a11y. Drive, assert, fix. | ◐ |
-| QA-2 | Real-engine pass — `@conkernftz/core` build/dedupe/rarity + the `conkernftz` CLI on a temp project; verify ACTUAL outputs. | ◐ |
-| QA-3 | Fix every problem found; re-verify; gates green + driver at 0 fails. | ◐ |
-| QA-FINAL | Real-environment checklist for the owner ([QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md)). | ◐ |
+| **QA-0** | **Interaction+verification driver** (`scripts/qa-driver.mjs`, `pnpm -C packages/ui qa`): drives controls, WAITS for completion, captures console/page/network errors per surface, asserts outcomes, injects mock failures, emits `qa-report.{md,json}`. Shared harness in `scripts/lib/harness.mjs`. | ☑ |
+| QA-1 | Deep per-surface sweep — every control, both themes, focus + a11y. **Done for everything drivable headlessly**; drag-placement + visual = owner. | ◐ |
+| QA-2 | Real-engine pass — `@conkernftz/core` build/dedupe/rarity + the `conkernftz` CLI on a temp project; verified ACTUAL outputs (8 editions). | ☑ |
+| QA-3 | Fix every problem found; re-verify. **2 fixed** (validate wallet; Dialog focus trap); ongoing as any new surface. | ◐ |
+| QA-FINAL | Real-environment checklist for the owner ([QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md)) — owner runs it. Consolidated report: [QA-SUMMARY.md](QA-SUMMARY.md). | ◐ |
 
 > **Status:** driver run is **0 findings** across all stages + Design (tabs/row-controls/rules+invalid-JSON)
 > + Projects/Preview/Build/Publish/Mint-FX + Site (template/canvas widgets) + Launch (deploy/sale/
