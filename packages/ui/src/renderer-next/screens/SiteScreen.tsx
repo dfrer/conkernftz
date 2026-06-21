@@ -12,6 +12,7 @@ import { bridge, isBridged } from '../lib/bridge';
 import { useProject } from '../state/project';
 import { resolveExperience, type ExperienceConfig } from '../lib/mintExperience';
 import { resolveExperienceArt } from '../lib/packLibrary';
+import { buildTierMap } from '../lib/rarityTier';
 import { buildSiteData, siteDataScript, SITE_DATA_FILENAME } from '../lib/siteBundle';
 import { useSiteHistory } from '../lib/useSiteHistory';
 import {
@@ -107,6 +108,27 @@ export function SiteScreen() {
 
   const mode = site.layout ?? 'flow';
   const experience: ExperienceConfig = resolveExperience(config?.mintExperience as Partial<ExperienceConfig> | undefined);
+
+  // Build the edition→tier map from the build's rarity ranks + configured rarity backs, so the
+  // exported widget can reveal a minted token's real tier (OC-3b). Best-effort: no ranks or no
+  // configured tiers → no map (the widget falls back to the default back).
+  const loadTierMap = async (): Promise<Record<number, string> | undefined> => {
+    const fb = bridge();
+    const rules = experience.rarityBacks ?? [];
+    if (!fb || rules.length === 0) return undefined;
+    try {
+      const outDir = String((config as { export?: { outDir?: string } })?.export?.outDir ?? 'build');
+      const r = await fb.readFile(`${outDir}/rarity-ranks.json`);
+      if (!r.ok || !r.content) return undefined;
+      const parsed = JSON.parse(r.content) as { editionCount?: number; tokens?: Array<{ edition: number; rank: number }> };
+      const tokens = Array.isArray(parsed.tokens) ? parsed.tokens : [];
+      const editionCount = Number(parsed.editionCount) || tokens.length || Number(config?.editionSize) || 0;
+      const map = buildTierMap(tokens, editionCount, rules);
+      return Object.keys(map).length ? map : undefined;
+    } catch {
+      return undefined;
+    }
+  };
   // Resolve the pack/back/rip art for the live preview (same as the export does) so the mint
   // block shows the REAL pack + layered rip + card backs, not the placeholder pack/◇ cards.
   const [previewExp, setPreviewExp] = useState<ExperienceConfig>(experience);
@@ -290,6 +312,7 @@ export function SiteScreen() {
         site,
         experience: await resolveExperienceArt(experience),
         images: imgs,
+        tierMap: await loadTierMap(),
       });
       const res = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
       if (res.ok && res.outDir) {
@@ -329,6 +352,7 @@ export function SiteScreen() {
         site,
         experience: await resolveExperienceArt(experience),
         images: imgs,
+        tierMap: await loadTierMap(),
       });
       const ex = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
       if (!ex.ok) {
@@ -418,6 +442,7 @@ export function SiteScreen() {
         site,
         experience: await resolveExperienceArt(experience),
         images: imgs,
+        tierMap: await loadTierMap(),
       });
       const ex = await fb.exportSite({ dataJs: siteDataScript(bundle), dataFile: SITE_DATA_FILENAME });
       if (!ex.ok) {

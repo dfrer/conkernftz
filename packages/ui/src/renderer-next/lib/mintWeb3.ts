@@ -7,6 +7,7 @@ import {
   type WalletMintState,
   type MintCall,
 } from '@conkernftz/chain-evm';
+import { mintedTokenIds } from './mintReceipt';
 
 /**
  * Non-custodial browser mint connector. Talks to an injected EIP-1193 wallet (MetaMask et al.)
@@ -164,6 +165,19 @@ export async function submitMint(
   const tx = encodeMintTx(call, from, to);
   const hash = (await provider.request({ method: 'eth_sendTransaction', params: [tx] })) as string;
   return hash as Hex;
+}
+
+/**
+ * Wait for a mint tx's receipt and return the token ids it minted (OC-3b) — read-only RPC, used
+ * by the live widget to map a buyer's tokens to their rarity tiers for the reveal.
+ */
+export async function waitForMintedTokenIds(rpcUrl: string, contract: string, hash: Hex): Promise<number[]> {
+  const pub = createPublicClient({ transport: http(rpcUrl) });
+  const receipt = await pub.waitForTransactionReceipt({ hash });
+  return mintedTokenIds(
+    receipt.logs.map((l) => ({ address: l.address, topics: l.topics as unknown as string[] })),
+    contract,
+  );
 }
 
 function getErrorCode(err: unknown): number | undefined {

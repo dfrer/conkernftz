@@ -15,6 +15,12 @@ describe('siteBundle', () => {
     expect(buildSiteData({}).name).toBe('CONKERNFTZ');
   });
 
+  it('embeds a non-empty tierMap (OC-3b) and omits an empty/absent one', () => {
+    expect(buildSiteData({ tierMap: { 1: 'Legendary', 7: 'Rare' } }).tierMap).toEqual({ 1: 'Legendary', 7: 'Rare' });
+    expect(buildSiteData({ tierMap: {} }).tierMap).toBeUndefined();
+    expect(buildSiteData({}).tierMap).toBeUndefined();
+  });
+
   it('siteDataScript assigns the global and neutralizes </script>', () => {
     const data = buildSiteData({ name: 'x' });
     (data.site.blocks as unknown[]).push({ id: 'h', kind: 'html', html: '</script><b>x</b>' });

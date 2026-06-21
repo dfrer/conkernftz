@@ -15,6 +15,8 @@ export interface SiteData {
   experience: ExperienceConfig;
   /** Baked-in card/gallery art as data URLs (self-contained — no external asset fetches). */
   images: string[];
+  /** Edition id → rarity tier label (from the build's ranks), for the live post-mint reveal. */
+  tierMap?: Record<number, string>;
 }
 
 export const SITE_GLOBAL = '__CONKER_SITE__';
@@ -25,14 +27,17 @@ export function buildSiteData(input: {
   site?: Partial<SiteConfig> | null;
   experience?: Partial<ExperienceConfig> | null;
   images?: string[];
+  tierMap?: Record<number, string> | null;
 }): SiteData {
-  return {
+  const data: SiteData = {
     version: 1,
     name: input.name && input.name.trim() ? input.name.trim() : 'CONKERNFTZ',
     site: resolveSite(input.site),
     experience: resolveExperience(input.experience),
     images: Array.isArray(input.images) ? input.images.filter((s) => typeof s === 'string') : [],
   };
+  if (input.tierMap && Object.keys(input.tierMap).length) data.tierMap = input.tierMap;
+  return data;
 }
 
 /**
