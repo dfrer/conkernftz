@@ -32,6 +32,25 @@ export function tierForRank(rank: number, editionCount: number, tiers: TierShare
 }
 
 /**
+ * A preview card-tier spread: one card per configured tier (a mid-band sample rank resolved through
+ * `tierForRank`, so it stays consistent with the live mapping), padded with common ('') up to
+ * `packCount`. This showcases every configured rarity back in the Mint FX preview.
+ */
+export function previewTierSpread(tiers: TierShareRule[], packCount: number, editionCount: number): string[] {
+  if (!tiers.length || packCount <= 0) return [];
+  const cards: string[] = [];
+  let cumulative = 0;
+  for (const t of tiers) {
+    const share = typeof t.share === 'number' && t.share > 0 ? t.share : DEFAULT_TIER_SHARE;
+    const band = Math.max(1, Math.round(share * editionCount));
+    cards.push(tierForRank(cumulative + Math.ceil(band / 2), editionCount, tiers));
+    cumulative += band;
+  }
+  while (cards.length < packCount) cards.push('');
+  return cards.slice(0, packCount);
+}
+
+/**
  * Build a lean per-token tier map (edition id → tier) for embedding in the exported site, from the
  * build's ranked tokens ({ edition, rank }). Only non-common tokens are included — the widget reads
  * a minted token's id, looks up its tier here, and falls back to the default back when absent.

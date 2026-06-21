@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tierForRank, buildTierMap, DEFAULT_TIER_SHARE } from '../lib/rarityTier';
+import { tierForRank, buildTierMap, previewTierSpread, DEFAULT_TIER_SHARE } from '../lib/rarityTier';
 
 const tiers = [{ tier: 'Legendary' }, { tier: 'Rare' }, { tier: 'Uncommon' }];
 
@@ -42,6 +42,20 @@ describe('tierForRank', () => {
 
   it('exposes the default share constant', () => {
     expect(DEFAULT_TIER_SHARE).toBe(0.05);
+  });
+});
+
+describe('previewTierSpread', () => {
+  it('showcases one card per tier, padded with common to packCount', () => {
+    // 5 cards, 3 tiers → [Legendary, Rare, Uncommon, '', ''].
+    expect(previewTierSpread(tiers, 5, 1000)).toEqual(['Legendary', 'Rare', 'Uncommon', '', '']);
+  });
+  it('truncates to packCount when there are more tiers than cards', () => {
+    expect(previewTierSpread(tiers, 2, 1000)).toEqual(['Legendary', 'Rare']);
+  });
+  it('is empty with no tiers or no cards', () => {
+    expect(previewTierSpread([], 5, 1000)).toEqual([]);
+    expect(previewTierSpread(tiers, 0, 1000)).toEqual([]);
   });
 });
 
