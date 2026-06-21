@@ -35,6 +35,21 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-4: audit handoff package assembled
+Continuing the NEXT board autonomously. Skipped **OC-3** for now — it embeds a genuine
+rarity-tiering **product decision** (how a token's rank maps to "Rare"/"Legendary") that's the
+owner's to set, and its live half runs in the unverifiable buyer mint runtime; flagged for a quick
+owner decision later. Took **OC-4** instead (fully ownable + verifiable, no devnet/decision): wrote
+**`docs/AUDIT_HANDOFF.md`** — an auditor's-front-door package for `ConkernftzLaunch.sol`:
+scope/out-of-scope, **exact `forge build/test/coverage/snapshot` + Slither repro commands** (incl.
+the no-local-forge/no-CI-budget reality → the auditor's run is the authoritative gate), architecture
++ full external surface (functions/events/state, the Merkle leaf format), trust model, the 4 forge
+invariants mapped to the spec's 8 (+ which unit/fuzz tests cover #4–#8), the **T1–T13** threat model,
+the **30 unit/fuzz + 4 invariant** test suite (incl. the JS↔Sol proof cross-check for T13), the 7
+open decisions with shipped defaults, and assumptions/gating. Verified the references it cites
+(`compile-contract` script, `remappings.txt`, the 11.9 KB/EIP-170 note). Docs-only (no build impact);
+finalize against the **freeze commit (OC-5)**.
+
 ### 2026-06-20 — OC-2 (EVM) finished + merged: reveal UX (auto-fill + stepper + Go-to-Publish)
 Closed out the EVM reveal flow and merged `feat/oc2-reveal-ux` → `main`. Final finishing touch:
 when the reveal step has no uploaded metadata, the panel now offers a **"Go to Publish →"** button

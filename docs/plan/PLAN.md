@@ -90,7 +90,7 @@ tracked in [QA-COVERAGE.md](QA-COVERAGE.md); per-run evidence in `screenshots/qa
 | OC-2 | **Reveal flow UX (EVM) — done + merged.** Auto-fills the baseURI from the upload manifest, a guided **upload → reveal → freeze stepper** with live state, and a **"Go to Publish"** action closing the no-code loop. On-chain reveal/freeze = owner's devnet check. | ☑ |
 | OC-2b | **Solana reveal** (Candy Machine hidden-settings) — deferred (same devnet-unverifiable-by-agent constraint as OC-1b; sequence after Solana create/insert is devnet-proven). | ☐ |
 | OC-3 | Rarity → live token-tier mapping in the mint widget (real mint data). | ☐ |
-| OC-4 | **Audit handoff package** — assemble the contract + spec + threat model + test suite + gas notes + assumptions for an external auditor to start cold. | ☐ |
+| OC-4 | **Audit handoff package** — [`docs/AUDIT_HANDOFF.md`](../AUDIT_HANDOFF.md): scope, exact build/test/Slither repro commands, architecture + surface, trust model, invariants (+ which forge tests cover them), T1–T13, the 30+4 test suite, open decisions, assumptions. Finalize at the freeze commit (OC-5). | ◐ |
 | OC-5 | Re-run the Foundry suite + Slither when CI/forge is available again (owner-run); freeze the contract for audit. | ☐ |
 
 ---
