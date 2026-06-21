@@ -18,7 +18,7 @@
 |---------|-----------|--------------------|
 | **Shell** (header/nav/status) | ✅ nav to all 13 stages; title asserted; theme toggle exists | ☐ keyboard nav of pipeline; status-bar readout states; reduced-motion |
 | **Projects** | ✅ New-project dialog open/fill/escape-close; populated recents (seeded) | ☐ open-via-dialog flow; recent-card open; create→scaffold path; error toast on bridge-offline |
-| **Design** | ✅ all tabs; +Add layer (row count asserted); trait browser opens; **layer-1 name/rarity/req/opacity edits asserted; fx editor opens; Save-config dirty-enable asserted** | ☐ move up/down + remove; EffectsEditor every control; OverridesEditor; RulesEditor; RenamerPanel apply; SpawnEditor save |
+| **Design** | ✅ all tabs; +Add layer (asserted); trait browser; layer-1 name/rarity/req/opacity edits; fx editor opens; Save dirty-enable; **RulesEditor add-cap + edit + invalid-JSON error banner (unhappy path)** | ☐ move up/down + remove; EffectsEditor every control; OverridesEditor; RenamerPanel apply; SpawnEditor save |
 | **Preview** | ✅ generate (thumb count asserted); lightbox open/close | ☐ seed lock + reproduce; count bounds (1..12); lightbox arrow paging |
 | **Build** | ✅ build (output count asserted) | ☐ pause/resume/stop; progress events; rarity report render; audit assets/outputs; reload; open-folder |
 | **Publish** | ✅ upload assets (mock) | ☐ provider/mode/force toggles; EVM vs Solana mint buttons (per-action); readiness refresh; console clear |

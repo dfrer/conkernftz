@@ -151,6 +151,23 @@ async function main() {
     await page.waitForTimeout(200);
   });
 
+  await step('design:rules-editor', async () => {
+    await gotoStage(page, 'Design');
+    await page.getByRole('tab', { name: /^Rules/i }).click();
+    await page.waitForTimeout(200);
+    await page.getByRole('button', { name: '+ Add cap' }).click();
+    await page.waitForTimeout(120);
+    await page.getByLabel('Max occurrence trait 1').fill('Background:Gold');
+    await page.getByLabel('Max occurrence count 1').fill('10');
+    await page.waitForTimeout(100);
+    assert((await page.getByLabel('Max occurrence trait 1').inputValue()) === 'Background:Gold', 'Rules: max-occ trait edit did not stick');
+    // Unhappy path: invalid JSON in the escape hatch must surface an error banner (no crash).
+    await page.getByLabel('Rules JSON').fill('{ not valid json');
+    await page.getByRole('button', { name: 'Apply JSON' }).click();
+    await page.waitForTimeout(200);
+    assert(await page.locator('.banner-error').first().isVisible(), 'Rules: invalid JSON did not surface an error banner');
+  });
+
   await step('projects:new-dialog', async () => {
     await gotoStage(page, 'Projects');
     await page.getByRole('button', { name: 'New project' }).first().click();
