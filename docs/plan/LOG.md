@@ -35,6 +35,21 @@ Two findings:
 Re-run: **driver 0 findings**. Verified: typecheck clean · 203/203 vitest (Dialog "renders body when
 open" still passes) · renderer build clean.
 
+### 2026-06-20 — OC-3b: live token-tier in the mint widget (built + verified, branch)
+Goal "work on the project for 2 hours" → built **OC-3b**, which I'd earlier deferred as a "blind"
+build. Reframed it as the *verifiable* feature it actually is and built it end-to-end:
+- **Pure logic (unit-tested):** `lib/mintReceipt.ts` — `mintedTokenIds(logs, contract)` parses ERC-721
+  `Transfer(from=0x0)` events (ignores resales / other contracts / ERC-20) and `tiersForTokens(ids,
+  map)`; 6 tests. `buildSiteData` now embeds the edition→tier `tierMap`; +test.
+- **Data flow (typechecks + builds):** SiteScreen reads `rarity-ranks.json` → `buildTierMap` → bundle
+  (all 3 export/deploy/preview paths); the exported template passes `tierMap` to `SiteRenderer`;
+  `mintWeb3.waitForMintedTokenIds()` reads the receipt; **`MintLive`** reports the minted tiers and the
+  new stateful **`MintBlock`** replays the reveal with the minted rarity backs (re-keyed) — so minting
+  becomes an actual experience (mint → see your token's rarity), not a decorative preview.
+Verified: typecheck · **217 UI tests (+12)** · full build incl. the **static site bundle** · QA driver
+**0 findings**. Only the real on-chain mint receipt stays the owner's devnet check. **On branch
+`feat/oc3b-live-tiers` — not merged** (owner had deferred OC-3b; it's ready when they want it).
+
 ### 2026-06-20 — OC-3 (core) + agent-facing-work sweep
 Owner: "do all the agent-facing work that can be done right now" (goal). Started with **OC-3** —
 rarity → tier mapping — picking a sensible **configurable default** rather than asking (per the goal):

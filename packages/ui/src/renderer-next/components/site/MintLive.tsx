@@ -8,8 +8,10 @@ import {
   ensureChain,
   readSale,
   submitMint,
+  waitForMintedTokenIds,
   parseWalletError,
 } from '../../lib/mintWeb3';
+import { tiersForTokens } from '../../lib/mintReceipt';
 
 /**
  * Non-custodial live-mint widget for the generated site. Connects an injected wallet, reads sale
@@ -20,7 +22,19 @@ import {
 
 type Status = 'idle' | 'connecting' | 'loading' | 'ready' | 'minting' | 'done' | 'error';
 
-export function MintLive({ chainId, rpcUrl, contractAddress, allowlist }: MintConfig): ReactElement {
+export function MintLive({
+  chainId,
+  rpcUrl,
+  contractAddress,
+  allowlist,
+  tierMap,
+  onMinted,
+}: MintConfig & {
+  /** Edition id → tier label (embedded in the site) to reveal a minted token's rarity. */
+  tierMap?: Record<number, string>;
+  /** Reports the minted tokens' tiers so the reveal can play with their rarity backs. */
+  onMinted?: (tiers: string[]) => void;
+}): ReactElement {
   const [status, setStatus] = useState<Status>('idle');
   const [address, setAddress] = useState<string | null>(null);
   const [plan, setPlan] = useState<MintPlan | null>(null);
@@ -69,6 +83,16 @@ export function MintLive({ chainId, rpcUrl, contractAddress, allowlist }: MintCo
       const hash = await submitMint(provider!, address, contractAddress, call);
       setTxHash(hash);
       setStatus('done');
+      // Reveal the minted token(s)' rarity: read the receipt's token ids → tiers (best-effort;
+      // a slow/failed receipt just leaves the reveal on the default back).
+      if (onMinted) {
+        try {
+          const ids = await waitForMintedTokenIds(rpcUrl, contractAddress, hash);
+          onMinted(tiersForTokens(ids, tierMap));
+        } catch {
+          /* reveal stays generic */
+        }
+      }
     } catch (e) {
       setError(parseWalletError(e));
       setStatus('error');

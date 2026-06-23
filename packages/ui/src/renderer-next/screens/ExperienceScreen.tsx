@@ -17,7 +17,7 @@ import {
   type ExperienceConfig,
   type ExperienceKind,
 } from '../lib/mintExperience';
-import { tierForRank, DEFAULT_TIER_SHARE } from '../lib/rarityTier';
+import { previewTierSpread, DEFAULT_TIER_SHARE } from '../lib/rarityTier';
 
 export function ExperienceScreen() {
   const { project, config, updateConfig, save } = useProject();
@@ -144,19 +144,7 @@ export function ExperienceScreen() {
   // (a mid-band sample rank per tier), then fill the rest as common (default back) — not a one-off
   // simulation. editionCount comes from the project; tiny collections still show at least one per tier.
   const editionCount = Math.max(rules.length * 2, Number(config?.editionSize) || 100);
-  const previewTiers: string[] = (() => {
-    if (rules.length === 0) return [];
-    const cards: string[] = [];
-    let cumulative = 0;
-    for (const r of rules) {
-      const share = typeof r.share === 'number' && r.share > 0 ? r.share : DEFAULT_TIER_SHARE;
-      const band = Math.max(1, Math.round(share * editionCount));
-      cards.push(tierForRank(cumulative + Math.ceil(band / 2), editionCount, rules));
-      cumulative += band;
-    }
-    while (cards.length < exp.packCount) cards.push('');
-    return cards.slice(0, exp.packCount);
-  })();
+  const previewTiers = previewTierSpread(rules, exp.packCount, editionCount);
 
   const picker = (kind: 'pack' | 'back', selectedId: string | undefined, onPick: (id: string | undefined) => void) => {
     const items = packs.filter((p) => p.kind === kind);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { cx } from '../../lib/cx';
 import { MintExperience } from '../MintExperience';
 import { MintLive } from './MintLive';
@@ -47,11 +47,14 @@ export function SiteRenderer({
   images = [],
   experience,
   viewport = 'desktop',
+  tierMap,
 }: {
   site: SiteConfig;
   images?: string[];
   experience?: ExperienceConfig;
   viewport?: 'desktop' | 'mobile';
+  /** Edition id → tier (from the build's ranks) for the live post-mint reveal (OC-3b). */
+  tierMap?: Record<number, string>;
 }) {
   const mode = site.layout ?? 'flow';
   const theme = site.theme;
@@ -87,7 +90,7 @@ export function SiteRenderer({
                 className="site-node"
                 style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: z, transform: rot ? `rotate(${rot}deg)` : undefined }}
               >
-                <BlockBody block={b} images={images} experience={experience} mint={site.mint} />
+                <BlockBody block={b} images={images} experience={experience} mint={site.mint} tierMap={tierMap} />
               </div>
             );
           })}
@@ -105,7 +108,7 @@ export function SiteRenderer({
     >
       {site.cursor && site.cursor !== 'none' ? <CursorTrail kind={site.cursor} /> : null}
       {site.blocks.map((b) => (
-        <BlockBody key={b.id} block={b} images={images} experience={experience} mint={site.mint} />
+        <BlockBody key={b.id} block={b} images={images} experience={experience} mint={site.mint} tierMap={tierMap} />
       ))}
     </div>
   );
@@ -126,7 +129,7 @@ function rectFor(layout: BlockLayout | undefined, index: number, viewport: 'desk
 // preview + editor + exported site) without affecting layout. font-size, text-align and color
 // are inherited properties, so they cascade through the box-less wrapper to the block's text;
 // site.css multiplies sizes by var(--site-fscale). All three are no-ops when unset.
-export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig }) {
+export function BlockBody(props: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig; tierMap?: Record<number, string> }) {
   const { block } = props;
   const fscale = clampFontScale(block.fontScale);
   const wscale = clampScale(block.scale);
@@ -145,7 +148,26 @@ export function BlockBody(props: { block: Block; images: string[]; experience?: 
   );
 }
 
-function BlockContent({ block, images, experience, mint }: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig }) {
+// The mint block is stateful: after a live mint, MintLive reports the minted token(s)' tiers and we
+// replay the reveal (re-keyed) with their rarity backs. Before any mint it's the generic preview.
+function MintBlock({ block, images, experience, mint, tierMap }: { block: Extract<Block, { kind: 'mint' }>; images: string[]; experience?: ExperienceConfig; mint?: MintConfig; tierMap?: Record<number, string> }) {
+  const [tiers, setTiers] = useState<string[] | null>(null);
+  return (
+    <section className="site-mint">
+      {block.heading ? <h2 className="site-h2">{block.heading}</h2> : null}
+      {block.price ? <p className="site-mint-price">{block.price}</p> : null}
+      <MintExperience
+        key={tiers ? `minted-${tiers.join('-')}` : 'preview'}
+        config={resolveExperience(experience)}
+        images={images}
+        cardTiers={tiers ?? undefined}
+      />
+      {mint?.contractAddress ? <MintLive {...mint} tierMap={tierMap} onMinted={setTiers} /> : null}
+    </section>
+  );
+}
+
+function BlockContent({ block, images, experience, mint, tierMap }: { block: Block; images: string[]; experience?: ExperienceConfig; mint?: MintConfig; tierMap?: Record<number, string> }) {
   switch (block.kind) {
     case 'hero':
       // Alignment comes from the block wrapper's text-align (the general per-block control),
@@ -184,14 +206,7 @@ function BlockContent({ block, images, experience, mint }: { block: Block; image
       );
     }
     case 'mint':
-      return (
-        <section className="site-mint">
-          {block.heading ? <h2 className="site-h2">{block.heading}</h2> : null}
-          {block.price ? <p className="site-mint-price">{block.price}</p> : null}
-          <MintExperience config={resolveExperience(experience)} images={images} />
-          {mint?.contractAddress ? <MintLive {...mint} /> : null}
-        </section>
-      );
+      return <MintBlock block={block} images={images} experience={experience} mint={mint} tierMap={tierMap} />;
     case 'faq':
       return (
         <section className="site-faq">

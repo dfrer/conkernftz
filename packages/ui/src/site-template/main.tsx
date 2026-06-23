@@ -34,7 +34,7 @@ const el = document.getElementById('root');
 if (el) {
   createRoot(el).render(
     <StrictMode>
-      <SiteRenderer site={site} images={images} experience={experience} />
+      <SiteRenderer site={site} images={images} experience={experience} tierMap={data?.tierMap} />
     </StrictMode>,
   );
 }
