@@ -2,6 +2,7 @@ import * as electron from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import fssync from 'node:fs';
+import type { TrustedIpcHandle } from './ipc-security.js';
 
 // App-level (project-independent) pack & card-back library. Built-in packs ship bundled in
 // dist/assets/packs; user-added packs live in the Electron userData dir so they persist across
@@ -58,8 +59,8 @@ async function writeUserManifest(list: UserPack[]): Promise<void> {
   await fs.writeFile(manifestPath(), JSON.stringify(list, null, 2), 'utf8');
 }
 
-export function initPacksIpc(): void {
-  electron.ipcMain.handle('foundry:packsList', async () => {
+export function initPacksIpc(handle: TrustedIpcHandle): void {
+  handle('foundry:packsList', async () => {
     try {
       const user = await readUserManifest();
       return {
@@ -74,7 +75,7 @@ export function initPacksIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:packsRead', async (_evt, id: string) => {
+  handle('foundry:packsRead', async (_evt, id: string) => {
     try {
       const b = BUILTINS.find((x) => x.id === id);
       let file: string | null = b ? path.join(builtinsDir(), b.file) : null;
@@ -91,7 +92,7 @@ export function initPacksIpc(): void {
   });
 
   // Open a file picker and import the chosen image into the app library (userData).
-  electron.ipcMain.handle('foundry:packsImport', async (_evt, opts: { name?: string; kind?: PackKind }) => {
+  handle('foundry:packsImport', async (_evt, opts: { name?: string; kind?: PackKind }) => {
     try {
       const res = await electron.dialog.showOpenDialog({
         title: 'Add pack / card-back image to the library',
@@ -116,7 +117,7 @@ export function initPacksIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:packsDelete', async (_evt, id: string) => {
+  handle('foundry:packsDelete', async (_evt, id: string) => {
     try {
       if (BUILTINS.some((b) => b.id === id)) return { ok: false, error: 'Cannot delete a built-in pack' };
       const list = await readUserManifest();

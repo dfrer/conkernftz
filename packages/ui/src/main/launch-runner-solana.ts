@@ -1,8 +1,8 @@
-import * as electron from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { getProjectDir } from './ipc-project.js';
 import { dynamicImport } from './dynamic-import.js';
+import type { TrustedIpcHandle } from './ipc-security.js';
 
 // Solana Launch parity (Core Candy Machine), in the Electron main so the renderer never touches
 // keys/RPCs directly. Mirrors the EVM launch-runner (key-file signer) and the CLI `candy` command:
@@ -91,9 +91,7 @@ function cmInfo(loaded: LoadedSolana): { candyMachine?: string; collection?: str
   return {};
 }
 
-export function initSolanaLaunchRunner(): void {
-  const handle = electron.ipcMain.handle.bind(electron.ipcMain);
-
+export function initSolanaLaunchRunner(handle: TrustedIpcHandle): void {
   handle('foundry:solanaLaunchStatus', async () => {
     try {
       const loaded = loadConfig();

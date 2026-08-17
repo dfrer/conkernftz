@@ -1,9 +1,9 @@
-import * as electron from 'electron';
 import { FileManager } from '@conkernftz/storage/file-manager';
 import { getProjectDir, getFileManager, setFileManager } from './ipc-project.js';
+import type { TrustedIpcHandle } from './ipc-security.js';
 
-export function initStorageIpc(): void {
-  electron.ipcMain.handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {
+export function initStorageIpc(handle: TrustedIpcHandle): void {
+  handle('foundry:fsSave', async (_evt, base64: string, relPath: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };
@@ -19,7 +19,7 @@ export function initStorageIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:fsList', async (_evt, relDir: string) => {
+  handle('foundry:fsList', async (_evt, relDir: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };
@@ -35,7 +35,7 @@ export function initStorageIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:fsDelete', async (_evt, relPath: string) => {
+  handle('foundry:fsDelete', async (_evt, relPath: string) => {
     try {
       const dir = getProjectDir();
       if (!dir) return { ok: false, error: 'No project selected' };

@@ -17,8 +17,8 @@ async function writePng(p: string, b64: string): Promise<void> {
 }
 
 // 1x1 red and green PNGs
-const RED_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottQAAAABJRU5ErkJggg==';
-const GRN_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4DwQAAhoB9m9k5dIAAAAASUVORK5CYII=';
+const RED_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==';
+const GRN_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWNg+M/wHwAEAQH/U7xMcQAAAABJRU5ErkJggg==';
 
 describe('CLI e2e build (tiny project)', () => {
   let projDir: string;
@@ -91,5 +91,4 @@ describe('CLI e2e build (tiny project)', () => {
     expect(String(j.image).startsWith('file://')).toBe(true);
   }, 30000);
 });
-
 

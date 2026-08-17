@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import type { OverlayOptions } from 'sharp';
 import { loadLayerCatalog } from './catalog.js';
 import { generateEditionsConstrained } from './generator.js';
 import { renderEdition } from './render-edition.js';
@@ -25,7 +26,7 @@ export async function makeContactSheet(
     },
   });
 
-  const overlays: sharp.OverlayOptions[] = [];
+  const overlays: OverlayOptions[] = [];
   for (let i = 0; i < imagePaths.length; i++) {
     const row = Math.floor(i / columns);
     const col = i % columns;

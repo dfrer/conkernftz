@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import type { OverlayOptions, Sharp } from 'sharp';
 import type { BlendMode } from './types.js';
 import type { ResolvedEffects } from './effects.js';
 
@@ -85,7 +86,7 @@ export async function compositeLayers(
       },
     });
 
-    const composites: sharp.OverlayOptions[] = [];
+    const composites: OverlayOptions[] = [];
     for (const layer of layers) {
       const group = await renderLayerGroup(layer, { ...options, width: workWidth, height: workHeight });
       const sharpBlend = mapBlendModeToSharp(layer.blend ?? layer.effects?.blend ?? 'normal');
@@ -104,7 +105,7 @@ export async function compositeLayers(
         input: groupBuf,
         top: usesInternalTransform ? 0 : Math.round(offY * scale),
         left: usesInternalTransform ? 0 : Math.round(offX * scale),
-        blend: (sharpBlend as sharp.OverlayOptions['blend']) ?? 'over',
+        blend: (sharpBlend as OverlayOptions['blend']) ?? 'over',
       });
     }
 
@@ -150,7 +151,7 @@ function clamp01(n: number): number {
  * sharp rasterizes SVG at the intrinsic size for density 72; we scale density by how much
  * the SVG must grow to fill the canvas (capped so pathological inputs can't blow up memory).
  */
-async function svgInput(svgPath: string, width: number, height: number): Promise<sharp.Sharp> {
+async function svgInput(svgPath: string, width: number, height: number): Promise<Sharp> {
   let density = 72;
   try {
     const meta = await sharp(svgPath).metadata();
@@ -178,7 +179,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 
 // Map our extended BlendMode to Sharp's native modes where possible.
 // For modes not supported by Sharp, return null to signal future CPU fallback.
-function mapBlendModeToSharp(mode: BlendMode): sharp.OverlayOptions['blend'] | null {
+function mapBlendModeToSharp(mode: BlendMode): OverlayOptions['blend'] | null {
   switch (mode) {
     case 'normal':
     case 'over':
@@ -278,7 +279,11 @@ async function compositeLayersCpu(
     .raw()
     .toBuffer();
 
-  let outPixels = new Uint8ClampedArray(baseRaw.buffer, baseRaw.byteOffset, baseRaw.byteLength);
+  let outPixels: Uint8ClampedArray<ArrayBufferLike> = new Uint8ClampedArray(
+    baseRaw.buffer,
+    baseRaw.byteOffset,
+    baseRaw.byteLength,
+  );
 
   for (const layer of layers) {
     // Render layer + effects to a flattened RGBA buffer
@@ -348,7 +353,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
   if (typeof effects?.blur === 'number' && effects.blur > 0) {
     base = base.blur(Math.max(0, effects.blur));
   }
-  let baseBuf = await base.png().toBuffer();
+  let baseBuf: Buffer<ArrayBufferLike> = await base.png().toBuffer();
 
   // Apply pre-transform (scale, rotate) on the flattened base content
   if (effects?.scale !== undefined || effects?.rotate !== undefined) {
@@ -358,7 +363,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
     baseBuf = transformed.buffer;
   }
 
-  const overlays: sharp.OverlayOptions[] = [];
+  const overlays: OverlayOptions[] = [];
 
   // Shadow (behind)
   // Note: effects referenced as const above
@@ -462,7 +467,7 @@ async function renderLayerGroup(layer: CompositeLayerInput, options: CompositeOp
       .linear([1, 1, 1, clamp01(effects.colorOverlay.opacity ?? 0.25)], [0, 0, 0, 0])
       .png()
       .toBuffer();
-    const blend = (effects.colorOverlay.blend as sharp.OverlayOptions['blend']) || 'over';
+    const blend = (effects.colorOverlay.blend as OverlayOptions['blend']) || 'over';
     overlays.push({ input: colBuf, top: 0, left: 0, blend });
   }
   overlays.push({ input: baseBuf, top: 0, left: 0, blend: 'over' });
@@ -586,7 +591,7 @@ async function makeExpandedSilhouette(silhouette: Buffer, width: number, height:
     [1, 1],
   ];
   const step = px > 24 ? 3 : px > 12 ? 2 : 1;
-  const overlays: sharp.OverlayOptions[] = [];
+  const overlays: OverlayOptions[] = [];
   // Base colored silhouette
   const base = await sharp(silhouette).ensureAlpha().linear([1, 1, 1, clamp01(opacity)], [0, 0, 0, 0]).png().toBuffer();
   for (let d = step; d <= px; d += step) {

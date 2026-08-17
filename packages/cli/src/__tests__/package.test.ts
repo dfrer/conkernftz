@@ -4,6 +4,6 @@ import pkg from '../../package.json';
 describe('package.json', () => {
   it('exposes the CLI package name', () => {
     expect(pkg.name).toBe('@conkernftz/cli');
+    expect(pkg.bin).toEqual({ conkernftz: 'dist/bin.js' });
   });
 });
-

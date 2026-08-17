@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This project uses a pnpm + Turbo monor
 
 #### Prereqs
 
-- Node.js >= 18.18
+- Node.js >= 22.14 and < 25 (Node 22 or 24 recommended)
 - pnpm 9.x
 
 #### Setup
@@ -65,4 +65,3 @@ Examples:
 - Update `CHANGELOG.md` and add `RELEASE_NOTES_vX.Y.Z.md`.
 - Build and run tests.
 - Commit with `chore(release): vX.Y.Z` and tag the commit (`git tag -a vX.Y.Z -m "vX.Y.Z"`).
-

@@ -1,4 +1,5 @@
-import { createPublicClient, http, encodeFunctionData, type Hex } from 'viem';
+import { createClient, http, encodeFunctionData, type Hex } from 'viem';
+import { readContract, waitForTransactionReceipt } from 'viem/actions';
 import {
   conkernftzLaunchAbi,
   LAUNCH_PHASES,
@@ -86,10 +87,10 @@ export async function readSale(
   contractAddress: string,
   address?: string,
 ): Promise<SaleStateWithWallet> {
-  const pub = createPublicClient({ transport: http(rpcUrl) });
+  const client = createClient({ transport: http(rpcUrl) });
   const address_ = contractAddress as Hex;
   const read = <T>(functionName: string, args: unknown[] = []): Promise<T> =>
-    pub.readContract({
+    readContract(client, {
       address: address_,
       abi: conkernftzLaunchAbi,
       functionName,
@@ -172,8 +173,8 @@ export async function submitMint(
  * by the live widget to map a buyer's tokens to their rarity tiers for the reveal.
  */
 export async function waitForMintedTokenIds(rpcUrl: string, contract: string, hash: Hex): Promise<number[]> {
-  const pub = createPublicClient({ transport: http(rpcUrl) });
-  const receipt = await pub.waitForTransactionReceipt({ hash });
+  const client = createClient({ transport: http(rpcUrl) });
+  const receipt = await waitForTransactionReceipt(client, { hash });
   return mintedTokenIds(
     receipt.logs.map((l) => ({ address: l.address, topics: l.topics as unknown as string[] })),
     contract,

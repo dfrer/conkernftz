@@ -22,7 +22,8 @@ import {
   type DeployInputs,
   type LaunchPhase,
 } from '../lib/launchSign';
-import { getProjectId, type WalletSession } from '../lib/walletConnect';
+import type { WalletSession } from '../lib/walletConnect';
+import { getProjectId, setProjectId } from '../lib/walletConnectSettings';
 
 type OpResult = { ok: boolean; error?: string; json?: unknown };
 
@@ -233,7 +234,7 @@ export function LaunchScreen({ onNavigate }: { onNavigate?: (stage: string) => v
     }
     setBusy('connect');
     try {
-      const { connectWallet, setProjectId } = await import('../lib/walletConnect');
+      const { connectWallet } = await import('../lib/walletConnect');
       setProjectId(wcProjectId);
       const s = await connectWallet(wcProjectId, cfg.chain.evm.chainId, cfg.chain.evm.rpcUrl);
       setSession(s);

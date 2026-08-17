@@ -3,6 +3,7 @@ import path from 'node:path';
 import fssync from 'node:fs';
 import { spawn } from 'node:child_process';
 import { getProjectDir, setProjectDir } from './ipc-project.js';
+import type { TrustedIpcHandle } from './ipc-security.js';
 
 const baseDir = __dirname;
 
@@ -230,8 +231,8 @@ async function deployGithubPages(siteDir: string, token: string, repoFull: strin
  * GitHub Pages pushes via the Git Data API (token in the header only). The artist owns the
  * deployment; ConkerNFTZ never stores or transmits their credentials.
  */
-function deploySiteHandler(): void {
-  electron.ipcMain.handle(
+function deploySiteHandler(handle: TrustedIpcHandle): void {
+  handle(
     'foundry:deploySite',
     async (_evt, payload: { provider?: string; token?: string; siteId?: string; repo?: string; branch?: string; domain?: string }): Promise<DeployResult> => {
       try {
@@ -264,9 +265,9 @@ function deploySiteHandler(): void {
   );
 }
 
-export function initCliRunner(): void {
-  deploySiteHandler();
-  electron.ipcMain.handle('foundry:run', async (_evt, args: string[]) => {
+export function initCliRunner(handle: TrustedIpcHandle): void {
+  deploySiteHandler(handle);
+  handle('foundry:run', async (_evt, args: string[]) => {
     try {
       let projectDir = getProjectDir();
       if (!projectDir) {

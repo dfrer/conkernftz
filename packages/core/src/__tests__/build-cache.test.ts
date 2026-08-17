@@ -6,8 +6,8 @@ import fssync from 'node:fs';
 import { buildCollection } from '../project-build.js';
 import type { ProjectConfig } from '../project-config.js';
 
-const RED = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottQAAAABJRU5ErkJggg==';
-const GRN = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4DwQAAhoB9m9k5dIAAAAASUVORK5CYII=';
+const RED = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==';
+const GRN = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWNg+M/wHwAEAQH/U7xMcQAAAABJRU5ErkJggg==';
 
 async function writePng(p: string, b64: string): Promise<void> {
   await fs.mkdir(path.dirname(p), { recursive: true });

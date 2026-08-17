@@ -31,21 +31,19 @@ From a terminal you can also run `pnpm app` (equivalent to `pnpm -C packages/ui 
 - End‑to‑end image format selection: `png` or `webp` (configurable)
 
 Live Preview overlay (UI)
+
 - Toggle an overlay to preview a single edition at any time. The UI asks the core to render accurate images via IPC when possible; it falls back to a canvas compositor for a quick approximation when core rendering is unavailable. The overlay can be dragged, rerolled, and configured for fit (contain/cover/actual) and background (checker/dark/light).
 
 ---
 
 ## 2) System Requirements
 
-- Node.js ≥ 18.18 (Node 20.x recommended)
+- Node.js ≥ 22.14 and < 25 (Node 22 or 24 recommended)
 - PNPM 9.x (via Corepack)
 - Git (for cloning)
-- Optional: Rust toolchain if building the Tauri app
-  - Windows: Rust + MSVC "Desktop development with C++" (Visual Studio Build Tools)
-  - macOS: Xcode Command Line Tools
-  - Linux: GTK/WebKit and dev headers per Tauri docs
 
 Notes for Windows
+
 - Prefer a local path (e.g., `C:\dev\conkernftz`) over OneDrive or network‑mapped drives to avoid policy/long‑path issues.
 - Optional but helpful: enable Win32 long paths (Group Policy → Computer Configuration → Administrative Templates → System → Filesystem → "Enable Win32 long paths" = Enabled).
 
@@ -62,14 +60,14 @@ cd conkernftz
 corepack enable
 corepack prepare pnpm@9.1.0 --activate
 
-# 3) Install workspace deps (root)
-pnpm install
+# 3) Install the exact workspace dependency lock (root)
+pnpm install --frozen-lockfile
 
 # 4) Build everything (CLI, core, UI, etc.)
 pnpm build
 
 # 5) Try the CLI
-pnpm cli -- --help           # runs @foundry/cli (foundry)
+pnpm cli -- --help           # runs the conkernftz CLI
 node packages/cli/dist/bin.js --version
 
 # 6) Run the Electron GUI (dev)
@@ -87,8 +85,7 @@ If you only run `pnpm -C packages/ui start` without a prior `pnpm build`, the GU
 - `packages/cli` – CLI `foundry` (init, validate, preview, build, upload, mint, e2e)
 - `packages/storage` – Storage providers (Arweave Bundlr, IPFS)
 - `packages/chain-solana` – Solana adapter (metadata JSON, Umi mint, optional pNFT)
-- `packages/ui` – Electron GUI (optional)
-- `packages/ui-tauri` – Tauri GUI (optional)
+- `packages/ui` – Electron + React desktop app
 
 We use PNPM workspaces + Turborepo. Root scripts:
 
@@ -104,7 +101,7 @@ We use PNPM workspaces + Turborepo. Root scripts:
 
 ## 5) Setting Up Node & PNPM
 
-Recommended: Use Corepack (bundled with Node ≥ 18)
+Recommended: use Corepack with Node 22 or 24
 
 ```bash
 corepack enable
@@ -118,13 +115,14 @@ npm i -g pnpm@9
 ```
 
 Node version managers
-- macOS/Linux: `nvm install 20 && nvm use 20`
-- Windows: `nvm-windows` or `Volta` (e.g., `volta install node@20`)
+
+- macOS/Linux: `nvm install 22 && nvm use 22`
+- Windows: `nvm-windows` or `Volta` (e.g., `volta install node@22`)
 
 Verify versions
 
 ```bash
-node -v           # v20.x preferred
+node -v           # v22.x or v24.x
 pnpm -v           # 9.x
 git --version
 ```
@@ -191,6 +189,7 @@ foundry e2e
 ```
 
 Key options per command
+
 - `preview`: `--count <n>`, `--seed <s>`, `--max-attempts <n>`, `--allow-duplicates`
 - `build`: `--count <n>` (defaults to `editionSize`), `--seed <s>`, `--max-attempts <n>`
 - `upload`: `--provider <arweave|ipfs>`, `--concurrency <n>`
@@ -212,10 +211,12 @@ Run `foundry init` to create `foundry.config.json` and starter folders. Importan
 - `chain.solana`: Cluster/wallet/fees/creators/pNFT options.
 
 Asset naming for rarity
+
 - Use `Trait#<weight>.png` to assign weights per asset within a layer.
 - If you omit weights, defaults from `rarity` config apply.
 
 Effects on layers and overrides
+
 - Each layer can define `effects` (plus legacy `blend`/`opacity`) that apply to all assets in the layer.
 - Per-asset `overrides` can refine any effect fields by matching `filename` or derived trait `value`.
 - Supported effects: `glow`, `shadow`, `stroke`, `extrude` (simple 3D), `blur`, `modulate` (hue/saturation/brightness), `colorOverlay`, `rotate`, `scale`. Presets are available where applicable.
@@ -224,6 +225,7 @@ Effects on layers and overrides
   - `stroke.position: "outside"|"inside"|"center"` controls stroke placement
 
 Available presets
+
 - `glow`: `subtle`, `medium`, `strong`, `neon`
 - `stroke`: `thin`, `medium`, `thick`, `white`
 - `shadow`: `soft`, `hard`, `long`
@@ -231,6 +233,7 @@ Available presets
 - `colorOverlay`: `tint`, `shade`, `highlight`
 
 Example layer snippet
+
 ```
 {
   "name": "Eyes",
@@ -258,11 +261,13 @@ Example layer snippet
 ## 9) Storage Setup (Arweave / IPFS)
 
 Arweave via Bundlr
+
 - Obtain a Bundlr key and fund the node you choose.
 - Configure `storage.provider = "arweave"` and credentials in `foundry.config.json` (or environment variables if supported by your setup).
 - Uploaded URIs are normalized to HTTPS gateway form: `https://arweave.net/<id>` for broad wallet/explorer compatibility.
 
 IPFS
+
 - NFT.Storage: create an API token.
 - Pinata: create an API token.
 - Configure `storage.provider = "ipfs"` with the respective token.
@@ -280,6 +285,7 @@ foundry upload --provider ipfs --concurrency 6
 ## 10) Minting on Solana (Devnet)
 
 Prereqs
+
 - A devnet RPC URL (optional; defaults typically work).
 - A wallet/keypair with devnet SOL for fees.
 
@@ -301,14 +307,17 @@ pnpm -C packages/ui start
 ```
 
 Notes
+
 - On first run, the GUI ensures the CLI and deps are compiled. If `pnpm` isn’t in PATH, it falls back to `corepack pnpm`.
 - If the CLI dist is still missing, the app shows a clear message with the exact fix: run `corepack enable`, then `pnpm install` and `pnpm build` at the repo root.
 - Configure page now has a Save button next to “Project Config” to persist changes from any pane.
 
 Fal AI page
+
 - Generate images via [fal.ai](https://fal.ai); choose models, set size/count, and save to your project folder.
 
 Customization & Accessibility
+
 - Theme & accent: Use the Options tab to switch Light/Dark and pick an accent color. Accent derivatives (`--accent-2`, `--accent-soft`, `--accent-glow`) update automatically.
 - UI tokens: The GUI consumes `design-system/tokens.css`; avoid inline hex colors. Radius/blur/noise controls apply to `:root` variables and persist.
 - Keyboard-friendly tabs: Primary tabs and subtabs support Arrow Left/Right, Home/End; current tab is marked with ARIA attributes and `tabindex`.
@@ -344,27 +353,34 @@ The binary is written to `packages/ui-tauri/src-tauri/target/release`.
 ## 14) Troubleshooting
 
 Cannot find module `packages/cli/dist/bin.js`
+
 - Cause: CLI TypeScript not compiled.
 - Fix: `corepack enable` → `pnpm install` → `pnpm build` (at repo root).
 - The GUI attempts to compile on demand via pnpm/Corepack and surfaces a clear message if it can’t.
 
 `pnpm` not found
+
 - Run `corepack enable` and `corepack prepare pnpm@9.1.0 --activate`.
 
 Windows path issues (OneDrive/network drives)
+
 - Use a local path like `C:\dev\conkernftz`.
 - Consider enabling Win32 long paths.
 
 Clean/full rebuild
+
 - `pnpm clean` → `pnpm build`.
 
 Node version mismatch
-- Prefer Node 20.x; use `nvm`/`nvm-windows`/`Volta` to switch.
+
+- Use Node 22.x or 24.x; use `nvm`/`nvm-windows`/`Volta` to switch.
 
 Corporate proxies / SSL MITM
+
 - Set `npm_config_https_proxy`/`npm_config_proxy` as needed; configure Git proxy/CA if required.
 
 Antivirus interference on Windows
+
 - Exclude the repo directory from real‑time scanning if builds are unexpectedly slow or failing.
 
 ---
@@ -382,6 +398,7 @@ pnpm clean      # clean build outputs
 ```
 
 Contributing
+
 - See `CONTRIBUTING.md`.
 
 ---
@@ -389,4 +406,3 @@ Contributing
 ## 16) License
 
 MIT — see `LICENSE`.
-
