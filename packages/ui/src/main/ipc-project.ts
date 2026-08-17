@@ -6,6 +6,7 @@ import http from 'node:http';
 import { FileManager } from '@conkernftz/storage/file-manager';
 import * as cliRunner from './cli-runner.js';
 import { getEngineClient } from './engine-client.js';
+import { isSafeExternalUrl, type TrustedIpcHandle } from './ipc-security.js';
 import type { LivePreviewResult, EffectsPreviewResult, PreviewToDiskResult } from './engine-service.js';
 
 let projectDir: string | null = null;
@@ -42,19 +43,19 @@ function resolveInProject(relativePath: string): string | null {
   return p;
 }
 
-export function initProjectIpc(): void {
+export function initProjectIpc(handle: TrustedIpcHandle): void {
   const baseDir = __dirname;
 
-  electron.ipcMain.handle('foundry:chooseProjectDir', async () => {
+  handle('foundry:chooseProjectDir', async () => {
     const res = await electron.dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
     if (res.canceled || res.filePaths.length === 0) return { ok: false, error: 'Canceled' };
     setProjectDir(res.filePaths[0] as string);
     return { ok: true, projectDir };
   });
 
-  electron.ipcMain.handle('foundry:getProjectDir', async () => ({ ok: true, projectDir }));
+  handle('foundry:getProjectDir', async () => ({ ok: true, projectDir }));
 
-  electron.ipcMain.handle('foundry:setProjectDir', async (_evt, dir: string) => {
+  handle('foundry:setProjectDir', async (_evt, dir: string) => {
     try {
       if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
       const exists = fssync.existsSync(dir);
@@ -66,7 +67,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:readConfig', async () => {
+  handle('foundry:readConfig', async () => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const p = path.join(projectDir, 'foundry.config.json');
@@ -77,7 +78,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:readConfigAt', async (_evt, dir: string) => {
+  handle('foundry:readConfigAt', async (_evt, dir: string) => {
     try {
       if (!dir || typeof dir !== 'string') return { ok: false, error: 'Invalid path' };
       const p = path.join(dir, 'foundry.config.json');
@@ -88,7 +89,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:writeConfig', async (_evt, json: unknown) => {
+  handle('foundry:writeConfig', async (_evt, json: unknown) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const p = path.join(projectDir, 'foundry.config.json');
@@ -99,7 +100,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:chooseDirInsideProject', async () => {
+  handle('foundry:chooseDirInsideProject', async () => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const res = await electron.dialog.showOpenDialog({
@@ -119,7 +120,7 @@ export function initProjectIpc(): void {
   // Pick any image off disk and return it as a self-contained data URL (site assets: the
   // Image/GIF widget, 88×31 badge, tiled wallpaper). Baked into the config, so the generated
   // static site stays portable with no external asset fetches.
-  electron.ipcMain.handle('foundry:pickImage', async () => {
+  handle('foundry:pickImage', async () => {
     try {
       const res = await electron.dialog.showOpenDialog({
         title: 'Choose an image',
@@ -137,7 +138,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:readFile', async (_evt, relativePath: string) => {
+  handle('foundry:readFile', async (_evt, relativePath: string) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const p = resolveInProject(relativePath);
@@ -150,7 +151,7 @@ export function initProjectIpc(): void {
   });
 
   // Read a binary file under the project as base64 (for inline image/animation previews).
-  electron.ipcMain.handle('foundry:readFileBase64', async (_evt, relativePath: string) => {
+  handle('foundry:readFileBase64', async (_evt, relativePath: string) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const p = resolveInProject(relativePath);
@@ -177,7 +178,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:ensureDirs', async (_evt, relativePaths: string[]) => {
+  handle('foundry:ensureDirs', async (_evt, relativePaths: string[]) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       for (const rel of relativePaths) {
@@ -192,7 +193,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:listImages', async (_evt, relativePath: string) => {
+  handle('foundry:listImages', async (_evt, relativePath: string) => {
     try {
       if (!relativePath) return { ok: true, count: 0 };
       // Read-only count; absolute paths allowed so absolute layer dirs work.
@@ -213,7 +214,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:openInExplorer', async (_evt, relativePath: string) => {
+  handle('foundry:openInExplorer', async (_evt, relativePath: string) => {
     try {
       // Read-only "reveal in file manager"; absolute paths allowed (build/layer dirs).
       const dir = path.isAbsolute(relativePath || '')
@@ -229,9 +230,9 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:openExternal', async (_evt, url: string) => {
+  handle('foundry:openExternal', async (_evt, url: string) => {
     try {
-      if (!url || typeof url !== 'string') return { ok: false, error: 'Invalid URL' };
+      if (!isSafeExternalUrl(url)) return { ok: false, error: 'Only HTTP(S) URLs can be opened' };
       await electron.shell.openExternal(url);
       return { ok: true };
     } catch (e) {
@@ -239,7 +240,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:listDir', async (_evt, relativePath: string) => {
+  handle('foundry:listDir', async (_evt, relativePath: string) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       if (!fileManager) fileManager = new FileManager(projectDir);
@@ -252,7 +253,7 @@ export function initProjectIpc(): void {
   });
 
   // Run CLI-based audits (shells the built CLI; chain/IO ops stay in the CLI for now).
-  electron.ipcMain.handle('foundry:auditAssets', async () => {
+  handle('foundry:auditAssets', async () => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const uiDistDir = path.resolve(baseDir, '..');
@@ -270,7 +271,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:auditOutputs', async () => {
+  handle('foundry:auditOutputs', async () => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const uiDistDir = path.resolve(baseDir, '..');
@@ -289,7 +290,7 @@ export function initProjectIpc(): void {
   });
 
   // Single effects preview via the engine service (CPU compositor for fidelity).
-  electron.ipcMain.handle('foundry:previewEffects', async (_evt, cfgLike: Record<string, unknown>) => {
+  handle('foundry:previewEffects', async (_evt, cfgLike: Record<string, unknown>) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const { result } = getEngineClient().call<EffectsPreviewResult>('renderEffectsPreview', {
@@ -304,7 +305,7 @@ export function initProjectIpc(): void {
   });
 
   // Delete a file or directory (recursive) inside the project.
-  electron.ipcMain.handle('foundry:deletePath', async (_evt, relativePath: string) => {
+  handle('foundry:deletePath', async (_evt, relativePath: string) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       if (!relativePath || typeof relativePath !== 'string') return { ok: false, error: 'Invalid path' };
@@ -317,7 +318,7 @@ export function initProjectIpc(): void {
     }
   });
 
-  electron.ipcMain.handle('foundry:renameFiles', async (_evt, pairs: { from: string; to: string }[]) => {
+  handle('foundry:renameFiles', async (_evt, pairs: { from: string; to: string }[]) => {
     try {
       if (!Array.isArray(pairs) || pairs.length === 0) return { ok: true, renamed: 0 };
       const toAbs = (p: string) => (path.isAbsolute(p) ? p : projectDir ? path.join(projectDir, p) : p);
@@ -366,15 +367,15 @@ export function initProjectIpc(): void {
   let previewController: { paused: boolean; stopped: boolean } | null = null;
   let activePreviewId = 0;
 
-  electron.ipcMain.handle('foundry:pauseBuild', async () => {
+  handle('foundry:pauseBuild', async () => {
     if (buildController) buildController.paused = true;
     return { ok: true };
   });
-  electron.ipcMain.handle('foundry:resumeBuild', async () => {
+  handle('foundry:resumeBuild', async () => {
     if (buildController) buildController.paused = false;
     return { ok: true };
   });
-  electron.ipcMain.handle('foundry:stopBuild', async () => {
+  handle('foundry:stopBuild', async () => {
     if (buildController) {
       buildController.paused = false;
       buildController.stopped = true;
@@ -382,17 +383,17 @@ export function initProjectIpc(): void {
     return { ok: true };
   });
 
-  electron.ipcMain.handle('foundry:pausePreview', async () => {
+  handle('foundry:pausePreview', async () => {
     if (previewController) previewController.paused = true;
     if (activePreviewId) getEngineClient().control(activePreviewId, 'pause');
     return { ok: true };
   });
-  electron.ipcMain.handle('foundry:resumePreview', async () => {
+  handle('foundry:resumePreview', async () => {
     if (previewController) previewController.paused = false;
     if (activePreviewId) getEngineClient().control(activePreviewId, 'resume');
     return { ok: true };
   });
-  electron.ipcMain.handle('foundry:stopPreview', async () => {
+  handle('foundry:stopPreview', async () => {
     if (previewController) {
       previewController.paused = false;
       previewController.stopped = true;
@@ -402,7 +403,7 @@ export function initProjectIpc(): void {
   });
 
   // Build the full collection through the engine service.
-  electron.ipcMain.handle('foundry:buildWithProgress', async (_evt, count: number) => {
+  handle('foundry:buildWithProgress', async (_evt, count: number) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       buildController = { paused: false, stopped: false };
@@ -436,7 +437,7 @@ export function initProjectIpc(): void {
   });
 
   // Generate N previews to disk through the engine service, with pause/stop.
-  electron.ipcMain.handle('foundry:previewWithProgress', async (_evt, count: number) => {
+  handle('foundry:previewWithProgress', async (_evt, count: number) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       previewController = { paused: false, stopped: false };
@@ -473,7 +474,7 @@ export function initProjectIpc(): void {
   });
 
   // Live previews returned as base64 (no disk writes).
-  electron.ipcMain.handle(
+  handle(
     'foundry:previewLive',
     async (_evt, cfgLike: Record<string, unknown>, count = 4, seed = 'ui-live') => {
       try {
@@ -496,7 +497,7 @@ export function initProjectIpc(): void {
   // into <project>/site-export, drop the renderer-supplied site-data.js bundle beside it, and
   // wire it into index.html. The renderer owns the (tested) bundle/script generation; this
   // handler is just the file writer.
-  electron.ipcMain.handle('foundry:exportSite', async (_evt, payload: { dataJs?: string; dataFile?: string }) => {
+  handle('foundry:exportSite', async (_evt, payload: { dataJs?: string; dataFile?: string }) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const dataFile = typeof payload?.dataFile === 'string' && payload.dataFile ? payload.dataFile : 'site-data.js';
@@ -540,7 +541,7 @@ export function initProjectIpc(): void {
     '.woff2': 'font/woff2',
     '.map': 'application/json',
   };
-  electron.ipcMain.handle('foundry:previewSite', async () => {
+  handle('foundry:previewSite', async () => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const dir = path.join(projectDir, 'site-export');
@@ -587,7 +588,7 @@ export function initProjectIpc(): void {
   });
 
   // Save arbitrary JSON inside the project (constrained to the project root).
-  electron.ipcMain.handle('foundry:saveJson', async (_evt, relativePath: string, json: unknown) => {
+  handle('foundry:saveJson', async (_evt, relativePath: string, json: unknown) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       if (typeof relativePath !== 'string' || !relativePath) return { ok: false, error: 'Invalid path' };

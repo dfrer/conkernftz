@@ -2,10 +2,11 @@ import {
   encodeDeployData,
   encodeFunctionData,
   parseEther,
-  createPublicClient,
+  createClient,
   http,
   type Hex,
 } from 'viem';
+import { waitForTransactionReceipt } from 'viem/actions';
 import { conkernftzLaunchAbi, conkernftzLaunchBytecode } from '@conkernftz/chain-evm';
 
 /**
@@ -105,8 +106,8 @@ export async function walletDeploy(
 
 /** Wait for a deploy tx to mine and return the created contract address (read-only RPC). */
 export async function waitForContractAddress(rpcUrl: string, txHash: Hex): Promise<Hex> {
-  const pub = createPublicClient({ transport: http(rpcUrl) });
-  const receipt = await pub.waitForTransactionReceipt({ hash: txHash });
+  const client = createClient({ transport: http(rpcUrl) });
+  const receipt = await waitForTransactionReceipt(client, { hash: txHash });
   if (!receipt.contractAddress) throw new Error('Deploy transaction did not create a contract.');
   return receipt.contractAddress;
 }

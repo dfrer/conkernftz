@@ -1,6 +1,8 @@
 import * as electron from 'electron';
 import path from 'path';
+import { pathToFileURL } from 'node:url';
 import { initProjectIpc } from './main/ipc-project.js';
+import { createTrustedIpcHandle, hardenPrimaryWindowNavigation } from './main/ipc-security.js';
 import { initStorageIpc } from './main/ipc-storage.js';
 import { initPacksIpc } from './main/ipc-packs.js';
 import { initCliRunner } from './main/cli-runner.js';
@@ -8,13 +10,16 @@ import { initLaunchRunner } from './main/launch-runner.js';
 import { initSolanaLaunchRunner } from './main/launch-runner-solana.js';
 
 const appDir = __dirname;
+const rendererEntry = path.join(appDir, 'renderer-next', 'index.html');
+const trustedRendererUrl = pathToFileURL(rendererEntry).href;
+const handleTrustedIpc = createTrustedIpcHandle(trustedRendererUrl);
 
-initProjectIpc();
-initStorageIpc();
-initPacksIpc();
-initCliRunner();
-initLaunchRunner();
-initSolanaLaunchRunner();
+initProjectIpc(handleTrustedIpc);
+initStorageIpc(handleTrustedIpc);
+initPacksIpc(handleTrustedIpc);
+initCliRunner(handleTrustedIpc);
+initLaunchRunner(handleTrustedIpc);
+initSolanaLaunchRunner(handleTrustedIpc);
 
 function createWindow(): void {
   const win = new electron.BrowserWindow({
@@ -29,11 +34,11 @@ function createWindow(): void {
       webSecurity: true,
     },
   });
-  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  hardenPrimaryWindowNavigation(win.webContents);
   win.webContents.on('did-fail-load', (_e, code, desc) => {
     console.error('Failed to load UI:', code, desc);
   });
-  win.loadFile(path.join(appDir, 'renderer-next', 'index.html'));
+  win.loadFile(rendererEntry);
 }
 
 electron.app.whenReady().then(() => {

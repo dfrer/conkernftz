@@ -85,7 +85,7 @@ describe('wallet senders use eth_sendTransaction', () => {
     const provider: Eip1193Provider = { request };
     const hash = await walletSend(provider, from, to, callSetPhase('public'), 0n);
     expect(hash).toBe('0xhash');
-    const [{ method, params }] = request.mock.calls[0];
+    const [{ method, params }] = request.mock.calls[0]!;
     expect(method).toBe('eth_sendTransaction');
     expect((params[0] as { to: string }).to).toBe(to);
     expect((params[0] as { value: string }).value).toBe('0x0');
@@ -96,7 +96,7 @@ describe('wallet senders use eth_sendTransaction', () => {
     const provider: Eip1193Provider = { request };
     const hash = await walletDeploy(provider, from, inputs);
     expect(hash).toBe('0xdeploytx');
-    const sent = request.mock.calls[0][0].params[0] as { to?: string; data: string };
+    const sent = request.mock.calls[0]![0].params![0] as { to?: string; data: string };
     expect(sent.to).toBeUndefined();
     expect(sent.data.startsWith(conkernftzLaunchBytecode)).toBe(true);
   });

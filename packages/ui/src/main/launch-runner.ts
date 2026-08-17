@@ -5,6 +5,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { getProjectDir } from './ipc-project.js';
 import { dynamicImport } from './dynamic-import.js';
+import type { TrustedIpcHandle } from './ipc-security.js';
 
 const CONSOLE_MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -103,9 +104,7 @@ function writeConfigFor(
   return { rpcUrl: evm.rpcUrl, chainId: evm.chainId, privateKeyPath: keyPath, contractAddress };
 }
 
-export function initLaunchRunner(): void {
-  const handle = electron.ipcMain.handle.bind(electron.ipcMain);
-
+export function initLaunchRunner(handle: TrustedIpcHandle): void {
   handle('foundry:launchStatus', async () => {
     try {
       const { evm } = loadConfig();

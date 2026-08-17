@@ -28,13 +28,20 @@ vi.mock('node:child_process', () => ({
 
 import { initCliRunner } from '../cli-runner.js';
 import { setProjectDir } from '../ipc-project.js';
+import { createTrustedIpcHandle } from '../ipc-security.js';
+
+const TRUSTED_RENDERER_URL = 'file:///opt/conkernftz/dist/renderer-next/index.html';
+
+function trustedEvent() {
+  const mainFrame = { url: TRUSTED_RENDERER_URL };
+  return { senderFrame: mainFrame, sender: { mainFrame } };
+}
 
 describe('cli-runner', () => {
   it('runs CLI and returns stdout', async () => {
     setProjectDir('/tmp/project');
-    initCliRunner();
-    const res = await handlers['foundry:run']({}, ['--help']);
+    initCliRunner(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    const res = await handlers['foundry:run'](trustedEvent(), ['--help']);
     expect(res).toEqual({ ok: true, stdout: 'output' });
   });
 });
-

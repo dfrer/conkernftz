@@ -99,7 +99,7 @@ describe('DesignScreen', () => {
     const { findByLabelText, getByRole, getByLabelText } = mount();
     await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(getByLabelText('Glow'));
+    fireEvent.click(await findByLabelText('Glow'));
     fireEvent.change(getByLabelText('Color'), { target: { value: '#00eaff' } });
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
@@ -114,7 +114,7 @@ describe('DesignScreen', () => {
     const { findByLabelText, getByRole, getByLabelText } = mount();
     await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(getByLabelText('Recolor (duotone)'));
+    fireEvent.click(await findByLabelText('Recolor (duotone)'));
     fireEvent.change(getByLabelText('Preset'), { target: { value: 'sepia' } });
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
@@ -141,10 +141,10 @@ describe('DesignScreen', () => {
 
   it('adds a per-asset override with a glow effect, losslessly', async () => {
     const { writeConfig } = installBridge();
-    const { findByLabelText, getByRole, getByLabelText, getAllByLabelText } = mount();
+    const { findByLabelText, findByRole, getByRole, getByLabelText, getAllByLabelText } = mount();
     await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(getByRole('button', { name: '+ Add override' }));
+    fireEvent.click(await findByRole('button', { name: '+ Add override' }));
     fireEvent.change(getByLabelText('Override match 1'), { target: { value: 'Gold' } });
     // Two "Glow" toggles now exist (layer + override); index 1 is the override's.
     fireEvent.click(getAllByLabelText('Glow')[1]!);

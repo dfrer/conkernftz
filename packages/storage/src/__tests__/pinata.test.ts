@@ -28,7 +28,7 @@ describe('PinataJwtProvider', () => {
     const ref = await p.uploadFile(f);
 
     expect(ref).toEqual({ uri: 'ipfs://bafyfile', type: 'image/png', cid: 'bafyfile' });
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toContain('pinFileToIPFS');
     expect(init.headers.Authorization).toBe('Bearer jwt-token');
     expect(init.body).toBeInstanceOf(FormData);

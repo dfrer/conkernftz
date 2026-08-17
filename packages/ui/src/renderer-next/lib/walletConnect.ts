@@ -1,5 +1,6 @@
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import type { Eip1193Provider } from './launchSign';
+export { getProjectId, setProjectId } from './walletConnectSettings';
 
 /**
  * WalletConnect v2 — non-custodial creator signing. `connectWallet` opens the WC modal (QR + wallet
@@ -8,24 +9,6 @@ import type { Eip1193Provider } from './launchSign';
  * stored locally in the browser (not in the project config). The heavy WC SDK is only imported
  * here — the Launch screen lazy-loads this module so it never weighs down the exported mint site.
  */
-
-const PROJECT_ID_KEY = 'conker.walletConnectProjectId';
-
-export function getProjectId(): string {
-  try {
-    return localStorage.getItem(PROJECT_ID_KEY) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-export function setProjectId(id: string): void {
-  try {
-    localStorage.setItem(PROJECT_ID_KEY, id.trim());
-  } catch {
-    /* ignore (storage unavailable) */
-  }
-}
 
 export interface WalletSession {
   provider: Eip1193Provider;

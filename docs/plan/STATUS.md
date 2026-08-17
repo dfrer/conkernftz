@@ -1,7 +1,7 @@
 # ConkerNFTZ — Status
 
-> *Where we are, component by component.* Updated as work lands. Legend: ✅ done · 🟡 partial ·
-> ⏳ planned · 🧊 icebox. Supersedes `KNOWN_GAPS.md`. Last full pass: **2026-06-20**.
+> _Where we are, component by component._ Updated as work lands. Legend: ✅ done · 🟡 partial ·
+> ⏳ planned · 🧊 icebox. Supersedes `KNOWN_GAPS.md`. Last full pass: **2026-08-16**.
 
 ## You are here
 
@@ -21,10 +21,21 @@ walked the build and signed off; V1-16 (the explicit gate) is passed.
 **✅ App-wide QA sweep complete + merged to `main`** (2026-06-20, owner-authorized). Built a standing
 **interaction+verification driver** (`pnpm -C packages/ui qa`) and drove **every drivable surface ×
 function to 0 findings** (all stages + all Design editors + Site canvas + Launch flows + light/compact
-+ keyboard-a11y + reduced-motion + unhappy paths); verified the **real engine/CLI** end-to-end (8-edition
-build + metadata + DNA + rarity, dupes, audit). **2 real bugs fixed:** `validate` wallet hard-error →
-WARN; `Dialog` missing focus-trap → added. Reports: [QA-SUMMARY.md](QA-SUMMARY.md) ·
-[QA-COVERAGE.md](QA-COVERAGE.md) · owner real-env checklist [QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md).
+
+- keyboard-a11y + reduced-motion + unhappy paths); verified the **real engine/CLI** end-to-end (8-edition
+  build + metadata + DNA + rarity, dupes, audit). **2 real bugs fixed:** `validate` wallet hard-error →
+  WARN; `Dialog` missing focus-trap → added. Reports: [QA-SUMMARY.md](QA-SUMMARY.md) ·
+  [QA-COVERAGE.md](QA-COVERAGE.md) · owner real-env checklist [QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md).
+
+**✅ MAINT-1 runtime/security modernization complete locally (2026-08-16).** The approved V1 design
+is unchanged. The supported runtime is Node 22/24 with Electron 43.4, Vite 8.2, Vitest 4.1, and
+Sharp 0.35. All 55 privileged Electron IPC registrations now share an exact packaged-renderer
+main-frame guard; renderer navigation/window creation is denied and external launches accept only
+bounded, credential-free HTTP(S) URLs. Browser-only chain exports and lazy WalletConnect loading cut
+the renderer entry from 1,186.97 kB to 497.94 kB, the static site to 368.38 kB, and the launch console
+to 223.46 kB. Production dependency audit: **0 critical / 0 high**. Full local source suite:
+**408 tests**, coverage gates green, QA driver 0 findings, screenshots 52/52, and real Edge `file://`
+static-site smoke green. Delivery branch: `codex/modernize-20260816`.
 
 **▶ On-chain parity in progress.** **OC-1 (Solana Launch parity) slices 1+2 merged to `main`:** in-app
 Candy Machine **status → create → insert** (key-file signer), chain-equal to the EVM Launch screen
@@ -49,14 +60,14 @@ follow-ups (Site UX session, Mint-FX motion, light palette). Full suite green: *
 
 ## Packages (engine & libraries)
 
-| Package | State | Notes |
-|---------|-------|-------|
-| `core` | ✅ | **Trait-based generative** engine: layers, rules, rarity, effects, palette recolor, SVG layers, constraint targets, worker-pool + incremental builds, dedupe. Project-config schema (`ProjectConfigSchema`, incl. `chain.evm.launch`). ~12 test files. *(Forward: depth to be massively expanded; broadening to all art types — 1/1s, code-based generative — is Vision II, V2-5.)* |
-| `storage` | ✅ | Providers: Pinata (IPFS), Irys (Arweave), local; `uploadDirectory → {baseUri,cid,files}`. ~3 test files. |
-| `cli` | ✅ | `conkernftz` commands: init/validate/preview/build/dupes/audit/upload/mint/deploy/candy + **`launch <deploy\|allowlist\|status\|prices\|caps\|phase\|reveal\|withdraw\|freeze>`** with the mainnet safeguard. ~3 test files. |
-| `chain-evm` | ✅ | viem-based. `ConkernftzCollection.sol` + **`ConkernftzLaunch.sol`** (ERC-721A phased mint, CI-verified earlier: 34/34 forge + Slither). `merkle.ts`, `mintPlan.ts`, `deploy/sale/chains`, `allowlistFile.ts`. 81 tests. |
-| `chain-solana` | 🟡 | Candy Machine deploy/mint (allowlist + payment guards) works. **No in-app Launch-stage parity yet** (EVM-only so far). ~2 test files. |
-| `ui` | ✅/🟡 | Electron + React app (the platform). Functionally complete for the A→Z loop; **design/UX polish is the V1 priority.** 43 test files (199 tests). |
+| Package        | State | Notes                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core`         | ✅    | **Trait-based generative** engine: layers, rules, rarity, effects, palette recolor, SVG layers, constraint targets, worker-pool + incremental builds, dedupe. Project-config schema (`ProjectConfigSchema`, incl. `chain.evm.launch`). ~12 test files. _(Forward: depth to be massively expanded; broadening to all art types — 1/1s, code-based generative — is Vision II, V2-5.)_ |
+| `storage`      | ✅    | Providers: Pinata (IPFS), Irys (Arweave), local; `uploadDirectory → {baseUri,cid,files}`. ~3 test files.                                                                                                                                                                                                                                                                            |
+| `cli`          | ✅    | `conkernftz` commands: init/validate/preview/build/dupes/audit/upload/mint/deploy/candy + **`launch <deploy\|allowlist\|status\|prices\|caps\|phase\|reveal\|withdraw\|freeze>`** with the mainnet safeguard. ~3 test files.                                                                                                                                                        |
+| `chain-evm`    | ✅    | viem-based. `ConkernftzCollection.sol` + **`ConkernftzLaunch.sol`** (ERC-721A phased mint, CI-verified earlier: 34/34 forge + Slither). `merkle.ts`, `mintPlan.ts`, `deploy/sale/chains`, `allowlistFile.ts`. 81 tests.                                                                                                                                                             |
+| `chain-solana` | 🟡    | Candy Machine deploy/mint plus in-app status → create → insert (key-file signer) are built; owner devnet verification and Phantom signing remain. 2 test files / 17 tests.                                                                                                                                                                                                          |
+| `ui`           | ✅/🟡 | Electron + React app (the platform). Functionally complete for the A→Z loop with the owner-approved V1 design. 47 test files / 238 tests.                                                                                                                                                                                                                                           |
 
 ## UI surfaces (Electron app) — functional state + V1-design readiness
 
@@ -64,46 +75,53 @@ Pipeline stages: **Projects → Design → Preview → Build → Publish → Min
 Utility: **Packs · Fal AI · Settings · Help · Components (playground)**. Shell = "Field Instrument"
 look (instrument-console layout, pipeline nav, status bar).
 
-| Screen | Function | V1 design polish |
-|--------|----------|------------------|
-| Projects | ✅ open/scaffold/select a project | ◐ V1-4: empty-state hero + card-path truncation |
-| Design | ✅ layers, rules, rarity, image, patterns | ◐ V1-5: themed form controls; **deeper table-density work still open** |
-| Preview | ✅ live random previews | ◐ V1-6: loading affordance (already strong) |
-| Build | ✅ images + local JSON, progress | ◐ V1-7: loading affordance (already strong) |
-| Publish | ✅ upload assets, rewrite URIs | ◐ V1-8: per-action loading |
-| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces | ◐ V1-9: loading + kicker; **reveal motion needs live review** |
-| Site | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | ◐ V1-10: loading + kicker; **widget/inspector UX deferred to a live session** |
-| Launch | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console) | ◐ V1-11: kicker + tokenized danger + per-action loading |
-| Packs | ✅ app-level pack/card-back library (built-in CONKERCO + imported) | ◐ V1-12: per-section loading (already clean) |
-| Fal AI | 🟡 fal catalog/generation (owner's key) | ◐ V1-13: loading affordance |
-| Settings / Help | ✅ | ◐ V1-14: Help manual reorder + Launch/Packs added + "NFT Art Foundry" copy; Settings clean |
-| Components | ✅ in-app design-system playground (review surface) | ✅ V1-2: full primitive×state catalog (the review surface) |
+| Screen               | Function                                                                                                                                                                          | V1 design polish                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Projects             | ✅ open/scaffold/select a project                                                                                                                                                 | ◐ V1-4: empty-state hero + card-path truncation                                            |
+| Design               | ✅ layers, rules, rarity, image, patterns                                                                                                                                         | ◐ V1-5: themed form controls; **deeper table-density work still open**                     |
+| Preview              | ✅ live random previews                                                                                                                                                           | ◐ V1-6: loading affordance (already strong)                                                |
+| Build                | ✅ images + local JSON, progress                                                                                                                                                  | ◐ V1-7: loading affordance (already strong)                                                |
+| Publish              | ✅ upload assets, rewrite URIs                                                                                                                                                    | ◐ V1-8: per-action loading                                                                 |
+| Mint FX (Experience) | ✅ pack-rip reveal (4-phase, layered pocket art, per-rarity backs); auto-loads card faces                                                                                         | ◐ V1-9: loading + kicker; **reveal motion needs live review**                              |
+| Site                 | ✅ GeoCities canvas builder (drag/resize/rotate/multi-select, undo/redo, snap, widget zoo, per-block text style + scale, 5-host deploy, local preview, **`Mint contract` panel**) | ◐ V1-10: loading + kicker; **widget/inspector UX deferred to a live session**              |
+| Launch               | ✅ deploy + sale mgmt (status/caps/prices/phase/reveal/freeze/withdraw/allowlist); **3 signer modes** (key file · WalletConnect · browser console)                                | ◐ V1-11: kicker + tokenized danger + per-action loading                                    |
+| Packs                | ✅ app-level pack/card-back library (built-in CONKERCO + imported)                                                                                                                | ◐ V1-12: per-section loading (already clean)                                               |
+| Fal AI               | 🟡 fal catalog/generation (owner's key)                                                                                                                                           | ◐ V1-13: loading affordance                                                                |
+| Settings / Help      | ✅                                                                                                                                                                                | ◐ V1-14: Help manual reorder + Launch/Packs added + "NFT Art Foundry" copy; Settings clean |
+| Components           | ✅ in-app design-system playground (review surface)                                                                                                                               | ✅ V1-2: full primitive×state catalog (the review surface)                                 |
 
 ## On-chain (Phase L)
 
-| Item | State | Notes |
-|------|-------|-------|
-| Launch contract `ConkernftzLaunch` | ✅ CI-verified | ERC-721A allowlist→public→reveal; Ownable2Step + ReentrancyGuard + Pausable + ERC-2981. **Audit-gated before mainnet.** |
-| Merkle allowlist (`merkle.ts`) | ✅ | OZ StandardMerkleTree; JS↔Sol leaf cross-check (threat T13). |
-| Off-chain adapter + CLI | ✅ | deploy/estimate/sale ops + chain presets + mainnet safeguard. |
-| Mint widget (exported site) | ✅ testnet-proven | Injected wallet; `planMint`/`buildMintCall`; builds clean into the buyer bundle (no `node:fs`). |
-| In-app Launch (EVM) | ✅ | key-file IPC + WalletConnect + browser console; all reuse `launchSign`/the adapter. |
-| **Solana Launch parity** | ⏳ | Candy Machine exists; needs in-app Launch-stage parity (chains-all-equal). |
-| Reveal metadata flow | 🟡 | `reveal`/`freeze` wired; the full upload→reveal UX is thin. |
-| Rarity → live tier mapping in the widget | 🟡 | preview simulates one rare; live token→tier mapping waits on mint data. |
+| Item                                     | State             | Notes                                                                                                                   |
+| ---------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Launch contract `ConkernftzLaunch`       | ✅ CI-verified    | ERC-721A allowlist→public→reveal; Ownable2Step + ReentrancyGuard + Pausable + ERC-2981. **Audit-gated before mainnet.** |
+| Merkle allowlist (`merkle.ts`)           | ✅                | OZ StandardMerkleTree; JS↔Sol leaf cross-check (threat T13).                                                            |
+| Off-chain adapter + CLI                  | ✅                | deploy/estimate/sale ops + chain presets + mainnet safeguard.                                                           |
+| Mint widget (exported site)              | ✅ testnet-proven | Injected wallet; `planMint`/`buildMintCall`; builds clean into the buyer bundle (no `node:fs`).                         |
+| In-app Launch (EVM)                      | ✅                | key-file IPC + WalletConnect + browser console; all reuse `launchSign`/the adapter.                                     |
+| **Solana Launch parity**                 | ⏳                | Candy Machine exists; needs in-app Launch-stage parity (chains-all-equal).                                              |
+| Reveal metadata flow                     | 🟡                | `reveal`/`freeze` wired; the full upload→reveal UX is thin.                                                             |
+| Rarity → live tier mapping in the widget | 🟡                | preview simulates one rare; live token→tier mapping waits on mint data.                                                 |
 
 ## Verification posture
 
-- ✅ Local gates green: typecheck, full build (renderer + site + console bundles), vitest (199 UI +
-  chain-evm 81 + cli 12 + core/…), preload drift test.
+- ✅ Frozen install, full build, typecheck, lint, source tests, and coverage gates are green on Node
+  22.22.1. Source-test total: core 47 + storage 13 + Solana 17 + EVM 81 + UI 238 + CLI 12 = **408**.
+- ✅ Vitest 4 coverage baseline is explicit and enforced: core 50.08% lines / 46.61% statements /
+  33.78% branches / 53.84% functions; UI 45.62% / 44.06% / 38.38% / 41.86%.
+- ✅ Production audit: **0 critical / 0 high / 5 moderate / 0 low**. Remaining high advisories in
+  the full audit are transitive development tooling, not shipped production dependencies.
 - ✅ The contract was CI-verified (34/34 forge + Slither) while quota existed — that result stands.
-- ✅/🟡 **Visual assessment upgraded (V1-0, ◐ pending owner nod)** — `packages/ui/scripts/screenshots.mjs`
-  (playwright-core → system Chrome/Edge headless, mocked `window.foundry`) now captures **45** shots:
+- ✅ **Visual assessment green** — `packages/ui/scripts/screenshots.mjs`
+  (playwright-core → system Chrome/Edge headless, mocked `window.foundry`) captures **52** shots:
   every stage incl. **Launch** (not-deployed + deployed), key in-screen states, a full **light-theme**
   pass, and a **compact-viewport** pass — and emits `screenshots/manifest.json` + a browsable
-  **`screenshots/index.html`** contact sheet with a per-shot critique note. Run:
+  **`screenshots/index.html`** contact sheet. Representative dark/light/compact screens were visually
+  inspected in the modernization pass. Run:
   `pnpm -C packages/ui build:renderer-next && pnpm -C packages/ui screenshots`. This is the review
-  surface for the screen-by-screen V1 passes (V1-1…V1-15).
+  surface for future screen changes.
+- ✅ `pnpm -C packages/ui qa` reports **0 findings**; the built static site also passes a real Edge
+  `file://` smoke with zero page/console errors.
 - 🟡 **No CI budget** (owner) → never rely on CI; local is the signal.
 
 ## Outstanding owner-verification items
