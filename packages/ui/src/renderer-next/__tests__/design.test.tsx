@@ -99,7 +99,7 @@ describe('DesignScreen', () => {
     const { findByLabelText, getByRole, getByLabelText } = mount();
     await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(getByLabelText('Glow'));
+    fireEvent.click(await findByLabelText('Glow'));
     fireEvent.change(getByLabelText('Color'), { target: { value: '#00eaff' } });
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
@@ -114,7 +114,7 @@ describe('DesignScreen', () => {
     const { findByLabelText, getByRole, getByLabelText } = mount();
     await findByLabelText('Layer 1 name');
     fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(getByLabelText('Recolor (duotone)'));
+    fireEvent.click(await findByLabelText('Recolor (duotone)'));
     fireEvent.change(getByLabelText('Preset'), { target: { value: 'sepia' } });
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());
