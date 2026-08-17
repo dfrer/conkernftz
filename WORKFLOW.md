@@ -28,9 +28,9 @@ does not perform live wallet, provider, devnet/mainnet, hosting, payment, or dep
 
 ## Delivery state
 
-Independently reviewed with no remaining findings on `codex/modernize-20260816`, based on current
-`origin/main` (`686880a`), and ready for one scoped commit and push. The obsolete dirty
-`conkernftz-main` checkout remains untouched.
+Merged into `main` through PR #97 after all five GitHub checks passed. Merge commit `985c6a0`
+contains the reviewed modernization and the cross-platform UI timing regression fix. The obsolete
+dirty `conkernftz-main` checkout remains untouched.
 
 ## Risks and blockers
 
@@ -45,4 +45,5 @@ Independently reviewed with no remaining findings on `codex/modernize-20260816`,
 
 ## Next action
 
-Commit the independently reviewed scoped work and push `codex/modernize-20260816`.
+Run the owner-environment wallet and Solana devnet checklist before any live deployment; keep
+mainnet blocked on the existing OC-5 audit/freeze gate.

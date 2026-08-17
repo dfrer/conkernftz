@@ -60,9 +60,9 @@ self-running goal/loop. _(Owner: "by far the most important.")_
 
 ## ✅ DONE — Platform maintenance
 
-| ID          | Task                                                                                                                                                                                                                                                                                                                                                      | Status |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| **MAINT-1** | Modernize the current GitHub build without reopening the owner-approved V1 design: Node 22/24, Electron 43, Vite 8, Vitest 4, Sharp 0.35, reproducible CI installs, production dependency remediation, app-wide IPC sender validation, browser-bundle boundaries, coverage/QA/screenshots. Local gates green; delivery branch `codex/modernize-20260816`. | ☑      |
+| ID          | Task                                                                                                                                                                                                                                                                                                                                                           | Status |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **MAINT-1** | Modernize the current GitHub build without reopening the owner-approved V1 design: Node 22/24, Electron 43, Vite 8, Vitest 4, Sharp 0.35, reproducible CI installs, production dependency remediation, app-wide IPC sender validation, browser-bundle boundaries, coverage/QA/screenshots. Local and GitHub gates green; PR #97 merged to `main` as `985c6a0`. | ☑      |
 
 Owner-environment checks remain separate: WalletConnect/browser-extension signing, Solana devnet,
 and the existing contract audit/freeze gate. These are not regressions or blockers for MAINT-1.

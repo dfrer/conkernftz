@@ -21,8 +21,8 @@ WalletConnect genuinely lazy. The approved V1 design was deliberately preserved.
 Local evidence: frozen install, build, typecheck, lint, 408 source tests, coverage, CLI smoke, and
 dependency audit pass; app QA reports 0 findings; screenshots capture 52/52; the static export passes
 a real Edge `file://` smoke. Forge/Slither and live wallet/devnet paths remain their existing
-owner-environment gates. Independent review completed with no remaining findings; commit/push is the
-delivery step.
+owner-environment gates. Independent review completed with no remaining findings. PR #97 passed the
+Ubuntu/Windows Node 22/24 matrix plus the contract job and merged to `main` as `985c6a0`.
 
 ---
 
