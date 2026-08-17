@@ -27,7 +27,7 @@ function to 0 findings** (all stages + all Design editors + Site canvas + Launch
   WARN; `Dialog` missing focus-trap → added. Reports: [QA-SUMMARY.md](QA-SUMMARY.md) ·
   [QA-COVERAGE.md](QA-COVERAGE.md) · owner real-env checklist [QA-REAL-ENV-CHECKLIST.md](QA-REAL-ENV-CHECKLIST.md).
 
-**✅ MAINT-1 runtime/security modernization complete locally (2026-08-16).** The approved V1 design
+**✅ MAINT-1 runtime/security modernization merged (2026-08-16).** The approved V1 design
 is unchanged. The supported runtime is Node 22/24 with Electron 43.4, Vite 8.2, Vitest 4.1, and
 Sharp 0.35. All 55 privileged Electron IPC registrations now share an exact packaged-renderer
 main-frame guard; renderer navigation/window creation is denied and external launches accept only
@@ -35,7 +35,7 @@ bounded, credential-free HTTP(S) URLs. Browser-only chain exports and lazy Walle
 the renderer entry from 1,186.97 kB to 497.94 kB, the static site to 368.38 kB, and the launch console
 to 223.46 kB. Production dependency audit: **0 critical / 0 high**. Full local source suite:
 **408 tests**, coverage gates green, QA driver 0 findings, screenshots 52/52, and real Edge `file://`
-static-site smoke green. Delivery branch: `codex/modernize-20260816`.
+static-site smoke green. PR #97 passed all five GitHub checks and merged to `main` as `985c6a0`.
 
 **▶ On-chain parity in progress.** **OC-1 (Solana Launch parity) slices 1+2 merged to `main`:** in-app
 Candy Machine **status → create → insert** (key-file signer), chain-equal to the EVM Launch screen
