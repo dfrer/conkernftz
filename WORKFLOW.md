@@ -158,9 +158,9 @@ stale operations after a layer/project switch; keyboard focus returns to the ren
 
 ## Delivery state, risk, and next action
 
-The feature is on `codex/trait-rarity-menu` pending commit, pull request checks, and merge. Automated
+The feature is delivered through PR #102 after all five required GitHub checks passed. Automated
 tests cover exact collision-safe filesystem behavior and the rendered editor flow, but the owner's
-NASAID project has not been used for the final visual/filesystem acceptance check. After merge, open
-that imported project, go to **Design → Layers → traits**, change one filename-mode weight, verify the
-asset's renamed filename and refreshed odds, then generate a small sample to confirm the intended
+NASAID project has not been used for the final visual/filesystem acceptance check. Open that imported
+project, go to **Design → Layers → traits**, change one filename-mode weight, verify the asset's
+renamed filename and refreshed odds, then generate a small sample to confirm the intended
 distribution.
