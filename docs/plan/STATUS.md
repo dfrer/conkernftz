@@ -37,7 +37,8 @@ to 223.46 kB. Production dependency audit: **0 critical / 0 high**. Full local s
 **408 tests**, coverage gates green, QA driver 0 findings, screenshots 52/52, and real Edge `file://`
 static-site smoke green. PR #97 passed all five GitHub checks and merged to `main` as `985c6a0`.
 
-**✅ Existing-folder import is implemented locally (2026-08-19).** Projects now imports a
+**✅ Existing-folder import is merged into `main` (2026-08-19).** PR #99 passed all five GitHub
+checks and merged as `e85b7c0`. Projects now imports a
 folder of layer folders, infers either one `Layers` container or direct layer folders, and
 creates a missing `foundry.config.json` with usable starter defaults. It recognizes direct
 PNG/WebP/GIF/SVG assets, ignores common generated root folders, reuses schema-valid existing
