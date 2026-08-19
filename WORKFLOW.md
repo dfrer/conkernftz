@@ -47,3 +47,49 @@ dirty `conkernftz-main` checkout remains untouched.
 
 Run the owner-environment wallet and Solana devnet checklist before any live deployment; keep
 mainnet blocked on the existing OC-5 audit/freeze gate.
+
+---
+
+# Existing-folder import handoff — 2026-08-19
+
+## Outcome and scope
+
+Projects can now import an ordinary art folder whose layer folders are present but whose
+`foundry.config.json` is missing. The importer accepts one `Layers` container or direct layer
+folders, recognizes direct PNG/WebP/GIF/SVG assets, infers natural numeric ordering, and writes
+only the missing project metadata needed to open and use the folder.
+
+## Safety and behavior
+
+The importer never moves, renames, deletes, or overwrites art. A schema-valid existing config is
+reused unchanged. In direct-folder mode, common generated root folders (`build`, `output`,
+`previews`, `uploads`, `dist`, and related output/metadata folders) are ignored. Malformed or
+schema-invalid configs, multiple layer containers, and folders without usable supported assets
+fail closed without writing a config. Generated defaults include a 1024×1024 transparent PNG,
+edition size capped at 100, filename rarity, SHA-256 uniqueness, local build output, and an EVM
+target; the user can review them in Design. A successful import returns one authoritative
+validated-or-generated schema-conformant snapshot and adopts it atomically with the project
+directory and recents; existing configs are schema-validated and lossless, while generated
+configs are tested equal to the persisted JSON. Cancellation, errors, and incomplete results
+leave both main and renderer state unchanged.
+
+## Validation and results
+
+- Focused importer/security/Projects suite: **40/40**.
+- UI typecheck and `build:ts` passed; lint exited 0 with 0 errors and 32 warnings; and `git diff --check` passed.
+- Production UI build passed after resolving a main-process compile-only type-resolution issue.
+- Screenshot harness: **52/52**, with the Projects screen inspected.
+- QA driver: **0 findings**.
+- Post-review full UI suite: **254/255** on first run because of one unrelated Design modal timing
+  test (`edits a layer effect (glow) and saves losslessly`); isolated full `design.test.tsx` passed
+  **7/7**.
+- The owner’s NASAID folder was not found locally; validation used real temporary filesystem
+  fixtures, not that exact folder.
+- No network, provider, wallet, or live chain action was used.
+
+## Delivery state and next action
+
+The importer change is implemented and locally validated on the feature branch. This handoff does
+not claim a GitHub push or merge. The next practical check is for the owner to select the NASAID
+folder in **Projects → Import layer folder…**, review the generated config in **Design**, and report
+any layout-specific mismatch.

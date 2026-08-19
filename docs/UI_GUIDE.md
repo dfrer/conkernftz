@@ -24,7 +24,28 @@ then `pnpm install` and `pnpm build` at the repo root).
 
 The left rail is the workflow, in order:
 
-- **Projects** — **create a new collection** (starter config + layer folders) or open an existing project folder (or pick a recent). The header shows the active project.
+- **Projects** — **create a new collection** (starter config + layer folders), import an existing layer folder, or open an existing project folder (or pick a recent). The header shows the active project.
+
+#### Importing existing art
+
+Choose **Import layer folder…** from the Projects header or empty state. Select either:
+
+- a project root containing exactly one `Layers` folder whose immediate subfolders are
+  layers; or
+- a project root whose immediate subfolders are the layer folders.
+
+The importer reads direct `.png`, `.webp`, `.gif`, and `.svg` assets, preserves natural
+numeric order, and creates `foundry.config.json` only when it is missing. It does not
+move, rename, delete, or overwrite art. If a valid config already exists, it is opened
+unchanged after schema validation. The successful import returns one authoritative
+validated-or-generated schema-conformant snapshot, so the project directory, recents list, and
+displayed configuration change together without a second read. In direct-folder mode, generated
+folders such as
+`build`, `output`, `previews`, `uploads`, and `dist` are ignored. A malformed or
+schema-invalid config, multiple `Layers` containers, or no usable layer folders is
+rejected with an explanatory error; no config is written in those cases. After import,
+review the inferred layers and generated defaults in **Design** before previewing or
+building.
 - **Design** — edit `foundry.config.json` visually, organized into **tabs** (Basics / Layers / Assets & rarity / Rules):
   - *Basics*: name, symbol, description, edition size, image size/format.
   - *Layers*: add/remove/reorder layers, set blend & opacity, live per-layer asset counts + a **rarity-distribution bar**; expand a layer ("traits") to browse every asset with its weight and computed drop-odds.

@@ -5,6 +5,32 @@
 
 ---
 
+### 2026-08-19 — Existing-folder importer: scaffold a usable project from layer art
+
+Owner requested that a folder such as NASAID, containing layer folders but no
+`foundry.config.json`, be importable as a usable project. The Projects screen now offers
+**Import layer folder…**. It accepts one `Layers` container or direct layer folders, reads
+direct PNG/WebP/GIF/SVG assets, preserves natural numeric ordering, and writes only a missing
+config with starter defaults. Existing schema-valid config is reused unchanged after validation.
+The importer does not move, rename, delete, or overwrite art; common generated root folders
+are ignored in direct-folder mode, and malformed, schema-invalid, ambiguous, or empty layouts
+fail without writing.
+
+Final evidence: real temporary-filesystem importer and IPC/renderer tests **40/40**; UI
+typecheck and `build:ts` passed; lint exited 0 with 0 errors and 32 warnings; and the production
+UI build passed after resolving a main-process compile-only type-resolution issue. Diff check passed;
+the screenshot harness was **52/52** with Projects inspected; and the QA driver reported
+**0 findings**. The post-review full UI suite was **254/255** initially due to one unrelated
+Design modal timing test (`edits a layer effect (glow) and saves losslessly`); isolated
+`design.test.tsx` passed **7/7**. The NASAID folder was not available in the local workspace,
+so no claim is made about that exact folder. Successful imports adopt one authoritative
+validated-or-generated schema-conformant snapshot atomically with the project directory and
+recents; existing configs are schema-validated and lossless, while generated configs are tested
+equal to the persisted JSON. Cancellation, errors, and incomplete results leave both unchanged.
+No network or live chain action was performed.
+
+---
+
 ### 2026-08-16 — MAINT-1: restart from current GitHub and modernize the working program
 
 Owner clarified that the first local checkout was obsolete and directed us to ignore that work,

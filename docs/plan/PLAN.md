@@ -67,6 +67,16 @@ self-running goal/loop. _(Owner: "by far the most important.")_
 Owner-environment checks remain separate: WalletConnect/browser-extension signing, Solana devnet,
 and the existing contract audit/freeze gate. These are not regressions or blockers for MAINT-1.
 
+### ✅ DONE — Existing-folder project import (2026-08-19)
+
+Importing an art folder from **Projects** now infers a single `Layers` container or direct
+layer folders, recognizes PNG/WebP/GIF/SVG assets, and creates a usable missing
+`foundry.config.json` without touching the art. Existing schema-valid configs are reused
+unchanged; ambiguous, malformed, schema-invalid, or empty layouts fail without a write.
+Targeted tests, UI build, typecheck, lint, diff check, screenshots, and QA evidence are recorded
+in [STATUS.md](STATUS.md) and [LOG.md](LOG.md). NASAID’s exact folder remains an owner check
+because it was not present locally.
+
 ---
 
 ## ▶ NOW — App-wide QA hardening sweep

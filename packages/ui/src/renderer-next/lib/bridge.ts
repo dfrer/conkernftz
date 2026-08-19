@@ -8,6 +8,16 @@ export interface OkResult {
   error?: string;
 }
 
+export interface ImportProjectResult extends OkResult {
+  cancelled?: boolean;
+  projectDir?: string;
+  config?: unknown;
+  created?: boolean;
+  layerCount?: number;
+  layerNames?: string[];
+  ignoredDirectories?: string[];
+}
+
 export interface BuildProgressEvent {
   current: number;
   total: number;
@@ -20,6 +30,7 @@ export interface FoundryBridge {
   getProjectDir(): Promise<{ ok: boolean; projectDir?: string }>;
   setProjectDir(dir: string): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
   chooseProjectDir(): Promise<{ ok: boolean; projectDir?: string; error?: string }>;
+  importProjectFolder(): Promise<ImportProjectResult>;
   readConfig(): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   readConfigAt(dir: string): Promise<{ ok: boolean; json?: unknown; error?: string }>;
   writeConfig(json: unknown): Promise<OkResult>;

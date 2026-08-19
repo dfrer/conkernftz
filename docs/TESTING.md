@@ -48,6 +48,11 @@ degrades to OFFLINE empty states off-bridge. The engine runs in a separate Elect
 
 - [ ] App launches; no errors in devtools console; window stays responsive.
 - [ ] Projects screen shows recents; "Browse…" opens a project; switching updates the header label.
+- [ ] **Import layer folder…** accepts a root `Layers` container or direct layer folders,
+  recognizes PNG/WebP/GIF/SVG assets, creates a missing `foundry.config.json`, and opens
+  the project without moving, renaming, deleting, or overwriting art.
+- [ ] Existing schema-valid config is reused unchanged; malformed, schema-invalid, or
+  ambiguous layouts show an actionable error and do not write a config.
 
 **Design**
 
@@ -102,3 +107,22 @@ pnpm -C packages/ui screenshots           # capture every stage → packages/ui/
 It uses `playwright-core` against the **system** browser (no ~150 MB browser
 download). The mock bridge lives in `scripts/screenshots.mjs` (`installMock`) —
 extend it there when a new screen needs more bridge methods or richer sample data.
+
+### Existing-folder importer evidence (2026-08-19)
+
+The importer’s real temporary-filesystem fixtures cover both supported layouts, natural
+layer ordering, supported extensions, ignored generated folders, existing-config reuse,
+schema-invalid/malformed and ambiguous layouts, cancellation, and no-write failure paths.
+The focused importer/security/Projects suite passed **40/40**; UI typecheck and `build:ts`
+passed; lint exited 0 with 0 errors and 32 warnings; and `git diff --check` passed. The
+production UI build passed after resolving a main-process compile-only type-resolution issue.
+The successful import adopts one authoritative validated-or-generated schema-conformant snapshot
+atomically with the project directory and recents; existing configs are schema-validated and
+lossless, while generated configs are tested equal to the persisted JSON. Cancellation, errors,
+and incomplete results leave both sides unchanged. The screenshot
+harness captured **52/52** with the Projects screen inspected, and the QA driver reported
+**0 findings**. The post-review full UI suite was **254/255** on the first run because of one
+unrelated Design modal timing test (`edits a layer effect (glow) and saves losslessly`);
+the isolated full `design.test.tsx` run passed **7/7**. No network or live chain action was
+used. The owner’s NASAID folder was not present locally, so these checks use real temporary
+fixtures rather than that specific folder.

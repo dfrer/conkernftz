@@ -88,8 +88,8 @@ describe('ipc-security', () => {
     }
 
     expect(directHandleOwners).toEqual(['ipc-security.ts']);
-    expect(channels).toHaveLength(55);
-    expect(new Set(channels).size).toBe(55);
+    expect(channels).toHaveLength(56);
+    expect(new Set(channels).size).toBe(56);
   });
 
   it('wires every privileged initializer to the trusted handle in production bootstrap', () => {

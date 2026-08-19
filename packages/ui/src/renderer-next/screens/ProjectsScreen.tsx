@@ -12,7 +12,7 @@ import { deriveSymbol } from '../lib/newProject';
 import { useProject, type ProjectRef } from '../state/project';
 
 export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
-  const { recents, openViaDialog, openDir, createProject, error } = useProject();
+  const { recents, openViaDialog, openDir, createProject, importProject, error } = useProject();
   const toast = useToast();
   const [newOpen, setNewOpen] = useState(false);
   const [name, setName] = useState('');
@@ -20,6 +20,7 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
   const [editionSize, setEditionSize] = useState(100);
   const [chain, setChain] = useState<'evm' | 'solana'>('evm');
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const open = async () => {
     if (!isBridged()) {
@@ -35,6 +36,23 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
   const openRecent = async (p: ProjectRef) => {
     if (await openDir(p)) onOpened();
     else toast.push('Could not open project', 'danger');
+  };
+
+  const importLayerFolder = async () => {
+    if (importing) return;
+    setImporting(true);
+    try {
+      const result = await importProject();
+      if (result.cancelled) return;
+      if (!result.ok) {
+        toast.push(result.error ?? 'Could not import layer folder', 'danger');
+        return;
+      }
+      toast.push(result.created ? `Imported ${result.layerCount ?? 0} layers` : 'Project loaded', 'ok');
+      onOpened();
+    } finally {
+      setImporting(false);
+    }
   };
 
   const create = async () => {
@@ -64,6 +82,15 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
         actions={
           <div className="row">
             <Badge tone={isBridged() ? 'ok' : 'default'}>{isBridged() ? 'BRIDGE ONLINE' : 'BRIDGE OFFLINE'}</Badge>
+            <Button
+              onClick={importLayerFolder}
+              loading={importing}
+              disabled={!isBridged()}
+              title="Choose artwork layer subfolders. A missing foundry.config.json is created without moving or renaming artwork; configured folders simply open."
+              aria-label="Import layer folder. Creates a missing foundry.config.json from layer subfolders without moving or renaming artwork; configured folders simply open."
+            >
+              Import layer folder…
+            </Button>
             <Button onClick={open}>Open project…</Button>
             <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
               New project
@@ -79,13 +106,22 @@ export function ProjectsScreen({ onOpened }: { onOpened: () => void }) {
         <EmptyState
           code="NO RECENTS"
           title="Start your first collection"
-          hint="Scaffold a fresh collection with New project, or open an existing conkernftz project folder."
+          hint="Import a layer folder to create a missing foundry.config.json from its layer subfolders without moving or renaming artwork; configured folders simply open. You can also scaffold a fresh collection or open an existing project."
           action={
             <div className="row">
               <Button variant="primary" onClick={() => setNewOpen(true)} disabled={!isBridged()}>
                 New project
               </Button>
               <Button onClick={open}>Open project…</Button>
+              <Button
+                onClick={importLayerFolder}
+                loading={importing}
+                disabled={!isBridged()}
+                title="Choose artwork layer subfolders. A missing foundry.config.json is created without moving or renaming artwork; configured folders simply open."
+                aria-label="Import layer folder. Creates a missing foundry.config.json from layer subfolders without moving or renaming artwork; configured folders simply open."
+              >
+                Import layer folder…
+              </Button>
             </div>
           }
         />

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { bridge } from '../lib/bridge';
+import { bridge, type ImportProjectResult } from '../lib/bridge';
 import { makeStarterConfig, type NewProjectOpts } from '../lib/newProject';
 import type { ExperienceConfig } from '../lib/mintExperience';
 import type { SiteConfig } from '../lib/site';
@@ -67,6 +67,7 @@ interface ProjectApi {
   openViaDialog(): Promise<boolean>;
   openDir(ref: ProjectRef): Promise<boolean>;
   createProject(opts: NewProjectOpts): Promise<boolean>;
+  importProject(): Promise<ImportProjectResult>;
   reload(): Promise<void>;
   updateConfig(mut: (draft: ProjectConfig) => void): void;
   save(): Promise<boolean>;
@@ -121,12 +122,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       let name = ref.name;
       if (fb) {
         const c = await fb.readConfig();
-        if (c.ok && c.json && typeof c.json === 'object') {
-          cfg = c.json as ProjectConfig;
-          name = nameFromConfig(cfg, ref.name);
-        } else if (c.error) {
-          setError(c.error);
+        if (!c.ok) {
+          setError(c.error ?? 'Could not read foundry.config.json');
+          return false;
         }
+        if (!c.json || typeof c.json !== 'object' || Array.isArray(c.json)) {
+          setError('foundry.config.json did not contain a project object');
+          return false;
+        }
+        cfg = c.json as ProjectConfig;
+        name = nameFromConfig(cfg, ref.name);
       }
       const finalRef = { dir: ref.dir, name };
       setProject(finalRef);
@@ -227,6 +232,53 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [loadFor],
   );
 
+  // The main process validates or creates the config and commits its active project
+  // exactly once. Adopt that same returned snapshot atomically so renderer and main
+  // cannot diverge through a second filesystem read.
+  const importProject = useCallback(async (): Promise<ImportProjectResult> => {
+    const fb = bridge();
+    if (!fb) {
+      const error = 'Bridge offline — import from the desktop app';
+      setError(error);
+      return { ok: false, error };
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fb.importProjectFolder();
+      if (result.cancelled) return result;
+      if (
+        !result.ok ||
+        !result.projectDir ||
+        !result.config ||
+        typeof result.config !== 'object' ||
+        Array.isArray(result.config)
+      ) {
+        const error = result.error ?? 'Could not import layer folder';
+        setError(error);
+        return { ...result, ok: false, error };
+      }
+      const importedConfig = result.config as ProjectConfig;
+      const importedProject = {
+        dir: result.projectDir,
+        name: nameFromConfig(importedConfig, basename(result.projectDir)),
+      };
+      setProject(importedProject);
+      setConfig(importedConfig);
+      setDirty(false);
+      const next = [importedProject, ...loadRecents().filter((recent) => recent.dir !== importedProject.dir)];
+      saveRecents(next);
+      setRecents(next);
+      return result;
+    } catch (e) {
+      const error = String((e as Error)?.message ?? e);
+      setError(error);
+      return { ok: false, error };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const reload = useCallback(async () => {
     if (project) await loadFor(project, false);
   }, [project, loadFor]);
@@ -258,7 +310,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ project, config, loading, error, dirty, recents, openViaDialog, openDir, createProject, reload, updateConfig, save }}
+      value={{
+        project,
+        config,
+        loading,
+        error,
+        dirty,
+        recents,
+        openViaDialog,
+        openDir,
+        createProject,
+        importProject,
+        reload,
+        updateConfig,
+        save,
+      }}
     >
       {children}
     </Ctx.Provider>
