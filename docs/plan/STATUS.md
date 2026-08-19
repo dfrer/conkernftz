@@ -1,7 +1,7 @@
 # ConkerNFTZ — Status
 
 > _Where we are, component by component._ Updated as work lands. Legend: ✅ done · 🟡 partial ·
-> ⏳ planned · 🧊 icebox. Supersedes `KNOWN_GAPS.md`. Last full pass: **2026-08-16**.
+> ⏳ planned · 🧊 icebox. Supersedes `KNOWN_GAPS.md`. Last full pass: **2026-08-19**.
 
 ## You are here
 
@@ -29,13 +29,30 @@ function to 0 findings** (all stages + all Design editors + Site canvas + Launch
 
 **✅ MAINT-1 runtime/security modernization merged (2026-08-16).** The approved V1 design
 is unchanged. The supported runtime is Node 22/24 with Electron 43.4, Vite 8.2, Vitest 4.1, and
-Sharp 0.35. All 55 privileged Electron IPC registrations now share an exact packaged-renderer
+Sharp 0.35. All 56 privileged Electron IPC registrations now share an exact packaged-renderer
 main-frame guard; renderer navigation/window creation is denied and external launches accept only
 bounded, credential-free HTTP(S) URLs. Browser-only chain exports and lazy WalletConnect loading cut
 the renderer entry from 1,186.97 kB to 497.94 kB, the static site to 368.38 kB, and the launch console
 to 223.46 kB. Production dependency audit: **0 critical / 0 high**. Full local source suite:
 **408 tests**, coverage gates green, QA driver 0 findings, screenshots 52/52, and real Edge `file://`
 static-site smoke green. PR #97 passed all five GitHub checks and merged to `main` as `985c6a0`.
+
+**✅ Existing-folder import is implemented locally (2026-08-19).** Projects now imports a
+folder of layer folders, infers either one `Layers` container or direct layer folders, and
+creates a missing `foundry.config.json` with usable starter defaults. It recognizes direct
+PNG/WebP/GIF/SVG assets, ignores common generated root folders, reuses schema-valid existing
+config unchanged, and never moves, renames, deletes, or overwrites art. Malformed or
+schema-invalid configs, multiple layer containers, and empty/unsupported folders fail closed.
+The focused importer/security/Projects suite passed 40/40; typecheck and `build:ts` passed;
+lint exited 0 with 0 errors and 32 warnings; and diff check passed. The production UI build passed after
+resolving a main-process compile-only type-resolution issue. Screenshots were 52/52 with
+Projects inspected; QA reported 0 findings. The post-review full UI suite was 254/255 on its
+first run due to one unrelated Design modal timing test; isolated `design.test.tsx` passed
+7/7. Successful imports adopt one authoritative validated-or-generated schema-conformant snapshot
+atomically with the project directory and recents; existing configs are schema-validated and
+lossless, while generated configs are tested equal to the persisted JSON. Cancellation, errors,
+and incomplete results leave both unchanged. NASAID itself was not available locally, so its exact
+folder remains an owner check.
 
 **▶ On-chain parity in progress.** **OC-1 (Solana Launch parity) slices 1+2 merged to `main`:** in-app
 Candy Machine **status → create → insert** (key-file signer), chain-equal to the EVM Launch screen
@@ -77,7 +94,7 @@ look (instrument-console layout, pipeline nav, status bar).
 
 | Screen               | Function                                                                                                                                                                          | V1 design polish                                                                           |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Projects             | ✅ open/scaffold/select a project                                                                                                                                                 | ◐ V1-4: empty-state hero + card-path truncation                                            |
+| Projects             | ✅ open/scaffold/select/import a project; missing configs can be generated from layer folders                                                                                     | ◐ V1-4: empty-state hero + card-path truncation                                            |
 | Design               | ✅ layers, rules, rarity, image, patterns                                                                                                                                         | ◐ V1-5: themed form controls; **deeper table-density work still open**                     |
 | Preview              | ✅ live random previews                                                                                                                                                           | ◐ V1-6: loading affordance (already strong)                                                |
 | Build                | ✅ images + local JSON, progress                                                                                                                                                  | ◐ V1-7: loading affordance (already strong)                                                |

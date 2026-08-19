@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('foundry', {
   stopPreview: () => ipcRenderer.invoke('foundry:stopPreview'),
   onPreviewProgress: (handler) => { ipcRenderer.on('preview-progress', (_evt, data) => handler(data)); },
   chooseProjectDir: () => ipcRenderer.invoke('foundry:chooseProjectDir'),
+  importProjectFolder: () => ipcRenderer.invoke('foundry:importProjectFolder'),
   getProjectDir: () => ipcRenderer.invoke('foundry:getProjectDir'),
   setProjectDir: (dir) => ipcRenderer.invoke('foundry:setProjectDir', dir),
   readConfig: () => ipcRenderer.invoke('foundry:readConfig'),

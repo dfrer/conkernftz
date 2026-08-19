@@ -8,6 +8,8 @@ const { handlers, ipcMain, dialog, shell } = vi.hoisted(() => {
   return { handlers, ipcMain, dialog, shell };
 });
 
+const importProjectFolder = vi.hoisted(() => vi.fn());
+
 vi.mock('electron', () => ({ ipcMain, dialog, shell }));
 vi.mock('node:fs', () => ({ default: { existsSync: vi.fn().mockReturnValue(true) } }));
 vi.mock('node:fs/promises', () => ({
@@ -20,6 +22,7 @@ vi.mock('node:fs/promises', () => ({
   },
 }));
 vi.mock('@conkernftz/storage', () => ({ FileManager: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('../project-import.js', () => ({ importProjectFolder }));
 
 import {
   getProjectDir,
@@ -45,6 +48,7 @@ describe('ipc-project', () => {
     for (const channel of Object.keys(handlers)) delete handlers[channel];
     vi.clearAllMocks();
     shell.openExternal.mockResolvedValue(undefined);
+    importProjectFolder.mockReset();
     setProjectDir(null);
   });
 
@@ -53,6 +57,49 @@ describe('ipc-project', () => {
     const res = await handlers['foundry:setProjectDir'](trustedEvent(), '/tmp/project');
     expect(res).toEqual({ ok: true, projectDir: '/tmp/project' });
     expect(getProjectDir()).toBe('/tmp/project');
+  });
+
+  it('keeps the active project on import cancellation and adopts it after a successful import', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/current');
+    importProjectFolder.mockResolvedValueOnce({ ok: false, cancelled: true });
+
+    await expect(handlers['foundry:importProjectFolder'](trustedEvent())).resolves.toEqual({ ok: false, cancelled: true });
+    expect(getProjectDir()).toBe('/tmp/current');
+
+    importProjectFolder.mockResolvedValueOnce({
+      ok: false,
+      error: 'Existing foundry.config.json is not a valid ConkerNFTZ project',
+    });
+    await expect(handlers['foundry:importProjectFolder'](trustedEvent())).resolves.toMatchObject({ ok: false });
+    expect(getProjectDir()).toBe('/tmp/current');
+
+    const importedConfig = { name: 'Imported', layers: [] };
+    importProjectFolder.mockResolvedValueOnce({
+      ok: true,
+      projectDir: '/tmp/imported',
+      config: importedConfig,
+      created: true,
+      layerCount: 2,
+    });
+    await expect(handlers['foundry:importProjectFolder'](trustedEvent())).resolves.toMatchObject({
+      ok: true,
+      projectDir: '/tmp/imported',
+      config: importedConfig,
+    });
+    expect(getProjectDir()).toBe('/tmp/imported');
+  });
+
+  it('refuses an incomplete success payload without changing the active project', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/current');
+    importProjectFolder.mockResolvedValueOnce({ ok: true, projectDir: '/tmp/imported', created: true });
+
+    await expect(handlers['foundry:importProjectFolder'](trustedEvent())).resolves.toEqual({
+      ok: false,
+      error: 'Project import did not return a complete validated project',
+    });
+    expect(getProjectDir()).toBe('/tmp/current');
   });
 
   it('accepts only the trusted app document main frame for IPC', () => {

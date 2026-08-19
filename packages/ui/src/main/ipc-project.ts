@@ -8,6 +8,7 @@ import * as cliRunner from './cli-runner.js';
 import { getEngineClient } from './engine-client.js';
 import { isSafeExternalUrl, type TrustedIpcHandle } from './ipc-security.js';
 import type { LivePreviewResult, EffectsPreviewResult, PreviewToDiskResult } from './engine-service.js';
+import { importProjectFolder } from './project-import.js';
 
 let projectDir: string | null = null;
 let fileManager: FileManager | null = null;
@@ -45,6 +46,22 @@ function resolveInProject(relativePath: string): string | null {
 
 export function initProjectIpc(handle: TrustedIpcHandle): void {
   const baseDir = __dirname;
+
+  handle('foundry:importProjectFolder', async () => {
+    const result = await importProjectFolder();
+    if (result.ok) {
+      if (
+        !result.projectDir ||
+        !result.config ||
+        typeof result.config !== 'object' ||
+        Array.isArray(result.config)
+      ) {
+        return { ok: false, error: 'Project import did not return a complete validated project' };
+      }
+      setProjectDir(result.projectDir);
+    }
+    return result;
+  });
 
   handle('foundry:chooseProjectDir', async () => {
     const res = await electron.dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });

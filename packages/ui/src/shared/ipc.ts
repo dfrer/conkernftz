@@ -15,6 +15,15 @@ export interface StdoutResult extends OkResult {
 export interface ProjectDirResult extends OkResult {
   projectDir?: string;
 }
+export interface ImportProjectResult extends OkResult {
+  cancelled?: boolean;
+  projectDir?: string;
+  config?: unknown;
+  created?: boolean;
+  layerCount?: number;
+  layerNames?: string[];
+  ignoredDirectories?: string[];
+}
 export interface JsonResult extends OkResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json?: any;
@@ -106,6 +115,7 @@ export interface FoundryApi {
   onPreviewProgress(handler: (data: any) => void): void;
 
   chooseProjectDir(): Promise<ProjectDirResult>;
+  importProjectFolder(): Promise<ImportProjectResult>;
   getProjectDir(): Promise<ProjectDirResult>;
   setProjectDir(dir: string): Promise<ProjectDirResult>;
   readConfig(): Promise<JsonResult>;
@@ -198,6 +208,7 @@ export const FOUNDRY_METHODS = [
   'stopPreview',
   'onPreviewProgress',
   'chooseProjectDir',
+  'importProjectFolder',
   'getProjectDir',
   'setProjectDir',
   'readConfig',

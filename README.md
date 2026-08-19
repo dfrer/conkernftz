@@ -312,6 +312,23 @@ Notes
 - If the CLI dist is still missing, the app shows a clear message with the exact fix: run `corepack enable`, then `pnpm install` and `pnpm build` at the repo root.
 - Configure page now has a Save button next to “Project Config” to persist changes from any pane.
 
+### Import an existing layer folder
+
+On **Projects**, choose **Import layer folder…** when you have art folders but no
+`foundry.config.json` yet. Select either a folder containing one `Layers` folder, or a
+folder whose immediate subfolders are the layers themselves. The importer recognizes
+`.png`, `.webp`, `.gif`, and `.svg` files, infers layer order naturally (for example,
+`Layer2` before `Layer10`), and writes a usable `foundry.config.json` beside the art.
+
+The generated configuration uses safe starter defaults: a 1024×1024 transparent PNG,
+an edition size capped at 100, filename-based rarity (`#`), SHA-256 uniqueness, local
+build output, and an EVM target. Review these values in **Design** before building.
+Existing valid configuration is reused unchanged. The import is non-destructive: it
+does not move, rename, delete, or overwrite art or an existing configuration. Common
+generated root folders such as `build`, `output`, `previews`, `uploads`, and `dist` are
+ignored when direct layer folders are inferred. Ambiguous layouts, malformed JSON, or
+folders without supported art produce an actionable error and leave the folder alone.
+
 Fal AI page
 
 - Generate images via [fal.ai](https://fal.ai); choose models, set size/count, and save to your project folder.
