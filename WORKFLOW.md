@@ -89,7 +89,7 @@ leave both main and renderer state unchanged.
 
 ## Delivery state and next action
 
-The importer change is implemented and locally validated on the feature branch. This handoff does
-not claim a GitHub push or merge. The next practical check is for the owner to select the NASAID
-folder in **Projects → Import layer folder…**, review the generated config in **Design**, and report
-any layout-specific mismatch.
+The importer is merged into `main` through PR #99 after all five GitHub checks passed. Merge commit
+`e85b7c0` contains the reviewed feature and its tests/documentation. The next practical check is
+for the owner to select the NASAID folder in **Projects → Import layer folder…**, review the
+generated config in **Design**, and report any layout-specific mismatch.
