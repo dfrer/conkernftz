@@ -93,3 +93,34 @@ The importer is merged into `main` through PR #99 after all five GitHub checks p
 `e85b7c0` contains the reviewed feature and its tests/documentation. The next practical check is
 for the owner to select the NASAID folder in **Projects → Import layer folder…**, review the
 generated config in **Design**, and report any layout-specific mismatch.
+
+---
+
+# Windows one-click launcher handoff — 2026-08-19
+
+## Outcome and scope
+
+`Launch ConkerNFTZ.bat` is the clear Windows double-click entry point. It resolves its own repository
+directory, verifies the workspace and supported Node 22.14+ prerequisite (before Node 25), selects
+pinned pnpm 9.1.0 through Corepack when available, and falls back only to a verified pnpm 9.x on
+`PATH` when Corepack cannot prepare the pinned runner. Install, build, and Electron start all use
+that same selected runner and propagate failures. `conkernftz.bat` remains a backwards-compatible
+forwarding entry point.
+
+`Launch ConkerNFTZ.bat --check` is intentionally side-effect-free: it verifies the repository layout,
+Node version, and Corepack availability without installing, building, or starting Electron. When
+Corepack is absent it checks only a directly resolvable pnpm 9.x; it never invokes a Corepack pnpm
+shim, so the check cannot trigger a package download.
+`make-desktop-shortcut.bat` now points to the obvious launcher, sets its working directory, and uses
+Electron's executable icon only when that executable exists; the standard shortcut icon is the safe
+fallback before dependencies are installed.
+
+## Validation and delivery state
+
+- Focused UI launcher contract test covers quoting, legacy forwarding, verified package-runner fallback
+  and executable failure propagation, safe-check routing/caller-directory preservation, and shortcut
+  target/icon fallback; its Windows-only smoke cases run `--check` from another working directory and
+  use a temporary failing pnpm 9.x fixture without launching Electron.
+- Automated validation did not open the GUI, install or download dependencies, access the network, or
+  create a desktop shortcut.
+- Delivery is through the one-click launcher PR after its required checks pass.
