@@ -44,6 +44,11 @@ function resolveInProject(relativePath: string): string | null {
   return p;
 }
 
+function isWithinRoot(root: string, candidate: string): boolean {
+  const rel = path.relative(root, candidate);
+  return rel === '' || (!rel.startsWith('..' + path.sep) && rel !== '..' && !path.isAbsolute(rel));
+}
+
 export function initProjectIpc(handle: TrustedIpcHandle): void {
   const baseDir = __dirname;
 
@@ -331,6 +336,67 @@ export function initProjectIpc(handle: TrustedIpcHandle): void {
       await fileManager.deletePath(relativePath);
       return { ok: true };
     } catch (e) {
+      return { ok: false, error: String((e as Error)?.message ?? e) };
+    }
+  });
+
+  // Rename one project file to the exact requested path without ever replacing
+  // an existing destination. A hard link reserves the destination atomically on
+  // Windows, macOS, and Linux; only after that succeeds is the source name removed.
+  handle('foundry:renameFileExact', async (_evt, from: string, to: string) => {
+    try {
+      if (!projectDir) return { ok: false, error: 'No project selected' };
+      if (!from || typeof from !== 'string' || !to || typeof to !== 'string') {
+        return { ok: false, error: 'Invalid path' };
+      }
+
+      const unresolvedSrc = resolveInProject(from);
+      const unresolvedDst = resolveInProject(to);
+      if (!unresolvedSrc || !unresolvedDst) {
+        return { ok: false, error: 'Rename paths must be inside the project directory' };
+      }
+
+      // Reject a symlink source, then canonicalize the source and destination
+      // parent so an in-project symlink cannot redirect the operation outside.
+      const source = await fs.lstat(unresolvedSrc);
+      if (!source.isFile()) return { ok: false, error: 'Source must be a file' };
+      const root = await fs.realpath(path.resolve(projectDir));
+      const src = await fs.realpath(unresolvedSrc);
+      const dstDir = await fs.realpath(path.dirname(unresolvedDst));
+      if (!isWithinRoot(root, src) || !isWithinRoot(root, dstDir)) {
+        return { ok: false, error: 'Rename paths must be inside the project directory' };
+      }
+      const dst = path.join(dstDir, path.basename(unresolvedDst));
+
+      // Unlike fs.rename(), link() fails with EEXIST instead of replacing dst.
+      await fs.link(src, dst);
+      try {
+        await fs.unlink(src);
+      } catch (removeError) {
+        try {
+          await fs.unlink(dst);
+        } catch (rollbackError) {
+          return {
+            ok: false,
+            error: `Source could not be removed, and destination rollback failed: ${String(
+              (rollbackError as Error)?.message ?? rollbackError,
+            )}`,
+          };
+        }
+        return {
+          ok: false,
+          error: `Source could not be removed; destination was rolled back: ${String(
+            (removeError as Error)?.message ?? removeError,
+          )}`,
+        };
+      }
+
+      return { ok: true, renamed: 1 };
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException)?.code;
+      if (code === 'EEXIST') return { ok: false, error: 'Destination already exists' };
+      if (code === 'ENOENT') return { ok: false, error: 'Source file or destination directory does not exist' };
+      if (code === 'EXDEV') return { ok: false, error: 'Rename paths must be on the same filesystem' };
       return { ok: false, error: String((e as Error)?.message ?? e) };
     }
   });

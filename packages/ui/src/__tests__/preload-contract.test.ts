@@ -16,6 +16,12 @@ function readPreload(name: string): string {
   return fs.readFileSync(path.resolve(here, '..', name), 'utf8');
 }
 
+function expectExactRenameChannel(code: string): void {
+  expect(code).toMatch(
+    /\brenameFileExact\s*:\s*\([^)]*\)\s*=>\s*ipcRenderer\.invoke\(\s*['"]foundry:renameFileExact['"]\s*,\s*from\s*,\s*to\s*\)/,
+  );
+}
+
 describe('preload contract', () => {
   it('preload.cjs (the runtime bridge) exposes every FoundryApi method', () => {
     const code = readPreload('preload.cjs');
@@ -29,5 +35,10 @@ describe('preload contract', () => {
     for (const method of FOUNDRY_METHODS) {
       expect(code, `preload.ts is missing the "${method}" method`).toMatch(new RegExp(`\\b${method}\\s*:`));
     }
+  });
+
+  it('routes exact single-file renames through the dedicated IPC channel', () => {
+    expectExactRenameChannel(readPreload('preload.cjs'));
+    expectExactRenameChannel(readPreload('preload.ts'));
   });
 });

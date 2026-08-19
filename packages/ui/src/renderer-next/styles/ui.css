@@ -1127,7 +1127,7 @@ input[type='radio']:disabled {
 /* ===================== Trait browser ===================== */
 .trait-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
   gap: var(--sp-3);
 }
 .trait-card {
@@ -1161,6 +1161,58 @@ input[type='radio']:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.trait-card__edit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 2px;
+}
+.trait-card__editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: var(--hair) solid var(--line);
+}
+.trait-card__weight-label,
+.trait-card__editor-meta,
+.trait-card__editor-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+.trait-card__editor-meta,
+.trait-card__editor-error,
+.trait-card__editor .btn {
+  grid-column: 1 / -1;
+}
+.trait-card__editor-meta {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.trait-card__editor-hint {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+.trait-card__editor-error {
+  color: var(--danger);
+}
+.trait-browser__notice {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--accent);
+  background: var(--surface-inset);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+@media (max-width: 520px) {
+  .trait-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===================== Effects editor ===================== */

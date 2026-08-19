@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
@@ -16,7 +16,7 @@ import { Tabs, TabPanel, type TabDef } from '../components/Tabs';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { bridge } from '../lib/bridge';
-import { isImage } from '../lib/rename';
+import { isCatalogImage } from '../lib/rename';
 import { computeTraitTable } from '../lib/traits';
 import { useProject, type LayerCfg, type AssetOverrideCfg } from '../state/project';
 
@@ -26,11 +26,15 @@ export function DesignScreen() {
   const [counts, setCounts] = useState<Record<number, number | null>>({});
   const [thumbs, setThumbs] = useState<Record<number, string | null>>({});
   const [fileNames, setFileNames] = useState<Record<number, string[]>>({});
+  const thumbRequest = useRef<Record<string, number>>({});
+  const projectScopeRef = useRef<string | null>(project?.dir ?? null);
+  projectScopeRef.current = project?.dir ?? null;
   const [selected, setSelected] = useState<number | null>(null);
   const [browsing, setBrowsing] = useState<number | null>(null);
   const [tab, setTab] = useState('layers');
 
-  const layersKey = (config?.layers ?? []).map((l) => l.path).join('|');
+  const projectScope = project?.dir ?? '';
+  const layersKey = `${projectScope}\0${(config?.layers ?? []).map((l) => l.path).join('|')}`;
   useEffect(() => {
     const fb = bridge();
     const layers = config?.layers ?? [];
@@ -44,8 +48,8 @@ export function DesignScreen() {
       await Promise.all(
         layers.map(async (l, i) => {
           try {
-            const r = await fb.listImages(l.path);
-            next[i] = r.ok ? (r.count ?? 0) : null;
+            const r = await fb.listDir(l.path);
+            next[i] = r.ok && Array.isArray(r.items) ? r.items.filter(isCatalogImage).length : null;
           } catch {
             next[i] = null;
           }
@@ -77,7 +81,7 @@ export function DesignScreen() {
         layers.map(async (l, i) => {
           try {
             const dir = await fb.listDir(l.path);
-            const imgs = dir.ok && Array.isArray(dir.items) ? dir.items.filter(isImage) : [];
+            const imgs = dir.ok && Array.isArray(dir.items) ? dir.items.filter(isCatalogImage) : [];
             names[i] = imgs;
             const name = imgs[0];
             if (!name) {
@@ -93,7 +97,7 @@ export function DesignScreen() {
           }
         }),
       );
-      if (!cancelled) {
+      if (!cancelled && projectScopeRef.current === projectScope) {
         setThumbs(next);
         setFileNames(names);
       }
@@ -180,6 +184,39 @@ export function DesignScreen() {
   const onSave = async () => {
     const ok = await save();
     toast.push(ok ? 'Config saved' : 'Save failed', ok ? 'ok' : 'danger');
+  };
+
+  // A trait rename changes the filesystem, not foundry.config.json. Keep the layer row's
+  // rarity bar and representative thumbnail in sync with the directory listing that the
+  // TraitBrowser just reloaded, without touching project dirty state.
+  const onTraitFilesChange = (scope: string, index: number, layer: LayerCfg, names: string[]) => {
+    if (projectScopeRef.current !== scope) return;
+    setFileNames((current) => ({ ...current, [index]: names }));
+    const requestKey = `${scope}\0${index}`;
+    const request = (thumbRequest.current[requestKey] ?? 0) + 1;
+    thumbRequest.current[requestKey] = request;
+    const first = names[0];
+    const fb = bridge();
+    if (!first || !fb) {
+      setThumbs((current) => ({ ...current, [index]: null }));
+      return;
+    }
+    void fb
+      .readFileBase64(`${layer.path.replace(/[\\/]+$/, '')}/${first}`)
+      .then((result) => {
+        if (projectScopeRef.current !== scope || thumbRequest.current[requestKey] !== request) return;
+        setThumbs((current) => ({
+          ...current,
+          [index]:
+            result.ok && result.base64
+              ? `data:${result.mime || 'image/png'};base64,${result.base64}`
+              : null,
+        }));
+      })
+      .catch(() => {
+        if (projectScopeRef.current === scope && thumbRequest.current[requestKey] === request)
+          setThumbs((current) => ({ ...current, [index]: null }));
+      });
   };
 
   const tabDefs: TabDef[] = [
@@ -326,7 +363,13 @@ export function DesignScreen() {
             </Button>
           }
         >
-          <TraitBrowser layer={layers[browsing]!} delimiter={delimiter} defaultWeight={defaultWeight} />
+          <TraitBrowser
+            layer={layers[browsing]!}
+            delimiter={delimiter}
+            defaultWeight={defaultWeight}
+            scopeKey={project.dir}
+            onFilesChange={(names) => onTraitFilesChange(project.dir, browsing, layers[browsing]!, names)}
+          />
         </Panel>
       ) : null}
 

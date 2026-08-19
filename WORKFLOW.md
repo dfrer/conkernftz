@@ -124,3 +124,43 @@ fallback before dependencies are installed.
 - Automated validation did not open the GUI, install or download dependencies, access the network, or
   create a desktop shortcut.
 - Delivery is through the one-click launcher PR after its required checks pass.
+
+---
+
+# Editable trait rarity handoff — 2026-08-19
+
+## Outcome and scope
+
+In **Design → Layers → traits**, each supported asset now has an **Edit rarity** disclosure for
+filename-based rarity. Artists can enter a positive whole-number weight, preview the exact target
+filename, and apply it without editing files by hand. The asset is renamed immediately, its drop
+odds and representative thumbnail refresh from disk, and `foundry.config.json` remains unchanged.
+Uniform-rarity layers explain that the layer must be switched to filename rarity first. JPEG assets
+remain hidden because the generator catalog supports PNG, WebP, GIF, and SVG.
+
+The new single-file rename bridge is project-bounded, rejects symlink/traversal escapes, reserves the
+exact destination without overwriting or auto-suffixing, and attempts to roll back the destination
+if removing the source fails while explicitly reporting any rollback failure. The editor rejects
+collisions, unsafe path delimiters, non-integer weights, and
+stale operations after a layer/project switch; keyboard focus returns to the renamed trait control.
+
+## Validation and results
+
+- Focused TraitBrowser, Design, and rarity-helper suite: **23/23**.
+- Focused project IPC, preload, and IPC-security suites: **30/30**.
+- Final combined feature regression: **5 files / 47 tests**.
+- Full UI suite: **50 files / 279 tests**; UI typecheck and main-process `build:ts`: pass.
+- Production UI build: pass, with only the existing non-fatal chunk/import-meta notices.
+- Lint: exit 0 with the same 32 pre-existing warnings.
+- Headless QA: 0 findings. Screenshot harness captured the opened
+  `design-traits-rarity-editor` state with no failures.
+- `git diff --check`: pass.
+
+## Delivery state, risk, and next action
+
+The feature is on `codex/trait-rarity-menu` pending commit, pull request checks, and merge. Automated
+tests cover exact collision-safe filesystem behavior and the rendered editor flow, but the owner's
+NASAID project has not been used for the final visual/filesystem acceptance check. After merge, open
+that imported project, go to **Design → Layers → traits**, change one filename-mode weight, verify the
+asset's renamed filename and refreshed odds, then generate a small sample to confirm the intended
+distribution.

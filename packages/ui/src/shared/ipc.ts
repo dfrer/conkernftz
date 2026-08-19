@@ -133,6 +133,7 @@ export interface FoundryApi {
   openInExplorer(relativePath: string): Promise<OkResult>;
   listDir(relativePath: string): Promise<ItemsResult>;
   deletePath(relativePath: string): Promise<OkResult>;
+  renameFileExact(from: string, to: string): Promise<RenamedResult>;
   renameFiles(pairs: { from: string; to: string }[]): Promise<RenamedResult>;
   openExternal(url: string): Promise<OkResult>;
   saveBase64(b64: string, relPath: string): Promise<OkResult>;
@@ -225,6 +226,7 @@ export const FOUNDRY_METHODS = [
   'openInExplorer',
   'listDir',
   'deletePath',
+  'renameFileExact',
   'renameFiles',
   'openExternal',
   'saveBase64',

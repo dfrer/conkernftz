@@ -39,6 +39,7 @@ const foundryApi: FoundryApi = {
   openInExplorer: (relativePath: string) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
   listDir: (relativePath: string) => ipcRenderer.invoke('foundry:listDir', relativePath),
   deletePath: (relativePath: string) => ipcRenderer.invoke('foundry:deletePath', relativePath),
+  renameFileExact: (from: string, to: string) => ipcRenderer.invoke('foundry:renameFileExact', from, to),
   renameFiles: (pairs: { from: string; to: string }[]) => ipcRenderer.invoke('foundry:renameFiles', pairs),
   openExternal: (url: string) => ipcRenderer.invoke('foundry:openExternal', url),
   saveBase64: (b64: string, relPath: string) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),

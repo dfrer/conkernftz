@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { ProjectProvider } from '../state/project';
+import { ProjectProvider, useProject } from '../state/project';
 import { DesignScreen } from '../screens/DesignScreen';
 import { ToastProvider } from '../components';
 
@@ -55,6 +55,26 @@ function mount() {
   );
 }
 
+function ProjectSwitch() {
+  const { openDir } = useProject();
+  return (
+    <button onClick={() => void openDir({ dir: '/p/two', name: 'Two' })}>
+      Switch project
+    </button>
+  );
+}
+
+function mountWithProjectSwitch() {
+  return render(
+    <ToastProvider>
+      <ProjectProvider>
+        <DesignScreen />
+        <ProjectSwitch />
+      </ProjectProvider>
+    </ToastProvider>,
+  );
+}
+
 describe('DesignScreen', () => {
   it('loads config and shows basics + layers', async () => {
     installBridge();
@@ -65,6 +85,69 @@ describe('DesignScreen', () => {
     // Basics lives behind its own tab.
     fireEvent.click(getByRole('tab', { name: 'Basics' }));
     expect(await findByDisplayValue('Specimens')).toBeTruthy();
+  });
+
+  it('uses core-catalog file types for parent layer counts and rarity bars', async () => {
+    const listImages = vi.fn(async () => ({ ok: true, count: 99 }));
+    installBridge({
+      listImages,
+      listDir: async (path: string) => ({
+        ok: true,
+        items: path === 'layers/bg' ? ['Gold#1.png', 'Ignored#9.jpg'] : [],
+      }),
+      readFileBase64: async () => ({ ok: true, base64: 'gold', mime: 'image/png' }),
+    });
+    const { findByDisplayValue, findByRole } = mount();
+    const path = await findByDisplayValue('layers/bg');
+    await waitFor(() =>
+      expect(path.closest('.layer-row')?.querySelector('.mono.muted')?.textContent).toBe('1'),
+    );
+    expect(
+      await findByRole('img', { name: 'Rarity distribution — Gold 100.0%' }),
+    ).toBeTruthy();
+    expect(listImages).not.toHaveBeenCalled();
+  });
+
+  it('keeps a new project thumbnail when both projects use the same layer paths', async () => {
+    let activeProject = '/p/one';
+    let resolveOldRead: (value: { ok: boolean; base64?: string; mime?: string }) => void = () =>
+      undefined;
+    const oldRead = new Promise<{ ok: boolean; base64?: string; mime?: string }>((resolve) => {
+      resolveOldRead = resolve;
+    });
+    const readFileBase64 = vi.fn((path: string) =>
+      path.includes('Old#1.png')
+        ? oldRead
+        : Promise.resolve({ ok: true, base64: 'new-project', mime: 'image/png' }),
+    );
+    installBridge({
+      getProjectDir: async () => ({ ok: true, projectDir: '/p/one' }),
+      setProjectDir: async (dir: string) => {
+        activeProject = dir;
+        return { ok: true };
+      },
+      readConfig: async () => ({
+        ok: true,
+        json: { ...structuredClone(baseConfig), name: activeProject === '/p/one' ? 'One' : 'Two' },
+      }),
+      listDir: async (path: string) => ({
+        ok: true,
+        items: path === 'layers/bg' ? [activeProject === '/p/one' ? 'Old#1.png' : 'New#1.png'] : [],
+      }),
+      readFileBase64,
+    });
+    const { findByLabelText, getByRole } = mountWithProjectSwitch();
+    await findByLabelText('Layer 1 name');
+    await waitFor(() => expect(readFileBase64).toHaveBeenCalledWith('layers/bg/Old#1.png'));
+    fireEvent.click(getByRole('button', { name: 'Switch project' }));
+    await waitFor(() => expect(readFileBase64).toHaveBeenCalledWith('layers/bg/New#1.png'));
+    await waitFor(() =>
+      expect(document.querySelector('.layer-thumb')?.getAttribute('src')).toContain('new-project'),
+    );
+    resolveOldRead({ ok: true, base64: 'old-project', mime: 'image/png' });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.querySelector('.layer-thumb')?.getAttribute('src')).toContain('new-project');
   });
 
   it('edits a field and saves via the bridge, preserving untouched fields', async () => {
