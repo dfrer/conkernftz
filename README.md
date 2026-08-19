@@ -6,12 +6,20 @@ Modern, type‑safe, open‑source NFT art foundry. Compose layered artwork, enf
 
 ## Quick start (Windows): open the app
 
-Double‑click **`conkernftz.bat`** in this folder. On the first run it installs
-dependencies and builds (a few minutes); after that it launches the desktop app
-in a few seconds. Keep the small console window open while you use the app.
+Double-click **`Launch ConkerNFTZ.bat`** in this folder. It works even when
+started from another folder. On the first run it installs dependencies and
+builds (a few minutes); after that it launches the desktop app in a few
+seconds. Keep the small console window open while you use the app.
+
+`conkernftz.bat` remains available for existing shortcuts and scripts; it now
+forwards to the same launcher. To verify the workspace without installing,
+building, or opening Electron, run `"Launch ConkerNFTZ.bat" --check` from a
+Command Prompt in this folder.
 
 Want a desktop icon? Double‑click **`make-desktop-shortcut.bat`** once to create a
-`conkernftz` shortcut on your Desktop, then launch from there.
+`ConkerNFTZ` shortcut on your Desktop, then launch from there. It uses the Electron
+icon when dependencies are already installed and otherwise uses the normal Windows
+shortcut icon.
 
 From a terminal you can also run `pnpm app` (equivalent to `pnpm -C packages/ui start`).
 
