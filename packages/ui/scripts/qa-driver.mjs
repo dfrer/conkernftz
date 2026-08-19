@@ -120,6 +120,15 @@ async function main() {
     await page.getByRole('button', { name: /Browse layer 1 traits/i }).click();
     await page.waitForTimeout(500);
     assert(await page.locator('.panel', { hasText: 'Traits —' }).first().isVisible(), 'Trait browser did not open');
+    const editRarity = page.getByRole('button', { name: 'Edit rarity for Gold#5.png' });
+    await editRarity.focus();
+    assert(await editRarity.getAttribute('aria-expanded') === 'false', 'Trait rarity disclosure is missing its collapsed state');
+    await editRarity.click();
+    assert(await editRarity.getAttribute('aria-expanded') === 'true', 'Trait rarity disclosure did not open');
+    await page.getByRole('spinbutton', { name: 'Rarity weight for Gold#5.png' }).fill('2');
+    await page.getByRole('button', { name: 'Apply rarity for Gold#5.png' }).click();
+    await page.getByText('w2').waitFor({ timeout: 2000 });
+    assert(await page.getByText('w2').isVisible(), 'Trait rarity rename did not refresh the current weight');
   });
 
   await step('design:layer-row-controls', async () => {

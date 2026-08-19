@@ -147,6 +147,10 @@ async function main() {
     await dark.waitForTimeout(700);
     await shot(dark, { id: 'design-traits', group: 'Design · detail', note: 'Trait browser open — card grid, value/%/weight legibility.' });
     await shot(dark, { id: 'design-traits-panel', group: 'Design · detail', note: 'Traits panel close-up — per-card detail density.', locator: dark.locator('.panel', { hasText: 'Traits —' }).first() });
+    await dark.getByRole('button', { name: 'Edit rarity for Gold#5.png' }).click();
+    await dark.getByRole('spinbutton', { name: 'Rarity weight for Gold#5.png' }).fill('2');
+    await dark.waitForTimeout(150);
+    await shot(dark, { id: 'design-traits-rarity-editor', group: 'Design · detail', note: 'Trait rarity disclosure — filename-backed weight input, odds context, and immediate rename cue.', locator: dark.locator('.panel', { hasText: 'Traits —' }).first() });
   } catch (e) {
     console.log('FAILED', 'design-interactions', String(e?.message ?? e));
   }

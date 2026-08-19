@@ -1,4 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
+import path from 'node:path';
 
 const { handlers, ipcMain, dialog, shell } = vi.hoisted(() => {
   const handlers: Record<string, any> = {};
@@ -9,18 +10,21 @@ const { handlers, ipcMain, dialog, shell } = vi.hoisted(() => {
 });
 
 const importProjectFolder = vi.hoisted(() => vi.fn());
+const fsPromises = vi.hoisted(() => ({
+  readFile: vi.fn(),
+  writeFile: vi.fn(),
+  mkdir: vi.fn(),
+  readdir: vi.fn().mockResolvedValue([]),
+  rename: vi.fn(),
+  lstat: vi.fn().mockResolvedValue({ isFile: () => true }),
+  realpath: vi.fn(async (p: string) => p),
+  link: vi.fn(),
+  unlink: vi.fn(),
+}));
 
 vi.mock('electron', () => ({ ipcMain, dialog, shell }));
 vi.mock('node:fs', () => ({ default: { existsSync: vi.fn().mockReturnValue(true) } }));
-vi.mock('node:fs/promises', () => ({
-  default: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    mkdir: vi.fn(),
-    readdir: vi.fn().mockResolvedValue([]),
-    rename: vi.fn(),
-  },
-}));
+vi.mock('node:fs/promises', () => ({ default: fsPromises }));
 vi.mock('@conkernftz/storage', () => ({ FileManager: vi.fn().mockImplementation(() => ({})) }));
 vi.mock('../project-import.js', () => ({ importProjectFolder }));
 
@@ -49,6 +53,7 @@ describe('ipc-project', () => {
     vi.clearAllMocks();
     shell.openExternal.mockResolvedValue(undefined);
     importProjectFolder.mockReset();
+    fsPromises.realpath.mockImplementation(async (p: string) => p);
     setProjectDir(null);
   });
 
@@ -57,6 +62,112 @@ describe('ipc-project', () => {
     const res = await handlers['foundry:setProjectDir'](trustedEvent(), '/tmp/project');
     expect(res).toEqual({ ok: true, projectDir: '/tmp/project' });
     expect(getProjectDir()).toBe('/tmp/project');
+  });
+
+  it('renames one file to the exact destination without using batch suffix behavior', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const src = path.resolve('/tmp/project/Layers/Gold#1.png');
+    const dst = path.resolve('/tmp/project/Layers/Gold#3.png');
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/Gold#1.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({ ok: true, renamed: 1 });
+
+    expect(fsPromises.link).toHaveBeenCalledWith(src, dst);
+    expect(fsPromises.unlink).toHaveBeenCalledOnce();
+    expect(fsPromises.unlink).toHaveBeenCalledWith(src);
+  });
+
+  it('does not mutate the source when the exact destination already exists', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    fsPromises.link.mockRejectedValueOnce(Object.assign(new Error('exists'), { code: 'EEXIST' }));
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/Gold#1.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({ ok: false, error: 'Destination already exists' });
+
+    expect(fsPromises.unlink).not.toHaveBeenCalled();
+  });
+
+  it('rejects exact-rename traversal before touching the filesystem', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), '../outside.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({ ok: false, error: 'Rename paths must be inside the project directory' });
+
+    expect(fsPromises.lstat).not.toHaveBeenCalled();
+    expect(fsPromises.link).not.toHaveBeenCalled();
+    expect(fsPromises.unlink).not.toHaveBeenCalled();
+  });
+
+  it('rejects an exact-rename source redirected outside by a project symlink', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const src = path.resolve('/tmp/project/Layers/Gold#1.png');
+    fsPromises.realpath.mockImplementation(async (p: string) =>
+      p === src ? path.resolve('/tmp/outside/Gold#1.png') : p,
+    );
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/Gold#1.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({ ok: false, error: 'Rename paths must be inside the project directory' });
+
+    expect(fsPromises.link).not.toHaveBeenCalled();
+    expect(fsPromises.unlink).not.toHaveBeenCalled();
+  });
+
+  it('returns a no-mutation error when the exact-rename source is missing', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    fsPromises.lstat.mockRejectedValueOnce(Object.assign(new Error('missing'), { code: 'ENOENT' }));
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/missing.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({ ok: false, error: 'Source file or destination directory does not exist' });
+
+    expect(fsPromises.link).not.toHaveBeenCalled();
+    expect(fsPromises.unlink).not.toHaveBeenCalled();
+  });
+
+  it('rolls back the destination link when removing the source fails', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const src = path.resolve('/tmp/project/Layers/Gold#1.png');
+    const dst = path.resolve('/tmp/project/Layers/Gold#3.png');
+    fsPromises.unlink
+      .mockRejectedValueOnce(new Error('source locked'))
+      .mockResolvedValueOnce(undefined);
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/Gold#1.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({
+      ok: false,
+      error: 'Source could not be removed; destination was rolled back: source locked',
+    });
+
+    expect(fsPromises.unlink).toHaveBeenNthCalledWith(1, src);
+    expect(fsPromises.unlink).toHaveBeenNthCalledWith(2, dst);
+  });
+
+  it('reports a rollback failure that leaves the duplicate destination visible', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    fsPromises.unlink
+      .mockRejectedValueOnce(new Error('source locked'))
+      .mockRejectedValueOnce(new Error('destination locked'));
+
+    await expect(
+      handlers['foundry:renameFileExact'](trustedEvent(), 'Layers/Gold#1.png', 'Layers/Gold#3.png'),
+    ).resolves.toEqual({
+      ok: false,
+      error: 'Source could not be removed, and destination rollback failed: destination locked',
+    });
+
+    expect(fsPromises.unlink).toHaveBeenCalledTimes(2);
   });
 
   it('keeps the active project on import cancellation and adopts it after a successful import', async () => {

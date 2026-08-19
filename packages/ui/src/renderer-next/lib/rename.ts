@@ -2,10 +2,16 @@
 // e.g. "Gold Crown#5.png". Kept DOM-free so the logic is unit-tested directly.
 
 const IMG_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
+const CATALOG_IMG_RE = /\.(png|webp|gif|svg)$/i;
 const EXT_RE = /\.[^.]+$/;
 
 export function isImage(name: string): boolean {
   return IMG_RE.test(name);
+}
+
+/** Image types the core asset catalog actually includes in generated layers. */
+export function isCatalogImage(name: string): boolean {
+  return CATALOG_IMG_RE.test(name);
 }
 
 export function splitName(filename: string): { stem: string; ext: string } {
@@ -25,7 +31,9 @@ export function weightOf(filename: string, delimiter: string, defaultWeight: num
   const i = stem.lastIndexOf(delimiter);
   if (i < 0) return defaultWeight;
   const w = Number(stem.slice(i + delimiter.length));
-  return Number.isFinite(w) && w > 0 ? w : defaultWeight;
+  // Keep the renderer's filename preview aligned with @conkernftz/core, which floors
+  // valid filename weights before selection.
+  return Number.isFinite(w) && w > 0 ? Math.floor(w) : defaultWeight;
 }
 
 export function setWeight(filename: string, weight: number, delimiter: string): string {
@@ -39,7 +47,11 @@ export interface RenamePair {
 }
 
 /** Set a uniform rarity weight on every file (filenames only, not paths). */
-export function uniformWeightRenames(files: string[], weight: number, delimiter: string): RenamePair[] {
+export function uniformWeightRenames(
+  files: string[],
+  weight: number,
+  delimiter: string,
+): RenamePair[] {
   return files
     .map((f) => ({ from: f, to: setWeight(f, weight, delimiter) }))
     .filter((p) => p.from !== p.to);

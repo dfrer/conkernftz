@@ -165,6 +165,12 @@ export function installMock(opts) {
     storage: { provider: 'pinata' },
     chain,
   };
+  const traitSets = {
+    background: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'],
+    body: ['Common#80.png', 'Uncommon#15.png', 'Rare#4.png', 'Legendary#1.png'],
+    eyes: ['Open#1.png', 'Closed#1.png', 'Wink#1.png', 'Laser#1.png', 'Glow#1.png'],
+    headwear: ['None#50.png', 'Crown#1.png'],
+  };
   const ok = (x) => Promise.resolve(Object.assign({ ok: true }, x || {}));
   // Action methods route through `res(name, okValue)`: returns an error result when the method is
   // in failMethods, otherwise the normal ok value. Read methods stay ok so screens still render.
@@ -240,16 +246,21 @@ export function installMock(opts) {
       if (s.includes('json')) {
         return ok({ items: Array.from({ length: 12 }, (_, i) => `${i + 1}.json`) });
       }
-      const sets = {
-        background: ['Gold#5.png', 'Silver#3.png', 'Bronze#1.png'],
-        body: ['Common#80.png', 'Uncommon#15.png', 'Rare#4.png', 'Legendary#1.png'],
-        eyes: ['Open#1.png', 'Closed#1.png', 'Wink#1.png', 'Laser#1.png', 'Glow#1.png'],
-        headwear: ['None#50.png', 'Crown#1.png'],
-      };
-      const key = Object.keys(sets).find((k) => s.includes(k));
-      return ok({ items: sets[key] ?? sets.background });
+      const key = Object.keys(traitSets).find((k) => s.includes(k));
+      return ok({ items: traitSets[key] ?? traitSets.background });
     },
     renameFiles: () => res('renameFiles', { renamed: 0 }),
+    renameFileExact: (fromPath = '', toPath = '') => {
+      if (failSet.has('renameFileExact')) return Promise.resolve({ ok: false, error: 'Simulated renameFileExact failure (QA)' });
+      const from = String(fromPath).split(/[\\/]/).pop();
+      const to = String(toPath).split(/[\\/]/).pop();
+      const key = Object.keys(traitSets).find((name) => String(fromPath).includes(name));
+      const set = key ? traitSets[key] : null;
+      const index = set && from ? set.indexOf(from) : -1;
+      if (!set || index < 0 || !to || set.some((name) => name !== from && name.toLocaleLowerCase() === to.toLocaleLowerCase())) return ok({ renamed: 0 });
+      set[index] = to;
+      return ok({ renamed: 1 });
+    },
     previewLive: () => res('previewLive', { format: 'png', images: previews }),
     previewEffects: () => ok({ format: 'png', b64: palette[0] }),
     buildWithProgress: () => res('buildWithProgress', { stdout: 'Built 8 editions' }),

@@ -10,7 +10,7 @@
 //   - Each file is one row; we do NOT merge same-valued names (the OS guarantees distinct
 //     files, and two files = two distinct images even if they share a trait value).
 
-import { isImage, traitValueOf, weightOf } from './rename';
+import { isCatalogImage, traitValueOf, weightOf } from './rename';
 
 export interface TraitRow {
   /** Filename as it sits on disk, e.g. "Gold Crown#5.png". */
@@ -37,14 +37,12 @@ export interface TraitOpts {
 }
 
 export function computeTraitTable(files: string[], opts: TraitOpts): TraitTable {
-  const rows: TraitRow[] = files
-    .filter(isImage)
-    .map((file) => ({
-      file,
-      value: traitValueOf(file, opts.delimiter),
-      weight: opts.uniform ? 1 : weightOf(file, opts.delimiter, opts.defaultWeight),
-      probability: 0,
-    }));
+  const rows: TraitRow[] = files.filter(isCatalogImage).map((file) => ({
+    file,
+    value: traitValueOf(file, opts.delimiter),
+    weight: opts.uniform ? 1 : weightOf(file, opts.delimiter, opts.defaultWeight),
+    probability: 0,
+  }));
   const total = rows.reduce((sum, r) => sum + r.weight, 0);
   for (const r of rows) r.probability = total > 0 ? r.weight / total : 0;
   return { rows, total };

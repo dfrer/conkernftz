@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('foundry', {
   openInExplorer: (relativePath) => ipcRenderer.invoke('foundry:openInExplorer', relativePath),
   listDir: (relativePath) => ipcRenderer.invoke('foundry:listDir', relativePath),
   deletePath: (relativePath) => ipcRenderer.invoke('foundry:deletePath', relativePath),
+  renameFileExact: (from, to) => ipcRenderer.invoke('foundry:renameFileExact', from, to),
   renameFiles: (pairs) => ipcRenderer.invoke('foundry:renameFiles', pairs),
   openExternal: (url) => ipcRenderer.invoke('foundry:openExternal', url),
   saveBase64: (b64, relPath) => ipcRenderer.invoke('foundry:fsSave', b64, relPath),

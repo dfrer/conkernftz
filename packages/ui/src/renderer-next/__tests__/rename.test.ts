@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { splitName, traitValueOf, weightOf, setWeight, uniformWeightRenames, sequenceRenames, isImage } from '../lib/rename';
+import {
+  splitName,
+  traitValueOf,
+  weightOf,
+  setWeight,
+  uniformWeightRenames,
+  sequenceRenames,
+  isCatalogImage,
+  isImage,
+} from '../lib/rename';
 
 describe('rename helpers', () => {
   it('splits names and parses value + weight', () => {
@@ -24,7 +33,9 @@ describe('rename helpers', () => {
       { from: 'x.png', to: 'Trait 001.png' },
       { from: 'y.png', to: 'Trait 002.png' },
     ]);
-    expect(sequenceRenames(['a#7.png'], 'T', 1, 2, '#', true)).toEqual([{ from: 'a#7.png', to: 'T 01#7.png' }]);
+    expect(sequenceRenames(['a#7.png'], 'T', 1, 2, '#', true)).toEqual([
+      { from: 'a#7.png', to: 'T 01#7.png' },
+    ]);
   });
 
   it('isImage recognises image files', () => {
@@ -32,5 +43,12 @@ describe('rename helpers', () => {
     expect(isImage('a.webp')).toBe(true);
     expect(isImage('a.txt')).toBe(false);
     expect(isImage('subdir/')).toBe(false);
+  });
+
+  it('keeps the generic renamer broad while catalog rarity excludes JPEG', () => {
+    expect(isImage('legacy.jpg')).toBe(true);
+    expect(isCatalogImage('asset.png')).toBe(true);
+    expect(isCatalogImage('legacy.jpg')).toBe(false);
+    expect(isCatalogImage('legacy.jpeg')).toBe(false);
   });
 });
