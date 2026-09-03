@@ -58,9 +58,7 @@ function mount() {
 function ProjectSwitch() {
   const { openDir } = useProject();
   return (
-    <button onClick={() => void openDir({ dir: '/p/two', name: 'Two' })}>
-      Switch project
-    </button>
+    <button onClick={() => void openDir({ dir: '/p/two', name: 'Two' })}>Switch project</button>
   );
 }
 
@@ -102,10 +100,58 @@ describe('DesignScreen', () => {
     await waitFor(() =>
       expect(path.closest('.layer-row')?.querySelector('.mono.muted')?.textContent).toBe('1'),
     );
-    expect(
-      await findByRole('img', { name: 'Rarity distribution — Gold 100.0%' }),
-    ).toBeTruthy();
+    expect(await findByRole('img', { name: 'Rarity distribution — Gold 100.0%' })).toBeTruthy();
     expect(listImages).not.toHaveBeenCalled();
+  });
+
+  it('wires the existing project trait catalog into transform suggestions without another scan', async () => {
+    const listDir = vi.fn(async (path: string) => ({
+      ok: true,
+      items: path === 'layers/bg' ? ['Aurora#2.png'] : ['Robot#3.png'],
+    }));
+    installBridge({
+      listDir,
+      readFileBase64: async () => ({ ok: true, base64: 'trait', mime: 'image/png' }),
+    });
+    const { findByRole, findByLabelText, getByRole, queryByRole } = mount();
+    await findByLabelText('Layer 1 name');
+    await waitFor(() => expect(listDir).toHaveBeenCalledWith('layers/bg'));
+    fireEvent.click(await findByRole('tab', { name: 'Rules' }));
+    fireEvent.click(getByRole('button', { name: '+ Add transform' }));
+    const condition = await findByLabelText('Transform 1 when traits match any of');
+    fireEvent.focus(condition);
+    expect(getByRole('option', { name: 'Background:Aurora' })).toBeTruthy();
+    expect(getByRole('option', { name: 'Body:Robot' })).toBeTruthy();
+    const values = getByRole('combobox', { name: 'Transform 1 values' });
+    fireEvent.focus(values);
+    expect(getByRole('option', { name: 'Aurora' })).toBeTruthy();
+    expect(queryByRole('option', { name: 'Robot' })).toBeNull();
+    expect(listDir).toHaveBeenCalledTimes(4);
+  });
+
+  it('refreshes the scoped transform catalog after a trait-file rename', async () => {
+    let backgroundFiles = ['Aurora#1.png'];
+    const renameFileExact = vi.fn(async () => {
+      backgroundFiles = ['Aurora#2.png'];
+      return { ok: true, renamed: 1 };
+    });
+    installBridge({
+      listDir: async (path: string) => ({ ok: true, items: path === 'layers/bg' ? backgroundFiles : [] }),
+      renameFileExact,
+      readFileBase64: async () => ({ ok: true, base64: 'trait', mime: 'image/png' }),
+    });
+    const { findByLabelText, findByRole, getByLabelText, getByRole, queryByRole } = mount();
+    await findByLabelText('Layer 1 name');
+    fireEvent.click(getByRole('button', { name: 'Browse layer 1 traits' }));
+    fireEvent.click(await findByRole('button', { name: 'Edit rarity for Aurora#1.png' }));
+    fireEvent.change(getByLabelText('Rarity weight for Aurora#1.png'), { target: { value: '2' } });
+    fireEvent.click(getByRole('button', { name: 'Apply rarity for Aurora#1.png' }));
+    await waitFor(() => expect(renameFileExact).toHaveBeenCalledWith('layers/bg/Aurora#1.png', 'layers/bg/Aurora#2.png'));
+    fireEvent.click(await findByRole('tab', { name: 'Rules' }));
+    fireEvent.click(getByRole('button', { name: '+ Add transform' }));
+    const previewAsset = await findByLabelText('Preview sample asset');
+    expect(previewAsset.querySelector('option')?.textContent).toContain('Aurora#2.png');
+    expect(queryByRole('option', { name: 'Aurora#1.png' })).toBeNull();
   });
 
   it('keeps a new project thumbnail when both projects use the same layer paths', async () => {
@@ -150,6 +196,47 @@ describe('DesignScreen', () => {
     expect(document.querySelector('.layer-thumb')?.getAttribute('src')).toContain('new-project');
   });
 
+  it('does not show old project trait suggestions while a same-path project catalog reloads', async () => {
+    let activeProject = '/p/one';
+    let resolveNewListing: (value: { ok: boolean; items: string[] }) => void = () => undefined;
+    const newListing = new Promise<{ ok: boolean; items: string[] }>((resolve) => {
+      resolveNewListing = resolve;
+    });
+    const listDir = vi.fn((path: string) => {
+      if (path !== 'layers/bg') return Promise.resolve({ ok: true, items: [] });
+      return activeProject === '/p/one'
+        ? Promise.resolve({ ok: true, items: ['OldProject#1.png'] })
+        : newListing;
+    });
+    installBridge({
+      getProjectDir: async () => ({ ok: true, projectDir: '/p/one' }),
+      setProjectDir: async (dir: string) => {
+        activeProject = dir;
+        return { ok: true };
+      },
+      readConfig: async () => ({ ok: true, json: { ...structuredClone(baseConfig), name: activeProject } }),
+      listDir,
+      readFileBase64: async () => ({ ok: true, base64: 'trait', mime: 'image/png' }),
+    });
+    const { findByLabelText, findByRole, getByRole, queryByRole } = mountWithProjectSwitch();
+    await findByLabelText('Layer 1 name');
+    await waitFor(() => expect(listDir).toHaveBeenCalledWith('layers/bg'));
+    fireEvent.click(await findByRole('tab', { name: 'Rules' }));
+    fireEvent.click(getByRole('button', { name: '+ Add transform' }));
+    const condition = await findByLabelText('Transform 1 when traits match any of');
+    fireEvent.focus(condition);
+    expect(getByRole('option', { name: 'Background:OldProject' })).toBeTruthy();
+
+    fireEvent.click(getByRole('button', { name: 'Switch project' }));
+    await waitFor(() => expect(listDir.mock.calls.length).toBeGreaterThan(4));
+    expect(queryByRole('option', { name: 'Background:OldProject' })).toBeNull();
+
+    resolveNewListing({ ok: true, items: ['NewProject#1.png'] });
+    fireEvent.click(getByRole('button', { name: '+ Add transform' }));
+    fireEvent.focus(await findByLabelText('Transform 1 when traits match any of'));
+    expect(await findByRole('option', { name: 'Background:NewProject' })).toBeTruthy();
+  });
+
   it('edits a field and saves via the bridge, preserving untouched fields', async () => {
     const { writeConfig } = installBridge();
     const { findByDisplayValue, findByRole, getByRole } = mount();
@@ -164,6 +251,21 @@ describe('DesignScreen', () => {
     expect(saved.rarity).toEqual(baseConfig.rarity);
     expect(saved.layers).toHaveLength(2);
     expect(saved.export.outDir).toBe('build');
+  });
+
+  it('edits the schema-backed preview output folder and does not expose unused seed jitter', async () => {
+    const { writeConfig } = installBridge();
+    const { findByRole, findByLabelText, getByRole, queryByLabelText } = mount();
+    fireEvent.click(await findByRole('tab', { name: 'Basics' }));
+    fireEvent.change(await findByLabelText('Preview output folder'), {
+      target: { value: 'review/previews' },
+    });
+    expect(queryByLabelText('Generation seed jitter')).toBeNull();
+    fireEvent.click(getByRole('button', { name: 'Save config' }));
+    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const saved = writeConfig.mock.calls.at(-1)![0] as any;
+    expect(saved.export.previewOutDir).toBe('review/previews');
   });
 
   it('adds a layer', async () => {
@@ -212,7 +314,9 @@ describe('DesignScreen', () => {
     const { findByLabelText, findByRole, getByRole } = mount();
     fireEvent.click(await findByRole('tab', { name: 'Rules' }));
     const ta = (await findByLabelText('Rules JSON')) as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: '{"maxOccurrences":[{"trait":"Body:Red","max":3}]}' } });
+    fireEvent.change(ta, {
+      target: { value: '{"maxOccurrences":[{"trait":"Body:Red","max":3}]}' },
+    });
     fireEvent.click(getByRole('button', { name: 'Apply JSON' }));
     fireEvent.click(getByRole('button', { name: 'Save config' }));
     await waitFor(() => expect(writeConfig).toHaveBeenCalled());

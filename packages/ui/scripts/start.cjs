@@ -11,6 +11,7 @@ delete env.ELECTRON_RUN_AS_NODE;
 
 const isWin = process.platform === 'win32';
 const uiDir = path.join(__dirname, '..');
+const repositoryRoot = path.join(uiDir, '..', '..');
 
 function startElectron() {
   try {
@@ -34,12 +35,12 @@ if (process.env.CONKERNFTZ_SKIP_UI_BUILD === '1') {
   return;
 }
 
-// Otherwise proactively build UI assets so dist/renderer-next and assets are present. On Windows
-// pnpm is a .cmd shim, which Node refuses to spawn without a shell (EINVAL) since 18.20/20.12,
-// so use shell:true there.
+// Otherwise build the workspace so Electron's CommonJS runtime dependencies and UI assets are
+// present. On Windows pnpm is a .cmd shim, which Node refuses to spawn without a shell (EINVAL)
+// since 18.20/20.12, so use shell:true there.
 try {
   const pnpm = isWin ? 'pnpm.cmd' : 'pnpm';
-  const build = spawn(pnpm, ['run', 'build'], { cwd: uiDir, stdio: 'inherit', env, shell: isWin });
+  const build = spawn(pnpm, ['-w', 'build'], { cwd: repositoryRoot, stdio: 'inherit', env, shell: isWin });
   build.on('error', (err) => {
     console.warn('UI build could not start:', err && err.message ? err.message : err, '; starting anyway...');
     startElectron();

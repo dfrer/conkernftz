@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Panel } from '../components/Panel';
 import { StageHeader } from '../components/StageHeader';
 import { Button } from '../components/Button';
-import { Field, Input } from '../components/Field';
+import { Field, Input, Select } from '../components/Field';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
 import { Skeleton } from '../components/Skeleton';
@@ -13,11 +13,23 @@ import { isImage } from '../lib/rename';
 import { useProject } from '../state/project';
 
 const OUTPUT_CAP = 120;
+export const ANIMATION_OUTPUT_CAP = 24;
+export const ANIMATION_PREVIEW_MAX_BYTES = 16 * 1024 * 1024;
 
 interface RarityData {
   traitCounts?: Record<string, Record<string, number>>;
   editionCount?: number;
 }
+
+interface AnimationPreview {
+  name: string;
+  source: string;
+  video: boolean;
+}
+
+const isAnimationOutput = (name: string) => /\.(gif|webp|mp4|webm)$/i.test(name);
+const isVideoOutput = (name: string) => /\.(mp4|webm)$/i.test(name);
+const animationFallbackMime = (name: string) => name.toLowerCase().endsWith('.webm') ? 'video/webm' : name.toLowerCase().endsWith('.mp4') ? 'video/mp4' : name.toLowerCase().endsWith('.gif') ? 'image/gif' : 'image/webp';
 
 export function BuildScreen() {
   const { project, config } = useProject();
@@ -33,6 +45,11 @@ export function BuildScreen() {
   const [outMime, setOutMime] = useState('image/png');
   const [outIndex, setOutIndex] = useState<number | null>(null);
   const [loadingOut, setLoadingOut] = useState(false);
+  const [animationNames, setAnimationNames] = useState<string[]>([]);
+  const [selectedAnimation, setSelectedAnimation] = useState('');
+  const [animation, setAnimation] = useState<AnimationPreview | null>(null);
+  const [animationError, setAnimationError] = useState<string | null>(null);
+  const [loadingAnimations, setLoadingAnimations] = useState(false);
 
   useEffect(() => {
     if (config?.editionSize) setCount(Number(config.editionSize));
@@ -132,6 +149,45 @@ export function BuildScreen() {
     const r = which === 'assets' ? await fb.auditAssets({ json: true }) : await fb.auditOutputs({ images: true, json: true });
     if (r.ok) setAudit({ label: which, json: r.json });
     else toast.push(r.error ?? 'Audit failed', 'danger');
+  };
+
+  const discoverAnimations = async () => {
+    const fb = bridge();
+    if (!fb) return;
+    setLoadingAnimations(true);
+    setAnimation(null);
+    setAnimationError(null);
+    try {
+      const dir = await fb.listDir(`${outDir}/images`);
+      if (!dir.ok) {
+        setAnimationNames([]);
+        setSelectedAnimation('');
+        setAnimationError(dir.error ?? 'Could not list animated outputs.');
+        return;
+      }
+      const names = (Array.isArray(dir.items) ? dir.items : []).filter(isAnimationOutput).slice(0, ANIMATION_OUTPUT_CAP);
+      setAnimationNames(names);
+      setSelectedAnimation(names[0] ?? '');
+    } finally { setLoadingAnimations(false); }
+  };
+
+  const loadSelectedAnimation = async () => {
+    const fb = bridge();
+    if (!fb || !selectedAnimation) return;
+    setLoadingAnimations(true);
+    setAnimation(null);
+    setAnimationError(null);
+    try {
+      const file = await fb.readFileBase64(`${outDir}/images/${selectedAnimation}`, ANIMATION_PREVIEW_MAX_BYTES);
+      if (!file.ok || !file.base64) {
+        setAnimationError(file.error ?? 'Could not load the selected animation.');
+        return;
+      }
+      const mime = file.mime ?? animationFallbackMime(selectedAnimation);
+      setAnimation({ name: selectedAnimation, source: `data:${mime};base64,${file.base64}`, video: isVideoOutput(selectedAnimation) });
+    } catch (cause) {
+      setAnimationError(String((cause as Error)?.message ?? cause));
+    } finally { setLoadingAnimations(false); }
   };
 
   const pct = prog ? Math.max(0, Math.min(100, prog.progress || (prog.total ? (prog.current / prog.total) * 100 : 0))) : 0;
@@ -283,6 +339,15 @@ export function BuildScreen() {
         ) : (
           <span className="label muted">Scan layer assets or built outputs for duplicates and issues.</span>
         )}
+      </Panel>
+
+      <Panel title="Animation preview" actions={<Button size="sm" onClick={discoverAnimations} loading={loadingAnimations}>Find animated outputs</Button>}>
+        <div className="stack">
+          <span className="label muted">Discover up to {ANIMATION_OUTPUT_CAP} GIF, WebP, MP4, or WebM outputs, then load one selected file on demand (maximum 16 MiB).</span>
+          {animationNames.length ? <div className="row wrap"><Field label="Animated output"><Select value={selectedAnimation} onChange={(event) => { setSelectedAnimation(event.target.value); setAnimation(null); setAnimationError(null); }} aria-label="Animated output"><option value="">Select output</option>{animationNames.map((name) => <option key={name} value={name}>{name}</option>)}</Select></Field><Button size="sm" onClick={loadSelectedAnimation} loading={loadingAnimations} disabled={!selectedAnimation}>Preview selected</Button></div> : <span className="label muted">Find animated outputs from the last build.</span>}
+          {animationError ? <div className="banner-error" role="alert">{animationError}</div> : null}
+          {animation ? animation.video ? <video className="animation-preview" src={animation.source} controls loop muted aria-label={`Animated output ${animation.name}`} /> : <img className="animation-preview" src={animation.source} alt={`Animated output ${animation.name}`} /> : null}
+        </div>
       </Panel>
 
       <Lightbox

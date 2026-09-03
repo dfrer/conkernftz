@@ -7,12 +7,30 @@ const repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
 const launcherPath = path.join(repositoryRoot, 'Launch ConkerNFTZ.bat');
 const legacyLauncherPath = path.join(repositoryRoot, 'conkernftz.bat');
 const shortcutPath = path.join(repositoryRoot, 'make-desktop-shortcut.bat');
+const directStartPath = path.join(repositoryRoot, 'packages', 'ui', 'scripts', 'start.cjs');
+const turboConfigPath = path.join(repositoryRoot, 'turbo.json');
 
 function readRepositoryFile(filePath: string): string {
   return fs.readFileSync(filePath, 'utf8').replace(/\r\n?/g, '\n');
 }
 
 describe('Windows launcher contract', () => {
+  it('preserves CommonJS build artifacts required by Electron', () => {
+    const turboConfig = JSON.parse(readRepositoryFile(turboConfigPath)) as {
+      tasks: { build: { outputs: string[] } };
+    };
+
+    expect(turboConfig.tasks.build.outputs).toContain('dist-cjs/**');
+  });
+
+  it('builds the workspace dependency graph before a direct UI start', () => {
+    const directStart = readRepositoryFile(directStartPath);
+
+    expect(directStart).toContain("const repositoryRoot = path.join(uiDir, '..', '..');");
+    expect(directStart).toContain("spawn(pnpm, ['-w', 'build']");
+    expect(directStart).toContain('cwd: repositoryRoot');
+  });
+
   it('keeps a quoted, location-independent primary launcher and a legacy forwarding entry point', () => {
     const launcher = readRepositoryFile(launcherPath);
     const legacyLauncher = readRepositoryFile(legacyLauncherPath);

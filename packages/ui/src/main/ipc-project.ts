@@ -9,9 +9,26 @@ import { getEngineClient } from './engine-client.js';
 import { isSafeExternalUrl, type TrustedIpcHandle } from './ipc-security.js';
 import type { LivePreviewResult, EffectsPreviewResult, PreviewToDiskResult } from './engine-service.js';
 import { importProjectFolder } from './project-import.js';
+import { dynamicImport } from './dynamic-import.js';
 
 let projectDir: string | null = null;
 let fileManager: FileManager | null = null;
+export const MAX_BASE64_FILE_BYTES = 16 * 1024 * 1024;
+
+interface CoreProjectConfigModule {
+  ProjectConfigSchema: {
+    safeParse(value: unknown):
+      | { success: true }
+      | { success: false; error: { issues: Array<{ path: Array<string | number>; message: string }> } };
+  };
+}
+
+let coreConfigPromise: Promise<CoreProjectConfigModule> | null = null;
+
+function loadCoreConfig(): Promise<CoreProjectConfigModule> {
+  coreConfigPromise ??= dynamicImport<CoreProjectConfigModule>('@conkernftz/core/project-config');
+  return coreConfigPromise;
+}
 
 export function getProjectDir(): string | null {
   return projectDir;
@@ -114,7 +131,16 @@ export function initProjectIpc(handle: TrustedIpcHandle): void {
   handle('foundry:writeConfig', async (_evt, json: unknown) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
+      const { ProjectConfigSchema } = await loadCoreConfig();
+      const validation = ProjectConfigSchema.safeParse(json);
+      if (!validation.success) {
+        const issue = validation.error.issues[0];
+        const location = issue?.path.length ? `${issue.path.join('.')}: ` : '';
+        return { ok: false, error: `Config is not valid and was not saved: ${location}${issue?.message ?? 'schema validation failed'}` };
+      }
       const p = path.join(projectDir, 'foundry.config.json');
+      // Validate with core, but serialize the original value so forward-compatible
+      // unknown keys are not stripped by the schema parser.
       await fs.writeFile(p, JSON.stringify(json, null, 2));
       return { ok: true };
     } catch (e) {
@@ -173,13 +199,40 @@ export function initProjectIpc(handle: TrustedIpcHandle): void {
   });
 
   // Read a binary file under the project as base64 (for inline image/animation previews).
-  handle('foundry:readFileBase64', async (_evt, relativePath: string) => {
+  handle('foundry:readFileBase64', async (_evt, relativePath: string, requestedMaxBytes?: number) => {
     try {
       if (!projectDir) return { ok: false, error: 'No project selected' };
       const p = resolveInProject(relativePath);
       if (!p) return { ok: false, error: 'Path escapes project' };
-      const buf = await fs.readFile(p);
-      const ext = path.extname(p).toLowerCase();
+      if (requestedMaxBytes != null && (!Number.isSafeInteger(requestedMaxBytes) || requestedMaxBytes <= 0)) {
+        return { ok: false, error: 'Base64 read limit must be a positive whole number of bytes' };
+      }
+      const maxBytes = Math.min(requestedMaxBytes ?? MAX_BASE64_FILE_BYTES, MAX_BASE64_FILE_BYTES);
+      const canonicalRoot = await fs.realpath(path.resolve(projectDir));
+      const canonicalFile = await fs.realpath(p);
+      if (!isWithinRoot(canonicalRoot, canonicalFile)) {
+        return { ok: false, error: 'Path escapes project through a symbolic link' };
+      }
+      const fileHandle = await fs.open(canonicalFile, 'r');
+      let buf: Buffer;
+      try {
+        const info = await fileHandle.stat();
+        if (!info.isFile()) return { ok: false, error: 'Base64 previews require a regular file' };
+        if (info.size > maxBytes) return { ok: false, error: `File exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MiB base64 preview limit` };
+        const capacity = Math.min(maxBytes + 1, info.size + 1);
+        const bounded = Buffer.alloc(capacity);
+        let offset = 0;
+        while (offset < bounded.length) {
+          const result = await fileHandle.read(bounded, offset, bounded.length - offset, offset);
+          if (result.bytesRead === 0) break;
+          offset += result.bytesRead;
+        }
+        if (offset > maxBytes) return { ok: false, error: `File exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MiB base64 preview limit` };
+        buf = bounded.subarray(0, offset);
+      } finally {
+        await fileHandle.close();
+      }
+      const ext = path.extname(canonicalFile).toLowerCase();
       const mime =
         ext === '.png'
           ? 'image/png'

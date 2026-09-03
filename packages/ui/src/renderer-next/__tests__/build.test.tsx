@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act } from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { ProjectProvider } from '../state/project';
-import { BuildScreen } from '../screens/BuildScreen';
+import { ANIMATION_OUTPUT_CAP, ANIMATION_PREVIEW_MAX_BYTES, BuildScreen } from '../screens/BuildScreen';
 import { ToastProvider } from '../components';
 import type { BuildProgressEvent } from '../lib/bridge';
 
@@ -113,5 +113,39 @@ describe('BuildScreen', () => {
     });
     expect(getByText('Processing batch 1/2')).toBeTruthy();
     expect(getByText(/50%/)).toBeTruthy();
+  });
+
+  it('discovers a bounded animation list and loads only the selected file on demand', async () => {
+    const names = Array.from({ length: 30 }, (_, index) => `${index + 1}.mp4`);
+    const readFileBase64 = vi.fn(async () => ({ ok: true, base64: PNG, mime: 'video/mp4' }));
+    installBridge({
+      listDir: vi.fn(async () => ({ ok: true, items: names })),
+      readFileBase64,
+    });
+    const { findByText, getByRole, findByLabelText } = mount();
+    await findByText('Ready to build');
+    fireEvent.click(getByRole('button', { name: 'Find animated outputs' }));
+    const select = await findByLabelText('Animated output');
+    expect(select.querySelectorAll('option')).toHaveLength(ANIMATION_OUTPUT_CAP + 1);
+    expect(readFileBase64).not.toHaveBeenCalled();
+    fireEvent.change(select, { target: { value: '2.mp4' } });
+    fireEvent.click(getByRole('button', { name: 'Preview selected' }));
+    expect(await findByLabelText('Animated output 2.mp4')).toBeTruthy();
+    expect(readFileBase64).toHaveBeenCalledOnce();
+    expect(readFileBase64).toHaveBeenCalledWith('build/images/2.mp4', ANIMATION_PREVIEW_MAX_BYTES);
+  });
+
+  it('shows the IPC oversize error without mounting media', async () => {
+    installBridge({
+      listDir: vi.fn(async () => ({ ok: true, items: ['large.webm'] })),
+      readFileBase64: vi.fn(async () => ({ ok: false, error: 'File exceeds the 16 MiB base64 preview limit' })),
+    });
+    const { findByText, getByRole, findByLabelText, queryByLabelText } = mount();
+    await findByText('Ready to build');
+    fireEvent.click(getByRole('button', { name: 'Find animated outputs' }));
+    await findByLabelText('Animated output');
+    fireEvent.click(getByRole('button', { name: 'Preview selected' }));
+    expect(await findByText('File exceeds the 16 MiB base64 preview limit')).toBeTruthy();
+    expect(queryByLabelText('Animated output large.webm')).toBeNull();
   });
 });
