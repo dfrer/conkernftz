@@ -67,6 +67,8 @@
   --surface-2: #151917;
   --surface-3: #1b201d;
   --surface-inset: #0c0f0e;
+  --preview-dark: #111411;
+  --preview-light: #f1eee5;
 
   --text: #e9e7dc;
   --text-muted: #9aa09a;
@@ -113,6 +115,8 @@
   --surface-2: #f6f0e1;
   --surface-3: #fdfaf1;
   --surface-inset: #e2d8bf;
+  --preview-dark: #111411;
+  --preview-light: #f1eee5;
 
   --text: #1d1810;
   --text-muted: #5a5141;

@@ -84,6 +84,9 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        # Keep Foundry build-info compatible with Slither --ignore-compile.
+        with:
+          version: v1.7.1
 
       # forge-std (test framework). Cloned rather than `forge install`ed to avoid submodule
       # semantics in the pnpm monorepo; pin a tag here for fully reproducible runs if desired.
@@ -104,7 +107,7 @@ jobs:
         with:
           target: packages/chain-evm/
           slither-config: packages/chain-evm/slither.config.json
+          slither-version: 0.11.4
           fail-on: high
           ignore-compile: true
           slither-args: --compile-force-framework foundry
-

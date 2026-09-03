@@ -124,7 +124,7 @@ export interface FoundryApi {
   chooseDirInsideProject(): Promise<PathResult>;
 
   readFile(relativePath: string): Promise<ContentResult>;
-  readFileBase64(relativePath: string): Promise<FileBase64Result>;
+  readFileBase64(relativePath: string, maxBytes?: number): Promise<FileBase64Result>;
   previewLive(config: unknown, count: number, seed?: string): Promise<LivePreviewResult>;
   previewEffects(config: unknown): Promise<EffectsPreviewResult>;
   saveJson(relPath: string, json: unknown): Promise<OkResult>;

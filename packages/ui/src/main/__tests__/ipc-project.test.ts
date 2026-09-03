@@ -11,6 +11,7 @@ const { handlers, ipcMain, dialog, shell } = vi.hoisted(() => {
 
 const importProjectFolder = vi.hoisted(() => vi.fn());
 const fsPromises = vi.hoisted(() => ({
+  open: vi.fn(),
   readFile: vi.fn(),
   writeFile: vi.fn(),
   mkdir: vi.fn(),
@@ -62,6 +63,92 @@ describe('ipc-project', () => {
     const res = await handlers['foundry:setProjectDir'](trustedEvent(), '/tmp/project');
     expect(res).toEqual({ ok: true, projectDir: '/tmp/project' });
     expect(getProjectDir()).toBe('/tmp/project');
+  });
+
+  it('bounds base64 file reads before allocating or returning animation data', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const close = vi.fn().mockResolvedValue(undefined);
+    const read = vi.fn();
+    fsPromises.open.mockResolvedValueOnce({
+      stat: vi.fn().mockResolvedValue({ isFile: () => true, size: 17 * 1024 * 1024 }),
+      read,
+      close,
+    });
+
+    await expect(
+      handlers['foundry:readFileBase64'](trustedEvent(), 'build/images/large.mp4', 16 * 1024 * 1024),
+    ).resolves.toEqual({ ok: false, error: 'File exceeds the 16 MiB base64 preview limit' });
+
+    expect(read).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+    expect(fsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects a base64 preview redirected outside the canonical project root by a symlink', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const root = path.resolve('/tmp/project');
+    const requested = path.resolve('/tmp/project/build/images/linked.mp4');
+    const outside = path.resolve('/tmp/outside/secret.mp4');
+    fsPromises.realpath.mockImplementation(async (candidate: string) => {
+      const resolved = path.resolve(candidate);
+      if (resolved === root) return root;
+      if (resolved === requested) return outside;
+      return resolved;
+    });
+
+    await expect(
+      handlers['foundry:readFileBase64'](trustedEvent(), 'build/images/linked.mp4', 16 * 1024 * 1024),
+    ).resolves.toEqual({ ok: false, error: 'Path escapes project through a symbolic link' });
+    expect(fsPromises.open).not.toHaveBeenCalled();
+  });
+
+  it('uses the core project schema to reject invalid common rules before saving', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const config = {
+      name: 'Invalid cap',
+      editionSize: 1,
+      image: { width: 64, height: 64 },
+      layers: [],
+      rules: { maxOccurrences: [{ trait: 'Body:Robot', max: 0 }] },
+      rarity: { mode: 'filenameDelimiter', delimiter: '#', defaultWeight: 1 },
+      uniqueness: { hash: 'sha256', ignore: [] },
+      export: { outDir: 'build', imageFormat: 'png' },
+      storage: { provider: 'local', local: {} },
+      chain: { target: 'evm' },
+    };
+
+    const result = await handlers['foundry:writeConfig'](trustedEvent(), config);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/rules\.maxOccurrences\.0\.max/);
+    expect(fsPromises.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('writes the original validated config so unknown keys remain lossless', async () => {
+    initProjectIpc(createTrustedIpcHandle(TRUSTED_RENDERER_URL));
+    setProjectDir('/tmp/project');
+    const config = {
+      name: 'Forward compatible',
+      editionSize: 1,
+      image: { width: 64, height: 64 },
+      layers: [],
+      rules: { maxOccurrences: [{ trait: 'Body:Robot', max: 1 }], futureRule: { keep: true } },
+      rarity: { mode: 'filenameDelimiter', delimiter: '#', defaultWeight: 1 },
+      uniqueness: { hash: 'sha256', ignore: [] },
+      export: { outDir: 'build', imageFormat: 'png' },
+      storage: { provider: 'local', local: {} },
+      chain: { target: 'evm' },
+      futureRoot: { keep: true },
+    };
+
+    await expect(handlers['foundry:writeConfig'](trustedEvent(), config)).resolves.toEqual({ ok: true });
+    expect(fsPromises.writeFile).toHaveBeenCalledWith(
+      path.join('/tmp/project', 'foundry.config.json'),
+      JSON.stringify(config, null, 2),
+    );
   });
 
   it('renames one file to the exact destination without using batch suffix behavior', async () => {
