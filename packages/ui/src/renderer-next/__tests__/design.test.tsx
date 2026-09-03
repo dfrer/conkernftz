@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import { ProjectProvider, useProject } from '../state/project';
 import { DesignScreen } from '../screens/DesignScreen';
 import { ToastProvider } from '../components';
@@ -16,6 +16,39 @@ const baseConfig = {
   rarity: { mode: 'filenameDelimiter', delimiter: '#', defaultWeight: 1 },
   export: { outDir: 'build', imageFormat: 'png' },
 };
+
+type Deferred<T> = {
+  promise: Promise<T>;
+  settled: Promise<void>;
+  resolve: (value?: T) => void;
+};
+
+const pendingDeferreds = new Set<Deferred<unknown>>();
+
+function deferred<T>(fallback: T): Deferred<T> {
+  let resolvePromise: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((resolve) => {
+    resolvePromise = resolve;
+  });
+  let resolveSettled: () => void = () => undefined;
+  const settled = new Promise<void>((resolve) => {
+    resolveSettled = resolve;
+  });
+  let resolved = false;
+  const result: Deferred<T> = {
+    promise,
+    settled,
+    resolve(value = fallback) {
+      if (resolved) return;
+      resolved = true;
+      resolvePromise(value);
+      resolveSettled();
+      pendingDeferreds.delete(result as Deferred<unknown>);
+    },
+  };
+  pendingDeferreds.add(result as Deferred<unknown>);
+  return result;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function installBridge(over: Record<string, any> = {}) {
@@ -38,7 +71,14 @@ function installBridge(over: Record<string, any> = {}) {
   return { writeConfig };
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Deferred bridge calls must settle while React is still mounted. This keeps a
+  // failed timing assertion from carrying async updates into the next test.
+  const remaining = [...pendingDeferreds];
+  await act(async () => {
+    remaining.forEach((pending) => pending.resolve());
+    await Promise.all(remaining.map((pending) => pending.settled));
+  });
   cleanup();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (window as any).foundry;
@@ -131,19 +171,46 @@ describe('DesignScreen', () => {
 
   it('refreshes the scoped transform catalog after a trait-file rename', async () => {
     let backgroundFiles = ['Aurora#1.png'];
+    const delayedTraitListing = deferred({ ok: true, items: ['Aurora#1.png'] });
+    let backgroundListingCalls = 0;
     const renameFileExact = vi.fn(async () => {
       backgroundFiles = ['Aurora#2.png'];
       return { ok: true, renamed: 1 };
     });
     installBridge({
-      listDir: async (path: string) => ({ ok: true, items: path === 'layers/bg' ? backgroundFiles : [] }),
+      listDir: (path: string) => {
+        if (path !== 'layers/bg') return Promise.resolve({ ok: true, items: [] });
+        backgroundListingCalls += 1;
+        // Design owns the first two background listings (count + thumbnail/catalog).
+        // The browser's listing is deliberately held to reproduce an assertion that
+        // runs before its async controls are ready.
+        return backgroundListingCalls === 3
+          ? delayedTraitListing.promise
+          : Promise.resolve({ ok: true, items: backgroundFiles });
+      },
       renameFileExact,
       readFileBase64: async () => ({ ok: true, base64: 'trait', mime: 'image/png' }),
     });
     const { findByLabelText, findByRole, getByLabelText, getByRole, queryByRole } = mount();
     await findByLabelText('Layer 1 name');
+    await waitFor(() => expect(backgroundListingCalls).toBe(2));
     fireEvent.click(getByRole('button', { name: 'Browse layer 1 traits' }));
-    fireEvent.click(await findByRole('button', { name: 'Edit rarity for Aurora#1.png' }));
+    try {
+      await waitFor(() => expect(backgroundListingCalls).toBe(3));
+      // The Phase-1 red state remains explicit: this action cannot exist until
+      // the browser-specific listing resolves.
+      expect(queryByRole('button', { name: 'Edit rarity for Aurora#1.png' })).toBeNull();
+      await act(async () => {
+        delayedTraitListing.resolve({ ok: true, items: backgroundFiles });
+        await delayedTraitListing.settled;
+      });
+      fireEvent.click(await findByRole('button', { name: 'Edit rarity for Aurora#1.png' }));
+    } finally {
+      await act(async () => {
+        delayedTraitListing.resolve({ ok: true, items: backgroundFiles });
+        await delayedTraitListing.settled;
+      });
+    }
     fireEvent.change(getByLabelText('Rarity weight for Aurora#1.png'), { target: { value: '2' } });
     fireEvent.click(getByRole('button', { name: 'Apply rarity for Aurora#1.png' }));
     await waitFor(() => expect(renameFileExact).toHaveBeenCalledWith('layers/bg/Aurora#1.png', 'layers/bg/Aurora#2.png'));
@@ -295,18 +362,31 @@ describe('DesignScreen', () => {
   });
 
   it('edits a layer recolor effect and saves losslessly', async () => {
-    const { writeConfig } = installBridge();
+    const delayedCatalog = deferred({ ok: true, items: [] });
+    const listDir = vi.fn(() => delayedCatalog.promise);
+    const { writeConfig } = installBridge({ listDir });
     const { findByLabelText, getByRole, getByLabelText } = mount();
     await findByLabelText('Layer 1 name');
-    fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
-    fireEvent.click(await findByLabelText('Recolor (duotone)'));
-    fireEvent.change(getByLabelText('Preset'), { target: { value: 'sepia' } });
-    fireEvent.click(getByRole('button', { name: 'Save config' }));
-    await waitFor(() => expect(writeConfig).toHaveBeenCalled());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const saved = writeConfig.mock.calls.at(-1)![0] as any;
-    expect(saved.layers[0].effects.recolor.preset).toBe('sepia');
-    expect(saved.rarity).toEqual(baseConfig.rarity); // untouched fields preserved
+    try {
+      await waitFor(() => expect(listDir).toHaveBeenCalledTimes(4));
+      // Effects are synchronous once the layer row is rendered; a delayed trait
+      // catalog must not hide this control (the hosted Recolor failure has a
+      // different cause than the delayed TraitBrowser action above).
+      fireEvent.click(getByRole('button', { name: 'Edit layer 1 effects' }));
+      fireEvent.click(await findByLabelText('Recolor (duotone)'));
+      fireEvent.change(getByLabelText('Preset'), { target: { value: 'sepia' } });
+      fireEvent.click(getByRole('button', { name: 'Save config' }));
+      await waitFor(() => expect(writeConfig).toHaveBeenCalled());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const saved = writeConfig.mock.calls.at(-1)![0] as any;
+      expect(saved.layers[0].effects.recolor.preset).toBe('sepia');
+      expect(saved.rarity).toEqual(baseConfig.rarity); // untouched fields preserved
+    } finally {
+      await act(async () => {
+        delayedCatalog.resolve();
+        await delayedCatalog.settled;
+      });
+    }
   });
 
   it('applies rules JSON and saves losslessly', async () => {

@@ -496,3 +496,33 @@ Work remains uncommitted on `codex/editor-parity-restoration` at base
 release action was performed. Remaining gate: use the reopened NASAID Studio to select several
 Visual Identity assets, confirm each image remains selected, then press **Match rule** and confirm
 the automatic sample changes only at that explicit request.
+
+---
+
+# Editor parity PR and CI stabilization — 2026-09-03
+
+## Outcome and scope
+
+The editor-parity restoration, transform-rule authoring, trait autocomplete, and interactive
+transform preview are delivered in PR #103. Hosted validation exposed two tooling/test issues that
+were repaired without weakening the gates: contract analysis now pins Foundry v1.7.1 and Slither
+0.11.4 for compatible build-info parsing, and the Design test now controls the trait catalog's
+actual async readiness boundary and settles deferred UI work before cleanup.
+
+No production behavior changed for the Design test stabilization. Its regression reproduces the
+hosted missing trait-action state while the catalog is loading, then resolves the bridge operation
+and verifies the rendered rename flow. A companion check proves the layer effects editor remains
+available while catalog I/O is pending.
+
+## Validation and delivery state
+
+- Focused Design suite: **1 file / 13 tests passed**; a bounded **10 consecutive runs** also passed.
+- Full UI suite: **53 files / 338 tests passed**.
+- Root typecheck: **6/6 packages passed**.
+- `git diff --check`: **passed** for the test stabilization before this documentation append.
+- PR #103 is open against `main`; its prior exact-head run passed Ubuntu Node 22/24, Windows Node
+  22, and contracts, while Windows Node 24 exposed the repaired Design readiness race.
+
+Remaining delivery gate: push this final stabilization, require all five jobs to pass on the new
+exact head, then perform the user-authorized squash merge of PR #103 into `main`. Deployment and
+public release remain outside this delivery.
